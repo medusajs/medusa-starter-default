@@ -1,0 +1,21 @@
+{
+  "name": "medusa-starter-default",
+  "version": "1.0.0",
+  "description": "A starter for Medusa projects.",
+  "main": "index.js",
+  "author": "Sebastian Rindom <skrindom@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "medusa develop"
+  },
+  "dependencies": {
+    "@medusajs/medusa": "^1.1.23",
+    "@medusajs/medusa-cli": "^1.1.8",
+    "medusa-fulfillment-manual": "^1.1.9",
+    "medusa-interfaces": "^1.1.10",
+    "medusa-payment-stripe": "^1.1.12",
+    "medusa-plugin-sendgrid": "^1.1.13",
+    "mongoose": "^5.12.12",
+    "typeorm": "^0.2.32"
+  }
+}
