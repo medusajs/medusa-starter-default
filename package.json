@@ -5,11 +5,12 @@
   "author": "Sebastian Rindom <skrindom@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "seed": "medusa seed -f ./data/seed.json",
     "start": "medusa develop"
   },
   "dependencies": {
     "@medusajs/medusa": "^1.1.23",
-    "@medusajs/medusa-cli": "^1.1.8",
+    "@medusajs/medusa-cli": "1.1.8-dev-1622702935870",
     "medusa-fulfillment-manual": "^1.1.9",
     "medusa-interfaces": "^1.1.10",
     "medusa-payment-stripe": "^1.1.12",
