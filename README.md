@@ -28,5 +28,15 @@ This repo provides the skeleton to get you started with using Medusa. Follow the
 
 Your local Medusa server is now running on port 9000. 
 
+Try it out: `curl -X GET localhost:9000/store/products | python -m json.tool`
+
+After the seed script has run you will have the following things in you database:
+
+- a User with the email: admin@medusa-test.com and password: supersecret
+- a Region called Default Region with the countries GB, DE, DK, SE, FR, ES, IT
+- a Shipping Option called Standard Shipping which costs 10 EUR
+- a Product called Cool Test Product with a Product Variant that costs 195 EUR
+
+
 Visit [docs.medusa-commerce.com](https://docs.medusa-comerce.com) for further guides.
 
