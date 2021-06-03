@@ -18,17 +18,36 @@ This repo provides the skeleton to get you started with using Medusa. Follow the
 
 
 ## Running Medusa
-- Rename `.env.template` to `.env`: `$ mv .env.template .env`
+- Get your environment variables ready: 
+  ```
+  $ mv .env.template .env
+  ```
 - Setup a Stripe account and add your API key and webhook secret to your `.env`
 - Setup a Sendgrid account and add your API key to your `.env`
-- Install all dependencies `$ yarn`
-- Create a local postgres database using `$ psql -h localhost -c 'create database "medusa-development";'`
-- Migrate and seed the database `$ yarn seed`
-- Run `$ medusa develop`
+- Install all dependencies 
+  ```
+  $ yarn
+  ```
+- Create a local postgres database using 
+  ```
+  $ psql -h localhost -c 'create database "medusa-development";'
+  ```
+- Migrate and seed the database 
+  ```
+  $ yarn seed
+  ```
+- Start the Medusa server:
+  ```
+  $ medusa develop
+  ```
 
-Your local Medusa server is now running on port 9000. 
+Your local Medusa server is now running on port **9000**. 
 
-Try it out: `curl -X GET localhost:9000/store/products | python -m json.tool`
+## Try it out
+
+```
+curl -X GET localhost:9000/store/products | python -m json.tool
+```
 
 After the seed script has run you will have the following things in you database:
 
