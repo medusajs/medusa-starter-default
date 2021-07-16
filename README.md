@@ -22,8 +22,6 @@ This repo provides the skeleton to get you started with using Medusa. Follow the
   ```
   $ mv .env.template .env
   ```
-- Setup a Stripe account and add your API key and webhook secret to your `.env`
-- Setup a Sendgrid account and add your API key to your `.env`
 - Install all dependencies 
   ```
   $ yarn
@@ -54,7 +52,7 @@ After the seed script has run you will have the following things in you database
 - a User with the email: admin@medusa-test.com and password: supersecret
 - a Region called Default Region with the countries GB, DE, DK, SE, FR, ES, IT
 - a Shipping Option called Standard Shipping which costs 10 EUR
-- a Product called Cool Test Product with a Product Variant that costs 195 EUR
+- a Product called Cool Test Product with 4 Product Variants that all cost 19.50 EUR
 
 
 Visit [docs.medusa-commerce.com](https://docs.medusa-comerce.com) for further guides.
