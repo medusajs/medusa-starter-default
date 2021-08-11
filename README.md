@@ -1,42 +1,28 @@
-# Medusa Starter Default
+# `medusa-starter-sqlite`
 
 This repo provides the skeleton to get you started with using Medusa. Follow the steps below to get ready.
 
 ## Prerequisites
-- Have Postgresql installed and ensure it is running and initialized.
-    - `$ brew install postgresql`
-    - `$ brew services start postgresql`
-    - `$ createdb`
+This starter has minimal prerequisites and most of these will usually already be installed on your computer.
 
-- Install Redis and ensure that it is running.
-    - `$ brew install redis`
-    - `$ brew services start redis`
+- [Install Node.js](https://nodejs.org/en/download/)
+- [Install git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+- [Install SQLite](https://www.sqlite.org/download.html)
 
-- Have Yarn and related packages installed globally:
-    - Install yarn if needed `$ brew install yarn` 
-    - Install packages `$ yarn global add npm @babel/core`
-
-
-## Running Medusa
-- Get your environment variables ready: 
+## Setting up your store
+- Install the Medusa CLI
   ```
-  $ mv .env.template .env
+  npm install -g @medusajs/medusa
+  yarn global add @medusajs/medusa
   ```
-- Install all dependencies 
+- Create a new Medusa project
   ```
-  $ yarn
+  medusa new medusa-sqlite https://github.com/medusajs/medusa-starter-sqlite
   ```
-- Create a local postgres database using 
+- Run your project
   ```
-  $ psql -h localhost -c 'create database "medusa-development";'
-  ```
-- Migrate and seed the database 
-  ```
-  $ yarn seed
-  ```
-- Start the Medusa server:
-  ```
-  $ medusa develop
+  cd medusa-sqlite
+  medusa develop
   ```
 
 Your local Medusa server is now running on port **9000**. 
