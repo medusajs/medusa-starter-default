@@ -1011,10 +1011,10 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@medusajs/medusa-cli@^1.1.15":
-  version "1.1.15"
-  resolved "https://registry.yarnpkg.com/@medusajs/medusa-cli/-/medusa-cli-1.1.15.tgz#01837aeb8850349b204a85cb2bbac0d5ce166eeb"
-  integrity sha512-WxToDuksYZWSUvrKhOvETwzBGgOqhd9q2l2kGLOV997bMu/elj90Nhzrf0jZ+ioNsXmebq7aw6/fCrmZc9KxbQ==
+"@medusajs/medusa-cli@^1.1.16":
+  version "1.1.16"
+  resolved "https://registry.yarnpkg.com/@medusajs/medusa-cli/-/medusa-cli-1.1.16.tgz#3ddcd5b16388a387c430116b962bb27a933ee85e"
+  integrity sha512-QvE7IYkR3NFiy4seZklfX+Xs/dJannVLbKfxLQbxCV2Sso3ZtJbSJt1BpTUwDxYjOFWXyTxRRjO1kEnA1yqCBA==
   dependencies:
     "@babel/polyfill" "^7.8.7"
     "@babel/runtime" "^7.9.6"
@@ -1033,7 +1033,7 @@
     joi-objectid "^3.0.1"
     meant "^1.0.1"
     medusa-core-utils "^0.1.27"
-    medusa-telemetry "^0.0.2"
+    medusa-telemetry "^0.0.3"
     netrc-parser "^3.1.6"
     open "^8.0.6"
     ora "^5.4.1"
@@ -1047,49 +1047,13 @@
     winston "^3.3.3"
     yargs "^15.3.1"
 
-"@medusajs/medusa-cli@^1.1.16-sqlite.12":
-  version "1.1.16-sqlite.12"
-  resolved "https://registry.yarnpkg.com/@medusajs/medusa-cli/-/medusa-cli-1.1.16-sqlite.12.tgz#1888c4ee1044b2ae27f9088e8c7b89ac15c3db02"
-  integrity sha512-74MDFPQUpKKF0nkLkzp7r6jOyn+xFebyFra1/iUzpMONvOAdTDkzJHVfgc7/QLsBmOVCjMMASm9sdaBAY18qzA==
-  dependencies:
-    "@babel/polyfill" "^7.8.7"
-    "@babel/runtime" "^7.9.6"
-    "@hapi/joi" "^16.1.8"
-    axios "^0.21.1"
-    chalk "^4.0.0"
-    configstore "5.0.1"
-    core-js "^3.6.5"
-    dotenv "^8.2.0"
-    execa "^5.1.1"
-    fs-exists-cached "^1.0.0"
-    fs-extra "^10.0.0"
-    hosted-git-info "^4.0.2"
-    inquirer "^8.0.0"
-    is-valid-path "^0.1.1"
-    joi-objectid "^3.0.1"
-    meant "^1.0.1"
-    medusa-core-utils "^0.1.27"
-    medusa-telemetry "^0.0.3-sqlite.12+e0a88e6c"
-    netrc-parser "^3.1.6"
-    open "^8.0.6"
-    ora "^5.4.1"
-    pg-god "^1.0.11"
-    prompts "^2.4.1"
-    regenerator-runtime "^0.13.5"
-    resolve-cwd "^3.0.0"
-    stack-trace "^0.0.10"
-    ulid "^2.3.0"
-    url "^0.11.0"
-    winston "^3.3.3"
-    yargs "^15.3.1"
-
-"@medusajs/medusa@^1.1.35-sqlite.17":
-  version "1.1.35-sqlite.17"
-  resolved "https://registry.yarnpkg.com/@medusajs/medusa/-/medusa-1.1.35-sqlite.17.tgz#41b4db5378525c94d90a62901b700ab889087299"
-  integrity sha512-fLpRzlIMTFD4xigYVpJc4hm7PRINPLQpb+GHn9NWwboHpIp82/WKI1/8tvMJHS7MHL9dKXm/2UvPndFSItfsWA==
+"@medusajs/medusa@^1.1.37":
+  version "1.1.37"
+  resolved "https://registry.yarnpkg.com/@medusajs/medusa/-/medusa-1.1.37.tgz#4f86141c1d8191bc44d4f4b5227a21d9f8496fe8"
+  integrity sha512-kXpt3Q8i/iBDduqpHZRrbVBcIRNOegK3/TdVyUPUXcnAgRDPTpNRqdCkClmThzWAN7pZAj+HIxRX5LnMQsIcjw==
   dependencies:
     "@hapi/joi" "^16.1.8"
-    "@medusajs/medusa-cli" "^1.1.15"
+    "@medusajs/medusa-cli" "^1.1.16"
     "@types/lodash" "^4.14.168"
     awilix "^4.2.3"
     body-parser "^1.19.0"
@@ -3973,24 +3937,10 @@ medusa-payment-stripe@^1.1.23:
     medusa-core-utils "^1.1.20"
     stripe "^8.50.0"
 
-medusa-telemetry@^0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/medusa-telemetry/-/medusa-telemetry-0.0.2.tgz#f3324eb3703b3f877f472dce450b5ad600a9a8f1"
-  integrity sha512-pZYYcXWPBkfoDSvReR9Aph3pKiXHf6sBiijtI+eSTvA1RmuPGktL7xpiKdGOG6IBKQpeqQRRfX0rV9bptu/PRg==
-  dependencies:
-    axios "^0.21.1"
-    axios-retry "^3.1.9"
-    boxen "^5.0.1"
-    ci-info "^3.2.0"
-    configstore "5.0.1"
-    is-docker "^2.2.1"
-    remove-trailing-slash "^0.1.1"
-    uuid "^8.3.2"
-
-medusa-telemetry@^0.0.3-sqlite.12+e0a88e6c:
-  version "0.0.3-sqlite.12"
-  resolved "https://registry.yarnpkg.com/medusa-telemetry/-/medusa-telemetry-0.0.3-sqlite.12.tgz#c4d727952f6a6a82234e86c29a5c1576271974de"
-  integrity sha512-1VxYMOyyHlP4GllNMFVnkw4S7oAjIyw5UJzCABlab7Q10qjjame24DtEz5y51upWaQmWY5/4OxETPKec0RNFDw==
+medusa-telemetry@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/medusa-telemetry/-/medusa-telemetry-0.0.3.tgz#c11e5e0f3cc969f3eaee41d1c24f78a5c0715362"
+  integrity sha512-Qb/sgOwO8t2Sjjo4nKyBa6hKZ/SjniT4eEWenygEaJDqXZhfogVYGhWc5gn4tLlFFNEHXzDTlrqX2LvzfEJWIw==
   dependencies:
     axios "^0.21.1"
     axios-retry "^3.1.9"

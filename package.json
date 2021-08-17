@@ -1,5 +1,5 @@
 {
-  "name": "medusa-starter-sqlite",
+  "name": "medusa-starter-default",
   "version": "0.0.1",
   "description": "A starter for Medusa projects.",
   "author": "Sebastian Rindom <skrindom@gmail.com>",
@@ -10,8 +10,8 @@
     "start": "medusa develop"
   },
   "dependencies": {
-    "@medusajs/medusa": "1.1.35-sqlite.17",
-    "@medusajs/medusa-cli": "1.1.16-sqlite.12",
+    "@medusajs/medusa": "^1.1.37",
+    "@medusajs/medusa-cli": "^1.1.16",
     "medusa-fulfillment-manual": "^1.1.20",
     "medusa-interfaces": "^1.1.21",
     "medusa-payment-manual": "^1.0.2",
@@ -19,8 +19,11 @@
     "mongoose": "^5.13.3",
     "typeorm": "^0.2.36"
   },
-  "repository": "https://github.com/medusajs/medusa-starter-sqlite.git",
+  "repository": "https://github.com/medusajs/medusa-starter-default.git",
   "keywords": [
+    "sqlite",
+    "ecommerce",
+    "headless",
     "medusa"
   ],
   "devDependencies": {
