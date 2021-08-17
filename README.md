@@ -39,11 +39,11 @@ This starter has minimal prerequisites and most of these will usually already be
   ```
 - Create a new Medusa project
   ```
-  medusa new medusa-sqlite https://github.com/medusajs/medusa-starter-sqlite
+  medusa new my-medusa-store
   ```
 - Run your project
   ```
-  cd medusa-sqlite
+  cd my-medusa-store
   medusa develop
   ```
 
