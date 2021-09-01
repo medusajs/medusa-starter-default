@@ -12,6 +12,8 @@ export default () => {
       message: "Welcome to Medusa!"
     })
   })
+
+  return router;
 }
 ```
 
@@ -31,5 +33,7 @@ export default () => {
       message: `Welcome to ${product.title}!`
     })
   })
+
+  return router;
 }
 ```
