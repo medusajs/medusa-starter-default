@@ -1,6 +1,6 @@
 # Custom subscribers
 
-You may define custom eventhandlers, `subscribers` by creating files in the `/subscribers` directory. 
+You may define custom eventhandlers, `subscribers` by creating files in the `/subscribers` directory.
 
 ```js
 class WelcomeSubscriber {
@@ -22,5 +22,4 @@ A subscriber is defined as a `class` which is registered as a subscriber by invo
 
 The type of event that the subscriber subscribes to is passed as the first parameter to the `eventBusService.subscribe` and the eventhandler is passed as the second parameter. The types of events a service can emmit are described in the individual service.
 
-An eventhandler has one paramenter; a data `object` with only an `id` field. The `id` can be used to fetch the appropriate entity in the eventhandler.
-
+An eventhandler has one paramenter; a data `object` wich contain information relating to the event, including relevant `id's`. The `id` can be used to fetch the appropriate entity in the eventhandler.
