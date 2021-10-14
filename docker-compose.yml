@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  database:
+    image: 'postgres:latest'
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: medusa-store
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+  medusa:
+    build: .
+    depends_on:
+      - database
+      - redis
+    working_dir: /usr/src/app
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - 9000:9000
+    environment:
+      DATABASE_URL: postgresql://username:password@database/medusa-store
+      REDIS_URL: redis://redis:6379
+    env_file: .env
+    links:
+      - database
+      - redis
