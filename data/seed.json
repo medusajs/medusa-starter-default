@@ -1,0 +1,116 @@
+{
+    "store": {
+      "currencies": ["eur"]
+    },
+    "users": [
+      {
+        "email": "admin@medusa-test.com",
+        "password": "supersecret"
+      }
+    ],
+    "regions": [
+      {
+        "id": "test-region",
+        "name": "Default Region",
+        "currency_code": "eur",
+        "tax_rate": 0,
+        "payment_providers": ["manual"],
+        "fulfillment_providers": ["manual"],
+        "countries": ["gb", "de", "dk", "se", "fr", "es", "it"]
+      }
+    ],
+    "shipping_options": [
+      {
+        "name": "Standard Shipping",
+        "region_id": "test-region",
+        "provider_id": "manual",
+        "data": {
+          "id": "manual-fulfillment"
+        },
+        "price_type": "flat_rate",
+        "amount": 1000
+      }
+    ],
+    "products": [
+      {
+        "title": "Basic T-Shirt",
+        "subtitle": null,
+        "description": "Reimagine the feeling of a classic T-shirt. With our men's Basic cotton T-shirts, everyday essentials no longer have to be ordinary.",
+        "handle": "basic-shirt",
+        "is_giftcard": false,
+        "images": [],
+        "thumbnail": "https://medusa-public-images.s3.eu-west-1.amazonaws.com/tshirt.png",
+        "options": [
+          {
+            "title": "Size"
+          }
+        ],
+        "variants": [
+          {
+            "title": "S",
+            "prices": [
+              {
+                "currency_code": "eur",
+                "amount": 1950
+              }
+            ],
+            "options": [
+              {
+                "value": "S"
+              }
+            ],
+            "inventory_quantity": 100,
+            "manage_inventory": true
+          },
+          {
+            "title": "M",
+            "prices": [
+              {
+                "currency_code": "eur",
+                "amount": 1950
+              }
+            ],
+            "options": [
+              {
+                "value": "M"
+              }
+            ],
+            "inventory_quantity": 100,
+            "manage_inventory": true
+          },
+          {
+            "title": "L",
+            "prices": [
+              {
+                "currency_code": "eur",
+                "amount": 1950
+              }
+            ],
+            "options": [
+              {
+                "value": "L"
+              }
+            ],
+            "inventory_quantity": 100,
+            "manage_inventory": true
+          },
+          {
+            "title": "XL",
+            "prices": [
+              {
+                "currency_code": "eur",
+                "amount": 1950
+              }
+            ],
+            "options": [
+              {
+                "value": "XL"
+              }
+            ],
+            "inventory_quantity": 100,
+            "manage_inventory": true
+          }
+        ]
+      }
+    ]
+  }  
