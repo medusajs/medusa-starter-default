@@ -63,7 +63,7 @@ After the seed script has run you will have the following things in you database
 - a Product called Cool Test Product with 4 Product Variants that all cost 19.50 EUR
 
 
-Visit [docs.medusa-commerce.com](https://docs.medusa-comerce.com) for further guides.
+Visit [docs.medusa-commerce.com](https://docs.medusa-commerce.com) for further guides.
 
 <p>
   <a href="https://www.medusa-commerce.com">
