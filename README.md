@@ -57,7 +57,7 @@ Your local Medusa server is now running on port **9000**.
   ```
   git clone https://https://github.com/medusajs/medusa-starter-default.git
   ```
-- Modify your medusa config:
+- Update your medusa config:
 
   ```
   module.exports = {
