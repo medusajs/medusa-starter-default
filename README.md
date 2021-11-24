@@ -25,13 +25,15 @@ This repo provides the skeleton to get you started with using <a href="https://g
 </p>
 
 ## Prerequisites
+
 This starter has minimal prerequisites and most of these will usually already be installed on your computer.
 
 - [Install Node.js](https://nodejs.org/en/download/)
 - [Install git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [Install SQLite](https://www.sqlite.org/download.html)
 
-## Setting up your store
+## Setting up your store SQLite
+
 - Install the Medusa CLI
   ```
   npm install -g @medusajs/medusa
@@ -47,7 +49,38 @@ This starter has minimal prerequisites and most of these will usually already be
   medusa develop
   ```
 
-Your local Medusa server is now running on port **9000**. 
+Your local Medusa server is now running on port **9000**.
+
+## Setting up your store with docker
+
+- Create a new Medusa project
+  ```
+  git clone https://https://github.com/medusajs/medusa-starter-default.git
+  ```
+- Modify your medusa config:
+
+  ```
+  module.exports = {
+    projectConfig: {
+      redis_url: REDIS_URL,
+      // For more production-like environment install PostgresQL
+      database_url: DATABASE_URL,
+      database_type: "postgres",
+      // database_database: "./medusa-db.sql",
+      // database_type: "sqlite",
+      store_cors: STORE_CORS,
+      admin_cors: ADMIN_CORS,
+    },
+    plugins,
+  };
+  ```
+
+- Run your project
+  ```
+  docker compose up
+  ```
+
+Your local Medusa server is now running on port **9000**.
 
 ## Try it out
 
@@ -61,7 +94,6 @@ After the seed script has run you will have the following things in you database
 - a Region called Default Region with the countries GB, DE, DK, SE, FR, ES, IT
 - a Shipping Option called Standard Shipping which costs 10 EUR
 - a Product called Cool Test Product with 4 Product Variants that all cost 19.50 EUR
-
 
 Visit [docs.medusa-commerce.com](https://docs.medusa-comerce.com) for further guides.
 
