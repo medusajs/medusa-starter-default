@@ -51,7 +51,7 @@ This starter has minimal prerequisites and most of these will usually already be
 
 Your local Medusa server is now running on port **9000**.
 
-## Setting up your store with docker
+## Setting up your store with docker and postgres
 
 - Create a new Medusa project
   ```
@@ -76,6 +76,15 @@ Your local Medusa server is now running on port **9000**.
   ```
 
 - Run your project
+
+  When running your project the first time `docker compose` should be run with the `build` flag to build your contianer locally:
+
+  ```
+  docker compose up --build
+  ```
+
+  When running your project subsequent times you can run docker compose with no flags to spin up your local environment in seconds:
+
   ```
   docker compose up
   ```

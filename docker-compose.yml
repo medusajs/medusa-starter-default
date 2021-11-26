@@ -18,6 +18,7 @@ services:
       - "9000:9000"
     volumes:
       - .:/app/medusa
+      - node_modules:/app/medusa/node_modules
 
   postgres:
     image: postgres:10.4
@@ -33,3 +34,6 @@ services:
     container_name: medusa-cache
     expose:
       - 6379
+
+volumes:
+  node_modules:
