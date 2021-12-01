@@ -32,7 +32,7 @@ This starter has minimal prerequisites and most of these will usually already be
 - [Install git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [Install SQLite](https://www.sqlite.org/download.html)
 
-## Setting up your store SQLite
+## Setting up your store
 
 - Install the Medusa CLI
   ```
@@ -51,7 +51,7 @@ This starter has minimal prerequisites and most of these will usually already be
 
 Your local Medusa server is now running on port **9000**.
 
-## Setting up your store with docker and postgres
+## Setting up your store with Docker
 
 - Install the Medusa CLI
   ```

@@ -10,8 +10,10 @@ RUN apt-get update
 
 RUN apt-get install -y python
 
-RUN yarn global add @medusajs/medusa-cli
+RUN npm install -g npm@latest
 
-RUN yarn install
+RUN npm install -g @medusajs/medusa-cli@latest
+
+RUN npm install
 
 ENTRYPOINT ["./develop.sh"]
