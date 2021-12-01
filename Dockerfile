@@ -2,18 +2,16 @@ FROM node:17.1.0
 
 WORKDIR /app/medusa
 
-COPY . .
-
-RUN rm -rf node_modules
+COPY package.json .
+COPY develop.sh .
+COPY yarn.lock .
 
 RUN apt-get update
 
 RUN apt-get install -y python
 
-RUN npm install -g npm@latest
+RUN yarn global add @medusajs/medusa-cli
 
-RUN npm install -g @medusajs/medusa-cli
-
-RUN npm install
+RUN yarn install
 
 ENTRYPOINT ["./develop.sh"]
