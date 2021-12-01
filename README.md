@@ -53,9 +53,13 @@ Your local Medusa server is now running on port **9000**.
 
 ## Setting up your store with docker and postgres
 
+- Install the Medusa CLI
+  ```
+  npm install -g @medusajs/medusa-cli
+  ```
 - Create a new Medusa project
   ```
-  git clone https://https://github.com/medusajs/medusa-starter-default.git
+  medusa new my-medusa-store
   ```
 - Update your medusa config:
 

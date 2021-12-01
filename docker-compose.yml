@@ -4,15 +4,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: backend:test
+    image: backend:starter
     container_name: medusa-server-default
     depends_on:
       - postgres
       - redis
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/medusa-docker
-      REDIS_URL: redis://medusa-cache
+      REDIS_URL: redis://redis
       NODE_ENV: development
+      JWT_SECRET: something
+      COOKIE_SECRET: something
       PORT: 9000
     ports:
       - "9000:9000"
@@ -31,7 +33,6 @@ services:
 
   redis:
     image: redis
-    container_name: medusa-cache
     expose:
       - 6379
 
