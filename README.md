@@ -51,6 +51,18 @@ This starter has minimal prerequisites and most of these will usually already be
 
 Your local Medusa server is now running on port **9000**.
 
+### Seeding your Medusa store
+
+---
+
+To add seed data to your medusa store run the following command:
+
+```
+medusa seed -f ./data/seed.json
+```
+
+This command adds seed data to your database, including a store, an administrator account, a region and a product with variants. What the data looks like precisely you can see in the `./data/seed.json` file.
+
 ## Setting up your store with Docker
 
 - Install the Medusa CLI
@@ -61,17 +73,14 @@ Your local Medusa server is now running on port **9000**.
   ```
   medusa new my-medusa-store
   ```
-- Update your medusa config:
+- Update project config in `medusa-config.js`:
 
   ```
   module.exports = {
     projectConfig: {
       redis_url: REDIS_URL,
-      // For more production-like environment install PostgresQL
-      database_url: DATABASE_URL,
+      database_url: DATABASE_URL, //postgres connectionstring
       database_type: "postgres",
-      // database_database: "./medusa-db.sql",
-      // database_type: "sqlite",
       store_cors: STORE_CORS,
       admin_cors: ADMIN_CORS,
     },
@@ -94,6 +103,18 @@ Your local Medusa server is now running on port **9000**.
   ```
 
 Your local Medusa server is now running on port **9000**.
+
+### Seeding your Medusa store with Docker
+
+---
+
+To add seed data to your medusa store runnign with Docker, run this command in a seperate terminal:
+
+```
+docker exec medusa-server medusa seed -f ./data/seed.json
+```
+
+This will execute the same seed script as described above in the `medusa-server` Docker container.
 
 ## Try it out
 
