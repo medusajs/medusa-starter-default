@@ -25,6 +25,7 @@ This repo provides the skeleton to get you started with using <a href="https://g
 </p>
 
 ## Prerequisites
+
 This starter has minimal prerequisites and most of these will usually already be installed on your computer.
 
 - [Install Node.js](https://nodejs.org/en/download/)
@@ -32,6 +33,7 @@ This starter has minimal prerequisites and most of these will usually already be
 - [Install SQLite](https://www.sqlite.org/download.html)
 
 ## Setting up your store
+
 - Install the Medusa CLI
   ```
   npm install -g @medusajs/medusa
@@ -47,7 +49,72 @@ This starter has minimal prerequisites and most of these will usually already be
   medusa develop
   ```
 
-Your local Medusa server is now running on port **9000**. 
+Your local Medusa server is now running on port **9000**.
+
+### Seeding your Medusa store
+
+---
+
+To seed your medusa store run the following command:
+
+```
+medusa seed -f ./data/seed.json
+```
+
+This command seeds your database with some sample datal to get you started, including a store, an administrator account, a region and a product with variants. What the data looks like precisely you can see in the `./data/seed.json` file.
+
+## Setting up your store with Docker
+
+- Install the Medusa CLI
+  ```
+  npm install -g @medusajs/medusa-cli
+  ```
+- Create a new Medusa project
+  ```
+  medusa new my-medusa-store
+  ```
+- Update project config in `medusa-config.js`:
+
+  ```
+  module.exports = {
+    projectConfig: {
+      redis_url: REDIS_URL,
+      database_url: DATABASE_URL, //postgres connectionstring
+      database_type: "postgres",
+      store_cors: STORE_CORS,
+      admin_cors: ADMIN_CORS,
+    },
+    plugins,
+  };
+  ```
+
+- Run your project
+
+  When running your project the first time `docker compose` should be run with the `build` flag to build your contianer locally:
+
+  ```
+  docker compose up --build
+  ```
+
+  When running your project subsequent times you can run docker compose with no flags to spin up your local environment in seconds:
+
+  ```
+  docker compose up
+  ```
+
+Your local Medusa server is now running on port **9000**.
+
+### Seeding your Medusa store with Docker
+
+---
+
+To add seed data to your medusa store runnign with Docker, run this command in a seperate terminal:
+
+```
+docker exec medusa-server medusa seed -f ./data/seed.json
+```
+
+This will execute the previously described seed script in the running `medusa-server` Docker container.
 
 ## Try it out
 
@@ -61,7 +128,6 @@ After the seed script has run you will have the following things in you database
 - a Region called Default Region with the countries GB, DE, DK, SE, FR, ES, IT
 - a Shipping Option called Standard Shipping which costs 10 EUR
 - a Product called Cool Test Product with 4 Product Variants that all cost 19.50 EUR
-
 
 Visit [docs.medusa-commerce.com](https://docs.medusa-commerce.com) for further guides.
 
