@@ -2,7 +2,7 @@
 
 # Usage
 
-##Api
+## Api
 
 ### Admin routes
 Those routes will automatically be attached by medusa to the admin path.
@@ -10,7 +10,7 @@ Those routes will automatically be attached by medusa to the admin path.
 ### Store routes
 Those routes will automatically be attached by medusa to the store path.
 
-###Custom routes
+### Custom routes
 All those routes are added in the main router and you have to manage them.
 
 ## Info
