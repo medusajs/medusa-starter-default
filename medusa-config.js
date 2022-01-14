@@ -36,6 +36,8 @@ module.exports = {
     // For more production-like environment install PostgresQL
     // database_url: DATABASE_URL,
     // database_type: "postgres",
+    jwtSecret: process.env.JWT_SECRET,
+    cookieSecret: process.env.COOKIE_SECRET,
     database_database: "./medusa-db.sql",
     database_type: "sqlite",
     store_cors: STORE_CORS,
