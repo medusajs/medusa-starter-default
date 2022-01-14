@@ -25,5 +25,11 @@ export default (app: Router, rootDirectory: string): Router => {
         bodyParser.json(),
         middlewares.wrap(require("./custom-route-handle").default)
     );
+    route.post(
+        "/my-custom-path-2",
+        cors(corsOptions),
+        bodyParser.json(),
+        middlewares.wrap(require("./custom-route-handle-2").default)
+    );
     return app;
 }
