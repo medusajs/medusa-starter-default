@@ -90,16 +90,16 @@ This command seeds your database with some sample datal to get you started, incl
 
 - Run your project
 
-  When running your project the first time `docker compose` should be run with the `build` flag to build your contianer locally:
+  When running your project the first time `docker-compose` should be run with the `build` flag to build your contianer locally:
 
   ```
-  docker compose up --build
+  docker-compose up --build
   ```
 
   When running your project subsequent times you can run docker compose with no flags to spin up your local environment in seconds:
 
   ```
-  docker compose up
+  docker-compose up
   ```
 
 Your local Medusa server is now running on port **9000**.
