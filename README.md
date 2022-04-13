@@ -61,7 +61,7 @@ To seed your medusa store run the following command:
 medusa seed -f ./data/seed.json
 ```
 
-This command seeds your database with some sample datal to get you started, including a store, an administrator account, a region and a product with variants. What the data looks like precisely you can see in the `./data/seed.json` file.
+This command seeds your database with some sample data to get you started, including a store, an administrator account, a region and a product with variants. What the data looks like precisely you can see in the `./data/seed.json` file.
 
 ## Setting up your store with Docker
 
@@ -90,7 +90,7 @@ This command seeds your database with some sample datal to get you started, incl
 
 - Run your project
 
-  When running your project the first time `docker compose` should be run with the `build` flag to build your contianer locally:
+  When running your project the first time `docker compose` should be run with the `build` flag to build your container locally:
 
   ```
   docker compose up --build
@@ -108,7 +108,7 @@ Your local Medusa server is now running on port **9000**.
 
 ---
 
-To add seed data to your medusa store runnign with Docker, run this command in a seperate terminal:
+To add seed data to your medusa store running with Docker, run this command in a seperate terminal:
 
 ```
 docker exec medusa-server medusa seed -f ./data/seed.json
