@@ -16,4 +16,6 @@ RUN npm install -g @medusajs/medusa-cli@latest
 
 RUN npm install
 
+COPY . .
+
 ENTRYPOINT ["./develop.sh"]
