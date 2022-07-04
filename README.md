@@ -22,6 +22,11 @@ This repo provides the skeleton to get you started with using <a href="https://g
   <a href="https://twitter.com/intent/follow?screen_name=medusajs">
     <img src="https://img.shields.io/twitter/follow/medusajs.svg?label=Follow%20@medusajs" alt="Follow @medusajs" />
   </a>
+  <p align="center">
+    <a href="https://heroku.com/deploy?template=https://github.com/medusajs/medusa-starter-default/tree/feat/deploy-heroku">
+      <img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy">
+    </a>
+  </p>
 </p>
 
 ## Prerequisites
