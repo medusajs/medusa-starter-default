@@ -1,0 +1,48 @@
+{
+  "name": "Medusa Server",
+  "description": "A Medusa Server deployed with Redis and Postgres Add-ons",
+  "repository": "https://github.com/medusajs/medusa-starter-default",
+  "logo": "https://i.imgur.com/AT1CMwh.jpg",
+  "keywords": ["node", "express", "ecommerce", "medusa", "ecommerce platform"],
+  "success_url": "/store/products",
+  "addons": [
+    {
+      "plan": "upstash-redis",
+      "as": "REDIS"
+    },
+    {
+      "plan": "heroku-postgresql",
+      "as": "DATABASE"
+    }
+  ],
+  "env": {
+    "JWT_SECRET": {
+      "description": "Secret used to sign JWT tokens",
+      "generator": "secret"
+    },
+    "COOKIE_SECRET": {
+      "description": "Secret used to sign cookie SID",
+      "generator": "secret"
+    },
+    "ADMIN_CORS": {
+      "description": "URL of the Medusa admin",
+      "required": false,
+      "value": "http://localhost:7000,http://localhost:7001"
+    },
+    "STORE_CORS": {
+      "description": "URL of the Medusa storefront",
+      "required": false,
+      "value": "http://localhost:8000"
+    },
+    "NPM_CONFIG_PRODUCTION": {
+      "description": "Keep this false to allow the server to install babel for build",
+      "required": true,
+      "value": "false"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}
