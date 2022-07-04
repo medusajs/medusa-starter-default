@@ -5,9 +5,11 @@
   "author": "Sebastian Rindom <skrindom@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "seed": "medusa seed -f ./data/seed.json",
     "build": "babel src -d dist --extensions \".ts,.js\"",
-    "start": "medusa develop"
+    "start": "medusa start",
+    "prepare": "npm run build",
+    "heroku-postbuild": "medusa migrations run",
+    "seed": "medusa seed -f ./data/seed.json"
   },
   "dependencies": {
     "@medusajs/medusa": "^1.3.1",
