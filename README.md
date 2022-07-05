@@ -113,7 +113,7 @@ Your local Medusa server is now running on port **9000**.
 
 ---
 
-To add seed data to your medusa store runnign with Docker, run this command in a seperate terminal:
+To add seed data to your medusa store running with Docker, run this command in a seperate terminal:
 
 ```
 docker exec medusa-server medusa seed -f ./data/seed.json
