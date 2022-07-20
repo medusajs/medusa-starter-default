@@ -1,0 +1,23 @@
+spec:
+  name: medusa-app
+  services:
+    - name: medusa-server
+      git:
+        branch: main
+        repo_clone_url: https://github.com/medusajs/medusa-starter-default
+        branch: feat/deploy-digitalocean
+    envs:
+    - key: DATABASE_URL
+      scope: RUN_TIME
+      value: ${db.DATABASE_URL}
+    - key: REDIS_URL
+      value: ${redis-db.DATABASE_URL}
+    - key: JWT_SECRET
+      value: secret
+    - key: NPM_CONFIG_PRODUCTION
+      value: false
+    databases:
+    - name: db
+      engine: PG
+    - name: redis-db
+      engine: REDIS
