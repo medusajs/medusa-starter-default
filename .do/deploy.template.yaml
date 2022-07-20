@@ -3,7 +3,6 @@ spec:
   services:
     - name: medusa-server
       git:
-        branch: main
         repo_clone_url: https://github.com/medusajs/medusa-starter-default.git
         branch: feat-deploy-digitalocean
     envs:
