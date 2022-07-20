@@ -15,20 +15,18 @@ spec:
       value: ${db.HOSTNAME}
     - key: DB_PORT
       value: ${db.PORT}
-    - key: DB_PORT
-      value: ${db.PORT}
     - key: DB_DATABASE
       value: ${db.DATABASE}
     - key: REDIS_URL
       value: ${redis-db.DATABASE_URL}
     - key: JWT_SECRET
-      value: secret
+      value: "secret"
+    - key: COOKIE_SECRET
+      value: "secret"
     - key: NPM_CONFIG_PRODUCTION
-      value: false
+      value: "false"
     routes:
     - path: /
   databases:
   - name: db
     engine: PG
-  - name: redis-db
-    engine: REDIS
