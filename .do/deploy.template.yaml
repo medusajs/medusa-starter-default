@@ -3,6 +3,8 @@ spec:
   services:
   - name: medusa-server
     environment_slug: node-js
+    build_command: npm run build
+    run_command: npm start
     git:
       repo_clone_url: https://github.com/medusajs/medusa-starter-default.git
       branch: feat-deploy-digitalocean
