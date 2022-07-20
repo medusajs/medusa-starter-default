@@ -4,12 +4,21 @@ spec:
     - name: medusa-server
       git:
         branch: main
-        repo_clone_url: https://github.com/medusajs/medusa-starter-default
-        branch: feat/deploy-digitalocean
+        repo_clone_url: https://github.com/medusajs/medusa-starter-default.git
+        branch: feat-deploy-digitalocean
     envs:
-    - key: DATABASE_URL
-      scope: RUN_TIME
-      value: ${db.DATABASE_URL}
+    - key: DB_USERNAME
+      value: ${db.USERNAME}
+    - key: DB_PASSWORD
+      value: ${db.PASSWORD}
+    - key: DB_HOST
+      value: ${db.HOSTNAME}
+    - key: DB_PORT
+      value: ${db.PORT}
+    - key: DB_PORT
+      value: ${db.PORT}
+    - key: DB_DATABASE
+      value: ${db.DATABASE}
     - key: REDIS_URL
       value: ${redis-db.DATABASE_URL}
     - key: JWT_SECRET
