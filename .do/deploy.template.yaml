@@ -20,15 +20,19 @@ spec:
     - key: DB_DATABASE
       value: ${db.DATABASE}
     - key: REDIS_URL
-      value: ${redis-db.DATABASE_URL}
+      value: ${redis.DATABASE_URL}
     - key: JWT_SECRET
       value: "secret"
     - key: COOKIE_SECRET
       value: "secret"
     - key: NPM_CONFIG_PRODUCTION
       value: "false"
+    - key: NODE_ENV
+      value: "production"
     routes:
     - path: /
   databases:
   - name: db
     engine: PG
+  - name: redis
+    engine: REDIS
