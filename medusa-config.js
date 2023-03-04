@@ -53,7 +53,7 @@ const plugins = [
   //   },
   // },
 ];
-
+/** @type {import('@medusajs/medusa').ConfigModule} */
 module.exports = {
   projectConfig: {
     // redis_url: REDIS_URL,
