@@ -36,8 +36,7 @@ const plugins = [
     resolve: "@medusajs/admin",
     /** @type {import('@medusajs/admin').PluginOptions} */
     options: {
-      path: "app",
-      outDir: "admin-build",
+      autoRebuild: true
     },
   },
 ];

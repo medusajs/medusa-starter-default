@@ -7,6 +7,7 @@
   "scripts": {
     "seed": "medusa seed -f ./data/seed.json",
     "build": "babel src -d dist --extensions \".ts,.js\"",
+    "build:admin": "medusa-admin build",
     "start": "medusa develop"
   },
   "dependencies": {
