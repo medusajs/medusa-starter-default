@@ -7,18 +7,20 @@
   "scripts": {
     "seed": "medusa seed -f ./data/seed.json",
     "build": "babel src -d dist --extensions \".ts,.js\"",
-    "start": "medusa develop"
+    "start": "medusa develop",
+    "build:admin": "medusa-admin build"
   },
   "dependencies": {
-    "@medusajs/cache-inmemory": "^2.0.0-snapshot-20230309082112",
-    "@medusajs/event-bus-local": "^0.0.0",
-    "@medusajs/medusa": "^1.6.0",
-    "@medusajs/medusa-cli": "^1.3.3",
-    "@medusajs/modules-sdk": "^0.0.1",
-    "medusa-fulfillment-manual": "^1.1.31",
-    "medusa-interfaces": "^1.3.3",
-    "medusa-payment-manual": "^1.0.16",
-    "medusa-payment-stripe": "^1.1.45",
+    "@medusajs/admin": "rc",
+    "@medusajs/cache-inmemory": "rc",
+    "@medusajs/event-bus-local": "rc",
+    "@medusajs/medusa": "rc",
+    "@medusajs/medusa-cli": "rc",
+    "@medusajs/modules-sdk": "rc",
+    "medusa-fulfillment-manual": "rc",
+    "medusa-interfaces": "rc",
+    "medusa-payment-manual": "rc",
+    "medusa-payment-stripe": "rc",
     "typeorm": "^0.3.11"
   },
   "repository": "https://github.com/medusajs/medusa-starter-default.git",
