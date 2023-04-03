@@ -10,8 +10,7 @@ You may define custom models (entities) that will be registered on the global co
 // src/models/post.ts
 
 import { BeforeInsert, Column, Entity, PrimaryColumn } from "typeorm";
-import { BaseEntity} from "@medusajs/medusa";
-import { generateEntityId } from "@medusajs/medusa/dist/utils"
+import { BaseEntity, generateEntityId } from "@medusajs/utils";
 
 @Entity()
 export class Post extends BaseEntity {
