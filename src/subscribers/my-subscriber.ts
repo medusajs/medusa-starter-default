@@ -1,6 +1,7 @@
 import MyCustomService from "../services/my-custom";
 import { EntityManager } from "typeorm";
-import { EventBusService, OrderService } from "@medusajs/medusa";
+import { OrderService } from "@medusajs/medusa";
+import { IEventBusService } from "@medusajs/types";
 
 export default class MySubscriber {
   protected readonly manager_: EntityManager;
@@ -13,7 +14,7 @@ export default class MySubscriber {
       myCustomService,
     }: {
       manager: EntityManager;
-      eventBusService: EventBusService;
+      eventBusService: IEventBusService;
       myCustomService: MyCustomService;
     }
   ) {
