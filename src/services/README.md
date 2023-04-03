@@ -3,32 +3,27 @@
 You may define custom services that will be registered on the global container by creating files in the `/services` directory that export an instance of `BaseService`.
 
 ```ts
-// my-custom.js
+// src/services/my-custom.ts
 
+import { Lifetime } from "awilix"
 import { TransactionBaseService } from "@medusajs/utils";
-import { ProductService } from "@medusajs/medusa";
+import { IEventBusService } from "@medusajs/types";
 
-type InjectedDependencies = {
-  productService: ProductService;
-};
+export default class MyCustomService extends TransactionBaseService {
+  static LIFE_TIME = Lifetime.SCOPED
+  protected readonly eventBusService_: IEventBusService
 
-class MyCustomService extends TransactionBaseService {
-  protected readonly productService_: ProductService;
-	
-  constructor({ productService }: InjectedDependencies) {
-    super(...arguments);
+  constructor(
+      { eventBusService }: { eventBusService: IEventBusService },
+      options: Record<string, unknown>
+  ) {
+    // @ts-ignore
+    super(...arguments)
 
-    this.productService_ = productService
-  }
-
-  async getProductMessage() {
-    const [product] = await this.productService_.list({}, { take: 1 })
-
-    return `Welcome to ${product.title}!`
+    this.eventBusService_ = eventBusService
   }
 }
 
-export default MyService;
 ```
 
 The first argument to the `constructor` is the global giving you access to easy dependency injection. The container holds all registered services from the core, installed plugins and from other files in the `/services` directory. The registration name is a camelCased version of the file name with the type appended i.e.: `my-custom.js` is registered as `myCustomService`, `custom-thing.js` is registered as `customThingService`.

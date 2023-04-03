@@ -4,6 +4,8 @@ The loader allows you have access to the Medusa service container. This allows y
 you can register custom registrations in the container or run custom code on startup.
 
 ```ts
+// src/loaders/my-loader.ts
+
 import { AwilixContainer } from 'awilix'
 
 /**
