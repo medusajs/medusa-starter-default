@@ -19,6 +19,7 @@
     "test": "jest",
     "seed": "medusa seed -f ./data/seed.json",
     "start": "npm run build && medusa start",
+    "start:custom": "npm run build && node index.js",
     "build:admin": "medusa-admin build"
   },
   "dependencies": {
