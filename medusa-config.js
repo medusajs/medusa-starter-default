@@ -44,6 +44,27 @@ const plugins = [
   },
 ];
 
+const modules = {
+  eventBus: {
+    resolve: "@medusajs/event-bus-redis",
+    options: {
+      redisUrl: REDIS_URL
+    }
+  },
+  cacheService: {
+    resolve: "@medusajs/cache-redis",
+    options: {
+      redisUrl: REDIS_URL
+    }
+  },
+  /*inventoryService: {
+    resolve: '@medusajs/inventory'
+  } ,
+  stockLocationService: {
+    resolve: '@medusajs/stock-location'
+  },*/
+}
+
 /** @type {import('@medusajs/medusa').ConfigModule["projectConfig"]} */
 const projectConfig = {
   jwtSecret: process.env.JWT_SECRET,
@@ -67,24 +88,5 @@ if (DATABASE_URL) {
 module.exports = {
   projectConfig,
   plugins,
-	modules: {
-    eventBus: {
-      resolve: "@medusajs/event-bus-redis",
-      options: {
-        redisUrl: REDIS_URL
-      }
-    },
-    cacheService: {
-      resolve: "@medusajs/cache-redis",
-      options: {
-        redisUrl: REDIS_URL
-      }
-    },
-		/*inventoryService: {
-      resolve: '@medusajs/inventory'
-    } ,
-    stockLocationService: {
-      resolve: '@medusajs/stock-location'
-    },*/
-  }
+	modules,
 };
