@@ -60,10 +60,32 @@ module.exports = {
     // For more production-like environment install PostgresQL
     // database_url: DATABASE_URL,
     // database_type: "postgres",
+		jwtSecret: process.env.JWT_SECRET,
+    cookieSecret: process.env.COOKIE_SECRET,
     database_database: "./medusa-db.sql",
     database_type: "sqlite",
     store_cors: STORE_CORS,
     admin_cors: ADMIN_CORS,
   },
   plugins,
+	modules: {
+    eventBus: {
+      resolve: "@medusajs/event-bus-redis",
+      options: {
+        redisUrl: REDIS_URL
+      }
+    },
+    cacheService: {
+      resolve: "@medusajs/cache-redis",
+      options: {
+        redisUrl: REDIS_URL
+      }
+    },
+		/*inventoryService: {
+      resolve: '@medusajs/inventory'
+    } ,
+    stockLocationService: {
+      resolve: '@medusajs/stock-location'
+    },*/
+  }
 };
