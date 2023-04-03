@@ -45,7 +45,7 @@ const plugins = [
 ];
 
 const modules = {
-  eventBus: {
+  /*eventBus: {
     resolve: "@medusajs/event-bus-redis",
     options: {
       redisUrl: REDIS_URL
@@ -56,12 +56,6 @@ const modules = {
     options: {
       redisUrl: REDIS_URL
     }
-  },
-  /*inventoryService: {
-    resolve: '@medusajs/inventory'
-  } ,
-  stockLocationService: {
-    resolve: '@medusajs/stock-location'
   },*/
 }
 

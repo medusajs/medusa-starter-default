@@ -1637,6 +1637,13 @@
     picocolors "^1.0.0"
     ts-dedent "^2.2.0"
 
+"@medusajs/cache-inmemory@^1.1.0-ci-issue-20230322190222":
+  version "1.1.0-ci-issue-20230322190222"
+  resolved "https://registry.yarnpkg.com/@medusajs/cache-inmemory/-/cache-inmemory-1.1.0-ci-issue-20230322190222.tgz#5a2948b2ccc47020c6c9367bfc8aebccadc9c995"
+  integrity sha512-S4UbuDBVsVrRDr7oHgoJzHeg5YLIrmQImgrQw01Lsr0KsySXOSO88Yii492Cg+frevIZdeHt7U1hO79FikSAdg==
+  dependencies:
+    "@medusajs/modules-sdk" "0.1.0-ci-issue-20230322190222"
+
 "@medusajs/cache-redis@rc":
   version "1.8.0-rc.2"
   resolved "https://registry.yarnpkg.com/@medusajs/cache-redis/-/cache-redis-1.8.0-rc.2.tgz#a35409168b3c3e6985f8c8eb839143bc02d08bab"
@@ -1645,6 +1652,14 @@
     "@medusajs/modules-sdk" "0.1.0-rc.3"
     awilix "^8.0.0"
     ioredis "^5.3.1"
+
+"@medusajs/event-bus-local@^1.8.0-rc.1":
+  version "1.8.0-rc.1"
+  resolved "https://registry.yarnpkg.com/@medusajs/event-bus-local/-/event-bus-local-1.8.0-rc.1.tgz#2e7f91bdac6edef4a15e1935eae70cdd9a9814b5"
+  integrity sha512-rjFO0lwXf7Q5MjzIH6po8WQwQ1ncbq3y1c0wD7k6JK+yh+ljx8WOZ1i+mFRb67BOd1u+VSZFcJGjc8hpY45x5g==
+  dependencies:
+    "@medusajs/modules-sdk" "0.1.0-rc.1"
+    "@medusajs/utils" "^0.0.2-rc.0"
 
 "@medusajs/event-bus-redis@rc":
   version "1.8.0-rc.3"
@@ -1753,6 +1768,29 @@
     uuid "^8.3.2"
     winston "^3.8.2"
 
+"@medusajs/modules-sdk@0.1.0-ci-issue-20230322190222":
+  version "0.1.0-ci-issue-20230322190222"
+  resolved "https://registry.yarnpkg.com/@medusajs/modules-sdk/-/modules-sdk-0.1.0-ci-issue-20230322190222.tgz#53c244d564e0b29f1d5fd96d4c1d2250af59a72b"
+  integrity sha512-rum0B4LcnWBEmxPINX/Xe6K1mzsx47Q313U7MCESVTp++ypEvr+UaGleky3cSEselSYzn2KaWrWjz/2/G1c3aQ==
+  dependencies:
+    "@medusajs/utils" "0.0.2-ci-issue-20230322190222"
+    awilix "^8.0.0"
+    glob "7.1.6"
+    medusa-telemetry "^0.0.16"
+    resolve-cwd "^3.0.0"
+
+"@medusajs/modules-sdk@0.1.0-rc.1":
+  version "0.1.0-rc.1"
+  resolved "https://registry.yarnpkg.com/@medusajs/modules-sdk/-/modules-sdk-0.1.0-rc.1.tgz#d910c1662b24e5f16341b869b649782f4c44931c"
+  integrity sha512-pn/7b0lBFhGBX3igPNZKYim0HPMuCsnQ9Q6wm3gQgkLCgF6CA8fSW1CikDYYGkL4pwUY8cDvZBm9cW1dgQ5f1g==
+  dependencies:
+    "@medusajs/types" "^0.0.2-rc.0"
+    "@medusajs/utils" "^0.0.2-rc.0"
+    awilix "^8.0.0"
+    glob "7.1.6"
+    medusa-telemetry "^0.0.16"
+    resolve-cwd "^3.0.0"
+
 "@medusajs/modules-sdk@0.1.0-rc.3", "@medusajs/modules-sdk@rc":
   version "0.1.0-rc.3"
   resolved "https://registry.yarnpkg.com/@medusajs/modules-sdk/-/modules-sdk-0.1.0-rc.3.tgz#708672858e2bf6f9c75f3bbdd6b40b979de98bac"
@@ -1774,6 +1812,17 @@
   version "0.0.2-rc.0"
   resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-0.0.2-rc.0.tgz#96849431d1c895a85bbf9178677e4f2d48bca5ae"
   integrity sha512-TawAz/r95Ivr89UhwXZwDV0af37VhtS6CGPayrmSc4lwWJFUM1aLxDE+duHFX/Hjh+6uL4AqbOPkw4YF6maL7Q==
+
+"@medusajs/utils@0.0.2-ci-issue-20230322190222":
+  version "0.0.2-ci-issue-20230322190222"
+  resolved "https://registry.yarnpkg.com/@medusajs/utils/-/utils-0.0.2-ci-issue-20230322190222.tgz#671108ce40a5c8553551aff629fb71981fb6ab4c"
+  integrity sha512-CEEJS96MQeQbyMHKPbjYCdiFFFSxbHHEgOGpEBvXxsSCKw3Eskl33c0Bq8sHXIb4J5dBTqLm1Glgp25uJIrExg==
+  dependencies:
+    awilix "^8.0.0"
+    class-transformer "^0.5.1"
+    class-validator "^0.13.2"
+    typeorm "^0.3.11"
+    ulid "^2.3.0"
 
 "@medusajs/utils@0.0.2-rc.1":
   version "0.0.2-rc.1"

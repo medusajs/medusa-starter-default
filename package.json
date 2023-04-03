@@ -14,18 +14,19 @@
   ],
   "scripts": {
     "clean": "./node_modules/.bin/rimraf dist",
-    "build": "npm run clean && tsc -p tsconfig.json",
+    "build": "yarn run clean && tsc -p tsconfig.json",
     "watch": "tsc --watch",
     "test": "jest",
     "seed": "medusa seed -f ./data/seed.json",
-    "start": "npm run build && medusa start",
-    "start:custom": "npm run build && node index.js",
+    "start": "yarn build && medusa start",
     "build:admin": "medusa-admin build"
   },
   "dependencies": {
     "@babel/preset-typescript": "^7.21.4",
     "@medusajs/admin": "rc",
+    "@medusajs/cache-inmemory": "^1.1.0-ci-issue-20230322190222",
     "@medusajs/cache-redis": "rc",
+    "@medusajs/event-bus-local": "^1.8.0-rc.1",
     "@medusajs/event-bus-redis": "rc",
     "@medusajs/medusa": "rc",
     "@medusajs/medusa-cli": "rc",
