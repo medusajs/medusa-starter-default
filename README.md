@@ -32,7 +32,7 @@
   </a>
 </p>
 
-## Getting Started
+## Compatibility
 
 This starter is compatible with versions >= 1.8.0 of `@medusajs/medusa`. 
 
