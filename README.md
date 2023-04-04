@@ -34,6 +34,10 @@
 
 ## Getting Started
 
+This starter is compatible with versions >= 1.8.0 of `@medusajs/medusa`. 
+
+## Getting Started
+
 Visit the [Quickstart Guide](https://docs.medusajs.com/create-medusa-app) to set up a server.
 
 Visit the [Docs](https://docs.medusajs.com/development/backend/prepare-environment) to learn more about our system requirements.
