@@ -74,8 +74,9 @@ if (REDIS_URL) {
   projectConfig.redis_url = REDIS_URL;
 }
 
-if (DATABASE_URL) {
+if (DATABASE_URL && DATABASE_TYPE === "postgres") {
   projectConfig.database_url = DATABASE_URL;
+  delete projectConfig["database_database"];
 }
 
 
