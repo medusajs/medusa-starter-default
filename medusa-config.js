@@ -68,10 +68,8 @@ const projectConfig = {
   database_type: DATABASE_TYPE,
   store_cors: STORE_CORS,
   admin_cors: ADMIN_CORS,
-}
-
-if (REDIS_URL) {
-  projectConfig.redis_url = REDIS_URL;
+  // Uncomment the following lines to enable REDIS
+  // redis_url = REDIS_URL
 }
 
 if (DATABASE_URL && DATABASE_TYPE === "postgres") {
