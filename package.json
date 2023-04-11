@@ -19,6 +19,7 @@
     "test": "jest",
     "seed": "medusa seed -f ./data/seed.json",
     "start": "yarn build && medusa start",
+    "dev": "yarn build && medusa develop",
     "build:admin": "medusa-admin build"
   },
   "dependencies": {
