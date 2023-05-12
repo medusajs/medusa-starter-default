@@ -1367,13 +1367,13 @@
     winston "^3.8.2"
     yargs "^15.3.1"
 
-"@medusajs/medusa@^1.10.0":
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/@medusajs/medusa/-/medusa-1.10.0.tgz#c3cbcc1d67cdeeb7672e71620c0e15473c5798ae"
-  integrity sha512-F3WI5kVHmVlnNZ8ykf6iDwICmZdvrVGj067uWWjUpTa1LSJFvj/znWlN1RuPDchAjmM2wL6bLM8jKa+iBISI4g==
+"@medusajs/medusa@nextjs-commerce":
+  version "1.10.1-nextjs-commerce-20230512123409"
+  resolved "https://registry.yarnpkg.com/@medusajs/medusa/-/medusa-1.10.1-nextjs-commerce-20230512123409.tgz#b6b570c9282f98e130887895c7061290d92b1a71"
+  integrity sha512-N703VezUhIUKU68Z7fSo5BFmp/3FUCI/u1/LAPPh7nP9nt2mJMYIl3kWFlYBIp8jV1xA6PELFDTeEzzAHlBXww==
   dependencies:
     "@medusajs/medusa-cli" "1.3.12"
-    "@medusajs/modules-sdk" "1.8.4"
+    "@medusajs/modules-sdk" "1.8.5-nextjs-commerce-20230512123409"
     "@medusajs/utils" "1.8.3"
     "@types/ioredis" "^4.28.10"
     "@types/lodash" "^4.14.191"
@@ -1433,10 +1433,27 @@
     medusa-telemetry "^0.0.16"
     resolve-cwd "^3.0.0"
 
+"@medusajs/modules-sdk@1.8.5-nextjs-commerce-20230512123409":
+  version "1.8.5-nextjs-commerce-20230512123409"
+  resolved "https://registry.yarnpkg.com/@medusajs/modules-sdk/-/modules-sdk-1.8.5-nextjs-commerce-20230512123409.tgz#efe5f4b501ed46ab68f75be6f1c0e377300846cb"
+  integrity sha512-y+HQvrW915DPwRLp0HY6DI4o1pzHLRd3OOSILy9AOzIoiDCYGHlsgP5KBnPjV8rbmMB//xSFyWI0PNdLLK9RoQ==
+  dependencies:
+    "@medusajs/types" "1.8.5-nextjs-commerce-20230512123409"
+    "@medusajs/utils" "1.8.3"
+    awilix "^8.0.0"
+    glob "7.1.6"
+    medusa-telemetry "^0.0.16"
+    resolve-cwd "^3.0.0"
+
 "@medusajs/types@1.8.4":
   version "1.8.4"
   resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.8.4.tgz#46d65683bcc7fc6f3b3665a55eedd3e97c73f6c1"
   integrity sha512-BcJsuMPbzen8/sVAFmGvK+LNhJMzBJNSOj4fWZ+BsGCV1yaxfJLmsXL59gUhkJKbK9g5BZGEDnGpYYRUowZp+Q==
+
+"@medusajs/types@1.8.5-nextjs-commerce-20230512123409":
+  version "1.8.5-nextjs-commerce-20230512123409"
+  resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.8.5-nextjs-commerce-20230512123409.tgz#641fd09d59386f9a3d400e3f34c3694ac302663a"
+  integrity sha512-r5OR6BI1K5BiCMA9ZAoldMd0AicLoJ0tpdSzvR8fbb9UI1kupT5rRXspB+ZUH0hxaAhbXMcjSKVTTSHAqMq8OQ==
 
 "@medusajs/utils@1.8.3":
   version "1.8.3"
