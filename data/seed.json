@@ -1,6 +1,9 @@
 {
   "store": {
-    "currencies": ["eur", "usd"]
+    "currencies": [
+      "eur",
+      "usd"
+    ]
   },
   "users": [
     {
@@ -14,18 +17,37 @@
       "name": "EU",
       "currency_code": "eur",
       "tax_rate": 0,
-      "payment_providers": ["manual"],
-      "fulfillment_providers": ["manual"],
-      "countries": ["gb", "de", "dk", "se", "fr", "es", "it"]
+      "payment_providers": [
+        "manual"
+      ],
+      "fulfillment_providers": [
+        "manual"
+      ],
+      "countries": [
+        "gb",
+        "de",
+        "dk",
+        "se",
+        "fr",
+        "es",
+        "it"
+      ]
     },
     {
       "id": "test-region-na",
       "name": "NA",
       "currency_code": "usd",
       "tax_rate": 0,
-      "payment_providers": ["manual"],
-      "fulfillment_providers": ["manual"],
-      "countries": ["us", "ca"]
+      "payment_providers": [
+        "manual"
+      ],
+      "fulfillment_providers": [
+        "manual"
+      ],
+      "countries": [
+        "us",
+        "ca"
+      ]
     }
   ],
   "shipping_options": [
@@ -117,9 +139,11 @@
   "products": [
     {
       "title": "Medusa T-Shirt",
-      "categories": [{
-        "id": "pcat_shirts"
-      }],
+      "categories": [
+        {
+          "id": "pcat_shirts"
+        }
+      ],
       "subtitle": null,
       "description": "Reimagine the feeling of a classic T-shirt. With our cotton T-shirts, everyday essentials no longer have to be ordinary.",
       "handle": "t-shirt",
@@ -134,11 +158,19 @@
       "options": [
         {
           "title": "Size",
-          "values": ["S", "M", "L", "XL"]
+          "values": [
+            "S",
+            "M",
+            "L",
+            "XL"
+          ]
         },
         {
           "title": "Color",
-          "values": ["Black", "White"]
+          "values": [
+            "Black",
+            "White"
+          ]
         }
       ],
       "variants": [
@@ -330,9 +362,11 @@
     },
     {
       "title": "Medusa Sweatshirt",
-      "categories": [{
-        "id": "pcat_shirts"
-      }],
+      "categories": [
+        {
+          "id": "pcat_shirts"
+        }
+      ],
       "subtitle": null,
       "description": "Reimagine the feeling of a classic sweatshirt. With our cotton sweatshirt, everyday essentials no longer have to be ordinary.",
       "handle": "sweatshirt",
@@ -345,7 +379,12 @@
       "options": [
         {
           "title": "Size",
-          "values": ["S", "M", "L", "XL"]
+          "values": [
+            "S",
+            "M",
+            "L",
+            "XL"
+          ]
         }
       ],
       "variants": [
@@ -433,9 +472,11 @@
     },
     {
       "title": "Medusa Sweatpants",
-      "categories": [{
-        "id": "pcat_pants"
-      }],
+      "categories": [
+        {
+          "id": "pcat_pants"
+        }
+      ],
       "subtitle": null,
       "description": "Reimagine the feeling of classic sweatpants. With our cotton sweatpants, everyday essentials no longer have to be ordinary.",
       "handle": "sweatpants",
@@ -448,7 +489,12 @@
       "options": [
         {
           "title": "Size",
-          "values": ["S", "M", "L", "XL"]
+          "values": [
+            "S",
+            "M",
+            "L",
+            "XL"
+          ]
         }
       ],
       "variants": [
@@ -536,9 +582,11 @@
     },
     {
       "title": "Medusa Shorts",
-      "categories": [{
-        "id": "pcat_merch"
-      }],
+      "categories": [
+        {
+          "id": "pcat_merch"
+        }
+      ],
       "subtitle": null,
       "description": "Reimagine the feeling of classic shorts. With our cotton shorts, everyday essentials no longer have to be ordinary.",
       "handle": "shorts",
@@ -551,7 +599,12 @@
       "options": [
         {
           "title": "Size",
-          "values": ["S", "M", "L", "XL"]
+          "values": [
+            "S",
+            "M",
+            "L",
+            "XL"
+          ]
         }
       ],
       "variants": [
@@ -639,9 +692,14 @@
     },
     {
       "title": "Medusa Hoodie",
-      "categories": [{
-        "id": "pcat_merch"
-      }],
+      "categories": [
+        {
+          "id": "pcat_merch"
+        },
+        {
+          "id": "pcat_hidden_featured"
+        }
+      ],
       "subtitle": null,
       "description": "Reimagine the feeling of a classic hoodie. With our cotton hoodie, everyday essentials no longer have to be ordinary.",
       "handle": "hoodie",
@@ -654,7 +712,12 @@
       "options": [
         {
           "title": "Size",
-          "values": ["S", "M", "L", "XL"]
+          "values": [
+            "S",
+            "M",
+            "L",
+            "XL"
+          ]
         }
       ],
       "variants": [
@@ -742,9 +805,14 @@
     },
     {
       "title": "Medusa Longsleeve",
-      "categories": [{
-        "id": "pcat_shirts"
-      }],
+      "categories": [
+        {
+          "id": "pcat_shirts"
+        },
+        {
+          "id": "pcat_hidden_featured"
+        }
+      ],
       "subtitle": null,
       "description": "Reimagine the feeling of a classic longsleeve. With our cotton longsleeve, everyday essentials no longer have to be ordinary.",
       "handle": "longsleeve",
@@ -757,7 +825,12 @@
       "options": [
         {
           "title": "Size",
-          "values": ["S", "M", "L", "XL"]
+          "values": [
+            "S",
+            "M",
+            "L",
+            "XL"
+          ]
         }
       ],
       "variants": [
@@ -845,9 +918,14 @@
     },
     {
       "title": "Medusa Coffee Mug",
-      "categories": [{
-        "id": "pcat_merch"
-      }],
+      "categories": [
+        {
+          "id": "pcat_merch"
+        },
+        {
+          "id": "pcat_hidden_featured"
+        }
+      ],
       "subtitle": null,
       "description": "Every programmer's best friend.",
       "handle": "coffee-mug",
@@ -859,7 +937,9 @@
       "options": [
         {
           "title": "Size",
-          "values": ["One Size"]
+          "values": [
+            "One Size"
+          ]
         }
       ],
       "variants": [
@@ -886,41 +966,41 @@
       ]
     }
   ],
-  "categories":[
+  "categories": [
     {
       "id": "pcat_pants",
-      "name":"Pants",
-      "rank":0,
-      "category_children":[],
-      "handle":"pants"
+      "name": "Pants",
+      "rank": 0,
+      "category_children": [],
+      "handle": "pants"
     },
     {
       "id": "pcat_shirts",
-      "name":"Shirts",
-      "rank":0,
-      "category_children":[],
-      "handle":"shirts"
+      "name": "Shirts",
+      "rank": 0,
+      "category_children": [],
+      "handle": "shirts"
     },
     {
       "id": "pcat_merch",
-      "name":"Merch",
-      "rank":0,
-      "category_children":[],
-      "handle":"merch"
+      "name": "Merch",
+      "rank": 0,
+      "category_children": [],
+      "handle": "merch"
     },
     {
       "id": "pcat_hidden_carousel",
-      "name":"Hidden homepage carousel",
-      "rank":0,
-      "category_children":[],
-      "handle":"hidden-homepage-carousel"
+      "name": "Hidden homepage carousel",
+      "rank": 0,
+      "category_children": [],
+      "handle": "hidden-homepage-carousel"
     },
     {
       "id": "pcat_hidden_featured",
-      "name":"Hidden homepage featured",
-      "rank":0,
-      "category_children":[],
-      "handle":"hidden-homepage-featured-items"
+      "name": "Hidden homepage featured",
+      "rank": 0,
+      "category_children": [],
+      "handle": "hidden-homepage-featured-items"
     }
   ]
 }
