@@ -30,6 +30,7 @@ const STORE_CORS = process.env.STORE_CORS || "http://localhost:8000";
 
 const DATABASE_URL =
   process.env.DATABASE_URL || "postgres://localhost/test-postgres";
+  
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
 const plugins = [

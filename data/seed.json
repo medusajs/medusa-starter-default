@@ -1,6 +1,9 @@
 {
   "store": {
-    "currencies": ["eur", "usd"]
+    "currencies": [
+      "eur",
+      "usd"
+    ]
   },
   "users": [
     {
@@ -14,18 +17,37 @@
       "name": "EU",
       "currency_code": "eur",
       "tax_rate": 0,
-      "payment_providers": ["manual"],
-      "fulfillment_providers": ["manual"],
-      "countries": ["gb", "de", "dk", "se", "fr", "es", "it"]
+      "payment_providers": [
+        "manual"
+      ],
+      "fulfillment_providers": [
+        "manual"
+      ],
+      "countries": [
+        "gb",
+        "de",
+        "dk",
+        "se",
+        "fr",
+        "es",
+        "it"
+      ]
     },
     {
       "id": "test-region-na",
       "name": "NA",
       "currency_code": "usd",
       "tax_rate": 0,
-      "payment_providers": ["manual"],
-      "fulfillment_providers": ["manual"],
-      "countries": ["us", "ca"]
+      "payment_providers": [
+        "manual"
+      ],
+      "fulfillment_providers": [
+        "manual"
+      ],
+      "countries": [
+        "us",
+        "ca"
+      ]
     }
   ],
   "shipping_options": [
@@ -117,6 +139,11 @@
   "products": [
     {
       "title": "Medusa T-Shirt",
+      "categories": [
+        {
+          "id": "pcat_shirts"
+        }
+      ],
       "subtitle": null,
       "description": "Reimagine the feeling of a classic T-shirt. With our cotton T-shirts, everyday essentials no longer have to be ordinary.",
       "handle": "t-shirt",
@@ -131,11 +158,19 @@
       "options": [
         {
           "title": "Size",
-          "values": ["S", "M", "L", "XL"]
+          "values": [
+            "S",
+            "M",
+            "L",
+            "XL"
+          ]
         },
         {
           "title": "Color",
-          "values": ["Black", "White"]
+          "values": [
+            "Black",
+            "White"
+          ]
         }
       ],
       "variants": [
@@ -327,6 +362,11 @@
     },
     {
       "title": "Medusa Sweatshirt",
+      "categories": [
+        {
+          "id": "pcat_shirts"
+        }
+      ],
       "subtitle": null,
       "description": "Reimagine the feeling of a classic sweatshirt. With our cotton sweatshirt, everyday essentials no longer have to be ordinary.",
       "handle": "sweatshirt",
@@ -339,7 +379,12 @@
       "options": [
         {
           "title": "Size",
-          "values": ["S", "M", "L", "XL"]
+          "values": [
+            "S",
+            "M",
+            "L",
+            "XL"
+          ]
         }
       ],
       "variants": [
@@ -427,6 +472,11 @@
     },
     {
       "title": "Medusa Sweatpants",
+      "categories": [
+        {
+          "id": "pcat_pants"
+        }
+      ],
       "subtitle": null,
       "description": "Reimagine the feeling of classic sweatpants. With our cotton sweatpants, everyday essentials no longer have to be ordinary.",
       "handle": "sweatpants",
@@ -439,7 +489,12 @@
       "options": [
         {
           "title": "Size",
-          "values": ["S", "M", "L", "XL"]
+          "values": [
+            "S",
+            "M",
+            "L",
+            "XL"
+          ]
         }
       ],
       "variants": [
@@ -527,6 +582,11 @@
     },
     {
       "title": "Medusa Shorts",
+      "categories": [
+        {
+          "id": "pcat_merch"
+        }
+      ],
       "subtitle": null,
       "description": "Reimagine the feeling of classic shorts. With our cotton shorts, everyday essentials no longer have to be ordinary.",
       "handle": "shorts",
@@ -539,7 +599,12 @@
       "options": [
         {
           "title": "Size",
-          "values": ["S", "M", "L", "XL"]
+          "values": [
+            "S",
+            "M",
+            "L",
+            "XL"
+          ]
         }
       ],
       "variants": [
@@ -627,6 +692,14 @@
     },
     {
       "title": "Medusa Hoodie",
+      "categories": [
+        {
+          "id": "pcat_merch"
+        },
+        {
+          "id": "pcat_hidden_featured"
+        }
+      ],
       "subtitle": null,
       "description": "Reimagine the feeling of a classic hoodie. With our cotton hoodie, everyday essentials no longer have to be ordinary.",
       "handle": "hoodie",
@@ -639,7 +712,12 @@
       "options": [
         {
           "title": "Size",
-          "values": ["S", "M", "L", "XL"]
+          "values": [
+            "S",
+            "M",
+            "L",
+            "XL"
+          ]
         }
       ],
       "variants": [
@@ -727,6 +805,14 @@
     },
     {
       "title": "Medusa Longsleeve",
+      "categories": [
+        {
+          "id": "pcat_shirts"
+        },
+        {
+          "id": "pcat_hidden_featured"
+        }
+      ],
       "subtitle": null,
       "description": "Reimagine the feeling of a classic longsleeve. With our cotton longsleeve, everyday essentials no longer have to be ordinary.",
       "handle": "longsleeve",
@@ -739,7 +825,12 @@
       "options": [
         {
           "title": "Size",
-          "values": ["S", "M", "L", "XL"]
+          "values": [
+            "S",
+            "M",
+            "L",
+            "XL"
+          ]
         }
       ],
       "variants": [
@@ -827,6 +918,14 @@
     },
     {
       "title": "Medusa Coffee Mug",
+      "categories": [
+        {
+          "id": "pcat_merch"
+        },
+        {
+          "id": "pcat_hidden_featured"
+        }
+      ],
       "subtitle": null,
       "description": "Every programmer's best friend.",
       "handle": "coffee-mug",
@@ -838,7 +937,9 @@
       "options": [
         {
           "title": "Size",
-          "values": ["One Size"]
+          "values": [
+            "One Size"
+          ]
         }
       ],
       "variants": [
@@ -865,399 +966,41 @@
       ]
     }
   ],
-  "categories":[
+  "categories": [
     {
-      "name":"Men",
-      "rank":0,
-      "category_children":[
-        {
-          "name":"Clothing",
-          "rank":0,
-          "category_children":[
-            {
-              "name":"T-shirts & Polos",
-              "rank":0,
-              "category_children":[
-                {
-                  "name":"Basic T-shirts",
-                  "rank":0,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/clothing/t-shirts-&-polos/basic-t-shirts"
-                },
-                {
-                  "name":"Printed T-shirts",
-                  "rank":1,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/clothing/t-shirts-&-polos/printed-t-shirts"
-                },
-                {
-                  "name":"Tank tops",
-                  "rank":2,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/clothing/t-shirts-&-polos/tank-tops"
-                },
-                {
-                  "name":"Polo shirts",
-                  "rank":3,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/clothing/t-shirts-&-polos/polo-shirts"
-                },
-                {
-                  "name":"Long-sleeved tops",
-                  "rank":4,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/clothing/t-shirts-&-polos/long-sleeved-tops"
-                },
-                {
-                  "name":"Sports T-shirts",
-                  "rank":5,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/clothing/t-shirts-&-polos/sports-t-shirts"
-                }
-              ],
-              "handle":"men/clothing/t-shirts-&-polos"
-            },
-            {
-              "name":"Shirts",
-              "rank":1,
-              "category_children":[
-                {
-                  "name":"Casual Shirts",
-                  "rank":0,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/clothing/shirts/casual-shirts"
-                },
-                {
-                  "name":"Business Shirts",
-                  "rank":1,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/clothing/shirts/business-shirts"
-                }
-              ],
-              "handle":"men/clothing/shirts"
-            }
-          ],
-          "handle":"men/clothing"
-        },
-        {
-          "name":"Shoes",
-          "rank":1,
-          "category_children":[
-            {
-              "name":"Sneakers",
-              "rank":0,
-              "category_children":[
-                {
-                  "name":"Low-Top Sneakers",
-                  "rank":0,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/shoes/sneakers/low-top-sneakers"
-                },
-                {
-                  "name":"High-Top Sneakers",
-                  "rank":1,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/shoes/sneakers/high-top-sneakers"
-                },
-                {
-                  "name":"Skate shoes",
-                  "rank":2,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/shoes/sneakers/skate-shoes"
-                }
-              ],
-              "handle":"men/shoes/sneakers"
-            },
-            {
-              "name":"Sports shoes",
-              "rank":1,
-              "category_children":[
-                {
-                  "name":"Running shoes",
-                  "rank":0,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/shoes/sports-shoes/running-shoes"
-                },
-                {
-                  "name":"Football boots",
-                  "rank":1,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/shoes/sports-shoes/football-boots"
-                },
-                {
-                  "name":"Basketball shoes",
-                  "rank":2,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/shoes/sports-shoes/basketball-shoes"
-                },
-                {
-                  "name":"Indoor shoes",
-                  "rank":3,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/shoes/sports-shoes/indoor-shoes"
-                },
-                {
-                  "name":"Boots",
-                  "rank":4,
-                  "category_children":[
-
-                  ],
-                  "handle":"men/shoes/sports-shoes/boots"
-                }
-              ],
-              "handle":"men/shoes/sports-shoes"
-            },
-            {
-              "name":"Business shoes",
-              "rank":2,
-              "category_children":[
-
-              ],
-              "handle":"men/shoes/business-shoes"
-            }
-          ],
-          "handle":"men/shoes"
-        }
-      ],
-      "handle":"men"
+      "id": "pcat_pants",
+      "name": "Pants",
+      "rank": 0,
+      "category_children": [],
+      "handle": "pants"
     },
     {
-      "name":"Women",
-      "rank":1,
-      "category_children":[
-        {
-          "name":"Clothing",
-          "rank":0,
-          "category_children":[
-            {
-              "name":"Shirts",
-              "rank":0,
-              "category_children":[
-                {
-                  "name":"Casual Shirts",
-                  "rank":0,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/clothing/shirts/casual-shirts"
-                },
-                {
-                  "name":"Business Shirts",
-                  "rank":1,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/clothing/shirts/business-shirts"
-                }
-              ],
-              "handle":"women/clothing/shirts"
-            },
-            {
-              "name":"Sweatshirts & Hoodies",
-              "rank":1,
-              "category_children":[
-                {
-                  "name":"Hoodies",
-                  "rank":0,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/clothing/sweatshirts-&-hoodies/hoodies"
-                },
-                {
-                  "name":"Sweatshirts",
-                  "rank":1,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/clothing/sweatshirts-&-hoodies/sweatshirts"
-                }
-              ],
-              "handle":"women/clothing/sweatshirts-&-hoodies"
-            },
-            {
-              "name":"Jeans",
-              "rank":2,
-              "category_children":[
-                {
-                  "name":"Skinny fit",
-                  "rank":0,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/clothing/jeans/skinny-fit"
-                },
-                {
-                  "name":"Slim fit",
-                  "rank":1,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/clothing/jeans/slim-fit"
-                },
-                {
-                  "name":"Straight leg",
-                  "rank":2,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/clothing/jeans/straight-leg"
-                },
-                {
-                  "name":"Tapered fit",
-                  "rank":3,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/clothing/jeans/tapered-fit"
-                }
-              ],
-              "handle":"women/clothing/jeans"
-            }
-          ],
-          "handle":"women/clothing"
-        },
-        {
-          "name":"Shoes",
-          "rank":1,
-          "category_children":[
-            {
-              "name":"Sports shoes",
-              "rank":0,
-              "category_children":[
-                {
-                  "name":"Running shoes",
-                  "rank":0,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/shoes/sports-shoes/running-shoes"
-                },
-                {
-                  "name":"Training shoes",
-                  "rank":1,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/shoes/sports-shoes/training-shoes"
-                },
-                {
-                  "name":"Football boots",
-                  "rank":2,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/shoes/sports-shoes/football-boots"
-                },
-                {
-                  "name":"Basketball shoes",
-                  "rank":3,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/shoes/sports-shoes/basketball-shoes"
-                },
-                {
-                  "name":"Hiking & mountaineering shoes",
-                  "rank":4,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/shoes/sports-shoes/hiking-&-mountaineering-shoes"
-                },
-                {
-                  "name":"Boots",
-                  "rank":5,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/shoes/sports-shoes/boots"
-                }
-              ],
-              "handle":"women/shoes/sports-shoes"
-            },
-            {
-              "name":"Business shoes",
-              "rank":1,
-              "category_children":[
-
-              ],
-              "handle":"women/shoes/business-shoes"
-            },
-            {
-              "name":"Boots",
-              "rank":2,
-              "category_children":[
-                {
-                  "name":"Lace-up boots",
-                  "rank":0,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/shoes/boots/lace-up-boots"
-                },
-                {
-                  "name":"Ankle boots",
-                  "rank":1,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/shoes/boots/ankle-boots"
-                },
-                {
-                  "name":"Winter Boots",
-                  "rank":2,
-                  "category_children":[
-
-                  ],
-                  "handle":"women/shoes/boots/winter-boots"
-                }
-              ],
-              "handle":"women/shoes/boots"
-            },
-            {
-              "name":"Slippers",
-              "rank":3,
-              "category_children":[
-
-              ],
-              "handle":"women/shoes/slippers"
-            }
-          ],
-          "handle":"women/shoes"
-        }
-      ],
-      "handle":"women"
+      "id": "pcat_shirts",
+      "name": "Shirts",
+      "rank": 0,
+      "category_children": [],
+      "handle": "shirts"
+    },
+    {
+      "id": "pcat_merch",
+      "name": "Merch",
+      "rank": 0,
+      "category_children": [],
+      "handle": "merch"
+    },
+    {
+      "id": "pcat_hidden_carousel",
+      "name": "Hidden homepage carousel",
+      "rank": 0,
+      "category_children": [],
+      "handle": "hidden-homepage-carousel"
+    },
+    {
+      "id": "pcat_hidden_featured",
+      "name": "Hidden homepage featured",
+      "rank": 0,
+      "category_children": [],
+      "handle": "hidden-homepage-featured-items"
     }
   ]
 }
