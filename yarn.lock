@@ -1320,7 +1320,40 @@
     bullmq "^3.5.6"
     ioredis "^5.2.5"
 
-"@medusajs/medusa-cli@1.3.14", "@medusajs/medusa-cli@^1.3.14":
+"@medusajs/medusa-cli@1.3.15-next-20230529115831":
+  version "1.3.15-next-20230529115831"
+  resolved "https://registry.yarnpkg.com/@medusajs/medusa-cli/-/medusa-cli-1.3.15-next-20230529115831.tgz#347e1c220b059456be7f6bc464ee8399650fe6a9"
+  integrity sha512-M+ZuBdn7n5VjsaGHScon25UZTFP+2kq7RtQSxzPbBkB96SVrsrdjCwu0U5YzQ9xv709KPw8+pia4XNQYFCA2QQ==
+  dependencies:
+    "@medusajs/utils" "1.9.0-next-20230529115831"
+    axios "^0.21.4"
+    chalk "^4.0.0"
+    configstore "5.0.1"
+    core-js "^3.6.5"
+    dotenv "^8.2.0"
+    execa "^5.1.1"
+    fs-exists-cached "^1.0.0"
+    fs-extra "^10.0.0"
+    hosted-git-info "^4.0.2"
+    inquirer "^8.0.0"
+    is-valid-path "^0.1.1"
+    meant "^1.0.3"
+    medusa-core-utils "^1.2.0"
+    medusa-telemetry "0.0.16"
+    open "^8.0.6"
+    ora "^5.4.1"
+    pg-god "^1.0.12"
+    prompts "^2.4.2"
+    regenerator-runtime "^0.13.11"
+    resolve-cwd "^3.0.0"
+    semver "^7.3.8"
+    stack-trace "^0.0.10"
+    ulid "^2.3.0"
+    url "^0.11.0"
+    winston "^3.8.2"
+    yargs "^15.3.1"
+
+"@medusajs/medusa-cli@^1.3.14":
   version "1.3.14"
   resolved "https://registry.yarnpkg.com/@medusajs/medusa-cli/-/medusa-cli-1.3.14.tgz#6f083c928d300745053fd13e4168f917a3708f0f"
   integrity sha512-NNeASjFxF36Ih0YxDuWCVd/3WelAb+KsNh3kdnfR6VdvDzbCdF1GyWwfmbV/9EVfeMa7ietPIR6cnX5OiN33ag==
@@ -1354,14 +1387,14 @@
     winston "^3.8.2"
     yargs "^15.3.1"
 
-"@medusajs/medusa@1.11.0":
-  version "1.11.0"
-  resolved "https://registry.yarnpkg.com/@medusajs/medusa/-/medusa-1.11.0.tgz#40c5e148ffb5ceea16ab50eab6712b8d6602047b"
-  integrity sha512-IFmA+QLDILQlvZz4bLSCzuYUYMinmHDaOaGLUKrzJbQoWFSAePc8uZguhTpXzXcFo2dheld04cpdUJV0cQdTMg==
+"@medusajs/medusa@^1.11.1-next-20230529115831":
+  version "1.11.1-next-20230529115831"
+  resolved "https://registry.yarnpkg.com/@medusajs/medusa/-/medusa-1.11.1-next-20230529115831.tgz#ae092aba6bf6797ee89edfcd0ca0b9b9e08f9fa4"
+  integrity sha512-j8bKPJUTRbKhl159ikw5QPR325Sb89ioF9zAt9HDaVJQDWL4Vmtykycf8prUdUc8oB21rFfToPRlDk2hvnrmew==
   dependencies:
-    "@medusajs/medusa-cli" "1.3.14"
-    "@medusajs/modules-sdk" "1.8.6"
-    "@medusajs/utils" "1.8.5"
+    "@medusajs/medusa-cli" "1.3.15-next-20230529115831"
+    "@medusajs/modules-sdk" "1.8.7-next-20230529115831"
+    "@medusajs/utils" "1.9.0-next-20230529115831"
     "@types/ioredis" "^4.28.10"
     "@types/lodash" "^4.14.191"
     awilix "^8.0.0"
@@ -1393,7 +1426,7 @@
     morgan "^1.9.1"
     multer "^1.4.5-lts.1"
     node-schedule "^2.1.1"
-    papaparse "^5.3.2"
+    papaparse "5.3.2"
     passport "^0.6.0"
     passport-http-bearer "^1.0.1"
     passport-jwt "^4.0.1"
@@ -1420,10 +1453,27 @@
     medusa-telemetry "^0.0.16"
     resolve-cwd "^3.0.0"
 
+"@medusajs/modules-sdk@1.8.7-next-20230529115831":
+  version "1.8.7-next-20230529115831"
+  resolved "https://registry.yarnpkg.com/@medusajs/modules-sdk/-/modules-sdk-1.8.7-next-20230529115831.tgz#0ac907306672e086773b3567f96ad17d9aa85dd4"
+  integrity sha512-iSlMRUd4DWBkc/HnxcQMtXPIVKWW2L6cMfMZw5jf/Q6EwJGuyr0JyfadKuptXEwpyQbPMdOPTwNDcb5hOH4/eA==
+  dependencies:
+    "@medusajs/types" "1.8.7-next-20230529115831"
+    "@medusajs/utils" "1.9.0-next-20230529115831"
+    awilix "^8.0.0"
+    glob "7.1.6"
+    medusa-telemetry "^0.0.16"
+    resolve-cwd "^3.0.0"
+
 "@medusajs/types@1.8.6":
   version "1.8.6"
   resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.8.6.tgz#c957fcf93e5c87d6704957e7a483c2dff3c25494"
   integrity sha512-C0BYZxrpSzeuWLtdpMW3AqpQiFLROdWBGnMs/ru418Cn6h/4kZwOieGjndPIl5cbgdy+PZluTqiauHSKeZ0IgA==
+
+"@medusajs/types@1.8.7-next-20230529115831":
+  version "1.8.7-next-20230529115831"
+  resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.8.7-next-20230529115831.tgz#043e6396fb2ab5d48db0fa68df1551caaacf3c31"
+  integrity sha512-sydxiVDpLkPiL/zf60eStioO9laK7nOceDgKm6GOcczoNO9afDLILzZWlDCsZ4V2e2r9kVawV2jP9dqD8wIDdw==
 
 "@medusajs/utils@1.8.5":
   version "1.8.5"
@@ -1434,6 +1484,14 @@
     class-transformer "^0.5.1"
     class-validator "^0.14.0"
     typeorm "^0.3.16"
+    ulid "^2.3.0"
+
+"@medusajs/utils@1.9.0-next-20230529115831":
+  version "1.9.0-next-20230529115831"
+  resolved "https://registry.yarnpkg.com/@medusajs/utils/-/utils-1.9.0-next-20230529115831.tgz#e21df48261520886802f8fa60a5fa496003184a6"
+  integrity sha512-J67AfHbPvrVz/uQwABN9ym1qJIfxf7OPaDDGum7lXIXexTnFu+19ghEM55LUxZF4VgaY+ROKRR2bq2jBDYnt0g==
+  dependencies:
+    awilix "^8.0.0"
     ulid "^2.3.0"
 
 "@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.2":
@@ -5538,10 +5596,10 @@ packet-reader@1.0.0:
   resolved "https://registry.npmjs.org/packet-reader/-/packet-reader-1.0.0.tgz"
   integrity sha512-HAKu/fG3HpHFO0AA8WE8q2g+gBJaZ9MG7fcKk+IJPLTGAD6Psw4443l+9DGRbOIh3/aXr7Phy0TjilYivJo5XQ==
 
-papaparse@^5.3.2:
-  version "5.4.1"
-  resolved "https://registry.npmjs.org/papaparse/-/papaparse-5.4.1.tgz"
-  integrity sha512-HipMsgJkZu8br23pW15uvo6sib6wne/4woLZPlFf3rpDyMe9ywEXUsuD7+6K9PRkJlVT51j/sCOYDKGGS3ZJrw==
+papaparse@5.3.2:
+  version "5.3.2"
+  resolved "https://registry.yarnpkg.com/papaparse/-/papaparse-5.3.2.tgz#d1abed498a0ee299f103130a6109720404fbd467"
+  integrity sha512-6dNZu0Ki+gyV0eBsFKJhYr+MdQYAzFUGlBMNj3GNrmHxmz1lfRa24CjFObPXtjcetlOv5Ad299MhIK0znp3afw==
 
 parent-module@^1.0.0:
   version "1.0.1"
