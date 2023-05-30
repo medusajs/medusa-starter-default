@@ -36,7 +36,12 @@ const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const plugins = [
   `medusa-fulfillment-manual`,
   `medusa-payment-manual`,
-  `@medusajs/file-local`,
+  {
+    resolve: `@medusajs/file-local`,
+    options: {
+      upload_dir: "uploads",
+    },
+  },
   // To enable the admin plugin, uncomment the following lines and run `yarn add @medusajs/admin`
   // {
   //   resolve: "@medusajs/admin",
