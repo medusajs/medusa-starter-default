@@ -6,7 +6,7 @@ You may define custom services that will be registered on the global container b
 // src/services/my-custom.ts
 
 import { Lifetime } from "awilix"
-import { TransactionBaseService } from "@medusajs/utils";
+import { TransactionBaseService } from "@medusajs/medusa";
 import { IEventBusService } from "@medusajs/types";
 
 export default class MyCustomService extends TransactionBaseService {
