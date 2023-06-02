@@ -1,6 +1,6 @@
-import * as cors from "cors"
+import cors from "cors"
 import { Router } from "express"
-import * as bodyParser from "body-parser"
+import bodyParser from "body-parser"
 import customRouteHandler from "./custom-route-handler"
 import { wrapHandler } from "@medusajs/medusa";
 
