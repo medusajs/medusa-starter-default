@@ -1793,39 +1793,6 @@
     winston "^3.8.2"
     yargs "^15.3.1"
 
-"@medusajs/medusa-cli@1.3.16-snapshot-20230607104906":
-  version "1.3.16-snapshot-20230607104906"
-  resolved "https://registry.yarnpkg.com/@medusajs/medusa-cli/-/medusa-cli-1.3.16-snapshot-20230607104906.tgz#6cff59c180e5f63c066029fab5f4eebd10cb6d82"
-  integrity sha512-YgCCGj6D5jNQMsu3iPRTlGnpnH5YzF8QTXDwff3Q6B9IYJWvDpuzmTHx9Hm9aS+XKdNBHH2kSQCDaTCQcIcrew==
-  dependencies:
-    "@medusajs/utils" "1.9.0"
-    axios "^0.21.4"
-    chalk "^4.0.0"
-    configstore "5.0.1"
-    core-js "^3.6.5"
-    dotenv "^8.2.0"
-    execa "^5.1.1"
-    fs-exists-cached "^1.0.0"
-    fs-extra "^10.0.0"
-    hosted-git-info "^4.0.2"
-    inquirer "^8.0.0"
-    is-valid-path "^0.1.1"
-    meant "^1.0.3"
-    medusa-core-utils "^1.2.0"
-    medusa-telemetry "0.0.16"
-    open "^8.0.6"
-    ora "^5.4.1"
-    pg-god "^1.0.12"
-    prompts "^2.4.2"
-    regenerator-runtime "^0.13.11"
-    resolve-cwd "^3.0.0"
-    semver "^7.3.8"
-    stack-trace "^0.0.10"
-    ulid "^2.3.0"
-    url "^0.11.0"
-    winston "^3.8.2"
-    yargs "^15.3.1"
-
 "@medusajs/medusa-js@6.0.1-snapshot-20230605093446":
   version "6.0.1-snapshot-20230605093446"
   resolved "https://registry.yarnpkg.com/@medusajs/medusa-js/-/medusa-js-6.0.1-snapshot-20230605093446.tgz#389970c446e99ca486600d7d390076c06441e495"
@@ -1836,13 +1803,13 @@
     retry-axios "^2.6.0"
     uuid "^9.0.0"
 
-"@medusajs/medusa@1.12.1-snapshot-20230607104906":
-  version "1.12.1-snapshot-20230607104906"
-  resolved "https://registry.yarnpkg.com/@medusajs/medusa/-/medusa-1.12.1-snapshot-20230607104906.tgz#abaac8236b0f505e42d8beb9199e66fa5d70578d"
-  integrity sha512-mjymZVHNZgVDDmBU6WyLpSlg3QU5+PIL11SbNq80STTufHv9ZIfUxQnvy4UvUCVRm6MNXf+6dlOqYDaNUDi9SQ==
+"@medusajs/medusa@1.12.1-snapshot-20230605093446":
+  version "1.12.1-snapshot-20230605093446"
+  resolved "https://registry.yarnpkg.com/@medusajs/medusa/-/medusa-1.12.1-snapshot-20230605093446.tgz#25f323e214eb0bbbdfa80a27f218d3e4c10094b3"
+  integrity sha512-CshfAKUfLR5GntDMQdpiyIKeSQw+hZa0kN5ADc4/ZHHHGBzbtD8FHM8WfiOP/90rSCf9nNSRwmQOX/gJIi9Exw==
   dependencies:
-    "@medusajs/medusa-cli" "1.3.16-snapshot-20230607104906"
-    "@medusajs/modules-sdk" "1.8.8-snapshot-20230607104906"
+    "@medusajs/medusa-cli" "1.3.16-snapshot-20230605093446"
+    "@medusajs/modules-sdk" "1.8.8-snapshot-20230605093446"
     "@medusajs/utils" "1.9.0"
     "@types/ioredis" "^4.28.10"
     "@types/lodash" "^4.14.191"
@@ -1902,12 +1869,12 @@
     medusa-telemetry "^0.0.16"
     resolve-cwd "^3.0.0"
 
-"@medusajs/modules-sdk@1.8.8-snapshot-20230607104906":
-  version "1.8.8-snapshot-20230607104906"
-  resolved "https://registry.yarnpkg.com/@medusajs/modules-sdk/-/modules-sdk-1.8.8-snapshot-20230607104906.tgz#7152227f033158dbeb5e6369ad0f40600dacbd5d"
-  integrity sha512-luzcb3oGbf39rGRTi2D4wKZf5luf2b8YaXUyFj6tJF9lXmlvfDI5taN0QRDQxNZ8P+oF/HjFJ+P1RImmx1kyYA==
+"@medusajs/modules-sdk@1.8.8-snapshot-20230605093446":
+  version "1.8.8-snapshot-20230605093446"
+  resolved "https://registry.yarnpkg.com/@medusajs/modules-sdk/-/modules-sdk-1.8.8-snapshot-20230605093446.tgz#462b20587a98a21dc48615c879e0ef407539f3ef"
+  integrity sha512-y9xFuor9n1IFsyEdEquhZ8dOjz5edYQEt9qgsz8TQN9PDreMGoJ4XOJ8kYi+VFcA7JGsKHskJIE+JFbWGtqQ7w==
   dependencies:
-    "@medusajs/types" "1.8.8-snapshot-20230607104906"
+    "@medusajs/types" "1.8.8-snapshot-20230605093446"
     "@medusajs/utils" "1.9.0"
     awilix "^8.0.0"
     glob "7.1.6"
@@ -1919,10 +1886,10 @@
   resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.8.7.tgz#139a1de015507ea0c4ebe9d106186873237e1c14"
   integrity sha512-4JsiEJH87slp2iAL8Xk1pPVZDXyBsWyN4NZqtQl0MPOZcmM07AvY5whuBNsC2AHRG689gztH7PTFq5zXngMC0Q==
 
-"@medusajs/types@1.8.8-snapshot-20230607104906":
-  version "1.8.8-snapshot-20230607104906"
-  resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.8.8-snapshot-20230607104906.tgz#da0d137d231983bf30355a2842d03d4c71b967cb"
-  integrity sha512-QxjY03ZARTMq5otyX+TDfOZxt/WnnL1qc25vNUrfr9xwpYgSJTv8BivXZizQy14Hbt94CkcCWdATZTu0Gk+img==
+"@medusajs/types@1.8.8-snapshot-20230605093446":
+  version "1.8.8-snapshot-20230605093446"
+  resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.8.8-snapshot-20230605093446.tgz#1835f3d7a1d71beae23019eafc1a44023c373d7b"
+  integrity sha512-BFHu7Uil9avud7EAtCkDA8W6ELT4Q5Smau/K/kCgrBbnKitdndCE7hqC8ZeDfEb/bdgkSJCsT4DJ6PhVYor3wA==
 
 "@medusajs/utils@1.9.0":
   version "1.9.0"
