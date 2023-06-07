@@ -1648,10 +1648,10 @@
   dependencies:
     "@lukeed/csprng" "^1.1.0"
 
-"@medusajs/admin-ui@1.8.8-snapshot-20230530160902":
-  version "1.8.8-snapshot-20230530160902"
-  resolved "https://registry.yarnpkg.com/@medusajs/admin-ui/-/admin-ui-1.8.8-snapshot-20230530160902.tgz#782d5282b8818da453b6d4f681cfb1e4d5297c5a"
-  integrity sha512-4Tp9FuPcJKfx5B90kw76zNMyBC8N8YX/HT2UocrG54KDdlEzVB/QOgcczCT4+jsH1VOEsj6avs/BG/N/QiE3Kw==
+"@medusajs/admin-ui@1.8.8-snapshot-20230605093446":
+  version "1.8.8-snapshot-20230605093446"
+  resolved "https://registry.yarnpkg.com/@medusajs/admin-ui/-/admin-ui-1.8.8-snapshot-20230605093446.tgz#b10676ba36afcf12164e489b6265e71f58ef028a"
+  integrity sha512-e7D7tAt3NWHLvdmgKhnx9bOJ9P6L9tw4/0co7+YlbTPxwa70XpEgo16Lsl4UYlM0bE4l8tkjPlkxonFfH5ZTZA==
   dependencies:
     "@hookform/error-message" "^2.0.1"
     "@radix-ui/react-accordion" "^1.0.1"
@@ -1676,7 +1676,7 @@
     copy-to-clipboard "^3.3.1"
     emoji-picker-react "^4.4.3"
     framer-motion "^9.1.6"
-    medusa-react "9.0.1-snapshot-20230530160902"
+    medusa-react "9.0.1-snapshot-20230605093446"
     moment "^2.29.4"
     pluralize "^8.0.0"
     postcss "^8.4.21"
@@ -1705,12 +1705,12 @@
     type-fest "^3.6.0"
     vite "^4.1.4"
 
-"@medusajs/admin@6.0.1-snapshot-20230530160902":
-  version "6.0.1-snapshot-20230530160902"
-  resolved "https://registry.yarnpkg.com/@medusajs/admin/-/admin-6.0.1-snapshot-20230530160902.tgz#dd23e22ef444dc82fa983e0115a59d4d56c119d4"
-  integrity sha512-Nm0Yqb9YyfDJebit/h21GiCwq2CLwmgT9rgx4JbkBfa0iOLjYULd3mjwX3yD+wy4oDvCsrgEOqd0/NkUKDwUbA==
+"@medusajs/admin@6.0.1-snapshot-20230605093446":
+  version "6.0.1-snapshot-20230605093446"
+  resolved "https://registry.yarnpkg.com/@medusajs/admin/-/admin-6.0.1-snapshot-20230605093446.tgz#dec4a572fe37fc6c80bfc4e4d99b3e7d2afae281"
+  integrity sha512-vCAEBBERELDHaQzjN6Ujdlck4oe26ZMa+ecTzjtJpL+nqbfykwiG9JnsQPeGu1gxvsH6mfrmsoJ7m2IroXSVSw==
   dependencies:
-    "@medusajs/admin-ui" "1.8.8-snapshot-20230530160902"
+    "@medusajs/admin-ui" "1.8.8-snapshot-20230605093446"
     commander "^10.0.0"
     dotenv "^16.0.3"
     express "^4.17.1"
@@ -1760,10 +1760,10 @@
   resolved "https://registry.yarnpkg.com/@medusajs/file-local/-/file-local-1.0.1.tgz#ff01550aa0e90b2016a5c5fd8f68438a12e3275b"
   integrity sha512-Y+zBbTaz1Q13QvAFpwHlGgx9r218bnOhZzewJFS+PEPtrQRjgYByv7PqAfaCIsdVwRohvde4joe+jx2LkKyzlQ==
 
-"@medusajs/medusa-cli@1.3.16-snapshot-20230530160902":
-  version "1.3.16-snapshot-20230530160902"
-  resolved "https://registry.yarnpkg.com/@medusajs/medusa-cli/-/medusa-cli-1.3.16-snapshot-20230530160902.tgz#01afda5e2bbc1b545acb21433b965de07941fe07"
-  integrity sha512-v9ELR/V1fact3DjZ1BWO9NAZFXUsvTR2wRSBHgAVxrBPc/1fvJH1GA8/AgWzLfyjR7JwOJtaGL3QdITWY2ohIA==
+"@medusajs/medusa-cli@1.3.16-snapshot-20230605093446":
+  version "1.3.16-snapshot-20230605093446"
+  resolved "https://registry.yarnpkg.com/@medusajs/medusa-cli/-/medusa-cli-1.3.16-snapshot-20230605093446.tgz#c511d681d2ed977649bbda9758701f059d005cad"
+  integrity sha512-a/HtnYZNNfgOVaHjXUq7Fwr5rGBU4el6J0wQnM67xnxnO9ygKQ5o9HGJuavXa/ehleNIDdStvIyIkJDnms39cA==
   dependencies:
     "@medusajs/utils" "1.9.0"
     axios "^0.21.4"
@@ -1793,23 +1793,56 @@
     winston "^3.8.2"
     yargs "^15.3.1"
 
-"@medusajs/medusa-js@6.0.1-snapshot-20230530160902":
-  version "6.0.1-snapshot-20230530160902"
-  resolved "https://registry.yarnpkg.com/@medusajs/medusa-js/-/medusa-js-6.0.1-snapshot-20230530160902.tgz#9f353deb6951221dff3c23c0edeec02dfb154b61"
-  integrity sha512-X9OM+XtIinU1mJFE1W5xX563MNeFcYkGRjj+bnXFgqYIUG1y090zeRmjnds9MbR7DuOXghBdv+NLJGaOTdXjsw==
+"@medusajs/medusa-cli@1.3.16-snapshot-20230607104906":
+  version "1.3.16-snapshot-20230607104906"
+  resolved "https://registry.yarnpkg.com/@medusajs/medusa-cli/-/medusa-cli-1.3.16-snapshot-20230607104906.tgz#6cff59c180e5f63c066029fab5f4eebd10cb6d82"
+  integrity sha512-YgCCGj6D5jNQMsu3iPRTlGnpnH5YzF8QTXDwff3Q6B9IYJWvDpuzmTHx9Hm9aS+XKdNBHH2kSQCDaTCQcIcrew==
+  dependencies:
+    "@medusajs/utils" "1.9.0"
+    axios "^0.21.4"
+    chalk "^4.0.0"
+    configstore "5.0.1"
+    core-js "^3.6.5"
+    dotenv "^8.2.0"
+    execa "^5.1.1"
+    fs-exists-cached "^1.0.0"
+    fs-extra "^10.0.0"
+    hosted-git-info "^4.0.2"
+    inquirer "^8.0.0"
+    is-valid-path "^0.1.1"
+    meant "^1.0.3"
+    medusa-core-utils "^1.2.0"
+    medusa-telemetry "0.0.16"
+    open "^8.0.6"
+    ora "^5.4.1"
+    pg-god "^1.0.12"
+    prompts "^2.4.2"
+    regenerator-runtime "^0.13.11"
+    resolve-cwd "^3.0.0"
+    semver "^7.3.8"
+    stack-trace "^0.0.10"
+    ulid "^2.3.0"
+    url "^0.11.0"
+    winston "^3.8.2"
+    yargs "^15.3.1"
+
+"@medusajs/medusa-js@6.0.1-snapshot-20230605093446":
+  version "6.0.1-snapshot-20230605093446"
+  resolved "https://registry.yarnpkg.com/@medusajs/medusa-js/-/medusa-js-6.0.1-snapshot-20230605093446.tgz#389970c446e99ca486600d7d390076c06441e495"
+  integrity sha512-9exTjBVFENqa3hSXRxFTyO5C7/N56OXfdDMPw9Ov0LIKt/JTeJ47exlhGal4yKnPPwVCsKW9H+qzyfzmaCgjyQ==
   dependencies:
     axios "^0.24.0"
     qs "^6.10.3"
     retry-axios "^2.6.0"
     uuid "^9.0.0"
 
-"@medusajs/medusa@1.12.1-snapshot-20230530160902":
-  version "1.12.1-snapshot-20230530160902"
-  resolved "https://registry.yarnpkg.com/@medusajs/medusa/-/medusa-1.12.1-snapshot-20230530160902.tgz#05749a5fef2705e14dfc1ddaa5adf3a455faf478"
-  integrity sha512-pYgg1JNGPZzdMGtdcpE6eg24z78ARVjCeJd7V2oCQgAeD41+iMrONITYDb5zkyElI+1ca05qbbxGMm711ZsA+Q==
+"@medusajs/medusa@1.12.1-snapshot-20230607104906":
+  version "1.12.1-snapshot-20230607104906"
+  resolved "https://registry.yarnpkg.com/@medusajs/medusa/-/medusa-1.12.1-snapshot-20230607104906.tgz#abaac8236b0f505e42d8beb9199e66fa5d70578d"
+  integrity sha512-mjymZVHNZgVDDmBU6WyLpSlg3QU5+PIL11SbNq80STTufHv9ZIfUxQnvy4UvUCVRm6MNXf+6dlOqYDaNUDi9SQ==
   dependencies:
-    "@medusajs/medusa-cli" "1.3.16-snapshot-20230530160902"
-    "@medusajs/modules-sdk" "1.8.7"
+    "@medusajs/medusa-cli" "1.3.16-snapshot-20230607104906"
+    "@medusajs/modules-sdk" "1.8.8-snapshot-20230607104906"
     "@medusajs/utils" "1.9.0"
     "@types/ioredis" "^4.28.10"
     "@types/lodash" "^4.14.191"
@@ -1869,10 +1902,27 @@
     medusa-telemetry "^0.0.16"
     resolve-cwd "^3.0.0"
 
+"@medusajs/modules-sdk@1.8.8-snapshot-20230607104906":
+  version "1.8.8-snapshot-20230607104906"
+  resolved "https://registry.yarnpkg.com/@medusajs/modules-sdk/-/modules-sdk-1.8.8-snapshot-20230607104906.tgz#7152227f033158dbeb5e6369ad0f40600dacbd5d"
+  integrity sha512-luzcb3oGbf39rGRTi2D4wKZf5luf2b8YaXUyFj6tJF9lXmlvfDI5taN0QRDQxNZ8P+oF/HjFJ+P1RImmx1kyYA==
+  dependencies:
+    "@medusajs/types" "1.8.8-snapshot-20230607104906"
+    "@medusajs/utils" "1.9.0"
+    awilix "^8.0.0"
+    glob "7.1.6"
+    medusa-telemetry "^0.0.16"
+    resolve-cwd "^3.0.0"
+
 "@medusajs/types@1.8.7":
   version "1.8.7"
   resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.8.7.tgz#139a1de015507ea0c4ebe9d106186873237e1c14"
   integrity sha512-4JsiEJH87slp2iAL8Xk1pPVZDXyBsWyN4NZqtQl0MPOZcmM07AvY5whuBNsC2AHRG689gztH7PTFq5zXngMC0Q==
+
+"@medusajs/types@1.8.8-snapshot-20230607104906":
+  version "1.8.8-snapshot-20230607104906"
+  resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.8.8-snapshot-20230607104906.tgz#da0d137d231983bf30355a2842d03d4c71b967cb"
+  integrity sha512-QxjY03ZARTMq5otyX+TDfOZxt/WnnL1qc25vNUrfr9xwpYgSJTv8BivXZizQy14Hbt94CkcCWdATZTu0Gk+img==
 
 "@medusajs/utils@1.9.0":
   version "1.9.0"
@@ -6998,12 +7048,12 @@ medusa-payment-stripe@6.0.1-snapshot-20230530160902:
     medusa-core-utils "^1.2.0"
     stripe "^11.10.0"
 
-medusa-react@9.0.1-snapshot-20230530160902:
-  version "9.0.1-snapshot-20230530160902"
-  resolved "https://registry.yarnpkg.com/medusa-react/-/medusa-react-9.0.1-snapshot-20230530160902.tgz#9ef04232d0b8bab67428cffcaaeaebd10ae28014"
-  integrity sha512-YJMvoTzjMBYrc06HZkJpxh5HcQdZbCFILdHzv3EpSOF4KMLkfAZCJdQnAGc3rCGmc/sYSAxw865uBoy1/40y4g==
+medusa-react@9.0.1-snapshot-20230605093446:
+  version "9.0.1-snapshot-20230605093446"
+  resolved "https://registry.yarnpkg.com/medusa-react/-/medusa-react-9.0.1-snapshot-20230605093446.tgz#69d86fa32275aa0260f148b67d2eac6dcdae8821"
+  integrity sha512-3b0MwzhtD2Msvc5T6SjssmxDMy3cHK3rg9cvIEqI+j6dNsHzhfGzETcs+xXMvAnkI9DvEqi7rudtQ65wuGQazw==
   dependencies:
-    "@medusajs/medusa-js" "6.0.1-snapshot-20230530160902"
+    "@medusajs/medusa-js" "6.0.1-snapshot-20230605093446"
 
 medusa-telemetry@0.0.16, medusa-telemetry@^0.0.16:
   version "0.0.16"
