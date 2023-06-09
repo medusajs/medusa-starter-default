@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { EntityManager } from "typeorm";
-import OnboardingService from "src/services/onboarding";
+import OnboardingService from "../../../../services/onboarding";
 
 export default async function updateOnboardingStatus(
   req: Request,

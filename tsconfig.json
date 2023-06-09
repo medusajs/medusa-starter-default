@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
-    "lib": ["es5", "es6"],
-    "target": "esnext",
+    "target": "es2019",
     "allowJs": true,
     "esModuleInterop": true,
     "module": "commonjs",
@@ -10,16 +9,13 @@
     "experimentalDecorators": true,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "declaration": false,
+    "declaration": true,
     "sourceMap": false,
     "outDir": "./dist",
-    "rootDir": "src",
-    "baseUrl": "src"
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "jsx": "react"
   },
   "include": ["src"],
-  "exclude": [
-    "**/__tests__",
-    "**/__fixtures__",
-    "node_modules"
-  ]
+  "exclude": ["**/__tests__", "**/__fixtures__", "node_modules"]
 }
