@@ -14,15 +14,16 @@
   ],
   "scripts": {
     "clean": "cross-env ./node_modules/.bin/rimraf dist",
-    "build": "cross-env npm run clean && tsc -p tsconfig.json && npm run build:extensions && npm run build:admin",
     "watch": "cross-env tsc --watch",
     "test": "cross-env jest",
     "seed": "cross-env medusa seed -f ./data/seed.json",
     "start": "cross-env npm run build && medusa start",
     "start:custom": "cross-env npm run build && node --preserve-symlinks index.js",
     "dev": "cross-env npm run build && medusa develop",
+    "build:backend": "cross-env npm run clean && tsc -p tsconfig.json",
     "build:admin": "cross-env medusa-admin build",
-    "build:extensions": "medusa-admin-sdk build"
+    "build:extensions": "medusa-admin-sdk build",
+    "build": "cross-env npm run build:backend && npm run build:extensions && npm run build:admin"
   },
   "dependencies": {
     "@babel/preset-typescript": "7.21.4",
