@@ -16,8 +16,8 @@ const ProductsList = ({ onNext, isComplete }: StepContentProps) => {
   const createSampleProduct = async () => {
     createProduct(
       {
-        title: "A coat or something idk",
-        description: "Lorem Ipsum Dolor Sit Amet",
+        title: "Medusa T-Shirt",
+        description: "Comfy t-shirt with Medusa logo",
         is_giftcard: false,
         discountable: false,
         options: [{ title: "Size" }],

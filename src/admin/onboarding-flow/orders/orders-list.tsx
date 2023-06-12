@@ -55,11 +55,10 @@ const OrdersList = ({ onNext, isComplete, data }: StepContentProps) => {
   return (
     <>
       <div className="py-4">
-        <p>You can now create an order.</p>
+        <p>We can now create an order.</p>
         <p>
-          To create an order, you can choose to create a sample order, use
-          Swagger UI to simulate the necessary API requests to create an order,
-          or use Medusa's Next.js Storefront Starter.
+          With a Product created, we can now place an Order. Click the button
+          below to create a sample order.
         </p>
       </div>
       <div className="flex gap-2">
@@ -73,14 +72,6 @@ const OrdersList = ({ onNext, isComplete, data }: StepContentProps) => {
             Create a sample order
           </Button>
         )}
-        <a
-          href="https://docs.medusajs.com/starters/nextjs-medusa-starter"
-          target="_blank"
-        >
-          <Button variant="secondary" size="small">
-            Install Next.js Starter Storefront
-          </Button>
-        </a>
       </div>
     </>
   );

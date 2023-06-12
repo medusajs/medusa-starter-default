@@ -19,15 +19,18 @@ const OrderDetail = () => {
         some essential guides to kickstart your development with Medusa.
       </p>
       <div className="grid grid-cols-2 gap-4 mt-5 pb-5 mb-5 border-b border-gray-300 border-solid">
-        <a href="#">
+        <a
+          href="https://medusa-docs-git-docs-onboarding-material-medusajs.vercel.app/starters/nextjs-medusa-starter?path=simple-quickstart"
+          target="_blank"
+        >
           <div
-            className="p-4 rounded-rounded flex flex-col bg-slate-50"
+            className="p-4 rounded-rounded flex items-center bg-slate-50"
             style={{
               boxShadow:
                 "0px 0px 0px 1px rgba(17, 24, 28, 0.08), 0px 1px 2px -1px rgba(17, 24, 28, 0.08), 0px 2px 4px rgba(17, 24, 28, 0.04)",
             }}
           >
-            <div className="mb-base">
+            <div className="mr-base">
               <IconBadge>
                 <DollarSignIcon />
               </IconBadge>
@@ -43,15 +46,18 @@ const OrderDetail = () => {
             </div>
           </div>
         </a>
-        <a href="#">
+        <a
+          href="https://medusa-docs-git-docs-onboarding-material-medusajs.vercel.app/recipes"
+          target="_blank"
+        >
           <div
-            className="p-4 rounded-rounded flex flex-col bg-slate-50"
+            className="p-4 rounded-rounded items-center flex bg-slate-50"
             style={{
               boxShadow:
                 "0px 0px 0px 1px rgba(17, 24, 28, 0.08), 0px 1px 2px -1px rgba(17, 24, 28, 0.08), 0px 2px 4px rgba(17, 24, 28, 0.04)",
             }}
           >
-            <div className="mb-base">
+            <div className="mr-base">
               <IconBadge>
                 <ComputerDesktopIcon />
               </IconBadge>

@@ -63,6 +63,7 @@ const OnboardingFlow = (props: ExtensionProps) => {
 
   useEffect(() => {
     setOpenStep(currentStep);
+    if (currentStep === STEP_FLOW[STEP_FLOW.length - 1]) setCompleted(true);
   }, [currentStep]);
 
   if (
@@ -250,9 +251,9 @@ const OnboardingFlow = (props: ExtensionProps) => {
               </>
             )}
           </div>
-          {!completed && (
+          {
             <div className="mt-5">
-              {Steps.map(step => {
+              {(!completed ? Steps : Steps.slice(-1)).map(step => {
                 const isComplete = isStepComplete(step.id);
                 const isCurrent = currentStep === step.id;
                 return (
@@ -280,7 +281,7 @@ const OnboardingFlow = (props: ExtensionProps) => {
                 );
               })}
             </div>
-          )}
+          }
         </Accordion>
       </Container>
     </>
