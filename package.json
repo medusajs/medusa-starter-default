@@ -18,7 +18,7 @@
     "test": "cross-env jest",
     "seed": "cross-env medusa seed -f ./data/seed.json",
     "start": "cross-env npm run build && medusa start",
-    "start:custom": "cross-env npm run build && node --preserve-symlinks index.js",
+    "start:custom": "cross-env npm run build && node --preserve-symlinks --trace-warnings index.js",
     "dev": "cross-env npm run build && medusa develop",
     "build:backend": "cross-env npm run clean && tsc -p tsconfig.json",
     "build:admin": "cross-env medusa-admin build",
