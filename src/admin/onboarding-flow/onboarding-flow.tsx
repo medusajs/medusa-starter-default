@@ -73,8 +73,11 @@ const OnboardingFlow = (props: ExtensionProps) => {
   )
     return null;
 
-  const updateServerState = (payload: UpdateOnboardingStateInput) => {
-    mutate(payload);
+  const updateServerState = (
+    payload: UpdateOnboardingStateInput,
+    onSuccess: () => void = () => {}
+  ) => {
+    mutate(payload, { onSuccess });
   };
 
   const onStart = () => {
@@ -82,27 +85,39 @@ const OnboardingFlow = (props: ExtensionProps) => {
     navigate(`/a/products`);
   };
 
-  const setStepComplete = (
-    step_id: STEP_ID,
-    extraData?: UpdateOnboardingStateInput
-  ) => {
+  const setStepComplete = ({
+    step_id,
+    extraData,
+    onComplete,
+  }: {
+    step_id: STEP_ID;
+    extraData?: UpdateOnboardingStateInput;
+    onComplete?: () => void;
+  }) => {
     const next = STEP_FLOW[STEP_FLOW.findIndex(step => step === step_id) + 1];
-    updateServerState({ current_step: next, ...extraData });
+    updateServerState({ current_step: next, ...extraData }, onComplete);
   };
 
   const goToProductView = (product: any) => {
-    setStepComplete("create_product", { product_id: product.id });
-    navigate(`/a/products/${product.id}`);
+    setStepComplete({
+      step_id: "create_product",
+      extraData: { product_id: product.id },
+      onComplete: () => navigate(`/a/products/${product.id}`),
+    });
   };
 
   const goToOrders = () => {
-    setStepComplete("preview_product");
-    navigate(`/a/orders`);
+    setStepComplete({
+      step_id: "preview_product",
+      onComplete: () => navigate(`/a/orders`),
+    });
   };
 
   const goToOrderView = (order: any) => {
-    setStepComplete("create_order");
-    navigate(`/a/orders/${order.id}`);
+    setStepComplete({
+      step_id: "create_order",
+      onComplete: () => navigate(`/a/orders/${order.id}`),
+    });
   };
 
   const onComplete = () => {
