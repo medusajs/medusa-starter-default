@@ -82,16 +82,16 @@ const OnboardingFlow = (props: ExtensionProps) => {
     navigate(`/a/products`);
   };
 
-  const setStepComplete = (step_id: STEP_ID) => {
+  const setStepComplete = (
+    step_id: STEP_ID,
+    extraData?: UpdateOnboardingStateInput
+  ) => {
     const next = STEP_FLOW[STEP_FLOW.findIndex(step => step === step_id) + 1];
-    updateServerState({ current_step: next });
-    // Also set local state in case we're reopening from "Next step" without changing the actual current step
-    setOpenStep(next);
+    updateServerState({ current_step: next, ...extraData });
   };
 
   const goToProductView = (product: any) => {
-    setStepComplete("create_product");
-    updateServerState({ product_id: product.id });
+    setStepComplete("create_product", { product_id: product.id });
     navigate(`/a/products/${product.id}`);
   };
 
@@ -183,20 +183,6 @@ const OnboardingFlow = (props: ExtensionProps) => {
                           Cancel Setup
                         </Button>
                       )}
-                      <Button
-                        variant="nuclear"
-                        size="small"
-                        onClick={() => {
-                          updateServerState({
-                            current_step: null,
-                            is_complete: null,
-                            product_id: null,
-                          });
-                          navigate("/a/products");
-                        }}
-                      >
-                        Reset flow (DEV)
-                      </Button>
                     </>
                   ) : (
                     <>

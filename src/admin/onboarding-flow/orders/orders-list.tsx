@@ -55,7 +55,6 @@ const OrdersList = ({ onNext, isComplete, data }: StepContentProps) => {
   return (
     <>
       <div className="py-4">
-        <p>We can now create an order.</p>
         <p>
           With a Product created, we can now place an Order. Click the button
           below to create a sample order.
