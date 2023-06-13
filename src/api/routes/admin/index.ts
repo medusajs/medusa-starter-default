@@ -6,7 +6,7 @@ import { authenticate, wrapHandler } from "@medusajs/medusa";
 
 const adminRouter = Router()
 export function getAdminRouter(adminCorsOptions): Router {
-  adminRouter.use("/admin", cors(adminCorsOptions), authenticate(), bodyParser.json())
+  adminRouter.use("/admin", cors(adminCorsOptions), bodyParser.json(), authenticate())
 
   adminRouter.post(
     "/my-custom-path",
