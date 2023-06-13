@@ -6,10 +6,10 @@ import { wrapHandler } from "@medusajs/medusa";
 
 const storeRouter = Router()
 export function getStoreRouter(storeCorsOptions): Router {
-  storeRouter.use(cors(storeCorsOptions), bodyParser.json())
+  storeRouter.use("/store", cors(storeCorsOptions), bodyParser.json())
 
   storeRouter.post(
-    "/store/my-custom-path",
+    "/my-custom-path",
     wrapHandler(customRouteHandler)
   )
 
