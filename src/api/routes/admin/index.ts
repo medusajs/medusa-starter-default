@@ -5,7 +5,7 @@ import customRouteHandler from "./custom-route-handler"
 import { authenticate, wrapHandler } from "@medusajs/medusa";
 
 const adminRouter = Router()
-export function getStoreRouter(adminCorsOptions): Router {
+export function getAdminRouter(adminCorsOptions): Router {
   adminRouter.use("/admin", cors(adminCorsOptions), authenticate(), bodyParser.json())
 
   adminRouter.post(
