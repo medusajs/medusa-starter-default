@@ -1,20 +1,18 @@
-import bodyParser from "body-parser";
-import cors from "cors";
 import { Router } from "express";
-import { authenticate } from "@medusajs/medusa";
+import { wrapHandler } from "@medusajs/medusa";
 import onboardingRoutes from "./onboarding";
+import customRouteHandler from "./custom-route-handler";
 
-const adminRouter = Router();
+// Initialize a custom router
+const router = Router();
 
-export function getAdminRouter(adminCorsOptions): Router {
-  adminRouter.use(
-    /\/admin\/((?!auth)(?!invites).*)/,
-    cors(adminCorsOptions),
-    bodyParser.json(),
-    authenticate()
-  );
+export function attachAdminRoutes(adminRouter: Router) {
+  // Attach our router to a custom path on the admin router
+  adminRouter.use("/custom", router);
 
+  // Define a GET endpoint on the root route of our custom path
+  router.get("/", wrapHandler(customRouteHandler));
+
+  // Attach routes for onboarding experience, defined separately
   onboardingRoutes(adminRouter);
-
-  return adminRouter;
 }

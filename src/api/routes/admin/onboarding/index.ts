@@ -3,13 +3,11 @@ import { Router } from "express";
 import getOnboardingStatus from "./get-status";
 import updateOnboardingStatus from "./update-status";
 
-const route = Router();
+const router = Router();
 
-export default (app: Router): Router => {
-  app.use("/admin/onboarding", route);
+export default (adminRouter: Router) => {
+  adminRouter.use("/onboarding", router);
 
-  route.get("/", wrapHandler(getOnboardingStatus));
-  route.post("/", wrapHandler(updateOnboardingStatus));
-
-  return app;
+  router.get("/", wrapHandler(getOnboardingStatus));
+  router.post("/", wrapHandler(updateOnboardingStatus));
 };
