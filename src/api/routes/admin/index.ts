@@ -8,7 +8,7 @@ const adminRouter = Router();
 
 export function getAdminRouter(adminCorsOptions): Router {
   adminRouter.use(
-    /\/admin\/((?!auth).*)/,
+    /\/admin\/((?!auth)(?!invites).*)/,
     cors(adminCorsOptions),
     bodyParser.json(),
     authenticate()

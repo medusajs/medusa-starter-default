@@ -13,15 +13,35 @@ const ProductsList = ({ onNext, isComplete }: StepContentProps) => {
   const { mutate: createProduct, isLoading } = useAdminCreateProduct();
   const { regions } = useAdminRegions();
 
-  const createSampleProduct = async () => {
+  const createSampleProduct = () => {
     createProduct(
       {
         title: "Medusa T-Shirt",
         description: "Comfy t-shirt with Medusa logo",
+        subtitle: "Black",
         is_giftcard: false,
         discountable: false,
         options: [{ title: "Size" }],
+        images: [
+          "https://medusa-public-images.s3.eu-west-1.amazonaws.com/tee-black-front.png",
+          "https://medusa-public-images.s3.eu-west-1.amazonaws.com/tee-black-back.png",
+        ],
+        categories: [
+          {
+            id: "pcat_shirts",
+          },
+        ],
         variants: [
+          {
+            title: "Small",
+            inventory_quantity: 25,
+            manage_inventory: true,
+            prices: regions.map(region => ({
+              amount: 5000,
+              currency_code: region.currency_code,
+            })),
+            options: [{ value: "S" }],
+          },
           {
             title: "Medium",
             inventory_quantity: 10,
@@ -31,6 +51,26 @@ const ProductsList = ({ onNext, isComplete }: StepContentProps) => {
               currency_code: region.currency_code,
             })),
             options: [{ value: "M" }],
+          },
+          {
+            title: "Large",
+            inventory_quantity: 17,
+            manage_inventory: true,
+            prices: regions.map(region => ({
+              amount: 5000,
+              currency_code: region.currency_code,
+            })),
+            options: [{ value: "L" }],
+          },
+          {
+            title: "Extra Large",
+            inventory_quantity: 22,
+            manage_inventory: true,
+            prices: regions.map(region => ({
+              amount: 5000,
+              currency_code: region.currency_code,
+            })),
+            options: [{ value: "XL" }],
           },
         ],
         status: ProductStatus.PUBLISHED,
