@@ -26,11 +26,6 @@ const ProductsList = ({ onNext, isComplete }: StepContentProps) => {
           "https://medusa-public-images.s3.eu-west-1.amazonaws.com/tee-black-front.png",
           "https://medusa-public-images.s3.eu-west-1.amazonaws.com/tee-black-back.png",
         ],
-        categories: [
-          {
-            id: "pcat_shirts",
-          },
-        ],
         variants: [
           {
             title: "Small",

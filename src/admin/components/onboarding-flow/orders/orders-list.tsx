@@ -9,19 +9,17 @@ import { StepContentProps } from "../../../widgets/onboarding-flow/onboarding-fl
 
 const OrdersList = ({ onNext, isComplete, data }: StepContentProps) => {
   const { product } = useAdminProduct(data.product_id);
-  const { mutate: createDraftOrder, isLoading } = useAdminCreateDraftOrder();
+  const { mutateAsync: createDraftOrder, isLoading } =
+    useAdminCreateDraftOrder();
   const { client } = useMedusa();
 
   const { regions } = useAdminRegions();
   const { shipping_options } = useAdminShippingOptions();
 
-  const createOrder = () => {
-    // TODO: Maybe use a specific product instead of taking first one?
-    // Issues could arise if first one doesn't have variant etc
+  const createOrder = async () => {
     const variant = product.variants[0] ?? null;
-
-    createDraftOrder(
-      {
+    try {
+      const { draft_order } = await createDraftOrder({
         email: "customer@medusajs.com",
         items: [
           variant
@@ -41,16 +39,14 @@ const OrdersList = ({ onNext, isComplete, data }: StepContentProps) => {
           },
         ],
         region_id: regions[0].id,
-      },
-      {
-        onSuccess: async ({ draft_order }) => {
-          const { order } = await client.admin.draftOrders.markPaid(
-            draft_order.id
-          );
-          onNext(order);
-        },
-      }
-    );
+      });
+
+      const { order } = await client.admin.draftOrders.markPaid(draft_order.id);
+
+      onNext(order);
+    } catch (e) {
+      console.error(e);
+    }
   };
   return (
     <>
