@@ -1,43 +1,51 @@
-import { Router } from "express"
-import { getConfigFile } from "medusa-core-utils"
-import {authenticate, ConfigModule} from "@medusajs/medusa"
-import cors from "cors"
+import { Router } from "express";
+import cors from "cors";
 import bodyParser from "body-parser";
-import {attachAdminRouter} from "./routes/admin";
-import {attachStoreRouter} from "./routes/store";
-
+import { authenticate, ConfigModule } from "@medusajs/medusa";
+import { getConfigFile } from "medusa-core-utils";
+import { attachStoreRoutes } from "./routes/store";
+import { attachAdminRoutes } from "./routes/admin";
 
 export default (rootDirectory: string): Router | Router[] => {
-  const { configModule: { projectConfig } } = getConfigFile<ConfigModule>(
+  // Read currently-loaded medusa config
+  const { configModule } = getConfigFile<ConfigModule>(
     rootDirectory,
     "medusa-config"
   );
+  const { projectConfig } = configModule;
 
-  const adminCors = {
-    origin: projectConfig.admin_cors.split(","),
-    credentials: true,
-  }
-
-  const storeCors = {
+  // Set up our CORS options objects, based on config
+  const storeCorsOptions = {
     origin: projectConfig.store_cors.split(","),
     credentials: true,
-  }
+  };
 
-  const router = Router()
+  const adminCorsOptions = {
+    origin: projectConfig.admin_cors.split(","),
+    credentials: true,
+  };
 
-  router.use("/store", cors(storeCors), bodyParser.json())
-  router.use("/admin", cors(adminCors), bodyParser.json())
-  router.use(/\/admin\/((?!auth)(?!invites).*)/, authenticate())
+  // Set up express router
+  const router = Router();
 
-  const adminRouter = Router()
-  const storeRouter = Router()
+  // Set up root routes for store and admin endpoints, with appropriate CORS settings
+  router.use("/store", cors(storeCorsOptions), bodyParser.json());
+  router.use("/admin", cors(adminCorsOptions), bodyParser.json());
 
-  router.use("/admin", adminRouter)
-  router.use("/store", storeRouter)
+  // Add authentication to all admin routes *except* auth and account invite ones
+  router.use(/\/admin\/((?!auth)(?!invites).*)/, authenticate());
 
-  attachAdminRouter(adminRouter)
-  attachStoreRouter(storeRouter)
+  // Set up routers for store and admin endpoints
+  const storeRouter = Router();
+  const adminRouter = Router();
 
-  // add your custom routes here
-  return router
-}
+  // Attach these routers to the root routes
+  router.use("/store", storeRouter);
+  router.use("/admin", adminRouter);
+
+  // Attach custom routes to these routers
+  attachStoreRoutes(storeRouter);
+  attachAdminRoutes(adminRouter);
+
+  return router;
+};

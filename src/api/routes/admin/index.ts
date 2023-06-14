@@ -1,13 +1,14 @@
-import { Router } from "express"
-import customRouteHandler from "./custom-route-handler"
+import { Router } from "express";
+import customRouteHandler from "./custom-route-handler";
 import { wrapHandler } from "@medusajs/medusa";
 
-const adminRouter = Router()
-export function attachAdminRouter(app: Router) {
-  app.use("/custom", adminRouter)
+// Initialize a custom router
+const router = Router();
 
-  adminRouter.get(
-    "/",
-    wrapHandler(customRouteHandler)
-  )
+export function attachAdminRoutes(adminRouter: Router) {
+  // Attach our router to a custom path on the admin router
+  adminRouter.use("/custom", router);
+
+  // Define a GET endpoint on the root route of our custom path
+  router.get("/", wrapHandler(customRouteHandler));
 }
