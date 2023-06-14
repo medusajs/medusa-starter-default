@@ -1,17 +1,13 @@
-import cors from "cors"
 import { Router } from "express"
-import bodyParser from "body-parser"
 import customRouteHandler from "./custom-route-handler"
 import { wrapHandler } from "@medusajs/medusa";
 
 const storeRouter = Router()
-export function getStoreRouter(storeCorsOptions): Router {
-  storeRouter.use("/store", cors(storeCorsOptions), bodyParser.json())
+export function attachStoreRouter(app: Router) {
+  app.use("/custom", storeRouter)
 
-  storeRouter.post(
-    "/my-custom-path",
+  storeRouter.get(
+    "/",
     wrapHandler(customRouteHandler)
   )
-
-  return storeRouter
 }
