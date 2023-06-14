@@ -1,11 +1,11 @@
 import React from "react";
-import Button from "../../shared/button";
+import Button from "../shared/button";
 import { useAdminProduct } from "medusa-react";
 import { useAdminCreateDraftOrder } from "medusa-react";
 import { useAdminShippingOptions } from "medusa-react";
 import { useAdminRegions } from "medusa-react";
 import { useMedusa } from "medusa-react";
-import { StepContentProps } from "../onboarding-flow";
+import { StepContentProps } from "../../../widgets/onboarding-flow/onboarding-flow";
 
 const OrdersList = ({ onNext, isComplete, data }: StepContentProps) => {
   const { product } = useAdminProduct(data.product_id);

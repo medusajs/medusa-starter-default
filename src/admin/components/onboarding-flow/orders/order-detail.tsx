@@ -1,7 +1,7 @@
 import React from "react";
-import IconBadge from "../../shared/icon-badge";
-import ComputerDesktopIcon from "../../shared/icons/computer-desktop-icon";
-import DollarSignIcon from "../../shared/icons/dollar-sign-icon";
+import IconBadge from "../shared/icon-badge";
+import ComputerDesktopIcon from "../shared/icons/computer-desktop-icon";
+import DollarSignIcon from "../shared/icons/dollar-sign-icon";
 
 const OrderDetail = () => {
   return (

@@ -1,4 +1,4 @@
-import { ConfigModule } from "@medusajs/medusa/dist/types/global";
+import { ConfigModule } from "@medusajs/medusa";
 import { Router } from "express";
 import { getConfigFile } from "medusa-core-utils";
 import { getAdminRouter } from "./routes/admin";

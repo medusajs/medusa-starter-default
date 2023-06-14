@@ -1,5 +1,5 @@
 import React from "react";
-import IconProps from "../../types/icon-type";
+import IconProps from "../../../../types/icon-type";
 
 const GetStartedIcon: React.FC<IconProps> = () => (
   <svg

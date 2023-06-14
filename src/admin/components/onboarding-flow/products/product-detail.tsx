@@ -1,8 +1,8 @@
 import React from "react";
 import { useAdminPublishableApiKeys } from "medusa-react";
-import Button from "../../shared/button";
-import CodeSnippets from "../../shared/code-snippets";
-import { StepContentProps } from "../onboarding-flow";
+import Button from "../shared/button";
+import CodeSnippets from "../shared/code-snippets";
+import { StepContentProps } from "../../../widgets/onboarding-flow/onboarding-flow";
 
 const ProductDetail = ({ onNext, isComplete, data }: StepContentProps) => {
   const { publishable_api_keys: keys, isLoading } = useAdminPublishableApiKeys({

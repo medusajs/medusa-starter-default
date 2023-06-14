@@ -1,24 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { Container } from "../shared/container";
-import Button from "../shared/button";
-import { ExtensionConfig } from "@medusajs/admin-sdk";
-import type { ExtensionProps } from "@medusajs/admin-shared";
-import Accordion from "../shared/accordion";
-import GetStartedIcon from "../shared/icons/get-started-icon";
-import ProductsList from "./products/products-list";
-import ProductDetail from "./products/product-detail";
-import OrdersList from "./orders/orders-list";
-import OrderDetail from "./orders/order-detail";
+import { useNavigate } from "react-router-dom";
+import { WidgetConfig } from "@medusajs/admin";
+import { Container } from "../../components/onboarding-flow/shared/container";
+import Button from "../../components/onboarding-flow/shared/button";
+import Accordion from "../../components/onboarding-flow/shared/accordion";
+import GetStartedIcon from "../../components/onboarding-flow/shared/icons/get-started-icon";
+import ProductsList from "../../components/onboarding-flow/products/products-list";
+import ProductDetail from "../../components/onboarding-flow/products/product-detail";
+import OrdersList from "../../components/onboarding-flow/orders/orders-list";
+import OrderDetail from "../../components/onboarding-flow/orders/order-detail";
 import {
   useAdminOnboardingState,
   useAdminUpdateOnboardingStateMutation,
-} from "../shared/hooks";
+} from "../../components/onboarding-flow/shared/hooks";
 import {
   AdminOnboardingUpdateStateReq,
   OnboardingStateRes,
   UpdateOnboardingStateInput,
-} from "../../types/onboarding";
-import { OnboardingState } from "../../models/onboarding";
+} from "../../../types/onboarding";
+import { OnboardingState } from "../../../models/onboarding";
 
 type STEP_ID =
   | "create_product"
@@ -26,7 +26,7 @@ type STEP_ID =
   | "create_order"
   | "setup_finished";
 
-export type StepContentProps = ExtensionProps & {
+export type StepContentProps = any & {
   onNext?: Function;
   isComplete?: boolean;
   data?: OnboardingState;
@@ -46,14 +46,14 @@ const STEP_FLOW: STEP_ID[] = [
   "setup_finished",
 ];
 
-const OnboardingFlow = (props: ExtensionProps) => {
+const OnboardingFlow = (props: any) => {
   const { data, isLoading } = useAdminOnboardingState<OnboardingStateRes>("");
   const { mutate } = useAdminUpdateOnboardingStateMutation<
     AdminOnboardingUpdateStateReq,
     OnboardingStateRes
   >("");
 
-  const { navigate } = props;
+  const navigate = useNavigate();
 
   const currentStep: STEP_ID | undefined = data?.status
     ?.current_step as STEP_ID;
@@ -289,8 +289,7 @@ const OnboardingFlow = (props: ExtensionProps) => {
   );
 };
 
-export const config: ExtensionConfig = {
-  type: "widget",
+export const config: WidgetConfig = {
   zone: [
     "product.list.before",
     "product.details.before",
