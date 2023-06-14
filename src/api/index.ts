@@ -13,7 +13,7 @@ export default (rootDirectory: string): Router | Router[] => {
     "medusa-config"
   );
 
-  const corsOptions = {
+  const adminCors = {
     origin: projectConfig.admin_cors.split(","),
     credentials: true,
   }
@@ -26,7 +26,7 @@ export default (rootDirectory: string): Router | Router[] => {
   const router = Router()
 
   router.use("/store", cors(storeCors), bodyParser.json())
-  router.use("/admin", cors(corsOptions), bodyParser.json())
+  router.use("/admin", cors(adminCors), bodyParser.json())
   router.use(/\/admin\/((?!auth)(?!invites).*)/, authenticate())
 
   const adminRouter = Router()
