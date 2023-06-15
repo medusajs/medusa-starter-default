@@ -1,7 +1,7 @@
 import React from "react";
-import IconBadge from "../shared/icon-badge";
-import ComputerDesktopIcon from "../shared/icons/computer-desktop-icon";
-import DollarSignIcon from "../shared/icons/dollar-sign-icon";
+import IconBadge from "../../shared/icon-badge";
+import ComputerDesktopIcon from "../../shared/icons/computer-desktop-icon";
+import DollarSignIcon from "../../shared/icons/dollar-sign-icon";
 
 const OrderDetail = () => {
   return (
@@ -20,7 +20,7 @@ const OrderDetail = () => {
       </p>
       <div className="grid grid-cols-2 gap-4 mt-5 pb-5 mb-5 border-b border-gray-300 border-solid">
         <a
-          href="https://medusa-docs-git-docs-onboarding-material-medusajs.vercel.app/starters/nextjs-medusa-starter?path=simple-quickstart"
+          href="https://docs.medusajs.com/starters/nextjs-medusa-starter?path=simple-quickstart"
           target="_blank"
         >
           <div
@@ -47,7 +47,7 @@ const OrderDetail = () => {
           </div>
         </a>
         <a
-          href="https://medusa-docs-git-docs-onboarding-material-medusajs.vercel.app/recipes"
+          href="https://docs.medusajs.com/recipes/?ref=onboarding"
           target="_blank"
         >
           <div

@@ -1,5 +1,5 @@
 import React from "react";
-import IconProps from "../../../../types/icon-type";
+import IconProps from "../../../types/icon-type";
 
 const ClipboardCopyIcon: React.FC<IconProps> = ({
   size = "20",

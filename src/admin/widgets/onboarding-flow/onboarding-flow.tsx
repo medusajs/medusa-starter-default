@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { WidgetConfig } from "@medusajs/admin";
-import { Container } from "../../components/onboarding-flow/shared/container";
-import Button from "../../components/onboarding-flow/shared/button";
-import Accordion from "../../components/onboarding-flow/shared/accordion";
-import GetStartedIcon from "../../components/onboarding-flow/shared/icons/get-started-icon";
+import { WidgetConfig, WidgetProps } from "@medusajs/admin";
+import { Container } from "../../components/shared/container";
+import Button from "../../components/shared/button";
+import Accordion from "../../components/shared/accordion";
+import GetStartedIcon from "../../components/shared/icons/get-started-icon";
 import ProductsList from "../../components/onboarding-flow/products/products-list";
 import ProductDetail from "../../components/onboarding-flow/products/product-detail";
 import OrdersList from "../../components/onboarding-flow/orders/orders-list";
@@ -12,7 +12,7 @@ import OrderDetail from "../../components/onboarding-flow/orders/order-detail";
 import {
   useAdminOnboardingState,
   useAdminUpdateOnboardingStateMutation,
-} from "../../components/onboarding-flow/shared/hooks";
+} from "../../components/shared/hooks";
 import {
   AdminOnboardingUpdateStateReq,
   OnboardingStateRes,
@@ -26,11 +26,11 @@ type STEP_ID =
   | "create_order"
   | "setup_finished";
 
-export type StepContentProps = any & {
+export type StepContentProps = WidgetProps & {
   onNext?: Function;
   isComplete?: boolean;
   data?: OnboardingState;
-} & any;
+};
 
 type Step = {
   id: STEP_ID;
@@ -231,7 +231,7 @@ const OnboardingFlow = (props: any) => {
                     <br /> You can find out more details and build your own by
                     following{" "}
                     <a
-                      href="https://docs.medusajs.com/"
+                      href="https://docs.medusajs.com/admin/onboarding?ref=onboarding"
                       target="_blank"
                       className="text-blue-500 font-semibold"
                     >

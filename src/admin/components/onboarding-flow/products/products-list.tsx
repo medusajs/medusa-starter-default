@@ -1,5 +1,5 @@
 import React from "react";
-import Button from "../shared/button";
+import Button from "../../shared/button";
 import { useAdminCreateProduct } from "medusa-react";
 import { useAdminRegions } from "medusa-react";
 import { StepContentProps } from "../../../widgets/onboarding-flow/onboarding-flow";

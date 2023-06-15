@@ -1,5 +1,5 @@
 import React from "react";
-import Button from "../shared/button";
+import Button from "../../shared/button";
 import { useAdminProduct } from "medusa-react";
 import { useAdminCreateDraftOrder } from "medusa-react";
 import { useAdminShippingOptions } from "medusa-react";
