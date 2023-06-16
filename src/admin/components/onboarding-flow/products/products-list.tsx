@@ -12,8 +12,11 @@ enum ProductStatus {
 const ProductsList = ({ onNext, isComplete }: StepContentProps) => {
   const { mutateAsync: createCollection, isLoading: collectionLoading } =
     useAdminCreateCollection();
-  const { mutateAsync: createProduct, isLoading } = useAdminCreateProduct();
+  const { mutateAsync: createProduct, isLoading: productLoading } =
+    useAdminCreateProduct();
   const { regions } = useAdminRegions();
+
+  const isLoading = collectionLoading || productLoading;
 
   const createSample = async () => {
     try {
