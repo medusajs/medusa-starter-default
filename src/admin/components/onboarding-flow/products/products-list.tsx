@@ -1,6 +1,6 @@
 import React from "react";
 import Button from "../../shared/button";
-import { useAdminCreateProduct } from "medusa-react";
+import { useAdminCreateProduct, useAdminCreateCollection } from "medusa-react";
 import { useAdminRegions } from "medusa-react";
 import { StepContentProps } from "../../../widgets/onboarding-flow/onboarding-flow";
 
@@ -10,12 +10,18 @@ enum ProductStatus {
 }
 
 const ProductsList = ({ onNext, isComplete }: StepContentProps) => {
-  const { mutate: createProduct, isLoading } = useAdminCreateProduct();
+  const { mutateAsync: createCollection, isLoading: collectionLoading } =
+    useAdminCreateCollection();
+  const { mutateAsync: createProduct, isLoading } = useAdminCreateProduct();
   const { regions } = useAdminRegions();
 
-  const createSampleProduct = () => {
-    createProduct(
-      {
+  const createSample = async () => {
+    try {
+      const { collection } = await createCollection({
+        title: "Merch",
+        handle: "merch",
+      });
+      const { product } = await createProduct({
         title: "Medusa T-Shirt",
         description: "Comfy t-shirt with Medusa logo",
         subtitle: "Black",
@@ -26,6 +32,7 @@ const ProductsList = ({ onNext, isComplete }: StepContentProps) => {
           "https://medusa-public-images.s3.eu-west-1.amazonaws.com/tee-black-front.png",
           "https://medusa-public-images.s3.eu-west-1.amazonaws.com/tee-black-back.png",
         ],
+        collection_id: collection.id,
         variants: [
           {
             title: "Small",
@@ -69,14 +76,11 @@ const ProductsList = ({ onNext, isComplete }: StepContentProps) => {
           },
         ],
         status: ProductStatus.PUBLISHED,
-      },
-      {
-        onSuccess: ({ product }) => {
-          onNext(product);
-        },
-        onError: err => console.log(err),
-      }
-    );
+      });
+      onNext(product);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
@@ -95,7 +99,7 @@ const ProductsList = ({ onNext, isComplete }: StepContentProps) => {
           <Button
             variant="secondary"
             size="small"
-            onClick={() => createSampleProduct()}
+            onClick={() => createSample()}
             loading={isLoading}
           >
             Create sample product
