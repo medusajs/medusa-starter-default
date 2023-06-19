@@ -1868,10 +1868,10 @@
   dependencies:
     "@lukeed/csprng" "^1.1.0"
 
-"@medusajs/admin-ui@1.9.0-snapshot-20230615191336":
-  version "1.9.0-snapshot-20230615191336"
-  resolved "https://registry.yarnpkg.com/@medusajs/admin-ui/-/admin-ui-1.9.0-snapshot-20230615191336.tgz#2d8502a07d67d5febf78a1ecc50281d37a1da44b"
-  integrity sha512-YRTAMaOjhKtiGMPHrmfyx8jZoHjgIlNCFw8iI2ky0CDu/KChRvikwZGjDZj5XtkxcgRGBs0x7N9DWNesrofyvA==
+"@medusajs/admin-ui@2.0.0-snapshot-20230619102637":
+  version "2.0.0-snapshot-20230619102637"
+  resolved "https://registry.yarnpkg.com/@medusajs/admin-ui/-/admin-ui-2.0.0-snapshot-20230619102637.tgz#44c29611d1b6283bb6776b3270d153c7a76c1de6"
+  integrity sha512-Gup6Thh1VCh1lH6mBt9hUoINCYxLzSyV+wV0VSrQ6/4qCGXBkAfl+Sr3nKte7YaNnI63AZ8fac94q91PGpTzRA==
   dependencies:
     "@babel/parser" "7.22.5"
     "@babel/traverse" "7.22.5"
@@ -1892,7 +1892,6 @@
     "@svgr/webpack" "^8.0.1"
     "@swc/core" "^1.3.61"
     "@tailwindcss/forms" "^0.5.3"
-    "@tailwindcss/line-clamp" "^0.4.2"
     "@tanstack/react-query" "4.22.0"
     "@tanstack/react-table" "^8.7.9"
     autoprefixer "^10.4.13"
@@ -1904,7 +1903,7 @@
     framer-motion "^9.1.6"
     html-webpack-plugin "^5.5.1"
     md5 "^2.3.0"
-    medusa-react "9.0.1-snapshot-20230615191336"
+    medusa-react "9.0.1-snapshot-20230619102637"
     mini-css-extract-plugin "^2.7.6"
     moment "^2.29.4"
     path-browserify "^1.0.1"
@@ -1947,21 +1946,20 @@
     webpack-dev-server "4.15.0"
     webpackbar "^5.0.2"
 
-"@medusajs/admin@6.0.1-snapshot-20230615191336":
-  version "6.0.1-snapshot-20230615191336"
-  resolved "https://registry.yarnpkg.com/@medusajs/admin/-/admin-6.0.1-snapshot-20230615191336.tgz#e0ac5d291236a9d8845a0b0eb971688b5efb5774"
-  integrity sha512-yjRfl1nzkVcxHul4LMxKNEEeqLD917x3TQXkjaK6fnwsh84d0bHrpQl6MucGygq1O3S0xi6LUw2llMQzC4ogUA==
+"@medusajs/admin@7.0.0-snapshot-20230619102637":
+  version "7.0.0-snapshot-20230619102637"
+  resolved "https://registry.yarnpkg.com/@medusajs/admin/-/admin-7.0.0-snapshot-20230619102637.tgz#a40873849977d48adf1cb7c967d84e89ab59725b"
+  integrity sha512-OuJvYjisoLvLZ2iFQnlZ/7VnsemjpOXnEftS/1wP14doyvhPcZXFSDTLE+4dkK7fvi33m+n9LBH7oobgPnNObQ==
   dependencies:
-    "@medusajs/admin-ui" "1.9.0-snapshot-20230615191336"
+    "@medusajs/admin-ui" "2.0.0-snapshot-20230619102637"
     "@rollup/plugin-alias" "5.0.0"
     "@rollup/plugin-commonjs" "24.1.0"
     "@rollup/plugin-json" "6.0.0"
     "@rollup/plugin-node-resolve" "15.0.2"
     "@rollup/plugin-replace" "5.0.2"
-    "@rollup/plugin-terser" "0.4.1"
     "@rollup/plugin-virtual" "^3.0.1"
     commander "^10.0.0"
-    dotenv "^16.0.3"
+    dotenv "16.0.3"
     esbuild "0.17.18"
     express "4.18.2"
     fs-extra "11.1.0"
@@ -2047,10 +2045,10 @@
     winston "^3.8.2"
     yargs "^15.3.1"
 
-"@medusajs/medusa-js@6.0.1-snapshot-20230615191336":
-  version "6.0.1-snapshot-20230615191336"
-  resolved "https://registry.yarnpkg.com/@medusajs/medusa-js/-/medusa-js-6.0.1-snapshot-20230615191336.tgz#06cd05ef1f375adc35bba420bc4828aeac050b4f"
-  integrity sha512-F8kkkqR/pdt1qHwvwnKqLKu/J2XmE6VoJ/JhIfiXMdQHteDu+13ze2TcowwDmrbjXI7BWw1A4FMtFZSi5rJurw==
+"@medusajs/medusa-js@6.0.1-snapshot-20230619102637":
+  version "6.0.1-snapshot-20230619102637"
+  resolved "https://registry.yarnpkg.com/@medusajs/medusa-js/-/medusa-js-6.0.1-snapshot-20230619102637.tgz#9fea185d3feefced44bf467cb9397a44875def52"
+  integrity sha512-FVt2czy/4//I4xM0l+QviNUuRR9efM/11Aq7bNqpVAwh+NY50rYqw25uU9jbPFDdSXwcFVU3vO9KltjO6/W+Tw==
   dependencies:
     axios "^0.24.0"
     cross-env "^5.2.1"
@@ -2842,15 +2840,6 @@
   dependencies:
     "@rollup/pluginutils" "^5.0.1"
     magic-string "^0.27.0"
-
-"@rollup/plugin-terser@0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@rollup/plugin-terser/-/plugin-terser-0.4.1.tgz#5c323fd066355056224b6993fcb14c409d29873e"
-  integrity sha512-aKS32sw5a7hy+fEXVy+5T95aDIwjpGHCTv833HXVtyKMDoVS7pBr5K3L9hEQoNqbJFjfANPrNpIXlTQ7is00eA==
-  dependencies:
-    serialize-javascript "^6.0.0"
-    smob "^0.0.6"
-    terser "^5.15.1"
 
 "@rollup/plugin-virtual@^3.0.1":
   version "3.0.1"
@@ -3976,11 +3965,6 @@
   integrity sha512-y5mb86JUoiUgBjY/o6FJSFZSEttfb3Q5gllE4xoKjAAD+vBrnIhE4dViwUuow3va8mpH4s9jyUbUbrRGoRdc2Q==
   dependencies:
     mini-svg-data-uri "^1.2.3"
-
-"@tailwindcss/line-clamp@^0.4.2":
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/line-clamp/-/line-clamp-0.4.4.tgz#767cf8e5d528a5d90c9740ca66eb079f5e87d423"
-  integrity sha512-5U6SY5z8N42VtrCrKlsTAA35gy2VSyYtHWCsg1H87NU1SXnEfekTVlrga9fzUDrrHcGi2Lb5KenUWb4lRQT5/g==
 
 "@tanstack/query-core@4.22.0":
   version "4.22.0"
@@ -8399,12 +8383,12 @@ medusa-payment-stripe@6.0.1-snapshot-20230530160902:
     medusa-core-utils "^1.2.0"
     stripe "^11.10.0"
 
-medusa-react@9.0.1-snapshot-20230615191336:
-  version "9.0.1-snapshot-20230615191336"
-  resolved "https://registry.yarnpkg.com/medusa-react/-/medusa-react-9.0.1-snapshot-20230615191336.tgz#44bd88a4722c1514195354631682d386179aae5b"
-  integrity sha512-h4J/rgo8RI8E4SWL7iwsrjuAuVo36+QUx/gR5Cl86k/kETxUJ+jBWyWEGfHP9tU3MAOiBscmHOKgpVUzK1flkw==
+medusa-react@9.0.1-snapshot-20230619102637:
+  version "9.0.1-snapshot-20230619102637"
+  resolved "https://registry.yarnpkg.com/medusa-react/-/medusa-react-9.0.1-snapshot-20230619102637.tgz#07e4cd3377f7b2e6aaafa45c0799146327b23d86"
+  integrity sha512-RF4iYMSDnRdTP3QrXgN7premydY2EhP7n8QWMdcwoQH4EITkwBwCQ7o7G27p+9s2ECdaGWlr4CJiw9GK5Ixvlg==
   dependencies:
-    "@medusajs/medusa-js" "6.0.1-snapshot-20230615191336"
+    "@medusajs/medusa-js" "6.0.1-snapshot-20230619102637"
 
 medusa-telemetry@^0.0.16:
   version "0.0.16"
@@ -10502,7 +10486,7 @@ send@0.18.0:
     range-parser "~1.2.1"
     statuses "2.0.1"
 
-serialize-javascript@^6.0.0, serialize-javascript@^6.0.1:
+serialize-javascript@^6.0.1:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/serialize-javascript/-/serialize-javascript-6.0.1.tgz#b206efb27c3da0b0ab6b52f48d170b7996458e5c"
   integrity sha512-owoXEFjWRllis8/M1Q+Cw5k8ZH40e3zhp/ovX+Xr/vi1qj6QesbyXXViFbpNvWvPNAD62SutwEXavefrLJWj7w==
@@ -10658,11 +10642,6 @@ sliced@1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/sliced/-/sliced-1.0.1.tgz#0b3a662b5d04c3177b1926bea82b03f837a2ef41"
   integrity sha512-VZBmZP8WU3sMOZm1bdgTadsQbcscK0UM8oKxKVBs4XAhUo2Xxzm/OFMGBkPusxw9xL3Uy8LrzEqGqJhclsr0yA==
-
-smob@^0.0.6:
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/smob/-/smob-0.0.6.tgz#09b268fea916158a2781c152044c6155adbb8aa1"
-  integrity sha512-V21+XeNni+tTyiST1MHsa84AQhT1aFZipzPpOFAVB8DkHzwJyjjAmt9bgwnuZiZWnIbMo2duE29wybxv/7HWUw==
 
 snake-case@^3.0.4:
   version "3.0.4"
@@ -11057,7 +11036,7 @@ terser-webpack-plugin@^5.3.7:
     serialize-javascript "^6.0.1"
     terser "^5.16.8"
 
-terser@^5.10.0, terser@^5.15.1, terser@^5.16.8:
+terser@^5.10.0, terser@^5.16.8:
   version "5.18.0"
   resolved "https://registry.yarnpkg.com/terser/-/terser-5.18.0.tgz#dc811fb8e3481a875d545bda247c8730ee4dc76b"
   integrity sha512-pdL757Ig5a0I+owA42l6tIuEycRuM7FPY4n62h44mRLRfnOxJkkOHd6i89dOpwZlpF6JXBwaAHF6yWzFrt+QyA==
