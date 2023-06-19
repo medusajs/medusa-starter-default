@@ -14,8 +14,17 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": ".",
-    "jsx": "react"
+    "jsx": "react-jsx",
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "checkJs": false
   },
-  "include": ["src"],
-  "exclude": ["**/__tests__", "**/__fixtures__", "node_modules"]
+  "include": ["src/"],
+  "exclude": [
+    "**/__tests__",
+    "**/__fixtures__",
+    "node_modules",
+    "build",
+    ".cache"
+  ]
 }
