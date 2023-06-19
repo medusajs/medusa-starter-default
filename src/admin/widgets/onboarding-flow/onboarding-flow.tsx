@@ -46,7 +46,7 @@ const STEP_FLOW: STEP_ID[] = [
   "setup_finished",
 ];
 
-const OnboardingFlow = (props: any) => {
+const OnboardingFlow = (props: WidgetProps) => {
   const { data, isLoading } = useAdminOnboardingState<OnboardingStateRes>("");
   const { mutate } = useAdminUpdateOnboardingStateMutation<
     AdminOnboardingUpdateStateReq,
@@ -265,6 +265,7 @@ const OnboardingFlow = (props: any) => {
                     active={isCurrent}
                     complete={isComplete}
                     disabled={!isComplete && !isCurrent}
+                    key={step.id}
                     {...(!isComplete &&
                       !isCurrent && {
                         customTrigger: <></>,
