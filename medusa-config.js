@@ -92,7 +92,10 @@ const plugins = [
   },
   {
     resolve: `medusa-plugin-authorize-net`,
-    options: {},
+    options: {
+      api_key: process.env.AUTHORIZE_NET_API_KEY,
+      transaction_key: process.env.AUTHORIZE_NET_TRANSACTION_KEY
+    },
   },
   // To enable the admin plugin, uncomment the following lines and run `yarn add @medusajs/admin`
   // {
