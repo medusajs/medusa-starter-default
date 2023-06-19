@@ -77,7 +77,7 @@ const OrderDetail = () => {
       <div>
         You can find more useful guides in{" "}
         <a
-          href="https://docs.medusajs.com/"
+          href="https://docs.medusajs.com/?ref=onboarding"
           target="_blank"
           className="text-blue-500 font-semibold"
         >
