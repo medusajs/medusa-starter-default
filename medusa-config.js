@@ -98,10 +98,10 @@ const plugins = [
     },
   },
   {
-    resolve: `medusa-plugin-authorize-net`,
+    resolve: `medusa-payment-stripe`,
     options: {
-      api_key: process.env.AUTHORIZE_NET_API_KEY,
-      transaction_key: process.env.AUTHORIZE_NET_TRANSACTION_KEY
+      api_key: process.env.STRIPE_API_KEY,
+      webhook_secret: process.env.STRIPE_WEBHOOK_SECRET,
     },
   },
   // To enable the admin plugin, uncomment the following lines and run `yarn add @medusajs/admin`
