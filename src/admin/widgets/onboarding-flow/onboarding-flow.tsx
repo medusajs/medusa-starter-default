@@ -1,24 +1,21 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { WidgetConfig, WidgetProps } from "@medusajs/admin";
-import { Container } from "../../components/shared/container";
-import Button from "../../components/shared/button";
-import Accordion from "../../components/shared/accordion";
-import GetStartedIcon from "../../components/shared/icons/get-started-icon";
-import ProductsList from "../../components/onboarding-flow/products/products-list";
-import ProductDetail from "../../components/onboarding-flow/products/product-detail";
-import OrdersList from "../../components/onboarding-flow/orders/orders-list";
-import OrderDetail from "../../components/onboarding-flow/orders/order-detail";
-import {
-  useAdminOnboardingState,
-  useAdminUpdateOnboardingStateMutation,
-} from "../../components/shared/hooks";
+import { useAdminCustomPost, useAdminCustomQuery } from "medusa-react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { OnboardingState } from "../../../models/onboarding";
 import {
   AdminOnboardingUpdateStateReq,
   OnboardingStateRes,
   UpdateOnboardingStateInput,
 } from "../../../types/onboarding";
-import { OnboardingState } from "../../../models/onboarding";
+import OrderDetail from "../../components/onboarding-flow/orders/order-detail";
+import OrdersList from "../../components/onboarding-flow/orders/orders-list";
+import ProductDetail from "../../components/onboarding-flow/products/product-detail";
+import ProductsList from "../../components/onboarding-flow/products/products-list";
+import Accordion from "../../components/shared/accordion";
+import Button from "../../components/shared/button";
+import { Container } from "../../components/shared/container";
+import GetStartedIcon from "../../components/shared/icons/get-started-icon";
 
 type STEP_ID =
   | "create_product"
@@ -46,12 +43,17 @@ const STEP_FLOW: STEP_ID[] = [
   "setup_finished",
 ];
 
+const QUERY_KEY = ["onboarding_state"];
+
 const OnboardingFlow = (props: WidgetProps) => {
-  const { data, isLoading } = useAdminOnboardingState<OnboardingStateRes>("");
-  const { mutate } = useAdminUpdateOnboardingStateMutation<
+  const { data, isLoading } = useAdminCustomQuery<
+    undefined,
+    OnboardingStateRes
+  >("/onboarding", QUERY_KEY);
+  const { mutate } = useAdminCustomPost<
     AdminOnboardingUpdateStateReq,
     OnboardingStateRes
-  >("");
+  >("/onboarding", QUERY_KEY);
 
   const navigate = useNavigate();
 
@@ -94,7 +96,7 @@ const OnboardingFlow = (props: WidgetProps) => {
     extraData?: UpdateOnboardingStateInput;
     onComplete?: () => void;
   }) => {
-    const next = STEP_FLOW[STEP_FLOW.findIndex(step => step === step_id) + 1];
+    const next = STEP_FLOW[STEP_FLOW.findIndex((step) => step === step_id) + 1];
     updateServerState({ current_step: next, ...extraData }, onComplete);
   };
 
@@ -164,7 +166,7 @@ const OnboardingFlow = (props: WidgetProps) => {
           type="single"
           className="my-3"
           value={openStep}
-          onValueChange={value => setOpenStep(value as STEP_ID)}
+          onValueChange={(value) => setOpenStep(value as STEP_ID)}
         >
           <div className="flex items-center">
             <div className="mr-5">
@@ -254,7 +256,7 @@ const OnboardingFlow = (props: WidgetProps) => {
           </div>
           {
             <div className="mt-5">
-              {(!completed ? Steps : Steps.slice(-1)).map(step => {
+              {(!completed ? Steps : Steps.slice(-1)).map((step) => {
                 const isComplete = isStepComplete(step.id);
                 const isCurrent = currentStep === step.id;
                 return (
