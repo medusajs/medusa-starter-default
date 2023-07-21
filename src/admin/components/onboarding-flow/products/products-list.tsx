@@ -94,8 +94,9 @@ const ProductsList = ({ onNext, isComplete }: StepContentProps) => {
         use the product to create a sample order.
       </p>
       <p>
-        If you're not ready to create a product, we can create a sample product
-        for you.
+        You can create a product by clicking the "New Product" button below.
+        Alternatively, if you're not ready to create your own product, we can
+        create a sample one for you.
       </p>
       {!isComplete && (
         <div className="flex gap-2 mt-4">
