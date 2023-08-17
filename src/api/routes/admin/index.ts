@@ -1,6 +1,7 @@
 import { Router } from "express";
-import customRouteHandler from "./custom-route-handler";
 import { wrapHandler } from "@medusajs/medusa";
+import onboardingRoutes from "./onboarding";
+import customRouteHandler from "./custom-route-handler";
 
 // Initialize a custom router
 const router = Router();
@@ -11,4 +12,7 @@ export function attachAdminRoutes(adminRouter: Router) {
 
   // Define a GET endpoint on the root route of our custom path
   router.get("/", wrapHandler(customRouteHandler));
+
+  // Attach routes for onboarding experience, defined separately
+  onboardingRoutes(adminRouter);
 }
