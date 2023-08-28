@@ -4,16 +4,16 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-groups:
-  medusa:
-    patterns:
-    - "@medusajs*"
-    - "medusa*"
-    update-types:
-    - "minor"
-    - "patch"
-ignore:
-  - dependency-name: "@medusajs*"
-    update-types: ["version-update:semver-major"]
-  - dependency-name: "medusa*"
-    update-types: ["version-update:semver-major"]
+    groups:
+      medusa:
+        patterns:
+        - "@medusajs*"
+        - "medusa*"
+        update-types:
+        - "minor"
+        - "patch"
+    ignore:
+      - dependency-name: "@medusajs*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "medusa*"
+        update-types: ["version-update:semver-major"]
