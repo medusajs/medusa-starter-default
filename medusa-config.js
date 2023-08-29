@@ -1,4 +1,5 @@
 const dotenv = require("dotenv");
+const transformer = require("medusa-plugin-meilisearch/dist/utils/transformer");
 
 let ENV_FILE_NAME = "";
 switch (process.env.NODE_ENV) {
@@ -92,6 +93,13 @@ const plugins = [
             searchableAttributes: process.env.MEILI_SEARCHABLE_ATTRIBUTES.split(' ') ?? [],
             displayedAttributes: process.env.MEILI_DISPLAYED_ATTRIBUTES.split(' ') ?? [],
             filterableAttributes: process.env.MEILI_FILTERABLE_ATTRIBUTES.split(' ') ?? [],
+          },
+          transformer: (product) => {
+            const transformedProduct = transformer.transformProduct(product);
+            return {
+              ...transformedProduct,
+              total_inventory_quantity: 0,
+            }
           },
         },
       },
