@@ -95,9 +95,9 @@ const plugins = [
           },
           transformer: (product) => {
             let quantity = 0;
-            product.variants?.map((value) => {
-              quantity += value?.inventory_quantity ?? 0;
-            });
+            // product.variants?.map((value) => {
+            //   quantity += value?.inventory_quantity ?? 0;
+            // });
             return {
               ...product,
               total_inventory_quantity: quantity
