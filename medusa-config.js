@@ -96,11 +96,11 @@ const plugins = [
           transformer: (product) => {
             let quantity = 0;
             product.variants?.map((value) => {
-              quantity += value.inventory_quantity;
+              quantity += value?.inventory_quantity ?? 0;
             });
             return {
               ...product,
-              metadata: {...product.metadata, total_inventory_quantity: quantity}
+              total_inventory_quantity: quantity
             }
           },
         },
