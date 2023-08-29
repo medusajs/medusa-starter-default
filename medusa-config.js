@@ -100,7 +100,6 @@ const plugins = [
             // });
             return {
               ...product,
-              total_inventory_quantity: quantity
             }
           },
         },
