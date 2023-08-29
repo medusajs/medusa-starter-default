@@ -96,12 +96,12 @@ const plugins = [
           },
           transformer: (product) => {
             let total_inventory_quantity = 0;
-            product.variants.map((value) => {
+            product.variants?.map((value) => {
               total_inventory_quantity += value.inventory_quantity;
             });
             return {
               ...product,
-              total_inventory_quantity: total_inventory_quantity
+              total_inventory_quantity
             }
           },
         },
