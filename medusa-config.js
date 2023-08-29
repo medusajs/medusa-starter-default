@@ -93,7 +93,6 @@ const plugins = [
             displayedAttributes: process.env.MEILI_DISPLAYED_ATTRIBUTES.split(' ') ?? [],
             filterableAttributes: process.env.MEILI_FILTERABLE_ATTRIBUTES.split(' ') ?? [],
           },
-          transformer: (product) => ({...product, total_inventory_quantity: 0}),
         },
       },
     },
