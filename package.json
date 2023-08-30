@@ -5,6 +5,7 @@
   "author": "Sebastian Rindom <skrindom@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "build:admin": "medusa-admin build --deployment",
     "build": "babel src -d dist --extensions \".ts,.js\"",
     "start": "medusa start",
     "prepare": "npm run build",
