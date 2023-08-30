@@ -17,6 +17,4 @@ RUN npm install -f
 
 COPY . .
 
-EXPOSE 7001
-
 CMD ["sh", "develop.sh"]
