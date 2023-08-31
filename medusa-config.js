@@ -95,17 +95,6 @@ const plugins = [
             filterableAttributes: process.env.MEILI_FILTERABLE_ATTRIBUTES.split(' ') ?? [],
             sortableAttributes: process.env.MEILI_SORTABLE_ATTRIBUTES.split(' ') ?? [],
           },
-          transformer: (product) => {
-            const transformedProduct = transformer.transformProduct(product);
-            let quantity = 0;
-            product.variants?.map((value) => {
-              quantity += value.inventory_quantity;
-            });
-            return {
-              ...transformedProduct,
-              total_inventory_quantity: quantity,
-            }
-          },
         },
       },
     },
