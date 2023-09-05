@@ -1,11 +1,11 @@
 import React from "react";
-import Button from "../../shared/button";
 import { useAdminProduct } from "medusa-react";
 import { useAdminCreateDraftOrder } from "medusa-react";
 import { useAdminShippingOptions } from "medusa-react";
 import { useAdminRegions } from "medusa-react";
 import { useMedusa } from "medusa-react";
 import { StepContentProps } from "../../../widgets/onboarding-flow/onboarding-flow";
+import { Button, Text } from "@medusajs/ui";
 
 const OrdersList = ({ onNext, isComplete, data }: StepContentProps) => {
   const { product } = useAdminProduct(data.product_id);
@@ -50,19 +50,21 @@ const OrdersList = ({ onNext, isComplete, data }: StepContentProps) => {
   };
   return (
     <>
-      <div className="py-4">
-        <p>
-          With a Product created, we can now place an Order. Click the button
-          below to create a sample order.
-        </p>
+      <div className="mb-6">
+        <Text className="mb-2">
+          The last step is to create a sample order using the product you just created. You can then view your order’s details, process its payment, fulfillment, inventory, and more.
+        </Text>
+        <Text>
+          By clicking the “Create a Sample Order” button, we’ll generate an order using the product you created and default configurations.
+        </Text>
       </div>
       <div className="flex gap-2">
         {!isComplete && (
           <Button
             variant="primary"
-            size="small"
+            size="base"
             onClick={() => createOrder()}
-            loading={isLoading}
+            isLoading={isLoading}
           >
             Create a sample order
           </Button>

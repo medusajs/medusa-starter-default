@@ -12,10 +12,9 @@ import OrderDetail from "../../components/onboarding-flow/orders/order-detail";
 import OrdersList from "../../components/onboarding-flow/orders/orders-list";
 import ProductDetail from "../../components/onboarding-flow/products/product-detail";
 import ProductsList from "../../components/onboarding-flow/products/products-list";
+import { Avatar, Button, Container, Heading, Text, clx } from "@medusajs/ui";
 import Accordion from "../../components/shared/accordion";
-import Button from "../../components/shared/button";
-import { Container } from "../../components/shared/container";
-import GetStartedIcon from "../../components/shared/icons/get-started-icon";
+import GetStarted from "../../components/shared/icons/get-started";
 
 type STEP_ID =
   | "create_product"
@@ -161,24 +160,34 @@ const OnboardingFlow = (props: WidgetProps) => {
 
   return (
     <>
-      <Container>
+      <Container className={clx(
+        "text-ui-fg-subtle px-0 pt-0 pb-4",
+        {
+          "mb-4": completed
+        }
+      )}>
         <Accordion
           type="single"
-          className="my-3"
           value={openStep}
           onValueChange={(value) => setOpenStep(value as STEP_ID)}
         >
-          <div className="flex items-center">
-            <div className="mr-5">
-              <GetStartedIcon />
+          <div className={clx(
+            "flex py-6 px-8",
+            {
+              "items-start": completed,
+              "items-center": !completed
+            }
+          )}>
+            <div className="w-12 h-12 p-1 flex justify-center items-center rounded-full bg-ui-bg-base shadow-elevation-card-rest mr-4">
+              <GetStarted />
             </div>
             {!completed ? (
               <>
                 <div>
-                  <h1 className="font-semibold text-lg">Get started</h1>
-                  <p>
+                  <Heading level="h1" className="text-ui-fg-base">Get started</Heading>
+                  <Text>
                     Learn the basics of Medusa by creating your first order.
-                  </p>
+                  </Text>
                 </div>
                 <div className="ml-auto flex items-start gap-2">
                   {!!currentStep ? (
@@ -186,7 +195,7 @@ const OnboardingFlow = (props: WidgetProps) => {
                       {currentStep === STEP_FLOW[STEP_FLOW.length - 1] ? (
                         <Button
                           variant="primary"
-                          size="small"
+                          size="base"
                           onClick={() => onComplete()}
                         >
                           Complete Setup
@@ -194,7 +203,7 @@ const OnboardingFlow = (props: WidgetProps) => {
                       ) : (
                         <Button
                           variant="secondary"
-                          size="small"
+                          size="base"
                           onClick={() => onHide()}
                         >
                           Cancel Setup
@@ -205,14 +214,14 @@ const OnboardingFlow = (props: WidgetProps) => {
                     <>
                       <Button
                         variant="secondary"
-                        size="small"
+                        size="base"
                         onClick={() => onHide()}
                       >
                         Close
                       </Button>
                       <Button
                         variant="primary"
-                        size="small"
+                        size="base"
                         onClick={() => onStart()}
                       >
                         Begin setup
@@ -224,10 +233,10 @@ const OnboardingFlow = (props: WidgetProps) => {
             ) : (
               <>
                 <div>
-                  <h1 className="font-semibold text-lg">
+                  <Heading level="h1" className="text-ui-fg-base">
                     Thank you for completing the setup guide!
-                  </h1>
-                  <p>
+                  </Heading>
+                  <Text>
                     This whole experience was built using our new{" "}
                     <strong>widgets</strong> feature.
                     <br /> You can find out more details and build your own by
@@ -240,12 +249,12 @@ const OnboardingFlow = (props: WidgetProps) => {
                       our guide
                     </a>
                     .
-                  </p>
+                  </Text>
                 </div>
                 <div className="ml-auto flex items-start gap-2">
                   <Button
                     variant="secondary"
-                    size="small"
+                    size="base"
                     onClick={() => onHide()}
                   >
                     Close
@@ -255,7 +264,7 @@ const OnboardingFlow = (props: WidgetProps) => {
             )}
           </div>
           {
-            <div className="mt-5">
+            <div>
               {(!completed ? Steps : Steps.slice(-1)).map((step) => {
                 const isComplete = isStepComplete(step.id);
                 const isCurrent = currentStep === step.id;
@@ -273,7 +282,7 @@ const OnboardingFlow = (props: WidgetProps) => {
                         customTrigger: <></>,
                       })}
                   >
-                    <div className="py-3 px-11 text-gray-500">
+                    <div className="pl-14 pb-6 pr-7">
                       <step.component
                         onNext={step.onNext}
                         isComplete={isComplete}

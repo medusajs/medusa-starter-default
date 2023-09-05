@@ -1,7 +1,8 @@
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
-import clsx from "clsx";
 import React from "react";
-import CheckCircleFillIcon from "./icons/check-circle-fill-icon";
+import { CheckCircleSolid, CircleDottedLine, CircleMiniSolid } from "@medusajs/icons";
+import { Heading, Text, clx } from "@medusajs/ui";
+import ActiveCircleDottedLine from "./icons/active-circle-dotted-line";
 
 type AccordionItemProps = AccordionPrimitive.AccordionItemProps & {
   title: string;
@@ -46,70 +47,57 @@ const Item: React.FC<AccordionItemProps> = ({
   triggerable,
   ...props
 }) => {
-  const headerClass = clsx({
-    "inter-small-semibold": headingSize === "small",
-    "inter-base-medium": headingSize === "medium",
-    "inter-large-semibold": headingSize === "large",
-  });
-
-  const paddingClasses = clsx({
-    "pb-0 mb-3 pt-3 ": headingSize === "medium",
-    "pb-5 radix-state-open:pb-5xlarge mb-5 ": headingSize === "large",
-  });
 
   return (
     <AccordionPrimitive.Item
       {...props}
-      className={clsx(
+      className={clx(
         "border-grey-20 group border-t last:mb-0",
-        { "opacity-30": props.disabled },
-        paddingClasses,
+        "py-1 px-8",
         className
       )}
     >
       <AccordionPrimitive.Header className="px-1">
         <div className="flex flex-col">
           <div className="flex w-full items-center justify-between">
-            <div className="gap-x-2xsmall flex items-center">
-              <div className="w-[25px] h-[25px] mr-4 flex items-center justify-center">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center p-[10px]">
                 {complete ? (
-                  <CheckCircleFillIcon color={"rgb(37, 99, 235)"} size="25px" />
+                  <CheckCircleSolid className="text-ui-fg-interactive" />
                 ) : (
-                  <span
-                    className={clsx(
-                      "rounded-full block border-gray-500 w-[20px] h-[20px] ml-[2px] border-2 transition-all",
-                      {
-                        "border-dashed border-blue-500 outline-4 outline-blue-200 outline outline-offset-2":
-                          active,
-                      }
+                  <>
+                    {active && (
+                      <ActiveCircleDottedLine size={20} className="text-ui-fg-interactive rounded-full" />
                     )}
-                  />
+                    {!active && <CircleMiniSolid className="text-ui-fg-muted" />}
+                  </>
                 )}
               </div>
-              <span className={headerClass}>
+              <Heading level="h3" className={clx(
+                "text-ui-fg-base"
+              )}>
                 {title}
-                {required && <span className="text-rose-50">*</span>}
-              </span>
+              </Heading>
             </div>
             <AccordionPrimitive.Trigger>
               {customTrigger || <MorphingTrigger />}
             </AccordionPrimitive.Trigger>
           </div>
           {subtitle && (
-            <span className="inter-small-regular text-grey-50 mt-1">
+            <Text as="span" size="small" className="mt-1">
               {subtitle}
-            </span>
+            </Text>
           )}
         </div>
       </AccordionPrimitive.Header>
       <AccordionPrimitive.Content
         forceMount={forceMountContent}
-        className={clsx(
+        className={clx(
           "radix-state-closed:animate-accordion-close radix-state-open:animate-accordion-open radix-state-closed:pointer-events-none px-1"
         )}
       >
         <div className="inter-base-regular group-radix-state-closed:animate-accordion-close">
-          {description && <p className="text-grey-50 ">{description}</p>}
+          {description && <Text>{description}</Text>}
           <div className="w-full">{children}</div>
         </div>
       </AccordionPrimitive.Content>

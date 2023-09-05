@@ -1,8 +1,8 @@
 import React from "react";
-import Button from "../../shared/button";
 import { useAdminCreateProduct, useAdminCreateCollection } from "medusa-react";
 import { useAdminRegions } from "medusa-react";
 import { StepContentProps } from "../../../widgets/onboarding-flow/onboarding-flow";
+import { Button, Text } from "@medusajs/ui";
 
 // Needed for sample product creation — not exported by anything importable here
 enum ProductStatus {
@@ -88,23 +88,23 @@ const ProductsList = ({ onNext, isComplete }: StepContentProps) => {
 
   return (
     <div>
-      <p>
+      <Text className="mb-2">
         Create a product and set its general details such as title and
         description, its price, options, variants, images, and more. You'll then
         use the product to create a sample order.
-      </p>
-      <p>
+      </Text>
+      <Text>
         You can create a product by clicking the "New Product" button below.
         Alternatively, if you're not ready to create your own product, we can
         create a sample one for you.
-      </p>
+      </Text>
       {!isComplete && (
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2 mt-6">
           <Button
-            variant="secondary"
-            size="small"
+            variant="primary"
+            size="base"
             onClick={() => createSample()}
-            loading={isLoading}
+            isLoading={isLoading}
           >
             Create sample product
           </Button>
