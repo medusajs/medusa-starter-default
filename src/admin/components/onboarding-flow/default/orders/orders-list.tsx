@@ -4,10 +4,10 @@ import { useAdminCreateDraftOrder } from "medusa-react";
 import { useAdminShippingOptions } from "medusa-react";
 import { useAdminRegions } from "medusa-react";
 import { useMedusa } from "medusa-react";
-import { StepContentProps } from "../../../widgets/onboarding-flow/onboarding-flow";
+import { StepContentProps } from "../../../../widgets/onboarding-flow/onboarding-flow";
 import { Button, Text } from "@medusajs/ui";
 
-const OrdersList = ({ onNext, isComplete, data }: StepContentProps) => {
+const OrdersListDefault = ({ onNext, isComplete, data }: StepContentProps) => {
   const { product } = useAdminProduct(data.product_id);
   const { mutateAsync: createDraftOrder, isLoading } =
     useAdminCreateDraftOrder();
@@ -74,4 +74,4 @@ const OrdersList = ({ onNext, isComplete, data }: StepContentProps) => {
   );
 };
 
-export default OrdersList;
+export default OrdersListDefault;

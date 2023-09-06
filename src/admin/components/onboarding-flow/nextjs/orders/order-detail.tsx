@@ -2,7 +2,7 @@ import React from "react";
 import { ComputerDesktopSolid, CurrencyDollarSolid, ToolsSolid } from "@medusajs/icons";
 import { Badge, Heading, Text } from "@medusajs/ui";
 
-const OrderDetail = () => {
+const OrderDetailNextjs = () => {
   return (
     <>
       <Text size="small" className="mb-6">
@@ -109,4 +109,4 @@ const OrderDetail = () => {
   );
 };
 
-export default OrderDetail;
+export default OrderDetailNextjs

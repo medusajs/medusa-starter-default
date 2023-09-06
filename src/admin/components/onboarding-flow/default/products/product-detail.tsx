@@ -1,9 +1,9 @@
 import React from "react";
 import { useAdminPublishableApiKeys } from "medusa-react";
-import { StepContentProps } from "../../../widgets/onboarding-flow/onboarding-flow";
+import { StepContentProps } from "../../../../widgets/onboarding-flow/onboarding-flow";
 import { Button, CodeBlock, Text } from "@medusajs/ui";
 
-const ProductDetail = ({ onNext, isComplete, data }: StepContentProps) => {
+const ProductDetailDefault = ({ onNext, isComplete, data }: StepContentProps) => {
   const { publishable_api_keys: keys, isLoading } = useAdminPublishableApiKeys({
     offset: 0,
     limit: 1,
@@ -59,4 +59,4 @@ const ProductDetail = ({ onNext, isComplete, data }: StepContentProps) => {
   );
 };
 
-export default ProductDetail;
+export default ProductDetailDefault;
