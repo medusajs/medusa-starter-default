@@ -12,7 +12,7 @@ const ProductDetailNextjs = ({ onNext, isComplete, data }: StepContentProps) => 
         You can preview your product using Medusa's Store APIs. You can copy any
         of the following code snippets to try it out.
       </Text>
-      <div className="flex gap-2">
+      <div className="flex gap-2 mt-6">
         <a
           href={`http://localhost:8000/products/${product?.handle}`}
           target="_blank"

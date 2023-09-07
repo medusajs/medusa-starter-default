@@ -86,7 +86,7 @@ const OrderDetailNextjs = () => {
             </div>
             <div>
               <Text size="xsmall" weight="plus" className="mb-1 text-ui-fg-base">
-                Learn more about the Next.js Storefront
+                Build with the Next.js Storefront
               </Text>
               <Text size="small">
                 Learn about the Next.js starter storefront’s features and how to customize it.

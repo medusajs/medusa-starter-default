@@ -107,11 +107,15 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
               id: "create_product_nextjs",
               title: "Create Product",
               component: ProductsListNextjs,
-              onNext: (product: Product, withOnComplete = true) => {
+              onNext: (product: Product) => {
                 setStepComplete({
                   step_id: "create_product_nextjs",
                   extraData: { product_id: product.id },
-                  onComplete: withOnComplete ? () => navigate(`/a/products/${product.id}`) : undefined,
+                  onComplete: () => {
+                    if (!location.pathname.startsWith(`/a/products/${product.id}`)) {
+                      navigate(`/a/products/${product.id}`)
+                    }
+                  },
                 });
               },
             },
@@ -119,10 +123,10 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
               id: "preview_product_nextjs",
               title: "Preview Product in your Next.js Storefront",
               component: ProductDetailNextjs,
-              onNext: (withOnComplete = true) => {
+              onNext: () => {
                 setStepComplete({
                   step_id: "preview_product_nextjs",
-                  onComplete: withOnComplete ? () => navigate(`/a/orders`) : undefined,
+                  onComplete: () => navigate(`/a/orders`),
                 });
               },
             },
@@ -130,14 +134,14 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
               id: "create_order_nextjs",
               title: "Create an Order using your Next.js Storefront",
               component: OrdersListNextjs,
-              onNext: (order: Order, withOnComplete = true) => {
+              onNext: (order: Order) => {
                 setStepComplete({
                   step_id: "create_order_nextjs",
-                  onComplete: withOnComplete ? () => {
+                  onComplete: () => {
                     if (!location.pathname.startsWith(`/a/orders/${order.id}`)) {
                       navigate(`/a/orders/${order.id}`)
                     }
-                  } : undefined,
+                  },
                 });
               },
             },
@@ -153,11 +157,15 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
               id: "create_product",
               title: "Create Product",
               component: ProductsListDefault,
-              onNext: (product: Product, withOnComplete = true) => {
+              onNext: (product: Product) => {
                 setStepComplete({
                   step_id: "create_product",
                   extraData: { product_id: product.id },
-                  onComplete: withOnComplete ? () => navigate(`/a/products/${product.id}`) : undefined,
+                  onComplete: () => {
+                    if (!location.pathname.startsWith(`/a/products/${product.id}`)) {
+                      navigate(`/a/products/${product.id}`)
+                    }
+                  },
                 });
               },
             },
@@ -165,10 +173,10 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
               id: "preview_product",
               title: "Preview Product",
               component: ProductDetailDefault,
-              onNext: (withOnComplete = true) => {
+              onNext: () => {
                 setStepComplete({
                   step_id: "preview_product",
-                  onComplete: withOnComplete ? () => navigate(`/a/orders`) : undefined,
+                  onComplete: () => navigate(`/a/orders`),
                 });
               },
             },
@@ -176,10 +184,14 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
               id: "create_order",
               title: "Create an Order",
               component: OrdersListDefault,
-              onNext: (order: Order, withOnComplete) => {
+              onNext: (order: Order) => {
                 setStepComplete({
                   step_id: "create_order",
-                  onComplete: withOnComplete ? () => navigate(`/a/orders/${order.id}`) : undefined,
+                  onComplete: () => {
+                    if (!location.pathname.startsWith(`/a/orders/${order.id}`)) {
+                      navigate(`/a/orders/${order.id}`)
+                    }
+                  },
                 });
               },
             },
@@ -191,7 +203,7 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
           ]
       }
     }
-  }, [])
+  }, [location.pathname])
 
   // used to retrieve the index of a step by its ID
   const findStepIndex = useCallback((step_id: STEP_ID) => {
@@ -242,6 +254,11 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
       currentStep === "create_product_nextjs"
   }, [currentStep])
 
+  const isOrderCreateStep = useMemo(() => {
+    return currentStep === "create_order" || 
+      currentStep === "create_order_nextjs"
+  }, [currentStep])
+
   // used to change the open step when the current
   // step is retrieved from custom endpoints
   useEffect(() => {
@@ -249,6 +266,26 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
     
     if (findStepIndex(currentStep) === steps.length - 1) setCompleted(true);
   }, [currentStep, findStepIndex]);
+
+  // used to check if the user created a product and has entered its details page
+  // the step is changed to the next one
+  useEffect(() => {
+    if (location.pathname.startsWith("/a/products/prod_") && isProductCreateStep && "product" in props) {
+      // change to the preview product step
+      const currentStepIndex = findStepIndex(currentStep)
+      steps[currentStepIndex].onNext?.(props.product)
+    }
+  }, [location.pathname, isProductCreateStep])
+
+  // used to check if the user created an order and has entered its details page
+  // the step is changed to the next one.
+  useEffect(() => {
+    if (location.pathname.startsWith("/a/orders/order_") && isOrderCreateStep && "order" in props) {
+      // change to the preview product step
+      const currentStepIndex = findStepIndex(currentStep)
+      steps[currentStepIndex].onNext?.(props.order)
+    }
+  }, [location.pathname, isOrderCreateStep])
 
   // used to check if the `onboarding_step` path
   // parameter is passed and, if so, moves to that step
@@ -273,14 +310,6 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
       .catch((e) => console.error(e))
     }
   }, [searchParams, openStep, getOnboardingParamStepData])
-
-  useEffect(() => {
-    if (location.pathname.startsWith("/a/products/prod_") && isProductCreateStep && "product" in props) {
-      // change to the preview product step
-      const currentStepIndex = findStepIndex(currentStep)
-      steps[currentStepIndex].onNext?.(props.product, false)
-    }
-  }, [location.pathname, isProductCreateStep])
 
   if (
     !isLoading &&
