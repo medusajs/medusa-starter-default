@@ -1,7 +1,7 @@
 import React from "react";
 import { useAdminProduct } from "medusa-react";
 import { StepContentProps } from "../../../../widgets/onboarding-flow/onboarding-flow";
-import { Button, Text } from "@medusajs/ui";
+import { Button, Text, clx } from "@medusajs/ui";
 
 const ProductDetailNextjs = ({ onNext, isComplete, data }: StepContentProps) => {
   const { product, isLoading: productIsLoading } = useAdminProduct(data?.product_id)
@@ -9,7 +9,16 @@ const ProductDetailNextjs = ({ onNext, isComplete, data }: StepContentProps) => 
     <div>
       <div className="flex flex-col gap-2">
         <Text>On this page, you can view your product's details and edit them.</Text>
-        <Text>We’ve created a Next.js storefront for you in the {process.env.MEDUSA_ADMIN_ONBOARDING_NEXTJS_DIRECTORY} directory.</Text>
+        <Text>
+          We’ve created a Next.js storefront for you in the{" "}
+          <code className={clx(
+            "p-0 px-[6px] bg-ui-tag-neutral-bg border border-ui-tag-neutral-border",
+            "text-ui-tag-neutral-text leading-6 rounded-md"
+          )}>
+            {process.env.MEDUSA_ADMIN_ONBOARDING_NEXTJS_DIRECTORY}
+          </code>{" "}
+          directory.
+        </Text>
         <Text>
           Medusa and the Next.js storefront are separate projects. Medusa stands on its own and can work with any storefront you prefer. 
           However, the{" "}
