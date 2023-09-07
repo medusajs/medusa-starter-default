@@ -32,8 +32,8 @@ const OrdersListNextjs = ({ isComplete, data }: StepContentProps) => {
 
   return (
     <>
-      <div className="mb-6">
-        <Text className="mb-2">
+      <div className="mb-6 flex flex-col gap-2">
+        <Text>
           The last step is to create a sample order using one of your products. You can then view your order’s details, process its payment, fulfillment, inventory, and more.
         </Text>
         <Text>

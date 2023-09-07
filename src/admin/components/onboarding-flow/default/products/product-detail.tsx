@@ -11,11 +11,13 @@ const ProductDetailDefault = ({ onNext, isComplete, data }: StepContentProps) =>
   const api_key = keys?.[0]?.id || "pk_01H0PY648BTMEJR34ZDATXZTD9";
   return (
     <div>
-      <Text>On this page, you can view your product's details and edit them.</Text>
-      <Text>
-        You can preview your product using Medusa's Store APIs. You can copy any
-        of the following code snippets to try it out.
-      </Text>
+      <div className="flex flex-col gap-2">
+        <Text>On this page, you can view your product's details and edit them.</Text>
+        <Text>
+          You can preview your product using Medusa's Store APIs. You can copy any
+          of the following code snippets to try it out.
+        </Text>
+      </div>
       <div>
         {!isLoading && (
           <CodeBlock snippets={[

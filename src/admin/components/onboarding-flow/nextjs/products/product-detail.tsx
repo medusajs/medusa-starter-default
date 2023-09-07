@@ -7,11 +7,26 @@ const ProductDetailNextjs = ({ onNext, isComplete, data }: StepContentProps) => 
   const { product, isLoading: productIsLoading } = useAdminProduct(data?.product_id)
   return (
     <div>
-      <Text>On this page, you can view your product's details and edit them.</Text>
-      <Text>
-        You can preview your product using Medusa's Store APIs. You can copy any
-        of the following code snippets to try it out.
-      </Text>
+      <div className="flex flex-col gap-2">
+        <Text>On this page, you can view your product's details and edit them.</Text>
+        <Text>We’ve created a Next.js storefront for you in the {process.env.MEDUSA_ADMIN_ONBOARDING_NEXTJS_DIRECTORY} directory.</Text>
+        <Text>
+          Medusa and the Next.js storefront are separate projects. Medusa stands on its own and can work with any storefront you prefer. 
+          However, the{" "}
+          <a 
+            href="https://github.com/medusajs/nextjs-starter-medusa"
+            target="_blank"
+            className="text-ui-fg-interactive hover:text-ui-fg-interactive-hover"
+          >
+            Next.js storefront
+          </a>{" "}
+          Next.js storefront is a perfect partner for Medusa, offering all the essentials you need for 
+          ecommerce and seamlessly connecting to Medusa's backend.
+        </Text>
+        <Text>
+          You can now check out your newly created products in the storefront!
+        </Text>
+      </div>
       <div className="flex gap-2 mt-6">
         <a
           href={`http://localhost:8000/products/${product?.handle}`}
