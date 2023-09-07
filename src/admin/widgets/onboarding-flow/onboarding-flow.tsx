@@ -1,7 +1,7 @@
-import { WidgetConfig, WidgetProps } from "@medusajs/admin";
+import { OrderDetailsWidgetProps, ProductDetailsWidgetProps, WidgetConfig, WidgetProps } from "@medusajs/admin";
 import { useAdminCustomPost, useAdminCustomQuery, useMedusa } from "medusa-react";
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { OnboardingState } from "../../../models/onboarding";
 import {
   AdminOnboardingUpdateStateReq,
@@ -31,7 +31,9 @@ type STEP_ID =
   | "create_order_nextjs"
   | "setup_finished_nextjs"
 
-export type StepContentProps = WidgetProps & {
+type OnboardingWidgetProps = WidgetProps | ProductDetailsWidgetProps | OrderDetailsWidgetProps
+
+export type StepContentProps = OnboardingWidgetProps & {
   onNext?: Function;
   isComplete?: boolean;
   data?: OnboardingState;
@@ -46,7 +48,7 @@ type Step = {
 
 const QUERY_KEY = ["onboarding_state"];
 
-const OnboardingFlow = (props: WidgetProps) => {
+const OnboardingFlow = (props: OnboardingWidgetProps) => {
   // create custom hooks for custom endpoints
   const { data, isLoading } = useAdminCustomQuery<
     undefined,
@@ -58,6 +60,7 @@ const OnboardingFlow = (props: WidgetProps) => {
   >("/onboarding", QUERY_KEY);
 
   const navigate = useNavigate();
+  const location = useLocation();
   // will be used if onboarding step
   // is passed as a path parameter
   const { client } = useMedusa();
@@ -104,11 +107,11 @@ const OnboardingFlow = (props: WidgetProps) => {
               id: "create_product_nextjs",
               title: "Create Product",
               component: ProductsListNextjs,
-              onNext: (product: Product) => {
+              onNext: (product: Product, withOnComplete = true) => {
                 setStepComplete({
                   step_id: "create_product_nextjs",
                   extraData: { product_id: product.id },
-                  onComplete: () => navigate(`/a/products/${product.id}`),
+                  onComplete: withOnComplete ? () => navigate(`/a/products/${product.id}`) : undefined,
                 });
               },
             },
@@ -116,10 +119,10 @@ const OnboardingFlow = (props: WidgetProps) => {
               id: "preview_product_nextjs",
               title: "Preview Product",
               component: ProductDetailNextjs,
-              onNext: () => {
+              onNext: (withOnComplete = true) => {
                 setStepComplete({
                   step_id: "preview_product_nextjs",
-                  onComplete: () => navigate(`/a/orders`),
+                  onComplete: withOnComplete ? () => navigate(`/a/orders`) : undefined,
                 });
               },
             },
@@ -127,10 +130,10 @@ const OnboardingFlow = (props: WidgetProps) => {
               id: "create_order_nextjs",
               title: "Create an Order",
               component: OrdersListNextjs,
-              onNext: (order: Order) => {
+              onNext: (order: Order, withOnComplete = true) => {
                 setStepComplete({
                   step_id: "create_order_nextjs",
-                  onComplete: () => navigate(`/a/orders/${order.id}`),
+                  onComplete: withOnComplete ? () => navigate(`/a/orders/${order.id}`) : undefined,
                 });
               },
             },
@@ -146,11 +149,11 @@ const OnboardingFlow = (props: WidgetProps) => {
               id: "create_product",
               title: "Create Product",
               component: ProductsListDefault,
-              onNext: (product: Product) => {
+              onNext: (product: Product, withOnComplete = true) => {
                 setStepComplete({
                   step_id: "create_product",
                   extraData: { product_id: product.id },
-                  onComplete: () => navigate(`/a/products/${product.id}`),
+                  onComplete: withOnComplete ? () => navigate(`/a/products/${product.id}`) : undefined,
                 });
               },
             },
@@ -158,10 +161,10 @@ const OnboardingFlow = (props: WidgetProps) => {
               id: "preview_product",
               title: "Preview Product",
               component: ProductDetailDefault,
-              onNext: () => {
+              onNext: (withOnComplete = true) => {
                 setStepComplete({
                   step_id: "preview_product",
-                  onComplete: () => navigate(`/a/orders`),
+                  onComplete: withOnComplete ? () => navigate(`/a/orders`) : undefined,
                 });
               },
             },
@@ -169,10 +172,10 @@ const OnboardingFlow = (props: WidgetProps) => {
               id: "create_order",
               title: "Create an Order",
               component: OrdersListDefault,
-              onNext: (order: Order) => {
+              onNext: (order: Order, withOnComplete) => {
                 setStepComplete({
                   step_id: "create_order",
-                  onComplete: () => navigate(`/a/orders/${order.id}`),
+                  onComplete: withOnComplete ? () => navigate(`/a/orders/${order.id}`) : undefined,
                 });
               },
             },
@@ -195,6 +198,39 @@ const OnboardingFlow = (props: WidgetProps) => {
   const isStepComplete = useCallback((step_id: STEP_ID) => {
     return findStepIndex(currentStep) > findStepIndex(step_id)
   }, [findStepIndex, currentStep]);
+  
+  // this is used to retrieve the data necessary
+  // to move to the next onboarding step
+  const getOnboardingParamStepData = useCallback(async (onboardingStep: string, data?: {
+    orderId?: string,
+    productId?: string,
+  }) => {
+    switch (onboardingStep) {
+      case "setup_finished_nextjs":
+      case "setup_finished":
+        const orderId = data?.orderId || searchParams.get("order_id")
+        if (orderId) {
+          return (await client.admin.orders.retrieve(orderId)).order
+        }
+
+        throw new Error ("Required `order_id` parameter was not passed as a parameter")
+      case "preview_product_nextjs":
+      case "preview_product":
+        const productId = data?.productId || searchParams.get("product_id")
+        if (productId) {
+          return (await client.admin.products.retrieve(productId)).product
+        }
+
+        throw new Error ("Required `product_id` parameter was not passed as a parameter")
+      default:
+        return undefined
+    }
+  }, [searchParams])
+
+  const isProductCreateStep = useMemo(() => {
+    return currentStep === "create_product" || 
+      currentStep === "create_product_nextjs"
+  }, [currentStep])
 
   // used to change the open step when the current
   // step is retrieved from custom endpoints
@@ -203,31 +239,6 @@ const OnboardingFlow = (props: WidgetProps) => {
     
     if (findStepIndex(currentStep) === steps.length - 1) setCompleted(true);
   }, [currentStep, findStepIndex]);
-  
-  // this is used to retrieve the data necessary
-  // to move to the next onboarding step
-  const getOnboardingParamStepData = useCallback(async (onboardingStep: string) => {
-    switch (onboardingStep) {
-      case "setup_finished_nextjs":
-      case "setup_finished":
-        const orderId = searchParams.get("order_id")
-        if (orderId) {
-          return (await client.admin.orders.retrieve(orderId)).order
-        }
-
-        throw new Error ("Required `order_id` parameter was not passed as a parameter")
-      case "preview_product_nextjs":
-      case "preview_product":
-        const productId = searchParams.get("product_id")
-        if (productId) {
-          return (await client.admin.products.retrieve(productId)).product
-        }
-
-        throw new Error ("Required `product_id` parameter was not passed as a parameter")
-      default:
-        return null
-    }
-  }, [searchParams])
 
   // used to check if the `onboarding_step` path
   // parameter is passed and, if so, moves to that step
@@ -249,12 +260,19 @@ const OnboardingFlow = (props: WidgetProps) => {
       // retrieve necessary data and trigger the next function
       getOnboardingParamStepData(onboardingStep)
       .then((data) => {
-        console.log("here", data)
         steps[openStepIndex].onNext?.(data)
       })
       .catch((e) => console.error(e))
     }
   }, [searchParams, openStep, getOnboardingParamStepData])
+
+  useEffect(() => {
+    if (location.pathname.startsWith("/a/products/prod_") && isProductCreateStep && "product" in props) {
+      // change to the preview product step
+      const currentStepIndex = findStepIndex(currentStep)
+      steps[currentStepIndex].onNext?.(props.product, false)
+    }
+  }, [location.pathname, isProductCreateStep])
 
   if (
     !isLoading &&
