@@ -103,6 +103,14 @@ const OrderDetailDefault = () => {
         >
           our documentation
         </a>
+        . If you like Medusa, please{" "}
+        <a 
+          href="https://github.com/medusajs/medusa"
+          target="_blank"
+          className="text-ui-fg-interactive hover:text-ui-fg-interactive-hover"
+        >
+          star us on GitHub
+        </a>
         .
       </div>
     </>

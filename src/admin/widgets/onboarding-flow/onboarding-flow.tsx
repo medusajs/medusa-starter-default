@@ -117,7 +117,7 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
             },
             {
               id: "preview_product_nextjs",
-              title: "Preview Product",
+              title: "Preview Product in your Next.js Storefront",
               component: ProductDetailNextjs,
               onNext: (withOnComplete = true) => {
                 setStepComplete({
@@ -128,18 +128,22 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
             },
             {
               id: "create_order_nextjs",
-              title: "Create an Order",
+              title: "Create an Order using your Next.js Storefront",
               component: OrdersListNextjs,
               onNext: (order: Order, withOnComplete = true) => {
                 setStepComplete({
                   step_id: "create_order_nextjs",
-                  onComplete: withOnComplete ? () => navigate(`/a/orders/${order.id}`) : undefined,
+                  onComplete: withOnComplete ? () => {
+                    if (!location.pathname.startsWith(`/a/orders/${order.id}`)) {
+                      navigate(`/a/orders/${order.id}`)
+                    }
+                  } : undefined,
                 });
               },
             },
             {
               id: "setup_finished_nextjs",
-              title: "Setup Finished: Start developing with Medusa",
+              title: "Setup Finished: Continue Building your Ecommerce Store",
               component: OrderDetailNextjs,
             },
           ]
@@ -208,6 +212,9 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
     switch (onboardingStep) {
       case "setup_finished_nextjs":
       case "setup_finished":
+        if (!data?.orderId && "order" in props) {
+          return props.order
+        }
         const orderId = data?.orderId || searchParams.get("order_id")
         if (orderId) {
           return (await client.admin.orders.retrieve(orderId)).order
@@ -216,6 +223,9 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
         throw new Error ("Required `order_id` parameter was not passed as a parameter")
       case "preview_product_nextjs":
       case "preview_product":
+        if (!data?.productId && "product" in props) {
+          return props.product
+        }
         const productId = data?.productId || searchParams.get("product_id")
         if (productId) {
           return (await client.admin.products.retrieve(productId)).product
@@ -246,11 +256,9 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
   useEffect(() => {
     const onboardingStep = searchParams.get("onboarding_step") as STEP_ID
     const onboardingStepIndex = findStepIndex(onboardingStep)
-    console.log("onboarding", onboardingStep, onboardingStepIndex, openStep)
     if (onboardingStep && onboardingStepIndex !== -1 && onboardingStep !== openStep) {
       // change current step to the onboarding step
       const openStepIndex = findStepIndex(openStep)
-      console.log(openStepIndex)
 
       if (onboardingStepIndex !== openStepIndex + 1) {
         // can only go forward one step
@@ -300,6 +308,16 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
     mutate({ is_complete: true });
   };
 
+  // used to get text for get started header
+  const getStartedText = () => {
+    switch(process.env.MEDUSA_ADMIN_ONBOARDING_TYPE) {
+      case "nextjs":
+        return "Learn the basics of Medusa by creating your first order using the Next.js storefront."
+      default:
+        return "Learn the basics of Medusa by creating your first order."
+    }
+  }
+
   return (
     <>
       <Container className={clx(
@@ -328,7 +346,7 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
                 <div>
                   <Heading level="h1" className="text-ui-fg-base">Get started</Heading>
                   <Text>
-                    Learn the basics of Medusa by creating your first order.
+                    {getStartedText()}
                   </Text>
                 </div>
                 <div className="ml-auto flex items-start gap-2">
