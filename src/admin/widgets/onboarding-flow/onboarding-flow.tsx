@@ -235,7 +235,7 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
       default:
         return undefined
     }
-  }, [searchParams])
+  }, [searchParams, props])
 
   const isProductCreateStep = useMemo(() => {
     return currentStep === "create_product" || 
