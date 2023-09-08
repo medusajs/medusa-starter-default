@@ -10,7 +10,7 @@ const ProductDetailNextjs = ({ onNext, isComplete, data }: StepContentProps) => 
       <div className="flex flex-col gap-2">
         <Text>On this page, you can view your product's details and edit them.</Text>
         <Text>
-          We’ve created a Next.js storefront for you in the{" "}
+          We've created a Next.js project for you in the{" "}
           <code className={clx(
             "p-0 px-[6px] bg-ui-tag-neutral-bg border border-ui-tag-neutral-border",
             "text-ui-tag-neutral-text leading-6 rounded-md"
@@ -20,20 +20,22 @@ const ProductDetailNextjs = ({ onNext, isComplete, data }: StepContentProps) => 
           directory.
         </Text>
         <Text>
-          Medusa and the Next.js storefront are separate projects. Medusa stands on its own and can work with any storefront you prefer. 
-          However, the{" "}
+          Your Medusa instance and Next.js storefront are two separate projects.
+          Medusa is a headless commerce engine, and ecommerce is one of many types of applications you can build with it.
+        </Text>
+        <Text>
+          The{" "}
           <a 
             href="https://github.com/medusajs/nextjs-starter-medusa"
             target="_blank"
             className="text-ui-fg-interactive hover:text-ui-fg-interactive-hover"
           >
-            Next.js storefront
+            Next.js Starter Storefront
           </a>{" "}
-          Next.js storefront is a perfect partner for Medusa, offering all the essentials you need for 
-          ecommerce and seamlessly connecting to Medusa's backend.
+          is a great option, offering all ecommerce essentials and seamless communication with your Medusa instance.
         </Text>
         <Text>
-          You can now check out your newly created products in the storefront!
+          You can now check out your newly created products in the storefront.
         </Text>
       </div>
       <div className="flex gap-2 mt-6">
