@@ -36,6 +36,11 @@ const ProductDetailDefault = ({ onNext, isComplete, data }: StepContentProps) =>
               language: "tsx",
               code: `// Install the React SDK and required dependencies in your storefront project:\n// medusa-react @tanstack/react-query @medusajs/medusa\n\nimport { useProduct } from "medusa-react"\n\nconst { product } = useProduct("${data?.product_id}")\nconsole.log(product.id)`,
             },
+            {
+              label: "@medusajs/product",
+              language: "tsx",
+              code: `// Install the Product module in a serverless project, such as a Next.js storefront: @medusajs/product\n\nimport {\ninitialize as initializeProductModule,\n} from "@medusajs/product"\n\n// in an async function, or you can use promises\nasync () => {\n  // ...\n  const productService = await initializeProductModule()\n  const products = await productService.list({\n    id: "${data?.product_id}",\n  })\n\n  console.log(products[0])\n}`,
+            },
           ]} className="my-6">
             <CodeBlock.Header />
             <CodeBlock.Body />
