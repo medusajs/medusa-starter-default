@@ -2,7 +2,7 @@ import React from "react";
 import { ComputerDesktopSolid, CurrencyDollarSolid, ToolsSolid } from "@medusajs/icons";
 import { Badge, Heading, Text } from "@medusajs/ui";
 
-const OrderDetail = () => {
+const OrderDetailDefault = () => {
   return (
     <>
       <Text size="small" className="mb-6">
@@ -103,10 +103,18 @@ const OrderDetail = () => {
         >
           our documentation
         </a>
+        . If you like Medusa, please{" "}
+        <a 
+          href="https://github.com/medusajs/medusa"
+          target="_blank"
+          className="text-ui-fg-interactive hover:text-ui-fg-interactive-hover"
+        >
+          star us on GitHub
+        </a>
         .
       </div>
     </>
   );
 };
 
-export default OrderDetail;
+export default OrderDetailDefault;
