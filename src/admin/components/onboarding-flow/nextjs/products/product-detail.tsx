@@ -1,7 +1,9 @@
 import React from "react";
 import { useAdminProduct } from "medusa-react";
 import { StepContentProps } from "../../../../widgets/onboarding-flow/onboarding-flow";
-import { Button, Text, clx } from "@medusajs/ui";
+import { Button, Code, Text, clx } from "@medusajs/ui";
+import Card from "../../../shared/card";
+import { InformationCircleSolid } from "@medusajs/icons";
 
 const ProductDetailNextjs = ({ onNext, isComplete, data }: StepContentProps) => {
   const { product, isLoading: productIsLoading } = useAdminProduct(data?.product_id)
@@ -11,12 +13,9 @@ const ProductDetailNextjs = ({ onNext, isComplete, data }: StepContentProps) => 
         <Text>On this page, you can view your product's details and edit them.</Text>
         <Text>
           We've created a Next.js project for you in the{" "}
-          <code className={clx(
-            "p-0 px-[6px] bg-ui-tag-neutral-bg border border-ui-tag-neutral-border",
-            "text-ui-tag-neutral-text leading-6 rounded-md"
-          )}>
+          <Code>
             {process.env.MEDUSA_ADMIN_ONBOARDING_NEXTJS_DIRECTORY}
-          </code>{" "}
+          </Code>{" "}
           directory.
         </Text>
         <Text>
@@ -38,6 +37,16 @@ const ProductDetailNextjs = ({ onNext, isComplete, data }: StepContentProps) => 
           You can now check out your newly created products in the storefront.
         </Text>
       </div>
+      <Card className="mt-4" icon={<InformationCircleSolid className="fill-ui-fg-base" />}>
+        If the storefront isn't working, you can change to the{" "}
+        <Code>
+          {process.env.MEDUSA_ADMIN_ONBOARDING_NEXTJS_DIRECTORY}
+        </Code>{" "}
+        directory and run the storefront using the command{" "}
+        <Code>
+          npm run dev
+        </Code>.
+      </Card>
       <div className="flex gap-2 mt-6">
         <a
           href={`http://localhost:8000/products/${product?.handle}`}
