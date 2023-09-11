@@ -1,59 +1,44 @@
-import React from "react";
 import { useAdminProduct } from "medusa-react";
 import { StepContentProps } from "../../../../widgets/onboarding-flow/onboarding-flow";
-import { Button, Code, Text, clx } from "@medusajs/ui";
-import Card from "../../../shared/card";
-import { InformationCircleSolid } from "@medusajs/icons";
+import { Button, Text } from "@medusajs/ui";
 
 const ProductDetailNextjs = ({ onNext, isComplete, data }: StepContentProps) => {
   const { product, isLoading: productIsLoading } = useAdminProduct(data?.product_id)
   return (
     <div>
       <div className="flex flex-col gap-2">
-        <Text>On this page, you can view your product's details and edit them.</Text>
         <Text>
-          We've created a Next.js project for you in the{" "}
-          <Code>
-            {process.env.MEDUSA_ADMIN_ONBOARDING_NEXTJS_DIRECTORY}
-          </Code>{" "}
-          directory.
+          We have now created a few sample products in your Medusa store. You can scroll down to see what the Product Detail view looks like in the Admin dashboard.
+          This is also the view you use to edit existing products.
         </Text>
         <Text>
-          Your Medusa instance and Next.js storefront are two separate projects.
-          Medusa is a headless commerce engine, and ecommerce is one of many types of applications you can build with it.
+          To view the products in your store, you can visit the Next.js Storefront that was installed with <code>create-medusa-app</code>. 
         </Text>
         <Text>
-          The{" "}
+          The Next.js Storefront Starter is a template that helps you start building an ecommerce store with Medusa. 
+          You control the code for the storefront and you can customize it further to fit your specific needs.
+        </Text>
+        <Text>
+          Click the button below to view the products in your Next.js Storefront.
+        </Text>
+        <Text>
+          Having trouble? Click{" "}
           <a 
-            href="https://github.com/medusajs/nextjs-starter-medusa"
+            href="https://docs.medusajs.com/starters/nextjs-medusa-starter#troubleshooting-nextjs-storefront-not-working"
             target="_blank"
             className="text-ui-fg-interactive hover:text-ui-fg-interactive-hover"
           >
-            Next.js Starter Storefront
-          </a>{" "}
-          is a great option, offering all ecommerce essentials and seamless communication with your Medusa instance.
-        </Text>
-        <Text>
-          You can now check out your newly created products in the storefront.
+            here
+          </a>.
         </Text>
       </div>
-      <Card className="mt-4" icon={<InformationCircleSolid className="fill-ui-fg-base" />}>
-        If the storefront isn't working, you can change to the{" "}
-        <Code>
-          {process.env.MEDUSA_ADMIN_ONBOARDING_NEXTJS_DIRECTORY}
-        </Code>{" "}
-        directory and run the storefront using the command{" "}
-        <Code>
-          npm run dev
-        </Code>.
-      </Card>
       <div className="flex gap-2 mt-6">
         <a
           href={`http://localhost:8000/products/${product?.handle}`}
           target="_blank"
         >
           <Button variant="primary" size="base" isLoading={productIsLoading}>
-            Open preview in Next.js Storefront
+            Open Next.js Storefront
           </Button>
         </a>
         {!isComplete && (

@@ -53,13 +53,11 @@ const ProductsListNextjs = ({ onNext, isComplete }: StepContentProps) => {
   return (
     <div>
       <Text className="mb-2">
-        Create a product and set its general details such as title and description, its price, 
-        options, variants, images, and more. You'll then use the product to create a sample order.
+        Products is Medusa represent the products you sell. You can set their general details including a
+        title and description. Each product has options and variants, and you can set a price for each variant.
       </Text>
       <Text>
-      You can create a product by clicking the “New Product” button at the top right of the overview below this setup. 
-      If you’re not ready to create a product, we can create some sample products that will
-      help you explore Medusa and the Next.js storefront better.
+        Click the button below to create sample products.
       </Text>
       {!isComplete && (
         <div className="flex gap-2 mt-6">

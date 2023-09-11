@@ -105,7 +105,7 @@ const OnboardingFlow = (props: OnboardingWidgetProps) => {
           return [
             {
               id: "create_product_nextjs",
-              title: "Create Product",
+              title: "Create Products",
               component: ProductsListNextjs,
               onNext: (product: Product) => {
                 setStepComplete({
