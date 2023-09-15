@@ -1,30 +1,35 @@
 import React from "react";
-import { useAdminProduct } from "medusa-react";
-import { useCreateCart } from "medusa-react";
-import { useAdminRegions } from "medusa-react";
+import { 
+  useAdminProduct,
+  useCreateCart,
+  useMedusa
+} from "medusa-react";
 import { StepContentProps } from "../../../../widgets/onboarding-flow/onboarding-flow";
 import { Button, Text } from "@medusajs/ui";
+import prepareRegions from "../../../../utils/prepare-region";
+import prepareShippingOptions from "../../../../utils/prepare-shipping-options";
 
 const OrdersListNextjs = ({ isComplete, data }: StepContentProps) => {
   const { product } = useAdminProduct(data.product_id);
   const { mutateAsync: createCart, isLoading: cartIsLoading } = useCreateCart()
-
-  const { regions } = useAdminRegions();
+  const { client } = useMedusa()
 
   const prepareNextjsCheckout = async () => {
     const variant = product.variants[0] ?? null;
     try {
+      const regions = await prepareRegions(client)
+      await prepareShippingOptions(client, regions[0])
       const { cart } = await createCart({
-        region_id: regions[0].id,
+        region_id: regions[0]?.id,
         items: [
           {
-            variant_id: variant.id,
+            variant_id: variant?.id,
             quantity: 1
           }
         ]
       })
 
-      window.open(`http://localhost:8000/checkout?cart_id=${cart.id}&onboarding=true`, "_blank")
+      window.open(`http://localhost:8000/checkout?cart_id=${cart?.id}&onboarding=true`, "_blank")
     } catch (e) {
       console.error(e);
     }

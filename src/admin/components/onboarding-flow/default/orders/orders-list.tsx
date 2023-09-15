@@ -1,11 +1,13 @@
 import React from "react";
-import { useAdminProduct } from "medusa-react";
-import { useAdminCreateDraftOrder } from "medusa-react";
-import { useAdminShippingOptions } from "medusa-react";
-import { useAdminRegions } from "medusa-react";
-import { useMedusa } from "medusa-react";
+import { 
+  useAdminProduct,
+  useAdminCreateDraftOrder,
+  useMedusa
+} from "medusa-react";
 import { StepContentProps } from "../../../../widgets/onboarding-flow/onboarding-flow";
 import { Button, Text } from "@medusajs/ui";
+import prepareRegions from "../../../../utils/prepare-region";
+import prepareShippingOptions from "../../../../utils/prepare-shipping-options";
 
 const OrdersListDefault = ({ onNext, isComplete, data }: StepContentProps) => {
   const { product } = useAdminProduct(data.product_id);
@@ -13,19 +15,21 @@ const OrdersListDefault = ({ onNext, isComplete, data }: StepContentProps) => {
     useAdminCreateDraftOrder();
   const { client } = useMedusa();
 
-  const { regions } = useAdminRegions();
-  const { shipping_options } = useAdminShippingOptions();
-
   const createOrder = async () => {
     const variant = product.variants[0] ?? null;
     try {
+      // check if there is a shipping option and a region
+      // and if not, create demo ones
+      const regions = await prepareRegions(client)
+      const shipping_options = await prepareShippingOptions(client, regions[0])
+
       const { draft_order } = await createDraftOrder({
         email: "customer@medusajs.com",
         items: [
           variant
             ? {
                 quantity: 1,
-                variant_id: variant.id,
+                variant_id: variant?.id,
               }
             : {
                 quantity: 1,

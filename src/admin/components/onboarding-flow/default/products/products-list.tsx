@@ -1,18 +1,25 @@
-import React from "react";
-import { useAdminCreateProduct, useAdminCreateCollection } from "medusa-react";
-import { useAdminRegions } from "medusa-react";
+import React, { useMemo } from "react";
+import { 
+  useAdminCreateProduct,
+  useAdminCreateCollection,
+  useMedusa
+} from "medusa-react";
 import { StepContentProps } from "../../../../widgets/onboarding-flow/onboarding-flow";
 import { Button, Text } from "@medusajs/ui";
 import getSampleProducts from "../../../../utils/sample-products";
+import prepareRegions from "../../../../utils/prepare-region";
 
 const ProductsListDefault = ({ onNext, isComplete }: StepContentProps) => {
   const { mutateAsync: createCollection, isLoading: collectionLoading } =
     useAdminCreateCollection();
   const { mutateAsync: createProduct, isLoading: productLoading } =
     useAdminCreateProduct();
-  const { regions } = useAdminRegions();
+  const { client } = useMedusa()
 
-  const isLoading = collectionLoading || productLoading;
+  const isLoading = useMemo(() => 
+    collectionLoading || productLoading,
+    [collectionLoading, productLoading]
+  );
 
   const createSample = async () => {
     try {
@@ -20,6 +27,9 @@ const ProductsListDefault = ({ onNext, isComplete }: StepContentProps) => {
         title: "Merch",
         handle: "merch",
       });
+
+      const regions = await prepareRegions(client)
+
       const sampleProducts = getSampleProducts({
         regions,
         collection_id: collection.id

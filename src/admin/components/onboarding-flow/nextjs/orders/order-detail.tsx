@@ -1,5 +1,5 @@
 import React from "react";
-import { CurrencyDollarSolid, NextJs, SquaresPlusSolid, ToolsSolid } from "@medusajs/icons";
+import { CurrencyDollarSolid, NextJs, SquaresPlusSolid } from "@medusajs/icons";
 import { Badge, Heading, Text } from "@medusajs/ui";
 
 const OrderDetailNextjs = () => {
