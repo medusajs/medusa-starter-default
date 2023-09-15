@@ -14,7 +14,9 @@ const ProductDetailDefault = ({ onNext, isComplete, data }: StepContentProps) =>
   const createPublishableApiKey = useAdminCreatePublishableApiKey()
   
   const api_key = useMemo(() => keys?.[0]?.id || "", [keys])
-  const backendUrl = process.env.MEDUSA_BACKEND_URL || process.env.MEDUSA_ADMIN_BACKEND_URL || "http://location:9000"
+  const backendUrl = process.env.MEDUSA_BACKEND_URL === "/" || process.env.MEDUSA_ADMIN_BACKEND_URL === "/" ? 
+    location.origin :
+    process.env.MEDUSA_BACKEND_URL || process.env.MEDUSA_ADMIN_BACKEND_URL || "http://location:9000"
 
   useEffect(() => {
     if (!isLoading && !keys?.length) {
