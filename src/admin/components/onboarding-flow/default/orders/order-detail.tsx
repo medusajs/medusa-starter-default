@@ -1,6 +1,10 @@
 import React from "react";
-import { ComputerDesktopSolid, CurrencyDollarSolid, ToolsSolid } from "@medusajs/icons";
-import { Badge, Heading, Text } from "@medusajs/ui";
+import {
+  ComputerDesktopSolid,
+  CurrencyDollarSolid,
+  ToolsSolid,
+} from "@medusajs/icons";
+import { IconBadge, Heading, Text } from "@medusajs/ui";
 
 const OrderDetailDefault = () => {
   return (
@@ -10,7 +14,10 @@ const OrderDetailDefault = () => {
         to play around with the order management functionalities, such as
         capturing payment, creating fulfillments, and more.
       </Text>
-      <Heading level="h2" className="text-ui-fg-base pt-6 border-t border-ui-border-base border-solid mb-2">
+      <Heading
+        level="h2"
+        className="text-ui-fg-base pt-6 border-t border-ui-border-base border-solid mb-2"
+      >
         Start developing with Medusa
       </Heading>
       <Text size="small">
@@ -23,22 +30,25 @@ const OrderDetailDefault = () => {
           target="_blank"
           className="flex"
         >
-          <div
-            className="p-3 rounded-rounded flex items-start bg-ui-bg-subtle shadow-elevation-card-rest hover:shadow-elevation-card-hover"
-          >
+          <div className="p-3 rounded-rounded flex items-start bg-ui-bg-subtle shadow-elevation-card-rest hover:shadow-elevation-card-hover">
             <div className="mr-4">
               <div className="bg-ui-bg-base rounded-lg border border-ui-border-strong p-1 flex justify-center items-center">
-                <Badge type="icon">
+                <IconBadge>
                   <CurrencyDollarSolid />
-                </Badge>
+                </IconBadge>
               </div>
             </div>
             <div>
-              <Text size="xsmall" weight="plus" className="mb-1 text-ui-fg-base">
+              <Text
+                size="xsmall"
+                weight="plus"
+                className="mb-1 text-ui-fg-base"
+              >
                 Start Selling in 3 Steps
               </Text>
               <Text size="small">
-                Go live with a backend, an admin, and a storefront by following these three steps.
+                Go live with a backend, an admin, and a storefront by following
+                these three steps.
               </Text>
             </div>
           </div>
@@ -48,22 +58,25 @@ const OrderDetailDefault = () => {
           target="_blank"
           className="flex"
         >
-          <div
-            className="p-3 rounded-rounded items-start flex bg-ui-bg-subtle shadow-elevation-card-rest hover:shadow-elevation-card-hover"
-          >
+          <div className="p-3 rounded-rounded items-start flex bg-ui-bg-subtle shadow-elevation-card-rest hover:shadow-elevation-card-hover">
             <div className="mr-4">
               <div className="bg-ui-bg-base rounded-lg border border-ui-border-strong p-1 flex justify-center items-center">
-                <Badge type="icon">
+                <IconBadge>
                   <ComputerDesktopSolid />
-                </Badge>
+                </IconBadge>
               </div>
             </div>
             <div>
-              <Text size="xsmall" weight="plus" className="mb-1 text-ui-fg-base">
+              <Text
+                size="xsmall"
+                weight="plus"
+                className="mb-1 text-ui-fg-base"
+              >
                 Build Custom Use Cases
               </Text>
               <Text size="small">
-                Learn how to build a marketplace, subscription-based purchases, or your custom use-case.
+                Learn how to build a marketplace, subscription-based purchases,
+                or your custom use-case.
               </Text>
             </div>
           </div>
@@ -73,22 +86,25 @@ const OrderDetailDefault = () => {
           target="_blank"
           className="flex"
         >
-          <div
-            className="p-3 rounded-rounded items-start flex bg-ui-bg-subtle shadow-elevation-card-rest hover:shadow-elevation-card-hover"
-          >
+          <div className="p-3 rounded-rounded items-start flex bg-ui-bg-subtle shadow-elevation-card-rest hover:shadow-elevation-card-hover">
             <div className="mr-4">
               <div className="bg-ui-bg-base rounded-lg border border-ui-border-strong p-1 flex justify-center items-center">
-                <Badge type="icon">
+                <IconBadge>
                   <ToolsSolid />
-                </Badge>
+                </IconBadge>
               </div>
             </div>
             <div>
-              <Text size="xsmall" weight="plus" className="mb-1 text-ui-fg-base">
+              <Text
+                size="xsmall"
+                weight="plus"
+                className="mb-1 text-ui-fg-base"
+              >
                 Check out beta features
               </Text>
               <Text size="small">
-                Learn about hidden beta features and how to enable them in your store.
+                Learn about hidden beta features and how to enable them in your
+                store.
               </Text>
             </div>
           </div>
@@ -104,7 +120,7 @@ const OrderDetailDefault = () => {
           our documentation
         </a>
         . If you like Medusa, please{" "}
-        <a 
+        <a
           href="https://github.com/medusajs/medusa"
           target="_blank"
           className="text-ui-fg-interactive hover:text-ui-fg-interactive-hover"
