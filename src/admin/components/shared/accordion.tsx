@@ -1,6 +1,6 @@
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import React from "react";
-import { CheckCircleSolid, CircleDottedLine, CircleMiniSolid } from "@medusajs/icons";
+import { CheckCircleSolid, CircleMiniSolid } from "@medusajs/icons";
 import { Heading, Text, clx } from "@medusajs/ui";
 import ActiveCircleDottedLine from "./icons/active-circle-dotted-line";
 
@@ -47,7 +47,6 @@ const Item: React.FC<AccordionItemProps> = ({
   triggerable,
   ...props
 }) => {
-
   return (
     <AccordionPrimitive.Item
       {...props}
@@ -67,15 +66,18 @@ const Item: React.FC<AccordionItemProps> = ({
                 ) : (
                   <>
                     {active && (
-                      <ActiveCircleDottedLine size={20} className="text-ui-fg-interactive rounded-full" />
+                      <ActiveCircleDottedLine
+                        size={20}
+                        className="text-ui-fg-interactive rounded-full"
+                      />
                     )}
-                    {!active && <CircleMiniSolid className="text-ui-fg-muted" />}
+                    {!active && (
+                      <CircleMiniSolid className="text-ui-fg-muted" />
+                    )}
                   </>
                 )}
               </div>
-              <Heading level="h3" className={clx(
-                "text-ui-fg-base"
-              )}>
+              <Heading level="h3" className={clx("text-ui-fg-base")}>
                 {title}
               </Heading>
             </div>
