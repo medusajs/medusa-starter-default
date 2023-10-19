@@ -25,13 +25,13 @@
     "dev": "cross-env npm run build:server && medusa develop"
   },
   "dependencies": {
-    "@medusajs/admin": "^7.1.4",
+    "@medusajs/admin": "7.1.5",
     "@medusajs/cache-inmemory": "^1.8.8",
     "@medusajs/cache-redis": "^1.8.8",
     "@medusajs/event-bus-local": "^1.9.6",
     "@medusajs/event-bus-redis": "^1.8.9",
     "@medusajs/file-local": "^1.0.2",
-    "@medusajs/medusa": "^1.17.1",
+    "@medusajs/medusa": "1.17.2",
     "@tanstack/react-query": "4.22.0",
     "babel-preset-medusa-package": "^1.1.13",
     "body-parser": "^1.19.0",
@@ -87,5 +87,6 @@
     ],
     "coverageDirectory": "./coverage",
     "testEnvironment": "node"
-  }
+  },
+  "packageManager": "yarn@3.6.4"
 }
