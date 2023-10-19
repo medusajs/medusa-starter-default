@@ -1,7 +1,7 @@
-# Custom endpoints
+# Custom API Routes
 
-You may define custom endpoints by putting files in the `/api` directory that export functions returning an express router or a collection of express routers.
-Medusa supports adding custom endpoints using a file based approach. This means that you can add files in the `/api` directory and the files path will be used as the endpoint path. For example, if you add a file called `/api/store/custom/route.ts` it will be available on the `/store/custom` endpoint.
+You may define custom API Routes by putting files in the `/api` directory that export functions returning an express router or a collection of express routers.
+Medusa supports adding custom API Routes using a file based approach. This means that you can add files in the `/api` directory and the files path will be used as the API Route path. For example, if you add a file called `/api/store/custom/route.ts` it will be available on the `/store/custom` API Route.
 
 ```ts
 import type { MedusaRequest, MedusaResponse } from "@medusajs/medusa";
