@@ -1,5 +1,5 @@
 import React from "react";
-import { CurrencyDollarSolid, NextJs, SquaresPlusSolid } from "@medusajs/icons";
+import { CurrencyDollarSolid, NextJs, ComputerDesktopSolid } from "@medusajs/icons";
 import { IconBadge, Heading, Text } from "@medusajs/ui";
 
 const OrderDetailNextjs = () => {
@@ -28,15 +28,15 @@ const OrderDetailNextjs = () => {
       </Text>
       <div className="grid grid-cols-3 gap-4 mt-6 pb-6 mb-6 border-b border-ui-border-base border-solid auto-rows-fr">
         <a
-          href={`https://docs.medusajs.com/plugins/overview${queryParams}`}
+          href={`https://docs.medusajs.com/starters/nextjs-medusa-starter${queryParams}`}
           target="_blank"
           className="flex"
         >
-          <div className="p-3 rounded-rounded flex items-start bg-ui-bg-subtle shadow-elevation-card-rest hover:shadow-elevation-card-hover">
+          <div className="p-3 rounded-rounded items-start flex bg-ui-bg-subtle shadow-elevation-card-rest hover:shadow-elevation-card-hover">
             <div className="mr-4">
               <div className="bg-ui-bg-base rounded-lg border border-ui-border-strong p-1 flex justify-center items-center">
                 <IconBadge>
-                  <SquaresPlusSolid />
+                  <NextJs />
                 </IconBadge>
               </div>
             </div>
@@ -46,11 +46,11 @@ const OrderDetailNextjs = () => {
                 weight="plus"
                 className="mb-1 text-ui-fg-base"
               >
-                Install Plugins
+                Build with the Next.js Storefront
               </Text>
               <Text size="small">
-                Install plugins for payment, fulfillment, search, and more, and
-                integrate them in your storefront.
+                Learn about the Next.js starter storefront’s features and how to
+                customize it.
               </Text>
             </div>
           </div>
@@ -77,22 +77,22 @@ const OrderDetailNextjs = () => {
                 Add Commerce Features
               </Text>
               <Text size="small">
-                Learn about all available commerce features in Medusa and how to
+                Learn about all available commerce features and how to
                 add them in your storefront
               </Text>
             </div>
           </div>
         </a>
         <a
-          href={`https://docs.medusajs.com/starters/nextjs-medusa-starter${queryParams}`}
+          href={`https://docs.medusajs.com/recipes${queryParams}`}
           target="_blank"
           className="flex"
         >
-          <div className="p-3 rounded-rounded items-start flex bg-ui-bg-subtle shadow-elevation-card-rest hover:shadow-elevation-card-hover">
+          <div className="p-3 rounded-rounded flex items-start bg-ui-bg-subtle shadow-elevation-card-rest hover:shadow-elevation-card-hover">
             <div className="mr-4">
               <div className="bg-ui-bg-base rounded-lg border border-ui-border-strong p-1 flex justify-center items-center">
                 <IconBadge>
-                  <NextJs />
+                  <ComputerDesktopSolid />
                 </IconBadge>
               </div>
             </div>
@@ -102,11 +102,11 @@ const OrderDetailNextjs = () => {
                 weight="plus"
                 className="mb-1 text-ui-fg-base"
               >
-                Build with the Next.js Storefront
+                Build Custom Use Cases
               </Text>
               <Text size="small">
-                Learn about the Next.js starter storefront’s features and how to
-                customize it.
+                Build a marketplace, subscription-based purchases,
+                or your custom use-cases.
               </Text>
             </div>
           </div>

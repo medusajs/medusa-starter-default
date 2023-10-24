@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { 
   useAdminProduct,
   useCreateCart,
@@ -13,6 +13,7 @@ const OrdersListNextjs = ({ isComplete, data }: StepContentProps) => {
   const { product } = useAdminProduct(data.product_id);
   const { mutateAsync: createCart, isLoading: cartIsLoading } = useCreateCart()
   const { client } = useMedusa()
+  const [cartId, setCartId] = useState<string | null>(null)
 
   const prepareNextjsCheckout = async () => {
     const variant = product.variants[0] ?? null;
@@ -29,11 +30,17 @@ const OrdersListNextjs = ({ isComplete, data }: StepContentProps) => {
         ]
       })
 
-      window.open(`http://localhost:8000/checkout?cart_id=${cart?.id}&onboarding=true`, "_blank")
+      setCartId(cart?.id)
     } catch (e) {
       console.error(e);
     }
   }
+
+  useEffect(() => {
+    if (!cartId && product) {
+      prepareNextjsCheckout()
+    }
+  }, [cartId, product])
 
   return (
     <>
@@ -47,16 +54,14 @@ const OrdersListNextjs = ({ isComplete, data }: StepContentProps) => {
       </div>
       <div className="flex gap-2">
         {!isComplete && (
-          <>
-            <Button
-              variant="primary"
-              size="base"
-              onClick={() => prepareNextjsCheckout()}
-              isLoading={cartIsLoading}
-            >
-              Place an order in your storefront
+          <a
+            href={`http://localhost:8000/checkout?cart_id=${cartId}&onboarding=true`}
+            target="_blank"
+          >
+            <Button variant="primary" size="base" isLoading={!cartId || cartIsLoading}>
+            Place an order in your storefront
             </Button>
-          </>
+          </a>
         )}
       </div>
     </>
