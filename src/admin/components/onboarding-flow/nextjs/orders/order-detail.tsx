@@ -9,7 +9,7 @@ const OrderDetailNextjs = () => {
   return (
     <>
       <Text size="small" className="mb-6">
-        You finished the setup guide 🎉. You have now a complete ecommerce store
+        You finished the setup guide 🎉. You now have a complete ecommerce store
         with a backend, admin, and a Next.js storefront. Feel free to play
         around with each of these components to experience all commerce features
         that Medusa provides.
