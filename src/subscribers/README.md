@@ -4,40 +4,41 @@ You may define custom eventhandlers, `subscribers` by creating files in the `/su
 
 ```ts
 import MyCustomService from "../services/my-custom";
-import { EntityManager } from "typeorm";
-import { OrderService } from "@medusajs/medusa";
-import { IEventBusService } from "@medusajs/types";
+import {
+  OrderService,
+  SubscriberArgs,
+  SubscriberConfig,
+} from "@medusajs/medusa";
 
-export default class MySubscriber {
-  protected readonly manager_: EntityManager;
-  protected readonly myCustomService_: MyCustomService
+type OrderPlacedEvent = {
+  id: string;
+  no_notification: boolean;
+};
 
-  constructor(
-    {
-      manager,
-      eventBusService,
-      myCustomService,
-    }: {
-      manager: EntityManager;
-      eventBusService: IEventBusService;
-      myCustomService: MyCustomService;
-    }
-  ) {
-    this.manager_ = manager;
-    this.myCustomService_ = myCustomService;
+export default async function orderPlacedHandler({
+  data,
+  eventName,
+  container,
+}: SubscriberArgs<OrderPlacedEvent>) {
+  const orderService: OrderService = container.resolve(OrderService);
 
-    eventBusService.subscribe(OrderService.Events.PLACED, this.handleOrderPlaced);
-  }
+  const order = await orderService.retrieve(data.id, {
+    relations: ["items", "items.variant", "items.variant.product"],
+  });
 
-  handleOrderPlaced = async (data): Promise<any> => {
-    return true;
-  }
+  // Do something with the order
 }
 
+export const config: SubscriberConfig = {
+  event: OrderService.Events.PLACED,
+};
 ```
 
-A subscriber is defined as a `class` which is registered as a subscriber by invoking `eventBusService.subscribe` in the `constructor` of the class.
+A subscriber is defined in two parts a `handler` and a `config`. The `handler` is a function which is invoked when an event is emitted. The `config` is an object which defines which event(s) the subscriber should subscribe to.
 
-The type of event that the subscriber subscribes to is passed as the first parameter to the `eventBusService.subscribe` and the eventhandler is passed as the second parameter. The types of events a service can emmit are described in the individual service.
+The `handler` is a function which takes one parameter, an `object` of type `SubscriberArgs<T>` with the following properties:
 
-An eventhandler has one parameter; a data `object` which contain information relating to the event, including relevant `id's`. The `id` can be used to fetch the appropriate entity in the eventhandler.
+- `data` - an `object` of type `T` containing information about the event.
+- `eventName` - a `string` containing the name of the event.
+- `container` - a `MedusaContainer` instance which can be used to resolve services.
+- `pluginOptions` - an `object` containing plugin options, if the subscriber is defined in a plugin.
