@@ -25,16 +25,7 @@ const SPACE_SECRET_ACCESS_KEY = process.env.SPACE_SECRET_ACCESS_KEY || "";
 const plugins = [
   `medusa-fulfillment-manual`,
   `medusa-payment-manual`,
-  {
-    resolve: `medusa-file-spaces`,
-    options: {
-      spaces_url: SPACE_URL,
-      bucket: SPACE_BUCKET,
-      endpoint: SPACE_ENDPOINT,
-      access_key_id: SPACE_ACCESS_KEY_ID,
-      secret_access_key: SPACE_SECRET_ACCESS_KEY,
-    },
-  },
+
 
   // {
   //   resolve: "@medusajs/admin",
