@@ -20,7 +20,6 @@ const SPACE_BUCKET = process.env.SPACE_BUCKET || "";
 const SPACE_ENDPOINT = process.env.SPACE_ENDPOINT || "";
 const SPACE_ACCESS_KEY_ID = process.env.SPACE_ACCESS_KEY_ID || "";
 const SPACE_SECRET_ACCESS_KEY = process.env.SPACE_SECRET_ACCESS_KEY || "";
-const SPACE_ENDPOINT = process.env.SPACE_ENDPOINT || "";
 
 // This is the place to include plugins. See API documentation for a thorough guide on plugins.
 const plugins = [
