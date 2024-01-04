@@ -15,6 +15,12 @@ const REDIS_URL = process.env.REDIS_URL_TLS || process.env.REDIS_URL || "redis:/
 const STRIPE_API_KEY = process.env.STRIPE_API_KEY || "";
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 
+const SPACE_URL = process.env.SPACE_URL || "";
+const SPACE_BUCKET = process.env.SPACE_BUCKET || "";
+const SPACE_ENDPOINT = process.env.SPACE_ENDPOINT || "";
+const SPACE_ACCESS_KEY_ID = process.env.SPACE_ACCESS_KEY_ID || "";
+const SPACE_SECRET_ACCESS_KEY = process.env.SPACE_SECRET_ACCESS_KEY || "";
+
 // This is the place to include plugins. See API documentation for a thorough guide on plugins.
 const plugins = [
   `medusa-fulfillment-manual`,
@@ -22,11 +28,11 @@ const plugins = [
   {
     resolve: `medusa-file-spaces`,
     options: {
-      spaces_url: process.env.SPACE_URL,
-      bucket: process.env.SPACE_BUCKET,
-      endpoint: process.env.SPACE_ENDPOINT,
-      access_key_id: process.env.SPACE_ACCESS_KEY_ID,
-      secret_access_key: process.env.SPACE_SECRET_ACCESS_KEY,
+      spaces_url: SPACE_URL,
+      bucket: SPACE_BUCKET,
+      endpoint: SPACE_ENDPOINT,
+      access_key_id: SPACE_ACCESS_KEY_ID,
+      secret_access_key: SPACE_SECRET_ACCESS_KEY,
     },
   },
 
