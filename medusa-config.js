@@ -19,6 +19,17 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 const plugins = [
   `medusa-fulfillment-manual`,
   `medusa-payment-manual`,
+  {
+    resolve: `medusa-file-spaces`,
+    options: {
+      spaces_url: process.env.SPACE_URL,
+      bucket: process.env.SPACE_BUCKET,
+      region: process.env.SPACE_REGION,
+      endpoint: process.env.SPACE_ENDPOINT,
+      access_key_id: process.env.SPACE_ACCESS_KEY_ID,
+      secret_access_key: process.env.SPACE_SECRET_ACCESS_KEY,
+    },
+  },
   // {
   //   resolve: "@medusajs/admin",
   //   /** @type {import('@medusajs/admin').PluginOptions} */
