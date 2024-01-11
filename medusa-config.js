@@ -103,6 +103,10 @@ const plugins = [
             filterableAttributes: process.env.MEILI_STOCK_LOCATIONS_FILTERABLE_ATTRIBUTES.split(' ') ?? [],
             sortableAttributes: process.env.MEILI_STOCK_LOCATIONS_SORTABLE_ATTRIBUTES.split(' ') ?? [],
           },
+          transformer: (location) => {
+            console.log(location);
+            return location;
+          }
         },
       },
     },
