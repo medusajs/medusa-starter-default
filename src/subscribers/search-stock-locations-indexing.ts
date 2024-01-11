@@ -28,7 +28,10 @@ class SearchStockLocationsIndexingSubscriber {
 
     this._eventBusService.subscribe(
       "SEARCH_INDEX_EVENT",
-      this.indexDocumentsAsync
+      this.indexDocumentsAsync,
+      {
+        subscriberId: "search-stock-locations-indexing",
+      }
     );
   }
 
