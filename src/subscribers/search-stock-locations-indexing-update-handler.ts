@@ -29,7 +29,7 @@ class SearchStockLocationsIndexing {
         lastSeenId,
         TAKE
       );
-
+      console.log(stockLocations);
       if (stockLocations.length > 0) {
         await this._searchService.addDocuments(
           this._indexName,
