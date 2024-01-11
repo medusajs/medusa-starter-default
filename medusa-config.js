@@ -96,7 +96,7 @@ const plugins = [
             sortableAttributes: process.env.MEILI_PRODUCTS_SORTABLE_ATTRIBUTES.split(' ') ?? [],
           },
         },
-        'stock-locations': {
+        stock_locations: {
           indexSettings: {
             searchableAttributes: process.env.MEILI_STOCK_LOCATIONS_SEARCHABLE_ATTRIBUTES.split(' ') ?? [],
             displayedAttributes: process.env.MEILI_STOCK_LOCATIONS_DISPLAYED_ATTRIBUTES.split(' ') ?? [],
