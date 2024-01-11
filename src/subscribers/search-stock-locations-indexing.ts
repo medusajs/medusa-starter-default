@@ -1,41 +1,26 @@
 import { IEventBusService, ISearchService } from "@medusajs/types";
-import { defaultSearchIndexingProductRelations } from "@medusajs/utils";
-import { indexTypes } from "medusa-core-utils";
 import StockLocationService from "@medusajs/stock-location/dist/services/stock-location";
 import { StockLocation } from "@medusajs/stock-location/dist/models";
+import {
+  type SubscriberConfig,
+  type SubscriberArgs,
+} from "@medusajs/medusa/dist/types/subscribers";
+import { MedusaContainer } from "@medusajs/medusa";
 
-type InjectedDependencies = {
-  eventBusService: IEventBusService;
-  searchService: ISearchService;
-  stockLocationService: StockLocationService;
-};
-
-class SearchStockLocationsIndexingSubscriber {
+class SearchStockLocationsIndexing {
   private readonly _indexName: string;
   private readonly _eventBusService: IEventBusService;
   private readonly _searchService: ISearchService;
   private readonly _stockLocationService: StockLocationService;
 
-  constructor({
-    eventBusService,
-    searchService,
-    stockLocationService,
-  }: InjectedDependencies) {
+  constructor(container: MedusaContainer) {
     this._indexName = "stock_locations";
-    this._eventBusService = eventBusService;
-    this._searchService = searchService;
-    this._stockLocationService = stockLocationService;
-
-    this._eventBusService.subscribe(
-      "SEARCH_INDEX_EVENT",
-      this.indexDocumentsAsync,
-      {
-        subscriberId: "search-stock-locations-indexing",
-      }
-    );
+    this._eventBusService = container.resolve("eventBusService");
+    this._searchService = container.resolve("searchService");
+    this._stockLocationService = container.resolve("stockLocationService");
   }
 
-  indexDocumentsAsync = async (): Promise<void> => {
+  public indexDocumentsAsync = async (): Promise<void> => {
     const TAKE = (this._searchService?.options?.batch_size as number) ?? 1000;
     let hasMore = true;
 
@@ -76,4 +61,20 @@ class SearchStockLocationsIndexingSubscriber {
   }
 }
 
-export default SearchStockLocationsIndexingSubscriber;
+export default async function searchStockLocationsIndexingUpdateHandler({
+  data,
+  eventName,
+  container,
+  pluginOptions,
+}: SubscriberArgs<Record<string, any>>) {
+  const searchStockLocationsIndexing: SearchStockLocationsIndexing =
+    new SearchStockLocationsIndexing(container);
+  await searchStockLocationsIndexing.indexDocumentsAsync();
+}
+
+export const config: SubscriberConfig = {
+  event: "SEARCH_INDEX_EVENT",
+  context: {
+    subscriberId: "search-stock-locations-indexing",
+  },
+};
