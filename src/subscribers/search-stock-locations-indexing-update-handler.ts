@@ -22,7 +22,7 @@ class SearchStockLocationsIndexing {
     const TAKE = (this._searchService?.options?.batch_size as number) ?? 1000;
     let hasMore = true;
 
-    let lastSeenId = "";
+    let lastSeenId: string | undefined = undefined;
 
     while (hasMore) {
       const stockLocations = await this.retrieveNextStockLocationsAsync(
@@ -44,7 +44,7 @@ class SearchStockLocationsIndexing {
   }
 
   private async retrieveNextStockLocationsAsync(
-    lastSeenId: string,
+    lastSeenId: string | undefined,
     take: number
   ): Promise<StockLocation[]> {
     const relations = ["address"];
