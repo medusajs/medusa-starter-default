@@ -19,24 +19,22 @@ class SearchStockLocationsIndexing {
   }
 
   public async indexDocumentsAsync(): Promise<void> {
-    const TAKE = (this._searchService?.options?.batch_size as number) ?? 1000;
+    const take = (this._searchService?.options?.batch_size as number) ?? 1000;
     let hasMore = true;
 
-    let lastSeenId: string | undefined = undefined;
-
+    let skip: number = 0;
     while (hasMore) {
       const stockLocations = await this.retrieveNextStockLocationsAsync(
-        lastSeenId,
-        TAKE
+        skip,
+        take
       );
-      console.log(stockLocations);
       if (stockLocations.length > 0) {
         await this._searchService.addDocuments(
           this._indexName,
           stockLocations,
           "stock-locations"
         );
-        lastSeenId = stockLocations[stockLocations.length - 1].id;
+        skip += take;
       } else {
         hasMore = false;
       }
@@ -44,14 +42,15 @@ class SearchStockLocationsIndexing {
   }
 
   private async retrieveNextStockLocationsAsync(
-    lastSeenId: string | undefined,
+    skip: number,
     take: number
   ): Promise<StockLocation[]> {
     const relations = ["address"];
     return await this._stockLocationService.list(
-      { id: lastSeenId },
+      {},
       {
         relations,
+        skip: skip,
         take: take,
         order: { id: "ASC" },
       }
