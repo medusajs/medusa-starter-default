@@ -26,30 +26,13 @@ class SearchStockLocationsIndexingSubscriber {
     this._searchService = searchService;
     this._stockLocationService = stockLocationService;
 
-    this.indexDocumentsAsync = this.indexDocumentsAsync.bind(this);
-
     this._eventBusService.subscribe(
       "SEARCH_INDEX_EVENT",
       this.indexDocumentsAsync
     );
   }
 
-  protected async retrieveNextStockLocations(
-    lastSeenId: string,
-    take: number
-  ): Promise<StockLocation[]> {
-    const relations = ["address"];
-    return await this._stockLocationService.list(
-      { id: lastSeenId },
-      {
-        relations,
-        take: take,
-        order: { id: "ASC" },
-      }
-    );
-  }
-
-  private indexDocumentsAsync = async (): Promise<void> => {
+  indexDocumentsAsync = async (): Promise<void> => {
     const TAKE = (this._searchService?.options?.batch_size as number) ?? 1000;
     let hasMore = true;
 
@@ -73,6 +56,21 @@ class SearchStockLocationsIndexingSubscriber {
       }
     }
   };
+
+  protected async retrieveNextStockLocations(
+    lastSeenId: string,
+    take: number
+  ): Promise<StockLocation[]> {
+    const relations = ["address"];
+    return await this._stockLocationService.list(
+      { id: lastSeenId },
+      {
+        relations,
+        take: take,
+        order: { id: "ASC" },
+      }
+    );
+  }
 }
 
 export default SearchStockLocationsIndexingSubscriber;
