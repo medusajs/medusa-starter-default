@@ -90,10 +90,18 @@ const plugins = [
       settings: {
         products: {
           indexSettings: {
-            searchableAttributes: process.env.MEILI_SEARCHABLE_ATTRIBUTES.split(' ') ?? [],
-            displayedAttributes: process.env.MEILI_DISPLAYED_ATTRIBUTES.split(' ') ?? [],
-            filterableAttributes: process.env.MEILI_FILTERABLE_ATTRIBUTES.split(' ') ?? [],
-            sortableAttributes: process.env.MEILI_SORTABLE_ATTRIBUTES.split(' ') ?? [],
+            searchableAttributes: process.env.MEILI_PRODUCTS_SEARCHABLE_ATTRIBUTES.split(' ') ?? [],
+            displayedAttributes: process.env.MEILI_PRODUCTS_DISPLAYED_ATTRIBUTES.split(' ') ?? [],
+            filterableAttributes: process.env.MEILI_PRODUCTS_FILTERABLE_ATTRIBUTES.split(' ') ?? [],
+            sortableAttributes: process.env.MEILI_PRODUCTS_SORTABLE_ATTRIBUTES.split(' ') ?? [],
+          },
+        },
+        stock_locations: {
+          indexSettings: {
+            searchableAttributes: process.env.MEILI_STOCK_LOCATIONS_SEARCHABLE_ATTRIBUTES.split(' ') ?? [],
+            displayedAttributes: process.env.MEILI_STOCK_LOCATIONS_DISPLAYED_ATTRIBUTES.split(' ') ?? [],
+            filterableAttributes: process.env.MEILI_STOCK_LOCATIONS_FILTERABLE_ATTRIBUTES.split(' ') ?? [],
+            sortableAttributes: process.env.MEILI_STOCK_LOCATIONS_SORTABLE_ATTRIBUTES.split(' ') ?? [],
           },
         },
       },
