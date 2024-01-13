@@ -11,11 +11,24 @@ class SearchStockLocationsIndexing {
   private readonly _indexName: string;
   private readonly _searchService: ISearchService;
   private readonly _stockLocationService: StockLocationService;
+  private readonly _eventBusService: IEventBusService;
+  private readonly _defaultRelations: string[];
 
   constructor(container: MedusaContainer) {
     this._indexName = "stock_locations";
     this._searchService = container.resolve("searchService");
     this._stockLocationService = container.resolve("stockLocationService");
+    this._eventBusService = container.resolve("eventBusService");
+    this._defaultRelations = ["address"];
+
+    this.onCreationAsync = this.onCreationAsync.bind(this);
+    this.onUpdateAsync = this.onUpdateAsync.bind(this);
+    this.onDeletionAsync = this.onDeletionAsync.bind(this);
+
+    this._eventBusService
+      .subscribe(StockLocationService.Events.CREATED, this.onCreationAsync)
+      .subscribe(StockLocationService.Events.UPDATED, this.onUpdateAsync)
+      .subscribe(StockLocationService.Events.DELETED, this.onDeletionAsync);
   }
 
   public async indexDocumentsAsync(): Promise<void> {
@@ -45,16 +58,41 @@ class SearchStockLocationsIndexing {
     skip: number,
     take: number
   ): Promise<StockLocation[]> {
-    const relations = ["address"];
     return await this._stockLocationService.list(
       {},
       {
-        relations,
+        relations: this._defaultRelations,
         skip: skip,
         take: take,
         order: { id: "ASC" },
       }
     );
+  }
+
+  private async onCreationAsync(data): Promise<void> {
+    const stockLocation = await this._stockLocationService.retrieve(data.id, {
+      relations: this._defaultRelations,
+    });
+    await this._searchService.addDocuments(
+      this._indexName,
+      [stockLocation],
+      "stock-locations"
+    );
+  }
+
+  private async onUpdateAsync(data): Promise<void> {
+    const stockLocation = await this._stockLocationService.retrieve(data.id, {
+      relations: this._defaultRelations,
+    });
+    await this._searchService.addDocuments(
+      this._indexName,
+      [stockLocation],
+      "stock-locations"
+    );
+  }
+
+  private async onDeletionAsync(data): Promise<void> {
+    await this._searchService.deleteDocument(this._indexName, data.id);
   }
 }
 
