@@ -15,7 +15,7 @@ export default async function orderPlacedHandler({
   pluginOptions,
 }: SubscriberArgs<Record<string, any>>) {
   const telegramService: TelegramService = container.resolve("telegramService");
-  telegramService.sendMessage(data as Order);
+  await telegramService.sendMessageAsync(data.id);
 }
 
 export const config: SubscriberConfig = {
