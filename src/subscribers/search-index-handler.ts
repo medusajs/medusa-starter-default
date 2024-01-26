@@ -96,7 +96,7 @@ class SearchStockLocationsIndexing {
   }
 }
 
-export default async function searchStockLocationsIndexingUpdateHandler({
+export default async function searchIndexHandler({
   data,
   eventName,
   container,
@@ -110,6 +110,6 @@ export default async function searchStockLocationsIndexingUpdateHandler({
 export const config: SubscriberConfig = {
   event: "SEARCH_INDEX_EVENT",
   context: {
-    subscriberId: "search-stock-locations-indexing",
+    subscriberId: "search-index-handler",
   },
 };

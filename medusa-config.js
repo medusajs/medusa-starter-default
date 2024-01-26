@@ -118,6 +118,13 @@ const plugins = [
       webhook_secret: process.env.STRIPE_WEBHOOK_SECRET,
     },
   },
+  {
+    resolve: `medusa-telegram-notification`,
+    options: {
+      botToken: process.env.NOTIFICATION_TELEGRAM_BOT_TOKEN,
+      debug: true || process.env.NODE_ENV === "development",
+    },
+  }
 ];
 
 const modules = {
