@@ -21,8 +21,20 @@ class TelegramService extends TransactionBaseService {
     this._orderService = container.resolve("orderService");
   }
 
-  public async sendMessageAsync(orderId: string): Promise<void> {
-    const order = await this._orderService.retrieve(orderId);
+  public async sendMessageOnOrderPlacedAsync(orderId: string): Promise<void> {
+    const order = await this._orderService.retrieve(orderId, {
+      relations: [
+        "cart",
+        "customer",
+        "shipping_address",
+        "region",
+        "currency",
+        "shipping_methods",
+        "payments",
+        "sales_channel",
+        "sales_channels",
+      ],
+    });
     const telegramGroupId: string =
       Object.keys(order.sales_channel.metadata).includes("telegram_group_id") &&
       (order.sales_channel.metadata["telegram_group_id"] as string);
@@ -42,7 +54,7 @@ class TelegramService extends TransactionBaseService {
     } ${order?.shipping_address?.country_code?.toUpperCase()}`;
     const totalAmount = new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: order.currency.code,
+      currency: order.currency.code.toUpperCase(),
     }).format(order.paid_total);
     const message = [
       `💌 Order *#${order.display_id}* placed successfully`,
