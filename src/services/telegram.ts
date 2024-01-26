@@ -1,4 +1,6 @@
 import { MedusaContainer, OrderService } from "@medusajs/medusa";
+import { StockLocation } from "@medusajs/stock-location/dist/models";
+import StockLocationService from "@medusajs/stock-location/dist/services/stock-location";
 import { BaseService } from "medusa-interfaces";
 import TelegramNotificationService from "medusa-telegram-notification/src/services/telegram-notification";
 import { TelegramNotificationSendMessageRequestPayload } from "medusa-telegram-notification/src/types";
@@ -8,6 +10,7 @@ const MEDUSA_ADMIN_BASE_URL = process.env.MEDUSA_ADMIN_BASE_URL;
 class TelegramService extends BaseService {
   private readonly _telegramNotificationService: TelegramNotificationService;
   private readonly _orderService: OrderService;
+  private readonly _stockLocationService: StockLocationService;
 
   constructor(container: MedusaContainer) {
     super(container);
@@ -16,6 +19,7 @@ class TelegramService extends BaseService {
       "telegramNotificationService"
     );
     this._orderService = container.resolve("orderService");
+    this._stockLocationService = container.resolve("stockLocationService");
   }
 
   public async sendMessageOnOrderPlacedAsync(orderId: string): Promise<void> {
@@ -32,10 +36,25 @@ class TelegramService extends BaseService {
         "sales_channels",
       ],
     });
-    const telegramGroupId: string =
-      Object.keys(order.sales_channel.metadata).includes("telegram_group_id") &&
-      (order.sales_channel.metadata["telegram_group_id"] as string);
-    if (!telegramGroupId) {
+    const telegramGroupIds: string[] = [];
+    const stockLocations: Record<string, StockLocation | null> = {};
+    for (const location of order.sales_channel.locations) {
+      stockLocations[location.location_id] = null;
+    }
+
+    const stockLocationIds = Object.keys(stockLocations);
+    const stockLocationsResponse = await this._stockLocationService.list({
+      id: stockLocationIds,
+    });
+    for (const location of stockLocationsResponse) {
+      if (!Object.keys(location.metadata).includes("telegram_group_id")) {
+        continue;
+      }
+
+      telegramGroupIds.push(location.metadata["telegram_group_id"] as string);
+    }
+
+    if (telegramGroupIds.length <= 0) {
       return;
     }
 
@@ -62,7 +81,7 @@ class TelegramService extends BaseService {
     ].join("\n");
 
     const payload: TelegramNotificationSendMessageRequestPayload = {
-      chat_ids: [telegramGroupId],
+      chat_ids: telegramGroupIds,
       text: message,
       parse_mode: "Markdown",
     };
