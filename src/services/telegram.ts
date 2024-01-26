@@ -1,22 +1,28 @@
-import { Order } from "@medusajs/medusa";
-import {} from "@medusajs/utils";
+import { MedusaContainer, Order, OrderService } from "@medusajs/medusa";
 import { BaseService } from "medusa-interfaces";
+import TelegramNotificationService from "medusa-telegram-notification/src/services/telegram-notification";
+import { TelegramNotificationSendMessageRequestPayload } from "medusa-telegram-notification/src/types";
 
 const MEDUSA_ADMIN_BASE_URL = process.env.MEDUSA_ADMIN_BASE_URL;
 
 class TelegramService extends BaseService {
-  private readonly _telegramNotificationService;
+  private readonly _telegramNotificationService: TelegramNotificationService;
+  private readonly _orderService: OrderService;
 
-  constructor({ telegramNotificationService }) {
+  constructor(container: MedusaContainer) {
     super();
 
-    this._telegramNotificationService = telegramNotificationService;
+    this._telegramNotificationService = container.resolve(
+      "telegramNotificationService"
+    );
+    this._orderService = container.resolve("orderService");
   }
 
-  public sendMessage(order: Order): void {
-    const telegramGroupId =
+  public async sendMessageAsync(orderId: string): Promise<void> {
+    const order = await this._orderService.retrieve(orderId);
+    const telegramGroupId: string =
       Object.keys(order.sales_channel.metadata).includes("telegram_group_id") &&
-      order.sales_channel.metadata["telegram_group_id"];
+      (order.sales_channel.metadata["telegram_group_id"] as string);
     if (!telegramGroupId) {
       return;
     }
@@ -43,7 +49,7 @@ class TelegramService extends BaseService {
       `🚚 Shipping address: ${address}`,
     ].join("\n");
 
-    const payload = {
+    const payload: TelegramNotificationSendMessageRequestPayload = {
       chat_ids: [telegramGroupId],
       text: message,
       parse_mode: "Markdown",
