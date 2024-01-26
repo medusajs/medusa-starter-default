@@ -1,16 +1,19 @@
-import { MedusaContainer, Order, OrderService } from "@medusajs/medusa";
-import { BaseService } from "medusa-interfaces";
+import {
+  MedusaContainer,
+  OrderService,
+  TransactionBaseService,
+} from "@medusajs/medusa";
 import TelegramNotificationService from "medusa-telegram-notification/src/services/telegram-notification";
 import { TelegramNotificationSendMessageRequestPayload } from "medusa-telegram-notification/src/types";
 
 const MEDUSA_ADMIN_BASE_URL = process.env.MEDUSA_ADMIN_BASE_URL;
 
-class TelegramService extends BaseService {
+class TelegramService extends TransactionBaseService {
   private readonly _telegramNotificationService: TelegramNotificationService;
   private readonly _orderService: OrderService;
 
   constructor(container: MedusaContainer) {
-    super();
+    super(container);
 
     this._telegramNotificationService = container.resolve(
       "telegramNotificationService"
