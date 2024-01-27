@@ -47,6 +47,7 @@ export default class TelegramService extends TransactionBaseService {
     const order = await this._orderService.retrieve(orderId, {
       relations: ["customer", "shipping_address", "currency"],
     });
+    console.log(order);
     const salesChannel = await this._salesChannelService.retrieve(
       order.sales_channel_id,
       { relations: ["locations"] }
@@ -83,11 +84,11 @@ export default class TelegramService extends TransactionBaseService {
     const totalAmount = new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: order.currency.code.toUpperCase(),
-    }).format(order.paid_total);
+    }).format(order.total);
     const message = [
       `💌 Order *#${order.display_id}* placed successfully`,
-      `📝 Order details: [view](${MEDUSA_ADMIN_BASE_URL}/a/orders/${order.id})`,
-      `🍭 Customer: ${customerInfo} ([details](${MEDUSA_ADMIN_BASE_URL}/a/customers/${order.customer.id}))`,
+      `📝 Order details: ${MEDUSA_ADMIN_BASE_URL}/a/orders/${order.id}`,
+      `🍭 Customer: ${MEDUSA_ADMIN_BASE_URL}/a/customers/${order.customer.id}`,
       `💰 Total amount: ${totalAmount.toString()}`,
       `🚚 Shipping address: ${address}`,
     ].join("\n");
