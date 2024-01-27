@@ -45,9 +45,8 @@ export default class TelegramService extends TransactionBaseService {
 
   public async sendMessageOnOrderPlacedAsync(orderId: string): Promise<void> {
     const order = await this._orderService.retrieve(orderId, {
-      relations: ["customer", "shipping_address", "currency", "total"],
+      relations: ["customer", "shipping_address"],
     });
-    console.log(order);
     const salesChannel = await this._salesChannelService.retrieve(
       order.sales_channel_id,
       { relations: ["locations"] }
@@ -81,15 +80,10 @@ export default class TelegramService extends TransactionBaseService {
     } ${order?.shipping_address?.city}, ${order?.shipping_address?.province} ${
       order?.shipping_address?.postal_code
     } ${order?.shipping_address?.country_code?.toUpperCase()}`;
-    const totalAmount = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: order.currency.code.toUpperCase(),
-    }).format(Number((order.total / 100).toFixed(2)));
     const message = [
       `💌 Order *#${order.display_id}* placed successfully`,
       `📝 Order details: [view](${MEDUSA_ADMIN_BASE_URL}/a/orders/${order.id})`,
       `🍭 Customer: ${customerInfo} ([details](${MEDUSA_ADMIN_BASE_URL}/a/customers/${order.customer.id}))`,
-      `💰 Total amount: ${totalAmount}`,
       `🚚 Shipping address: ${address}`,
     ].join("\n");
 
