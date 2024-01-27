@@ -1,6 +1,7 @@
 import {
   MedusaContainer,
   OrderService,
+  SalesChannelService,
   TransactionBaseService,
 } from "@medusajs/medusa";
 import { StockLocation } from "@medusajs/stock-location/dist/models";
@@ -16,16 +17,19 @@ export default class TelegramService extends TransactionBaseService {
   static LIFE_TIME = Lifetime.SCOPED;
   private readonly _telegramNotificationService: TelegramNotificationService;
   private readonly _orderService: OrderService;
+  private readonly _salesChannelService: SalesChannelService;
   private readonly _stockLocationService: StockLocationService;
 
   constructor(
     {
       telegramNotificationService,
       orderService,
+      salesChannelService,
       stockLocationService,
     }: {
       telegramNotificationService: TelegramNotificationService;
       orderService: OrderService;
+      salesChannelService: SalesChannelService;
       stockLocationService: StockLocationService;
     },
     options: Record<string, unknown>
@@ -35,30 +39,20 @@ export default class TelegramService extends TransactionBaseService {
 
     this._telegramNotificationService = telegramNotificationService;
     this._orderService = orderService;
+    this._salesChannelService = salesChannelService;
     this._stockLocationService = stockLocationService;
   }
 
   public async sendMessageOnOrderPlacedAsync(orderId: string): Promise<void> {
-    const order = await this._orderService.retrieve(orderId, {
-      relations: [
-        "cart",
-        "customer",
-        "shipping_address",
-        "region",
-        "currency",
-        "shipping_methods",
-        "payments",
-        "sales_channel",
-      ],
-    });
+    const order = await this._orderService.retrieve(orderId);
+    const salesChannel = await this._salesChannelService.retrieve(
+      order.sales_channel_id,
+      { relations: ["locations"] }
+    );
     const telegramGroupIds: string[] = [];
-    const stockLocations: Record<string, StockLocation | null> = {};
-    console.log(order);
-    for (const location of order.sales_channel.locations) {
-      stockLocations[location.location_id] = null;
-    }
-
-    const stockLocationIds = Object.keys(stockLocations);
+    const stockLocationIds = salesChannel.locations.map(
+      (value) => value.location_id
+    );
     const stockLocationsResponse = await this._stockLocationService.list({
       id: stockLocationIds,
     });
