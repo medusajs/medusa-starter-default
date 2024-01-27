@@ -85,11 +85,11 @@ export default class TelegramService extends TransactionBaseService {
       style: "currency",
       currency: order.currency.code.toUpperCase(),
     }).format(Number((order.total / 100).toFixed(2)));
-    const message = `<p>💌 Order <em>#${order.display_id}</em> placed successfully
+    const message = `<span class="tg-spoiler">💌 Order <em>#${order.display_id}</em> placed successfully
     📝 Order details: <a href="${MEDUSA_ADMIN_BASE_URL}/a/orders/${order.id}">view</a>
     🍭 Customer: ${customerInfo} (<a href="${MEDUSA_ADMIN_BASE_URL}/a/customers/${order.customer.id}">details</a>)
     💰 Total amount: ${totalAmount}
-    🚚 Shipping address: ${address}</p>`;
+    🚚 Shipping address: ${address}</span>`;
 
     const payload: TelegramNotificationSendMessageRequestPayload = {
       chat_ids: telegramGroupIds,
