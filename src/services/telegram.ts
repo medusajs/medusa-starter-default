@@ -84,24 +84,17 @@ export default class TelegramService extends TransactionBaseService {
     const totalAmount = new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: order.currency.code.toUpperCase(),
-    }).format(order.total);
-    const message = [
-      `💌 Order *#${order.display_id}* placed successfully`,
-      `📝 Order details: [view](${MEDUSA_ADMIN_BASE_URL}/a/orders/${order.id})`,
-      `🍭 Customer: ${customerInfo} ([details](${MEDUSA_ADMIN_BASE_URL}/a/customers/${order.customer.id}))`,
-      `💰 Total amount: ${totalAmount}`,
-      `🚚 Shipping address: ${address}`,
-    ]
-      .join("\n")
-      .replace("_", "\\_")
-      .replace("*", "\\*")
-      .replace("[", "\\[")
-      .replace("`", "\\`");
+    }).format(Number((order.total / 100).toFixed(2)));
+    const message = `<p>💌 Order <em>#${order.display_id}</em> placed successfully
+    📝 Order details: <a href="${MEDUSA_ADMIN_BASE_URL}/a/orders/${order.id}">view</a>
+    🍭 Customer: ${customerInfo} (<a href="${MEDUSA_ADMIN_BASE_URL}/a/customers/${order.customer.id}">details</a>)
+    💰 Total amount: ${totalAmount}
+    🚚 Shipping address: ${address}</p>`;
 
     const payload: TelegramNotificationSendMessageRequestPayload = {
       chat_ids: telegramGroupIds,
       text: message,
-      parse_mode: "MarkdownV2",
+      parse_mode: "HTML",
     };
 
     this._telegramNotificationService.sendMessage(payload);
