@@ -86,7 +86,7 @@ export default class TelegramService extends TransactionBaseService {
       currency: order.currency.code.toUpperCase(),
     }).format(order.total);
     const message = [
-      `💌 Order *#${order.display_id}* placed successfully`,
+      `💌 Order *\#${order.display_id}* placed successfully`,
       `📝 Order details: [view](${MEDUSA_ADMIN_BASE_URL}/a/orders/${order.id})`,
       `🍭 Customer: ${customerInfo} ([details](${MEDUSA_ADMIN_BASE_URL}/a/customers/${order.customer.id}))`,
       `💰 Total amount: ${totalAmount}`,
