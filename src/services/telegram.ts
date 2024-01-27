@@ -20,19 +20,22 @@ export default class TelegramService extends TransactionBaseService {
 
   constructor(
     {
-      eventBusService,
-      container,
-    }: { eventBusService: IEventBusService; container: MedusaContainer },
+      telegramNotificationService,
+      orderService,
+      stockLocationService,
+    }: {
+      telegramNotificationService: TelegramNotificationService;
+      orderService: OrderService;
+      stockLocationService: StockLocationService;
+    },
     options: Record<string, unknown>
   ) {
     // @ts-ignore
     super(...arguments);
 
-    this._telegramNotificationService = container.resolve(
-      "telegramNotificationService"
-    );
-    this._orderService = container.resolve("orderService");
-    this._stockLocationService = container.resolve("stockLocationService");
+    this._telegramNotificationService = telegramNotificationService;
+    this._orderService = orderService;
+    this._stockLocationService = stockLocationService;
   }
 
   public async sendMessageOnOrderPlacedAsync(orderId: string): Promise<void> {
