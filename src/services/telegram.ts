@@ -8,17 +8,25 @@ import StockLocationService from "@medusajs/stock-location/dist/services/stock-l
 import TelegramNotificationService from "medusa-telegram-notification/src/services/telegram-notification";
 import { TelegramNotificationSendMessageRequestPayload } from "medusa-telegram-notification/src/types";
 import { Lifetime } from "awilix";
+import { IEventBusService } from "@medusajs/types";
 
 const MEDUSA_ADMIN_BASE_URL = process.env.MEDUSA_ADMIN_BASE_URL;
 
-class TelegramService extends TransactionBaseService {
-  public static LIFE_TIME = Lifetime.SCOPED;
+export default class TelegramService extends TransactionBaseService {
+  static LIFE_TIME = Lifetime.SCOPED;
   private readonly _telegramNotificationService: TelegramNotificationService;
   private readonly _orderService: OrderService;
   private readonly _stockLocationService: StockLocationService;
 
-  constructor(container: MedusaContainer) {
-    super(container);
+  constructor(
+    {
+      eventBusService,
+      container,
+    }: { eventBusService: IEventBusService; container: MedusaContainer },
+    options: Record<string, unknown>
+  ) {
+    // @ts-ignore
+    super(...arguments);
 
     this._telegramNotificationService = container.resolve(
       "telegramNotificationService"
@@ -94,5 +102,3 @@ class TelegramService extends TransactionBaseService {
     this._telegramNotificationService.sendMessage(payload);
   }
 }
-
-export default TelegramService;
