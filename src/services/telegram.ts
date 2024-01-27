@@ -50,7 +50,7 @@ export default class TelegramService extends TransactionBaseService {
     console.log(order);
     const salesChannel = await this._salesChannelService.retrieve(
       order.sales_channel_id,
-      { relations: ["locations"] }
+      { relations: ["locations", "total"] }
     );
     const telegramGroupIds: string[] = [];
     const stockLocationIds = salesChannel.locations.map(
