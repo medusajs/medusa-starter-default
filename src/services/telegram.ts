@@ -87,16 +87,16 @@ export default class TelegramService extends TransactionBaseService {
     }).format(order.total);
     const message = [
       `💌 Order *#${order.display_id}* placed successfully`,
-      `📝 Order details: ${MEDUSA_ADMIN_BASE_URL}/a/orders/${order.id}`,
-      `🍭 Customer: ${MEDUSA_ADMIN_BASE_URL}/a/customers/${order.customer.id}`,
-      `💰 Total amount: ${totalAmount.toString()}`,
+      `📝 Order details: [view](${MEDUSA_ADMIN_BASE_URL}/a/orders/${order.id})`,
+      `🍭 Customer: ${customerInfo} ([details](${MEDUSA_ADMIN_BASE_URL}/a/customers/${order.customer.id}))`,
+      `💰 Total amount: ${totalAmount}`,
       `🚚 Shipping address: ${address}`,
     ].join("\n");
 
     const payload: TelegramNotificationSendMessageRequestPayload = {
       chat_ids: telegramGroupIds,
       text: message,
-      parse_mode: "Markdown",
+      parse_mode: "MarkdownV2",
     };
 
     this._telegramNotificationService.sendMessage(payload);
