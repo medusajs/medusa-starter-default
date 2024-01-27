@@ -1,13 +1,18 @@
-import { MedusaContainer, OrderService } from "@medusajs/medusa";
+import {
+  MedusaContainer,
+  OrderService,
+  TransactionBaseService,
+} from "@medusajs/medusa";
 import { StockLocation } from "@medusajs/stock-location/dist/models";
 import StockLocationService from "@medusajs/stock-location/dist/services/stock-location";
-import { BaseService } from "medusa-interfaces";
 import TelegramNotificationService from "medusa-telegram-notification/src/services/telegram-notification";
 import { TelegramNotificationSendMessageRequestPayload } from "medusa-telegram-notification/src/types";
+import { Lifetime } from "awilix";
 
 const MEDUSA_ADMIN_BASE_URL = process.env.MEDUSA_ADMIN_BASE_URL;
 
-class TelegramService extends BaseService {
+class TelegramService extends TransactionBaseService {
+  public static LIFE_TIME = Lifetime.SCOPED;
   private readonly _telegramNotificationService: TelegramNotificationService;
   private readonly _orderService: OrderService;
   private readonly _stockLocationService: StockLocationService;
