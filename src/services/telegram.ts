@@ -49,7 +49,6 @@ export default class TelegramService extends TransactionBaseService {
         "shipping_methods",
         "payments",
         "sales_channel",
-        "sales_channels",
       ],
     });
     const telegramGroupIds: string[] = [];
