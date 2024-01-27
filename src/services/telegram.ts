@@ -45,12 +45,12 @@ export default class TelegramService extends TransactionBaseService {
 
   public async sendMessageOnOrderPlacedAsync(orderId: string): Promise<void> {
     const order = await this._orderService.retrieve(orderId, {
-      relations: ["customer", "shipping_address", "currency"],
+      relations: ["customer", "shipping_address", "currency", "total"],
     });
     console.log(order);
     const salesChannel = await this._salesChannelService.retrieve(
       order.sales_channel_id,
-      { relations: ["locations", "total"] }
+      { relations: ["locations"] }
     );
     const telegramGroupIds: string[] = [];
     const stockLocationIds = salesChannel.locations.map(
