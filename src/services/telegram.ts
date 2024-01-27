@@ -53,6 +53,7 @@ export default class TelegramService extends TransactionBaseService {
     });
     const telegramGroupIds: string[] = [];
     const stockLocations: Record<string, StockLocation | null> = {};
+    console.log(order);
     for (const location of order.sales_channel.locations) {
       stockLocations[location.location_id] = null;
     }
