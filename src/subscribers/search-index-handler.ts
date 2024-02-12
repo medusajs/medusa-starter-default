@@ -110,7 +110,6 @@ class SearchProductIndexing {
   private readonly _eventBusService: IEventBusService;
   private readonly _searchService: ISearchService;
   private readonly _productService: ProductService;
-  private readonly _featureFlagRouter: FlagRouter;
   private readonly _defaultRelations: string[];
 
   constructor(container: MedusaContainer) {
@@ -118,7 +117,6 @@ class SearchProductIndexing {
     this._searchService = container.resolve("searchService");
     this._eventBusService = container.resolve("eventBusService");
     this._productService = container.resolve("productService");
-    this._featureFlagRouter = container.resolve("featureFlagRoute");
     this._defaultRelations = [
       "variants",
       "tags",
@@ -167,12 +165,6 @@ class SearchProductIndexing {
     lastSeenId: string,
     take: number
   ): Promise<Product[]> {
-    if (
-      this._featureFlagRouter.isFeatureEnabled(ProductCategoryFeatureFlag.key)
-    ) {
-      this._defaultRelations.push("categories");
-    }
-
     return await this._productService.list(
       { id: { gt: lastSeenId } },
       {
