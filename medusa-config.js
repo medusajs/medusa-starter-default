@@ -96,6 +96,7 @@ const plugins = [
             sortableAttributes: process.env.MEILI_PRODUCTS_SORTABLE_ATTRIBUTES.split(' ') ?? [],
           },
           transformer: (product) => {
+            console.log(product);
             const salesChannelIds = product.sales_channels?.map((value) => value.id) ?? [];
             return {...product, sales_channel_ids: salesChannelIds};
           }
