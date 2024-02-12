@@ -88,7 +88,7 @@ const plugins = [
         apiKey: process.env.MEILISEARCH_API_KEY,
       },
       settings: {
-        products: {
+        products_custom: {
           indexSettings: {
             searchableAttributes: process.env.MEILI_PRODUCTS_SEARCHABLE_ATTRIBUTES.split(' ') ?? [],
             displayedAttributes: process.env.MEILI_PRODUCTS_DISPLAYED_ATTRIBUTES.split(' ') ?? [],
@@ -96,8 +96,10 @@ const plugins = [
             sortableAttributes: process.env.MEILI_PRODUCTS_SORTABLE_ATTRIBUTES.split(' ') ?? [],
           },
           transformer: (product) => {
-            console.log(product);
-            const salesChannelIds = product.sales_channels?.map((value) => value.id) ?? [];
+            let salesChannelIds = [];
+            if (product.sales_channels) {
+              salesChannelIds = product.sales_channels?.map((value) => value.id) ?? [];
+            }
             return {...product, sales_channel_ids: salesChannelIds};
           }
         },
