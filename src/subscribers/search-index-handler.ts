@@ -147,11 +147,12 @@ class SearchProductIndexing {
 
     while (hasMore) {
       const products = await this.retrieveNextProducts(lastSeenId, take);
+      const documents = this.transformDocuments(products);
 
       if (products.length > 0) {
         await this._searchService.addDocuments(
           this._indexName,
-          products,
+          documents,
           "products-custom"
         );
         lastSeenId = products[products.length - 1].id;
@@ -176,29 +177,52 @@ class SearchProductIndexing {
   }
 
   private async onCreationAsync(data): Promise<void> {
-    const products = await this._productService.retrieve(data.id, {
+    const product = await this._productService.retrieve(data.id, {
       relations: this._defaultRelations,
     });
+    const documents = this.transformDocuments([product]);
     await this._searchService.addDocuments(
       this._indexName,
-      [products],
+      documents,
       "products-custom"
     );
   }
 
   private async onUpdateAsync(data): Promise<void> {
-    const stockLocation = await this._productService.retrieve(data.id, {
+    const product = await this._productService.retrieve(data.id, {
       relations: this._defaultRelations,
     });
+    const documents = this.transformDocuments([product]);
     await this._searchService.addDocuments(
       this._indexName,
-      [stockLocation],
+      documents,
       "products-custom"
     );
   }
 
   private async onDeletionAsync(data): Promise<void> {
     await this._searchService.deleteDocument(this._indexName, data.id);
+  }
+
+  private transformDocuments(products: Product[]): Record<string, any> {
+    const documents: Record<string, any>[] = [];
+    for (const product of products) {
+      let salesChannelIds = [];
+      if (product.sales_channels) {
+        salesChannelIds =
+          product.sales_channels?.map((value) => value.id) ?? [];
+      }
+      const document = Object.keys(product)
+        .filter((objKey) => objKey !== "sales_channels")
+        .reduce((newObj, key) => {
+          newObj[key] = product[key];
+          return newObj;
+        }, {});
+
+      documents.push({ ...document, sales_channel_ids: salesChannelIds });
+    }
+
+    return documents;
   }
 }
 

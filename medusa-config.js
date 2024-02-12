@@ -95,14 +95,6 @@ const plugins = [
             filterableAttributes: process.env.MEILI_PRODUCTS_FILTERABLE_ATTRIBUTES.split(' ') ?? [],
             sortableAttributes: process.env.MEILI_PRODUCTS_SORTABLE_ATTRIBUTES.split(' ') ?? [],
           },
-          transformer: (product) => {
-            console.log(product);
-            let salesChannelIds = [];
-            if (product.sales_channels) {
-              salesChannelIds = product.sales_channels?.map((value) => value.id) ?? [];
-            }
-            return {...product, sales_channel_ids: salesChannelIds};
-          }
         },
         stock_locations: {
           indexSettings: {
