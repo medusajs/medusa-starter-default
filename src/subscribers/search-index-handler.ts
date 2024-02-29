@@ -5,7 +5,11 @@ import {
   SubscriberConfig,
   SubscriberArgs,
 } from "@medusajs/medusa/dist/types/subscribers";
-import { MedusaContainer } from "@medusajs/medusa";
+import {
+  MedusaContainer,
+  SalesChannelLocationService,
+  SalesChannelService,
+} from "@medusajs/medusa";
 import {
   FlagRouter,
   defaultSearchIndexingProductRelations,
@@ -20,6 +24,7 @@ class SearchStockLocationsIndexing {
   private readonly _indexName: string;
   private readonly _searchService: ISearchService;
   private readonly _stockLocationService: StockLocationService;
+  private readonly _salesChannelLocationService: SalesChannelLocationService;
   private readonly _eventBusService: IEventBusService;
   private readonly _defaultRelations: string[];
 
@@ -27,8 +32,11 @@ class SearchStockLocationsIndexing {
     this._indexName = "stock_locations";
     this._searchService = container.resolve("searchService");
     this._stockLocationService = container.resolve("stockLocationService");
+    this._salesChannelLocationService = container.resolve(
+      "salesChannelLocationService"
+    );
     this._eventBusService = container.resolve("eventBusService");
-    this._defaultRelations = ["address", "sales_channels"];
+    this._defaultRelations = ["address"];
 
     this.onCreationAsync = this.onCreationAsync.bind(this);
     this.onUpdateAsync = this.onUpdateAsync.bind(this);
@@ -66,8 +74,11 @@ class SearchStockLocationsIndexing {
   private async retrieveNextStockLocationsAsync(
     skip: number,
     take: number
-  ): Promise<StockLocation[]> {
-    return await this._stockLocationService.list(
+  ): Promise<(Partial<StockLocation> & { sales_channel_ids: string[] })[]> {
+    const customStockLocations: (Partial<StockLocation> & {
+      sales_channel_ids: string[];
+    })[] = [];
+    const stockLocations = await this._stockLocationService.list(
       {},
       {
         relations: this._defaultRelations,
@@ -76,15 +87,36 @@ class SearchStockLocationsIndexing {
         order: { id: "ASC" },
       }
     );
+    for (const stockLocation of stockLocations) {
+      const salesChannelIds =
+        await this._salesChannelLocationService.listSalesChannelIds(
+          stockLocation.id
+        );
+      customStockLocations.push({
+        ...stockLocation,
+        sales_channel_ids: salesChannelIds,
+      });
+    }
+    return customStockLocations;
   }
 
   private async onCreationAsync(data): Promise<void> {
     const stockLocation = await this._stockLocationService.retrieve(data.id, {
       relations: this._defaultRelations,
     });
+    const salesChannelIds =
+      await this._salesChannelLocationService.listSalesChannelIds(
+        stockLocation.id
+      );
+    const customStockLocation: Partial<StockLocation> & {
+      sales_channel_ids: string[];
+    } = {
+      ...stockLocation,
+      sales_channel_ids: salesChannelIds,
+    };
     await this._searchService.addDocuments(
       this._indexName,
-      [stockLocation],
+      [customStockLocation],
       "stock-locations"
     );
   }
@@ -93,9 +125,19 @@ class SearchStockLocationsIndexing {
     const stockLocation = await this._stockLocationService.retrieve(data.id, {
       relations: this._defaultRelations,
     });
+    const salesChannelIds =
+      await this._salesChannelLocationService.listSalesChannelIds(
+        stockLocation.id
+      );
+    const customStockLocation: Partial<StockLocation> & {
+      sales_channel_ids: string[];
+    } = {
+      ...stockLocation,
+      sales_channel_ids: salesChannelIds,
+    };
     await this._searchService.addDocuments(
       this._indexName,
-      [stockLocation],
+      [customStockLocation],
       "stock-locations"
     );
   }
