@@ -28,7 +28,7 @@ class SearchStockLocationsIndexing {
     this._searchService = container.resolve("searchService");
     this._stockLocationService = container.resolve("stockLocationService");
     this._eventBusService = container.resolve("eventBusService");
-    this._defaultRelations = ["address"];
+    this._defaultRelations = ["address", "sales_channels"];
 
     this.onCreationAsync = this.onCreationAsync.bind(this);
     this.onUpdateAsync = this.onUpdateAsync.bind(this);
