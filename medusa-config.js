@@ -67,6 +67,57 @@ const modules = {
       redisUrl: REDIS_URL
     }
   },*/
+  apiKey: {
+    resolve: "@medusajs/api-key"
+  },
+  auth: {
+    resolve: "@medusajs/auth"
+  },
+  cart: {
+    resolve: "@medusajs/cart"
+  },
+  customer: {
+    resolve: "@medusajs/customer"
+  },
+  currency: {
+    resolve: "@medusajs/currency"
+  },
+  fulfillment: {
+    resolve: "@medusajs/fulfillment"
+  },
+  inventoryService: {
+    resolve: "@medusajs/inventory-next"
+  },
+  order: {
+    resolve: "@medusajs/order"
+  },
+  payment: {
+    resolve: "@medusajs/payment"
+  },
+  pricingService: {
+    resolve: "@medusajs/pricing"
+  },
+  productService: {
+    resolve: "@medusajs/product"
+  },
+  region: {
+    resolve: "@medusajs/region"
+  },
+  salesChannel: {
+    resolve: "@medusajs/sales-channel"
+  },
+  stockLocationService: {
+    resolve: "@medusajs/stock-location-next"
+  },
+  store: {
+    resolve: "@medusajs/store"
+  },
+  tax: {
+    resolve: "@medusajs/tax"
+  },
+  user: {
+    resolve: "@medusajs/user"
+  },
 };
 
 /** @type {import('@medusajs/medusa').ConfigModule["projectConfig"]} */
@@ -85,4 +136,7 @@ module.exports = {
   projectConfig,
   plugins,
   modules,
+  featureFlags: {
+    medusa_v2: true
+  }
 };
