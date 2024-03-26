@@ -100,6 +100,9 @@ const modules = {
   productService: {
     resolve: "@medusajs/product"
   },
+  promotion: {
+    resolve: "@medusajs/promotion"
+  },
   region: {
     resolve: "@medusajs/region"
   },
