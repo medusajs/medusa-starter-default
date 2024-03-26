@@ -116,7 +116,10 @@ const modules = {
     resolve: "@medusajs/tax"
   },
   user: {
-    resolve: "@medusajs/user"
+    resolve: "@medusajs/user",
+    options: {
+      jwt_secret: process.env.JWT_SECRET
+    }
   },
 };
 
