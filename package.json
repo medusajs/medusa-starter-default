@@ -49,6 +49,7 @@
     "@babel/core": "^7.14.3",
     "@babel/preset-typescript": "^7.21.4",
     "@medusajs/medusa-cli": "latest",
+    "@stdlib/number-float64-base-normalize": "0.0.8",
     "@types/express": "^4.17.13",
     "@types/jest": "^27.4.0",
     "@types/node": "^17.0.8",
@@ -86,13 +87,5 @@
     ],
     "coverageDirectory": "./coverage",
     "testEnvironment": "node"
-  },
-  "overrides": {
-    "@medusajs/admin-ui": {
-      "@medusajs/ui-preset": "^1.1.2"
-    }
-  },
-  "resolutions": {
-    "@medusajs/ui-preset": "^1.1.2"
   }
 }
