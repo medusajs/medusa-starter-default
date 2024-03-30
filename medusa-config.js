@@ -78,8 +78,14 @@ const projectConfig = {
 	store_cors: STORE_CORS,
 	database_url: DATABASE_URL,
 	admin_cors: ADMIN_CORS,
-	// Uncomment the following lines to enable REDIS
 	redis_url: REDIS_URL,
+};
+
+const featureFlag = {
+	featureFlags: {
+		product_categories: true,
+		tax_inclusive_pricing: true,
+	},
 };
 
 /** @type {import('@medusajs/medusa').ConfigModule} */
@@ -87,4 +93,5 @@ module.exports = {
 	projectConfig,
 	plugins,
 	modules,
+	featureFlag,
 };
