@@ -25,6 +25,7 @@
 		"dev": "cross-env npm run build:server && medusa develop"
 	},
 	"dependencies": {
+		"@medusajs/admin": "latest",
 		"@medusajs/cache-inmemory": "latest",
 		"@medusajs/cache-redis": "latest",
 		"@medusajs/event-bus-local": "latest",
@@ -36,12 +37,12 @@
 		"cors": "^2.8.5",
 		"dotenv": "16.3.1",
 		"express": "^4.17.2",
+		"medusa-file-minio": "^1.3.1",
 		"medusa-fulfillment-manual": "latest",
 		"medusa-interfaces": "latest",
 		"medusa-payment-manual": "latest",
 		"medusa-payment-stripe": "latest",
 		"prism-react-renderer": "^2.0.4",
-		"@medusajs/admin": "latest",
 		"typeorm": "^0.3.16"
 	},
 	"devDependencies": {

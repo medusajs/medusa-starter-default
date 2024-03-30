@@ -35,15 +35,19 @@ const plugins = [
 	`medusa-fulfillment-manual`,
 	`medusa-payment-manual`,
 	{
-		resolve: `@medusajs/file-local`,
+		resolve: `medusa-file-minio`,
 		options: {
-			upload_dir: 'uploads',
+			endpoint: process.env.MINIO_ENDPOINT,
+			bucket: process.env.MINIO_BUCKET,
+			access_key_id: process.env.MINIO_ACCESS_KEY,
+			secret_access_key: process.env.MINIO_SECRET_KEY,
 		},
 	},
 	{
 		resolve: '@medusajs/admin',
 		/** @type {import('@medusajs/admin').PluginOptions} */
 		options: {
+			serve: process.env.NODE_ENV === 'development',
 			autoRebuild: true,
 			develop: {
 				open: process.env.OPEN_BROWSER !== 'false',
