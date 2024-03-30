@@ -44,11 +44,10 @@ const plugins = [
 		resolve: '@medusajs/admin',
 		/** @type {import('@medusajs/admin').PluginOptions} */
 		options: {
-			serve: process.env.NODE_ENV === 'development',
-			// autoRebuild: true,
-			// develop: {
-			//   open: process.env.OPEN_BROWSER !== 'false',
-			// },
+			autoRebuild: true,
+			develop: {
+				open: process.env.OPEN_BROWSER !== 'false',
+			},
 		},
 	},
 ];
