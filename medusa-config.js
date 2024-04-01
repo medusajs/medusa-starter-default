@@ -71,7 +71,18 @@ const modules = {
     resolve: "@medusajs/api-key"
   },
   auth: {
-    resolve: "@medusajs/auth"
+    resolve: "@medusajs/auth",
+    options: {
+      providers: [
+        {
+          name: "emailpass",
+          scopes: {
+            admin: {},
+            store: {},
+          },
+        },
+      ],
+    },
   },
   cart: {
     resolve: "@medusajs/cart"
