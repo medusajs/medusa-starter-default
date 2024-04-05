@@ -2537,7 +2537,7 @@
     "@mikro-orm/postgresql" "5.9.7"
     awilix "^8.0.0"
 
-"@medusajs/medusa-cli@^1.3.21", "@medusajs/medusa-cli@^1.3.22":
+"@medusajs/medusa-cli@^1.3.22", "@medusajs/medusa-cli@latest":
   version "1.3.22"
   resolved "https://registry.yarnpkg.com/@medusajs/medusa-cli/-/medusa-cli-1.3.22.tgz#fdcc3d42e046c2eae828735b0f38bee791cfbc12"
   integrity sha512-iUkQVSKlvjzrisgIyKPfiPTbWFYZt/y7tWlKMrP78ekZm5P/ls5chIdlM/5TKOTxjvcgGEop76323lQ//W5dCg==
@@ -2833,15 +2833,15 @@
     dotenv "^16.4.5"
     knex "2.4.2"
 
-"@medusajs/types@^1.11.12", "@medusajs/types@^1.11.13", "@medusajs/types@^1.11.14", "@medusajs/types@^1.11.15":
+"@medusajs/types@^1.11.12", "@medusajs/types@^1.11.14", "@medusajs/types@^1.11.15":
   version "1.11.15"
   resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.11.15.tgz#d02450737a7f0c2a3bbdef078d81252055eb76c9"
   integrity sha512-1zoM+MSbSxuDoyJ3xUVlwh5DgB9DgZH4yu/WUrymbZwVNka7/uPIraRG65sVO6fJu+/y8NpEe231Y7ZEyFz19A==
 
-"@medusajs/ui-preset@^1.1.2", "@medusajs/ui-preset@^1.1.3":
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/@medusajs/ui-preset/-/ui-preset-1.1.2.tgz#536c73e49f251c3aad3bf298569fcc7c2434929e"
-  integrity sha512-xiGNY0pkVM4mgibtmWFZPQPv9k6gQrNevxBDJN44cHVYXQirV0VnWsEZcOuI5w95qOLYcEAfV6Zy836ryeT1Ew==
+"@medusajs/ui-preset@^1.1.3":
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/@medusajs/ui-preset/-/ui-preset-1.1.3.tgz#7a7d9bcc879952fad8f46375d73cfdf2c965f408"
+  integrity sha512-pFfZUE7EP5rH4tkzxHIH0sW5iOwUzZGP3u7519D4LIusI1MrgH5E89USjSaQXNJlh0jil4pfbh3zNWnGFn5ldg==
   dependencies:
     "@tailwindcss/forms" "^0.5.3"
     tailwindcss-animate "^1.0.6"
@@ -2922,19 +2922,6 @@
     "@mikro-orm/postgresql" "5.9.7"
     awilix "^8.0.1"
     bignumber.js "^9.1.2"
-    knex "2.4.2"
-    ulid "^2.3.0"
-
-"@medusajs/utils@^1.11.3":
-  version "1.11.6"
-  resolved "https://registry.yarnpkg.com/@medusajs/utils/-/utils-1.11.6.tgz#52ba9472628cb37a27929a6edff25cdd123ad381"
-  integrity sha512-xGjUdgesteN1W+OFxrT7IUMDmlWpFoIMoEemn6UYXqjpeHmFfUJ1Co2x1jSEotXxykKbGnTa+MH72CA3JCjULg==
-  dependencies:
-    "@medusajs/types" "^1.11.13"
-    "@mikro-orm/core" "5.9.7"
-    "@mikro-orm/migrations" "5.9.7"
-    "@mikro-orm/postgresql" "5.9.7"
-    awilix "^8.0.1"
     knex "2.4.2"
     ulid "^2.3.0"
 
@@ -4699,6 +4686,18 @@
     "@stdlib/number-float64-base-to-words" "^0.0.x"
     "@stdlib/utils-library-manifest" "^0.0.x"
 
+"@stdlib/number-float64-base-normalize@0.0.8":
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/@stdlib/number-float64-base-normalize/-/number-float64-base-normalize-0.0.8.tgz#981149317bd34921c653ed526376718b961e17e9"
+  integrity sha512-4P3c7YD0hahCgflxxTWrjR8457o2ViYu32MH/M166Aj6nkPj0ZovYj/X1DdyiYAAMHhVePGGMl0JAL3X141FVQ==
+  dependencies:
+    "@stdlib/constants-float64-smallest-normal" "^0.0.x"
+    "@stdlib/math-base-assert-is-infinite" "^0.0.x"
+    "@stdlib/math-base-assert-is-nan" "^0.0.x"
+    "@stdlib/math-base-special-abs" "^0.0.x"
+    "@stdlib/types" "^0.0.x"
+    "@stdlib/utils-define-nonenumerable-read-only-property" "^0.0.x"
+
 "@stdlib/number-float64-base-normalize@^0.0.x":
   version "0.0.9"
   resolved "https://registry.yarnpkg.com/@stdlib/number-float64-base-normalize/-/number-float64-base-normalize-0.0.9.tgz#9e98eda47faa9ffc24bcf8161e587ae7b5f96a39"
@@ -5388,7 +5387,7 @@
   resolved "https://registry.yarnpkg.com/@types/mime/-/mime-3.0.4.tgz#2198ac274de6017b44d941e00261d5bc6a0e0a45"
   integrity sha512-iJt33IQnVRkqeqC7PzBHPTC6fDlRNRW8vjrgqtScAhrmMwe8c4Eo7+fUGTa+XdWrpEgpyKWMYmi2dIwMAYRzPw==
 
-"@types/mime@^1":
+"@types/mime@1.3.5", "@types/mime@^1":
   version "1.3.5"
   resolved "https://registry.yarnpkg.com/@types/mime/-/mime-1.3.5.tgz#1ef302e01cf7d2b5a0fa526790c9123bf1d06690"
   integrity sha512-/pyBZWSLD2n0dcHE3hq8s8ZvcETHtEuF+3E7XVt0Ig2nvsVQXdghHVcEkIWjy9A0wKfTn97a/PSDYohKIlnP/w==
@@ -10059,10 +10058,10 @@ medusa-core-utils@1.2.1, medusa-core-utils@^1.2.0, medusa-core-utils@^1.2.1:
   resolved "https://registry.yarnpkg.com/medusa-core-utils/-/medusa-core-utils-1.2.1.tgz#c95ce78fb5e2d532b5441c11575cbf99f6138fc2"
   integrity sha512-PBAm+5ODVcS9HREz7SH9LtiDY6/Fkwax+tqB5cTjujOiWSPuuj13ImH8eb9p6aVoOEvFtpDP4HL8TIijpJ6juw==
 
-medusa-fulfillment-manual@^1.1.39:
-  version "1.1.39"
-  resolved "https://registry.yarnpkg.com/medusa-fulfillment-manual/-/medusa-fulfillment-manual-1.1.39.tgz#d4a45cd885c5edab0f9713784a2668fe690e959c"
-  integrity sha512-tZaO36lt29j2W5Xye7YqnN1DPVPBYQS+/eBDvBiMh8SUYlXMgSGt3td/QZuVXelcn3C7SfGd07K/Qqcn49rFIA==
+medusa-fulfillment-manual@latest:
+  version "1.1.40"
+  resolved "https://registry.yarnpkg.com/medusa-fulfillment-manual/-/medusa-fulfillment-manual-1.1.40.tgz#0d98d4af62d826e50f749d8add20048977c9f26a"
+  integrity sha512-HRz2+ZAE8lYMgFs17EVkQrXYuOWTSmR1qZa++XqDx2DJrv6NWtBKYf49AmdB3VkFdeuHRz7Xl+7114bStNlM4Q==
   dependencies:
     "@babel/plugin-transform-classes" "^7.9.5"
     "@babel/plugin-transform-instanceof" "^7.8.3"
@@ -10070,22 +10069,22 @@ medusa-fulfillment-manual@^1.1.39:
     express "^4.17.1"
     medusa-core-utils "^1.2.1"
 
-medusa-interfaces@^1.3.8:
-  version "1.3.8"
-  resolved "https://registry.yarnpkg.com/medusa-interfaces/-/medusa-interfaces-1.3.8.tgz#80e5b962ab8ac5b7b630c2324a3b7aa301351d38"
-  integrity sha512-S1uCwwbOaEnBy9TWwfBlfs9scLSUz/0GcD9p5EWyPLVXvnBfGTmLBt4HI6oj6h3fVd+92RTdrmVnhznRYnOvoQ==
+medusa-interfaces@latest:
+  version "1.3.9"
+  resolved "https://registry.yarnpkg.com/medusa-interfaces/-/medusa-interfaces-1.3.9.tgz#4064a99dd3a50d50ac8a3a7f7e9217c2ba6f2a4a"
+  integrity sha512-5cTYPvnL96djEdQjO5Mp4ECLJH6FTL1NWQf6kdxbda3S66JkbliNydQ03KorKEPKxT6Fsr74su494rm077EiFw==
 
-medusa-payment-manual@^1.0.24:
+medusa-payment-manual@latest:
   version "1.0.24"
   resolved "https://registry.yarnpkg.com/medusa-payment-manual/-/medusa-payment-manual-1.0.24.tgz#4836998d51e4b2be4d0ba7acf3016b35c0f85437"
   integrity sha512-VcQJuuE86J+ePPmZPVp0961Gkjfvu9v/xII9jM5uOH2CsuMsLI3G8QOjDBxn+kiy+hiQFXD1ZoWDDuuFY/Wt8A==
 
-medusa-payment-stripe@^6.0.7:
-  version "6.0.7"
-  resolved "https://registry.yarnpkg.com/medusa-payment-stripe/-/medusa-payment-stripe-6.0.7.tgz#b9a8357f1fdd5e0a7e8798855578882a364ae416"
-  integrity sha512-qpSSHJDW3+yCF7jY/53XiZeuJY5gXMFA33BAh0ipAlBC2OAqM/ZPYiiZNtDb8RaTYTTikhBOIqHxCaYYoFaPkw==
+medusa-payment-stripe@latest:
+  version "6.0.9"
+  resolved "https://registry.yarnpkg.com/medusa-payment-stripe/-/medusa-payment-stripe-6.0.9.tgz#d8e2a5454aae70eb7258cfaee5833d49b0d1a711"
+  integrity sha512-HovJnrKZHFM+n+TaT9fNchwwYf1Mqt9XMeel3XUtUUvO62t8h/slaxSr7nPB4apQ3IEuDHy1cjI0maJb1Ongzw==
   dependencies:
-    "@medusajs/utils" "^1.11.3"
+    "@medusajs/utils" "^1.11.8"
     body-parser "^1.19.0"
     express "^4.17.1"
     stripe "^11.10.0"
