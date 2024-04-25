@@ -67,6 +67,74 @@ const modules = {
       redisUrl: REDIS_URL
     }
   },*/
+  apiKey: {
+    resolve: "@medusajs/api-key"
+  },
+  auth: {
+    resolve: "@medusajs/auth",
+    options: {
+      providers: [
+        {
+          name: "emailpass",
+          scopes: {
+            admin: {},
+            store: {},
+          },
+        },
+      ],
+    },
+  },
+  cart: {
+    resolve: "@medusajs/cart"
+  },
+  customer: {
+    resolve: "@medusajs/customer"
+  },
+  currency: {
+    resolve: "@medusajs/currency"
+  },
+  fulfillment: {
+    resolve: "@medusajs/fulfillment"
+  },
+  inventoryService: {
+    resolve: "@medusajs/inventory-next"
+  },
+  order: {
+    resolve: "@medusajs/order"
+  },
+  payment: {
+    resolve: "@medusajs/payment"
+  },
+  pricingService: {
+    resolve: "@medusajs/pricing"
+  },
+  productService: {
+    resolve: "@medusajs/product"
+  },
+  promotion: {
+    resolve: "@medusajs/promotion"
+  },
+  region: {
+    resolve: "@medusajs/region"
+  },
+  salesChannel: {
+    resolve: "@medusajs/sales-channel"
+  },
+  stockLocationService: {
+    resolve: "@medusajs/stock-location-next"
+  },
+  store: {
+    resolve: "@medusajs/store"
+  },
+  tax: {
+    resolve: "@medusajs/tax"
+  },
+  user: {
+    resolve: "@medusajs/user",
+    options: {
+      jwt_secret: process.env.JWT_SECRET
+    }
+  },
 };
 
 /** @type {import('@medusajs/medusa').ConfigModule["projectConfig"]} */
@@ -76,6 +144,7 @@ const projectConfig = {
   store_cors: STORE_CORS,
   database_url: DATABASE_URL,
   admin_cors: ADMIN_CORS,
+  auth_cors: process.env.AUTH_CORS || ADMIN_CORS
   // Uncomment the following lines to enable REDIS
   // redis_url: REDIS_URL
 };
@@ -85,4 +154,7 @@ module.exports = {
   projectConfig,
   plugins,
   modules,
+  featureFlags: {
+    medusa_v2: true
+  }
 };
