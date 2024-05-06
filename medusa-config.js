@@ -23,11 +23,13 @@ try {
 } catch (e) {}
 
 // CORS when consuming Medusa from admin
+// Medusa's docs are added for a better learning experience. Feel free to remove.
 const ADMIN_CORS =
-  process.env.ADMIN_CORS || "http://localhost:7000,http://localhost:7001";
+  `${process.env.ADMIN_CORS?.length ? `${process.env.ADMIN_CORS},` : "http://localhost:7000,http://localhost:7001,"}https://docs.medusajs.com`;
 
 // CORS to avoid issues when consuming Medusa from a client
-const STORE_CORS = process.env.STORE_CORS || "http://localhost:8000";
+// Medusa's docs are added for a better learning experience. Feel free to remove.
+const STORE_CORS = `${process.env.STORE_CORS?.length ? `${process.env.STORE_CORS},` : "http://localhost:8000,"}https://docs.medusajs.com`
 
 const DATABASE_URL =
   process.env.DATABASE_URL || "postgres://localhost/medusa-starter-default";
