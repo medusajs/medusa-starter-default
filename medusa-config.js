@@ -1,4 +1,5 @@
 const dotenv = require("dotenv");
+const { Modules } = require("@medusajs/modules-sdk");
 
 let ENV_FILE_NAME = "";
 switch (process.env.NODE_ENV) {
@@ -33,34 +34,12 @@ const DATABASE_URL =
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
-const plugins = [
-  `medusa-fulfillment-manual`,
-  `medusa-payment-manual`,
-  {
-    resolve: `@medusajs/file-local`,
-    options: {
-      upload_dir: "uploads",
-    },
-  },
-];
+const plugins = [];
 
 const modules = {
-  /*eventBus: {
-    resolve: "@medusajs/event-bus-redis",
-    options: {
-      redisUrl: REDIS_URL
-    }
-  },
-  cacheService: {
-    resolve: "@medusajs/cache-redis",
-    options: {
-      redisUrl: REDIS_URL
-    }
-  },*/
-  apiKey: {
-    resolve: "@medusajs/api-key"
-  },
-  auth: {
+  [Modules.CACHE]: true,
+  [Modules.EVENT_BUS]: true,
+  [Modules.AUTH]: {
     resolve: "@medusajs/auth",
     options: {
       providers: [
@@ -74,56 +53,56 @@ const modules = {
       ],
     },
   },
-  cart: {
-    resolve: "@medusajs/cart"
-  },
-  customer: {
-    resolve: "@medusajs/customer"
-  },
-  currency: {
-    resolve: "@medusajs/currency"
-  },
-  fulfillment: {
-    resolve: "@medusajs/fulfillment"
-  },
-  inventoryService: {
-    resolve: "@medusajs/inventory-next"
-  },
-  order: {
-    resolve: "@medusajs/order"
-  },
-  payment: {
-    resolve: "@medusajs/payment"
-  },
-  pricingService: {
-    resolve: "@medusajs/pricing"
-  },
-  productService: {
-    resolve: "@medusajs/product"
-  },
-  promotion: {
-    resolve: "@medusajs/promotion"
-  },
-  region: {
-    resolve: "@medusajs/region"
-  },
-  salesChannel: {
-    resolve: "@medusajs/sales-channel"
-  },
-  stockLocationService: {
-    resolve: "@medusajs/stock-location-next"
-  },
-  store: {
-    resolve: "@medusajs/store"
-  },
-  tax: {
-    resolve: "@medusajs/tax"
-  },
-  user: {
+  [Modules.USER]: {
     resolve: "@medusajs/user",
     options: {
-      jwt_secret: process.env.JWT_SECRET
-    }
+      jwt_secret: process.env.JWT_SECRET ?? "test",
+    },
+  },
+  [Modules.FILE]: {
+    resolve: "@medusajs/file",
+    options: {
+      providers: [
+        {
+          resolve: "@medusajs/file-local-next",
+          options: {
+            config: {
+              local: {},
+            },
+          },
+        },
+      ],
+    },
+  },
+  [Modules.WORKFLOW_ENGINE]: true,
+  [Modules.STOCK_LOCATION]: true,
+  [Modules.INVENTORY]: true,
+  [Modules.PRODUCT]: true,
+  [Modules.PRICING]: true,
+  [Modules.PROMOTION]: true,
+  [Modules.CUSTOMER]: true,
+  [Modules.SALES_CHANNEL]: true,
+  [Modules.CART]: true,
+  [Modules.REGION]: true,
+  [Modules.API_KEY]: true,
+  [Modules.STORE]: true,
+  [Modules.TAX]: true,
+  [Modules.CURRENCY]: true,
+  [Modules.PAYMENT]: true,
+  [Modules.FULFILLMENT]: {
+    resolve: "@medusajs/fulfillment",
+    options: {
+      providers: [
+        {
+          resolve: "@medusajs/fulfillment-manual",
+          options: {
+            config: {
+              manual: {},
+            },
+          },
+        },
+      ],
+    },
   },
 };
 
