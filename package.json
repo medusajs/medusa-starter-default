@@ -14,9 +14,8 @@
   ],
   "scripts": {
     "clean": "cross-env ./node_modules/.bin/rimraf dist",
-    "build": "cross-env npm run clean && npm run build:server && npm run build:admin",
+    "build": "cross-env npm run clean && npm run build:server",
     "build:server": "node ./build.mjs",
-    "build:admin": "cross-env medusa-admin build",
     "watch": "cross-env tsc --watch",
     "test": "cross-env jest",
     "seed": "cross-env medusa seed -f ./data/seed.json",
@@ -26,7 +25,6 @@
     "dev:inspect": "node --inspect ./develop.mjs"
   },
   "dependencies": {
-    "@medusajs/admin": "7.1.14",
     "@medusajs/api-key": "0.1.2",
     "@medusajs/auth": "0.0.3",
     "@medusajs/cache-inmemory": "^1.8.10",
