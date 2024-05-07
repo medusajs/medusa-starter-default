@@ -1,19 +1,31 @@
 # Custom loader
 
-The loader allows you have access to the Medusa service container. This allows you to access the database and the services registered on the container.
-you can register custom registrations in the container or run custom code on startup.
+A loader is a function executed when the Medusa application starts.
+
+To create a loader in your Medusa application, create a TypeScript or JavaScript file under the `src/loaders` directory that default exports a function.
 
 ```ts
-// src/loaders/my-loader.ts
+export default function () {
+  console.log(
+    "[HELLO LOADER] Just started the Medusa application!"
+  )
+}
+```
 
-import { AwilixContainer } from 'awilix'
+## Loader Parameters
 
-/**
- * 
- * @param container The container in which the registrations are made
- * @param config The options of the plugin or the entire config object
- */
-export default (container: AwilixContainer, config: Record<string, unknown>): void | Promise<void> => {
-  /* Implement your own loader. */
+A loader receives the Medusa container as a first parameter, and the Medusa configuration as a second parameter.
+
+```ts
+import { MedusaContainer } from "@medusajs/medusa"
+import { ConfigModule } from "@medusajs/types"
+
+export default async function (
+  container: MedusaContainer, 
+  config: ConfigModule
+) {
+  console.log(`You have ${
+    Object.values(config.modules || {}).length
+  } modules!`)
 }
 ```

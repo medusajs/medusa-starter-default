@@ -1,6 +1,12 @@
 # Custom scheduled jobs
 
-You may define custom scheduled jobs (cron jobs) by creating files in the `/jobs` directory.
+> Scheduled jobs are coming soon.
+
+A scheduled job is a function executed at a specified interval of time in the background of your Medusa application.
+
+A scheduled job is created in a TypeScript or JavaScript file under the `src/jobs` directory.
+
+For example, create the file `src/jobs/hello-world.ts` with the following content:
 
 ```ts
 import {
@@ -23,10 +29,14 @@ export const config: ScheduledJobConfig = {
 };
 ```
 
-A scheduled job is defined in two parts a `handler` and a `config`. The `handler` is a function which is invoked when the job is scheduled. The `config` is an object which defines the name of the job, the schedule, and an optional data object.
+A scheduled job file must export:
+
+- The function to be executed whenever it’s time to run the scheduled job.
+- A configuration object defining the job. It has two properties:
+  - `name`: a unique name for the job.
+  - `schedule`: a [cron expression](https://crontab.guru/).
 
 The `handler` is a function which takes one parameter, an `object` of type `ScheduledJobArgs` with the following properties:
 
 - `container` - a `MedusaContainer` instance which can be used to resolve services.
 - `data` - an `object` containing data passed to the job when it was scheduled. This object is passed in the `config` object.
-- `pluginOptions` - an `object` containing plugin options, if the job is defined in a plugin.
