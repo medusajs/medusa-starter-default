@@ -105,7 +105,8 @@ const copyToOut = async (file, config) => {
     console.log(`Copying ${file} to ${outputPath}`);
     return;
   }
-  await fs.mkdir(outputPath.replace(/\/[^/]+$/, ""), { recursive: true });
+  let dirNameRegex = new RegExp("\\" + path.sep + "([^\\" + path.sep + "]+)$");
+  await fs.mkdir(outputPath.replace(dirNameRegex, ""), { recursive: true });
   await fs.copyFile(file, outputPath);
 };
 
