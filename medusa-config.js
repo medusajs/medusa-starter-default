@@ -91,6 +91,7 @@ const modules = {
   [Modules.TAX]: true,
   [Modules.CURRENCY]: true,
   [Modules.PAYMENT]: true,
+  [Modules.ORDER]: true,
   [Modules.FULFILLMENT]: {
     resolve: "@medusajs/fulfillment",
     options: {
