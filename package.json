@@ -14,12 +14,12 @@
   ],
   "scripts": {
     "clean": "cross-env ./node_modules/.bin/rimraf dist",
-    "build": "cross-env npm run clean && npm run build:server",
-    "build:server": "node ./build.mjs",
+    "build": "cross-env npm build",
+    "build:server": "medusa build",
     "watch": "cross-env tsc --watch",
     "test": "cross-env jest",
     "seed": "cross-env medusa seed -f ./data/seed.json",
-    "start": "cross-env npm run build && medusa start",
+    "start": "cross-env npm medusa start",
     "start:custom": "cross-env npm run build && node --preserve-symlinks --trace-warnings index.js",
     "dev": "node ./develop.mjs",
     "dev:inspect": "node --inspect ./develop.mjs"
