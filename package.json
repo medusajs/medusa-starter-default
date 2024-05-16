@@ -14,12 +14,11 @@
   ],
   "scripts": {
     "clean": "cross-env ./node_modules/.bin/rimraf dist",
-    "build": "cross-env npm build",
-    "build:server": "medusa build",
+    "build": "medusa build",
     "watch": "cross-env tsc --watch",
     "test": "cross-env jest",
     "seed": "cross-env medusa seed -f ./data/seed.json",
-    "start": "cross-env npm medusa start",
+    "start": "medusa start",
     "start:custom": "cross-env npm run build && node --preserve-symlinks --trace-warnings index.js",
     "dev": "node ./develop.mjs",
     "dev:inspect": "node --inspect ./develop.mjs"
@@ -38,7 +37,7 @@
     "@medusajs/fulfillment-manual": "preview",
     "@medusajs/inventory-next": "preview",
     "@medusajs/medusa": "preview",
-    "@medusajs/order": "^0.1.3-preview-20240510084332",
+    "@medusajs/order": "preview",
     "@medusajs/payment": "preview",
     "@medusajs/pricing": "preview",
     "@medusajs/product": "preview",
