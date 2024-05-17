@@ -8,7 +8,6 @@ For example, create the file `src/subscribers/product-created.ts` with the follo
 
 ```ts
 import {
-  ProductService,
   type SubscriberConfig,
 } from "@medusajs/medusa"
 
@@ -19,7 +18,7 @@ export default async function productCreateHandler() {
 
 // subscriber config
 export const config: SubscriberConfig = {
-  event: ProductService.Events.CREATED,
+  event: "product.created",
 }
 ```
 
@@ -36,10 +35,9 @@ A subscriber receives an object having the following properties:
 - `container`: The Medusa container. Use it to resolve modules' main services and other registered resources.
 
 ```ts
-import {
-  ProductService,
+import type {
   SubscriberArgs,
-  type SubscriberConfig,
+  SubscriberConfig,
 } from "@medusajs/medusa"
 import { IProductModuleService } from "@medusajs/types"
 import { ModuleRegistrationName } from "@medusajs/modules-sdk"
@@ -47,16 +45,18 @@ import { ModuleRegistrationName } from "@medusajs/modules-sdk"
 export default async function productCreateHandler({
   data,
   container,
-}: SubscriberArgs<Record<string, string>>) {
+}: SubscriberArgs<{ id: string }>) {
+  const productId = "data" in data ? data.data.id : data.id
+
   const productModuleService: IProductModuleService =
     container.resolve(ModuleRegistrationName.PRODUCT)
 
-  const product = await productModuleService.retrieve(data.id)
+  const product = await productModuleService.retrieve(productId)
 
   console.log(`The product ${product.title} was created`)
 }
 
 export const config: SubscriberConfig = {
-  event: ProductService.Events.CREATED,
+  event: "product.created",
 }
 ```
