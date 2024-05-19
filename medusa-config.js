@@ -24,12 +24,19 @@ try {
 
 // CORS when consuming Medusa from admin
 // Medusa's docs are added for a better learning experience. Feel free to remove.
-const ADMIN_CORS =
-  `${process.env.ADMIN_CORS?.length ? `${process.env.ADMIN_CORS},` : "http://localhost:7000,http://localhost:7001,"}https://docs.medusajs.com`;
+const ADMIN_CORS = `${
+  process.env.ADMIN_CORS?.length
+    ? `${process.env.ADMIN_CORS},`
+    : "http://localhost:7000,http://localhost:7001,"
+}https://docs.medusajs.com`;
 
 // CORS to avoid issues when consuming Medusa from a client
 // Medusa's docs are added for a better learning experience. Feel free to remove.
-const STORE_CORS = `${process.env.STORE_CORS?.length ? `${process.env.STORE_CORS},` : "http://localhost:8000,"}https://docs.medusajs.com`
+const STORE_CORS = `${
+  process.env.STORE_CORS?.length
+    ? `${process.env.STORE_CORS},`
+    : "http://localhost:8000,"
+}https://docs.medusajs.com`;
 
 const DATABASE_URL =
   process.env.DATABASE_URL || "postgres://localhost/medusa-starter-default";
@@ -111,12 +118,14 @@ const modules = {
 
 /** @type {import('@medusajs/medusa').ConfigModule["projectConfig"]} */
 const projectConfig = {
-  jwt_secret: process.env.JWT_SECRET || "supersecret",
-  cookie_secret: process.env.COOKIE_SECRET || "supersecret",
-  store_cors: STORE_CORS,
   database_url: DATABASE_URL,
-  admin_cors: ADMIN_CORS,
-  auth_cors: process.env.AUTH_CORS || ADMIN_CORS
+  http: {
+    storeCors: STORE_CORS,
+    adminCors: ADMIN_CORS,
+    authCors: process.env.AUTH_CORS || ADMIN_CORS,
+    jwtSecret: process.env.JWT_SECRET || "supersecret",
+    cookieSecret: process.env.COOKIE_SECRET || "supersecret",
+  },
   // Uncomment the following lines to enable REDIS
   // redis_url: REDIS_URL
 };
@@ -125,11 +134,11 @@ const projectConfig = {
 module.exports = {
   projectConfig,
   admin: {
-    disable: true
+    disable: true,
   },
   plugins,
   modules,
   featureFlags: {
-    medusa_v2: true
-  }
+    medusa_v2: true,
+  },
 };
