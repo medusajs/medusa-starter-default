@@ -133,9 +133,6 @@ const projectConfig = {
 /** @type {import('@medusajs/medusa').ConfigModule} */
 module.exports = {
   projectConfig,
-  admin: {
-    disable: true,
-  },
   plugins,
   modules,
   featureFlags: {
