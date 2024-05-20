@@ -134,7 +134,7 @@ const projectConfig = {
 module.exports = {
   projectConfig,
   admin: {
-    disabled: true
+    disable: true
   },
   plugins,
   modules,
