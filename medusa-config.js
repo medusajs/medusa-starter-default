@@ -130,11 +130,11 @@ const projectConfig = {
   // redis_url: REDIS_URL
 };
 
-/** @type {import('@medusajs/medusa').ConfigModule} */
+/** @type {import('@medusajs/types').ConfigModule} */
 module.exports = {
   projectConfig,
   admin: {
-    disable: true
+    backendUrl: "http://localhost:9000"
   },
   plugins,
   modules,

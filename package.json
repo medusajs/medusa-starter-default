@@ -20,7 +20,7 @@
     "seed": "cross-env medusa seed -f ./data/seed.json",
     "start": "medusa start",
     "start:custom": "cross-env npm run build && node --preserve-symlinks --trace-warnings index.js",
-    "dev": "node ./develop.mjs",
+    "dev": "npm run build && node ./develop.mjs",
     "dev:inspect": "node --inspect ./develop.mjs"
   },
   "dependencies": {
