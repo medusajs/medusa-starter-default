@@ -133,7 +133,7 @@ const projectConfig = {
 module.exports = {
   projectConfig,
   admin: {
-    backendUrl: "http://localhost:9000"
+    disable: true
   },
   plugins,
   modules,
