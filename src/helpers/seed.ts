@@ -16,7 +16,8 @@ import {
 } from "@medusajs/types"
 import { 
   ContainerRegistrationKeys,
-  Modules
+  Modules,
+  ProductStatus
 } from "@medusajs/utils"
 
 export default async function seedDemoData({
@@ -219,6 +220,7 @@ export default async function seedDemoData({
         description: "Reimagine the feeling of a classic T-shirt. With our cotton T-shirts, everyday essentials no longer have to be ordinary.",
         handle: "t-shirt",
         weight: 400,
+        status: ProductStatus.PUBLISHED,
         images: [
           {
             url: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/tee-black-front.png"
@@ -324,6 +326,7 @@ export default async function seedDemoData({
         description: "Reimagine the feeling of a classic sweatshirt. With our cotton sweatshirt, everyday essentials no longer have to be ordinary.",
         handle: "sweatshirt",
         weight: 400,
+        status: ProductStatus.PUBLISHED,
         images: [
           {
             url: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatshirt-vintage-front.png"
@@ -380,6 +383,7 @@ export default async function seedDemoData({
         description: "Reimagine the feeling of classic sweatpants. With our cotton sweatpants, everyday essentials no longer have to be ordinary.",
         handle: "sweatpants",
         weight: 400,
+        status: ProductStatus.PUBLISHED,
         images: [
           {
             url: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatpants-gray-front.png"
@@ -436,6 +440,7 @@ export default async function seedDemoData({
         description: "Reimagine the feeling of classic shorts. With our cotton shorts, everyday essentials no longer have to be ordinary.",
         handle: "shorts",
         weight: 400,
+        status: ProductStatus.PUBLISHED,
         images: [
           {
             url: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/shorts-vintage-front.png"
