@@ -1,5 +1,5 @@
-const dotenv = require("dotenv");
-const { Modules } = require("@medusajs/modules-sdk");
+import dotenv from "dotenv";
+import { Modules } from "@medusajs/modules-sdk";
 
 let ENV_FILE_NAME = "";
 switch (process.env.NODE_ENV) {
@@ -126,19 +126,21 @@ const projectConfig = {
     jwtSecret: process.env.JWT_SECRET || "supersecret",
     cookieSecret: process.env.COOKIE_SECRET || "supersecret",
   },
-  // Uncomment the following lines to enable REDIS
-  // redis_url: REDIS_URL
+  // redis_url: REDIS_URL,
 };
 
 /** @type {import('@medusajs/medusa').ConfigModule} */
-module.exports = {
+export default {
   projectConfig,
   admin: {
-    disable: true
+    disable: true,
   },
   plugins,
   modules,
   featureFlags: {
     medusa_v2: true,
+  },
+  directories: {
+    srcDir: "src",
   },
 };
