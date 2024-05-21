@@ -256,6 +256,7 @@ export default async function seedDemoData({
         variants: [
           {
             title: "S / Black",
+            sku: "SHIRT-S-BLACK",
             options: {
               Size: "S",
               Color: "Black"
@@ -264,6 +265,7 @@ export default async function seedDemoData({
           },
           {
             title: "S / White",
+            sku: "SHIRT-S-WHITE",
             options: {
               Size: "S",
               Color: "White"
@@ -272,6 +274,7 @@ export default async function seedDemoData({
           },
           {
             title: "M / Black",
+            sku: "SHIRT-M-BLACK",
             options: {
               Size: "M",
               Color: "Black"
@@ -280,6 +283,7 @@ export default async function seedDemoData({
           },
           {
             title: "M / White",
+            sku: "SHIRT-M-WHITE",
             options: {
               Size: "M",
               Color: "White"
@@ -288,6 +292,7 @@ export default async function seedDemoData({
           },
           {
             title: "L / Black",
+            sku: "SHIRT-L-BLACK",
             options: {
               Size: "L",
               Color: "Black"
@@ -296,6 +301,7 @@ export default async function seedDemoData({
           },
           {
             title: "L / White",
+            sku: "SHIRT-L-WHITE",
             options: {
               Size: "L",
               Color: "White"
@@ -304,6 +310,7 @@ export default async function seedDemoData({
           },
           {
             title: "XL / Black",
+            sku: "SHIRT-XL-BLACK",
             options: {
               Size: "XL",
               Color: "Black"
@@ -312,6 +319,7 @@ export default async function seedDemoData({
           },
           {
             title: "XL / White",
+            sku: "SHIRT-XL-WHITE",
             options: {
               Size: "XL",
               Color: "White"
@@ -349,6 +357,7 @@ export default async function seedDemoData({
         variants: [
           {
             title: "S",
+            sku: "SWEATSHIRT-S",
             options: {
               Size: "S"
             },
@@ -356,6 +365,7 @@ export default async function seedDemoData({
           },
           {
             title: "M",
+            sku: "SWEATSHIRT-M",
             options: {
               Size: "M",
             },
@@ -363,6 +373,7 @@ export default async function seedDemoData({
           },
           {
             title: "L",
+            sku: "SWEATSHIRT-L",
             options: {
               Size: "L",
             },
@@ -370,6 +381,7 @@ export default async function seedDemoData({
           },
           {
             title: "XL",
+            sku: "SWEATSHIRT-XL",
             options: {
               Size: "XL",
             },
@@ -406,6 +418,7 @@ export default async function seedDemoData({
         variants: [
           {
             title: "S",
+            sku: "SWEATPANTS-S",
             options: {
               Size: "S"
             },
@@ -413,6 +426,7 @@ export default async function seedDemoData({
           },
           {
             title: "M",
+            sku: "SWEATPANTS-M",
             options: {
               Size: "M",
             },
@@ -420,6 +434,7 @@ export default async function seedDemoData({
           },
           {
             title: "L",
+            sku: "SWEATPANTS-L",
             options: {
               Size: "L",
             },
@@ -427,6 +442,7 @@ export default async function seedDemoData({
           },
           {
             title: "XL",
+            sku: "SWEATPANTS-XL",
             options: {
               Size: "XL",
             },
@@ -463,6 +479,7 @@ export default async function seedDemoData({
         variants: [
           {
             title: "S",
+            sku: "SHORTS-S",
             options: {
               Size: "S"
             },
@@ -470,6 +487,7 @@ export default async function seedDemoData({
           },
           {
             title: "M",
+            sku: "SHORTS-M",
             options: {
               Size: "M",
             },
@@ -477,6 +495,7 @@ export default async function seedDemoData({
           },
           {
             title: "L",
+            sku: "SHORTS-L",
             options: {
               Size: "L",
             },
@@ -484,6 +503,7 @@ export default async function seedDemoData({
           },
           {
             title: "XL",
+            sku: "SHORTS-XL",
             options: {
               Size: "XL",
             },
