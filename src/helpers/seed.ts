@@ -451,7 +451,10 @@ export default async function seedDemoData({
                     }
                   ]
                 },
-              ]
+              ],
+              sales_channels: [{
+                id: defaultSalesChannel[0].id
+              }]
             },
             {
               title: "Medusa Sweatshirt",
@@ -552,7 +555,10 @@ export default async function seedDemoData({
                     }
                   ]
                 },
-              ]
+              ],
+              sales_channels: [{
+                id: defaultSalesChannel[0].id
+              }]
             },
             {
               title: "Medusa Sweatpants",
@@ -653,7 +659,10 @@ export default async function seedDemoData({
                     }
                   ]
                 },
-              ]
+              ],
+              sales_channels: [{
+                id: defaultSalesChannel[0].id
+              }]
             },
             {
               title: "Medusa Shorts",
@@ -754,7 +763,10 @@ export default async function seedDemoData({
                     }
                   ]
                 },
-              ]
+              ],
+              sales_channels: [{
+                id: defaultSalesChannel[0].id
+              }]
             }
           ]
         }
