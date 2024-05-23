@@ -10,7 +10,7 @@ const devServer = {
   start() {
     this.childProcess = execa({
       cwd: process.cwd(),
-      env: { ...process.env },
+      env: { ...process.env, COMMAND_INITIATED_BY: "develop" },
       stdout: "inherit",
       stderr: "inherit",
     })`node -r ts-node/register ${cliPath} start`;
