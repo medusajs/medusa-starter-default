@@ -141,6 +141,13 @@ export default async function seedDemoData({
                 region_id: region.id,
                 amount: 1000
               },
+            ],
+            rules: [
+              {
+                attribute: "enabled_in_store",
+                value: "true",
+                operator: "eq"
+              }
             ]
           },
           {
@@ -159,6 +166,13 @@ export default async function seedDemoData({
                 region_id: region.id,
                 amount: 1500
               },
+            ],
+            rules: [
+              {
+                attribute: "enabled_in_store",
+                value: "true",
+                operator: "eq"
+              }
             ]
           }
         ]
