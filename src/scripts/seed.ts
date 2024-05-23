@@ -194,6 +194,11 @@ export default async function seedDemoData({
         input: {
           locations: [{
             name: "European Warehouse",
+            address: {
+              city: "Copenhagen",
+              country_code: "DK",
+              address_1: ""
+            }
           }]
         }
       })
@@ -206,6 +211,15 @@ export default async function seedDemoData({
           add: [defaultSalesChannel[0].id]
         }
       })
+
+    await remoteLink.create({
+      [Modules.STOCK_LOCATION]: {
+        stock_location_id: stockLocation.id
+      },
+      [Modules.FULFILLMENT]: {
+        fulfillment_set_id: fulfillmentSet.id
+      }
+    })
     logger.info("Finished seeding stock location data.")
 
     logger.info("Seeding publishable API key data...")
@@ -217,7 +231,7 @@ export default async function seedDemoData({
           api_keys: [{
             title: "Webshop",
             type: "publishable",
-            created_by: "Seed Script"
+            created_by: ""
           }]
         }
       })
@@ -246,7 +260,8 @@ export default async function seedDemoData({
         .run({
           input: {
             product_category: {
-              name: category
+              name: category,
+              is_active: true
             }
           }
         })
@@ -779,7 +794,8 @@ export default async function seedDemoData({
           .run({
             input: {
               items: [{
-                sku: variant.sku
+                sku: variant.sku,
+                title: variant.title
               }]
             }
           })
