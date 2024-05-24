@@ -48,20 +48,7 @@ const plugins = [];
 const modules = {
   [Modules.CACHE]: true,
   [Modules.EVENT_BUS]: true,
-  [Modules.AUTH]: {
-    resolve: "@medusajs/auth",
-    options: {
-      providers: [
-        {
-          name: "emailpass",
-          scopes: {
-            admin: {},
-            store: {},
-          },
-        },
-      ],
-    },
-  },
+  [Modules.AUTH]: true,
   [Modules.USER]: {
     resolve: "@medusajs/user",
     options: {
