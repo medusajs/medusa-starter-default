@@ -1,31 +1,31 @@
+import {
+  createApiKeysWorkflow,
+  createProductCategoryWorkflow,
+  createProductsWorkflow,
+  createRegionsWorkflow,
+  createSalesChannelsWorkflow,
+  createShippingOptionsWorkflow,
+  createShippingProfilesWorkflow,
+  createStockLocationsWorkflow,
+  createTaxRegionsWorkflow,
+  linkSalesChannelsToApiKeyWorkflow,
+  linkSalesChannelsToStockLocationWorkflow
+} from "@medusajs/core-flows"
 import { Logger } from "@medusajs/medusa"
-import { 
-  ModuleRegistrationName, 
+import {
+  ModuleRegistrationName,
   RemoteLink
 } from "@medusajs/modules-sdk"
 import {
-  ISalesChannelModuleService,
-  IFulfillmentModuleService,
   ExecArgs,
+  IFulfillmentModuleService,
+  ISalesChannelModuleService,
 } from "@medusajs/types"
-import { 
+import {
   ContainerRegistrationKeys,
   Modules,
   ProductStatus
 } from "@medusajs/utils"
-import {
-  createRegionsWorkflow,
-  createShippingProfilesWorkflow,
-  createShippingOptionsWorkflow,
-  createSalesChannelsWorkflow,
-  createStockLocationsWorkflow,
-  linkSalesChannelsToStockLocationWorkflow,
-  createApiKeysWorkflow,
-  linkSalesChannelsToApiKeyWorkflow,
-  createProductCategoryWorkflow,
-  createProductsWorkflow,
-  createTaxRegionsWorkflow
-} from "@medusajs/core-flows"
 
 export default async function seedDemoData({
   container,
@@ -148,8 +148,16 @@ export default async function seedDemoData({
             },
             prices: [
               {
+                currency_code: "usd",
+                amount: 1000,
+              },
+              {
+                currency_code: "eur",
+                amount: 1000,
+              },
+              {
                 region_id: region.id,
-                amount: 1000
+                amount: 1000,
               },
             ],
             rules: [
@@ -178,8 +186,16 @@ export default async function seedDemoData({
             },
             prices: [
               {
+                currency_code: "usd",
+                amount: 1000,
+              },
+              {
+                currency_code: "eur",
+                amount: 1000,
+              },
+              {
                 region_id: region.id,
-                amount: 1500
+                amount: 1000,
               },
             ],
             rules: [
