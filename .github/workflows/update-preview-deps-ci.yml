@@ -48,7 +48,7 @@ jobs:
           # Close each pull request
           echo "$PR_LIST" | jq -r '.[].number' | while read -r PR_NUMBER; do
             echo "Closing pull request #$PR_NUMBER"
-            gh pr close "$PR_NUMBER"
+            gh pr close "$PR_NUMBER" -d
           done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,12 +57,11 @@ jobs:
 
       - name: Open PR with changes
         uses: peter-evans/create-pull-request@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
           title: "chore(feat/v2-ci): updated preview dependencies"
           body: "This PR updates preview dependencies to the latest versions."
           branch: "chore/update-preview"
           branch-suffix: "timestamp"
+          token: ${{ secrets.PAT_TOKEN }}
           base: "feat/v2-ci"
           add-paths: yarn.lock
