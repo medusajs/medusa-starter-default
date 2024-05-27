@@ -821,6 +821,6 @@ export default async function seedDemoData({
     logger.info("Finished seeding product data.")
 
   } catch (e) {
-    logger.error(`Seeding failed: ${e}`)
+    logger.error(`Seeding failed`, e)
   }
 }
