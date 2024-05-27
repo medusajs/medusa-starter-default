@@ -282,9 +282,7 @@ export default async function seedDemoData({
 
       categories[category] = categoryResult.id
     }
-    const {
-      result: products
-    } = await createProductsWorkflow(container)
+    await createProductsWorkflow(container)
       .run({
         input: {
           products: [
@@ -335,7 +333,7 @@ export default async function seedDemoData({
                     Size: "S",
                     Color: "Black"
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -354,7 +352,7 @@ export default async function seedDemoData({
                     Size: "S",
                     Color: "White"
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -373,7 +371,7 @@ export default async function seedDemoData({
                     Size: "M",
                     Color: "Black"
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -392,7 +390,7 @@ export default async function seedDemoData({
                     Size: "M",
                     Color: "White"
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -411,7 +409,7 @@ export default async function seedDemoData({
                     Size: "L",
                     Color: "Black"
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -430,7 +428,7 @@ export default async function seedDemoData({
                     Size: "L",
                     Color: "White"
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -449,7 +447,7 @@ export default async function seedDemoData({
                     Size: "XL",
                     Color: "Black"
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -468,7 +466,7 @@ export default async function seedDemoData({
                     Size: "XL",
                     Color: "White"
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -518,7 +516,7 @@ export default async function seedDemoData({
                   options: {
                     Size: "S"
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -536,7 +534,7 @@ export default async function seedDemoData({
                   options: {
                     Size: "M",
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -554,7 +552,7 @@ export default async function seedDemoData({
                   options: {
                     Size: "L",
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -572,7 +570,7 @@ export default async function seedDemoData({
                   options: {
                     Size: "XL",
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -622,7 +620,7 @@ export default async function seedDemoData({
                   options: {
                     Size: "S"
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -640,7 +638,7 @@ export default async function seedDemoData({
                   options: {
                     Size: "M",
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -658,7 +656,7 @@ export default async function seedDemoData({
                   options: {
                     Size: "L",
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -676,7 +674,7 @@ export default async function seedDemoData({
                   options: {
                     Size: "XL",
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -726,7 +724,7 @@ export default async function seedDemoData({
                   options: {
                     Size: "S"
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -744,7 +742,7 @@ export default async function seedDemoData({
                   options: {
                     Size: "M",
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -762,7 +760,7 @@ export default async function seedDemoData({
                   options: {
                     Size: "L",
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -780,7 +778,7 @@ export default async function seedDemoData({
                   options: {
                     Size: "XL",
                   },
-                  manage_inventory: true,
+                  manage_inventory: false,
                   prices: [
                     {
                       amount: 1000,
@@ -800,41 +798,6 @@ export default async function seedDemoData({
           ]
         }
       })
-    for (const product of products) {
-      for (const variant of product.variants) {
-        const {
-          result: inventoryItems
-        } = await createInventoryItemsWorkflow(container)
-          .run({
-            input: {
-              items: [{
-                sku: variant.sku,
-                title: variant.title
-              }]
-            }
-          })
-        const inventoryItem = inventoryItems[0]
-        await createInventoryLevelsWorkflow(container)
-          .run({
-            input: {
-              inventory_levels: [{
-                inventory_item_id: inventoryItem.id,
-                location_id: stockLocation.id,
-                stocked_quantity: 100
-              }]
-            }
-          })
-
-        await remoteLink.create({
-          [Modules.PRODUCT]: {
-            variant_id: variant.id
-          },
-          [Modules.INVENTORY]: {
-            inventory_item_id: inventoryItem.id
-          }
-        })
-      }
-    }
     logger.info("Finished seeding product data.")
 
   } catch (e) {
