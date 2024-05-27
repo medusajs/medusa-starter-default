@@ -59,6 +59,7 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           title: "chore(feat/v2-ci): updated preview dependencies [automated]"
+          commit-message: "chore(feat/v2-ci): updated preview dependencies [automated]"
           body: "This PR updates preview dependencies to the latest versions."
           branch: "chore/update-preview"
           branch-suffix: "timestamp"

@@ -60,6 +60,7 @@ jobs:
         with:
           title: "chore(feat/v2): updated preview dependencies [automated]"
           body: "This PR updates preview dependencies to the latest versions."
+          commit-message: "chore(feat/v2-ci): updated preview dependencies [automated]"
           branch: "chore/update-preview"
           branch-suffix: "timestamp"
           token: ${{ secrets.PAT_TOKEN }}
