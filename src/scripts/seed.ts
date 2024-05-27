@@ -163,7 +163,7 @@ export default async function seedDemoData({
             rules: [
               {
                 attribute: "enabled_in_store",
-                value: "true",
+                value: '"true"',
                 operator: "eq"
               },
               {
@@ -201,7 +201,7 @@ export default async function seedDemoData({
             rules: [
               {
                 attribute: "enabled_in_store",
-                value: "true",
+                value: '"true"',
                 operator: "eq"
               },
               {
