@@ -1,6 +1,9 @@
 name: Test CLI
 on:
  pull_request:
+  branches:
+    - 'feat/v2'
+    - 'feat/v2-ci'
 
 jobs:
   test-cli-yarn:
