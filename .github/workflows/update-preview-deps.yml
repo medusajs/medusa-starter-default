@@ -59,9 +59,10 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           title: "chore(feat/v2): updated preview dependencies [automated]"
-          body: "This PR updates preview dependencies to the latest versions. cc @shahednasser"
+          body: "This PR updates preview dependencies to the latest versions."
           branch: "chore/update-preview"
           branch-suffix: "timestamp"
           token: ${{ secrets.PAT_TOKEN }}
           base: "feat/v2"
           add-paths: yarn.lock
+          author: "GitHub Bot github-actions[bot]@users.noreply.github.com"
