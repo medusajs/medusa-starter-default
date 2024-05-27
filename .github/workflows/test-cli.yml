@@ -4,6 +4,7 @@ on:
 
 jobs:
   test-cli-yarn:
+    name: "Test CLI (Yarn)"
     env:
       NODE_ENV: CI
       REDIS_URL: redis://localhost:6379
@@ -50,12 +51,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: "yarn"
   
       - name: Install Dependencies
         run: yarn install
 
-      - name: run medusa build
+      - name: Check CLI tool is installed
+        run: ./node_modules/.bin/medusa -v
+
+      - name: run build
         run: yarn build
 
       - name: Run migrations
@@ -65,7 +68,7 @@ jobs:
         run: yarn seed
 
       - name: Run development server
-        run: yarn dev
+        run: yarn dev &
 
       - name: Wait for live server response
         shell: "bash"
@@ -76,6 +79,7 @@ jobs:
         run: kill -9 $(lsof -t -i :9000)
           
   test-cli-npm:
+    name: "Test CLI (npm)"
     env:
       NODE_ENV: CI
       REDIS_URL: redis://localhost:6379
@@ -117,17 +121,20 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      - name: Check CLI tool is installed
+        run: ./node_modules/.bin/medusa -v
+
       - name: run medusa build
-        run: npm build
+        run: npm run build
 
       - name: Run migrations
         run: npx medusa migrations run
 
       - name: Run seed
-        run: npm seed
+        run: npm run seed
 
       - name: Run development server
-        run: npm run dev
+        run: npm run dev -- &
 
       - name: Wait for live server response
         shell: "bash"
