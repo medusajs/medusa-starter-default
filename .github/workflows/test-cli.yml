@@ -53,9 +53,9 @@ jobs:
           cache: "yarn"
   
       - name: Install Dependencies
-        run: yarn install
+        run: yarn install --frozen-lockfile
 
-      - name: run medusa build
+      - name: run build
         run: yarn build
 
       - name: Run migrations
@@ -115,16 +115,16 @@ jobs:
           cache: "npm"
   
       - name: Install Dependencies
-        run: npm install
+        run: npm run install
 
       - name: run medusa build
-        run: npm build
+        run: npm run build
 
       - name: Run migrations
         run: npx medusa migrations run
 
       - name: Run seed
-        run: npm seed
+        run: npm run seed
 
       - name: Run development server
         run: npm run dev
