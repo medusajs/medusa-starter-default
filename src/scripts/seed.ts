@@ -137,7 +137,7 @@ export default async function seedDemoData({
             prices: [
               {
                 region_id: region.id,
-                amount: 10
+                amount: 1000
               },
             ],
             rules: [
@@ -162,7 +162,7 @@ export default async function seedDemoData({
             prices: [
               {
                 region_id: region.id,
-                amount: 15
+                amount: 1500
               },
             ],
             rules: [
@@ -334,11 +334,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -353,11 +353,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -372,11 +372,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -391,11 +391,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -410,11 +410,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -429,11 +429,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -448,11 +448,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -467,11 +467,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -517,11 +517,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -535,11 +535,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -553,11 +553,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -571,11 +571,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -621,11 +621,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -639,11 +639,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -657,11 +657,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -675,11 +675,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -725,11 +725,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -743,11 +743,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -761,11 +761,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
@@ -779,11 +779,11 @@ export default async function seedDemoData({
                   manage_inventory: false,
                   prices: [
                     {
-                      amount: 10,
+                      amount: 1000,
                       currency_code: "eur",
                     },
                     {
-                      amount: 15,
+                      amount: 1500,
                       currency_code: "usd"
                     }
                   ]
