@@ -28,6 +28,32 @@ jobs:
 
       - name: Install Dependencies
         run: yarn
+        
+      - name: Close Previous PRs
+        shell: "bash"
+        run: |
+          TITLE="chore(feat/v2): updated preview dependencies"
+          
+          # Get the list of pull requests with the specified title
+          PR_LIST=$(gh pr list --search "$TITLE in:title" --json number)
+          
+          echo "$PR_LIST"
+          
+          # Check if any pull requests were found
+          if [ -z "$PR_LIST" ]; then
+            echo "No pull requests found with the title: $TITLE"
+            exit 0
+          fi
+          
+          # Close each pull request
+          echo "$PR_LIST" | jq -r '.[].number' | while read -r PR_NUMBER; do
+            echo "Closing pull request #$PR_NUMBER"
+            gh pr close "$PR_NUMBER"
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
 
       - name: Open PR with changes
         uses: peter-evans/create-pull-request@v5
