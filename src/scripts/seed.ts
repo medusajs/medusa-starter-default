@@ -24,8 +24,6 @@ import {
   linkSalesChannelsToApiKeyWorkflow,
   createProductCategoryWorkflow,
   createProductsWorkflow,
-  createInventoryItemsWorkflow,
-  createInventoryLevelsWorkflow
 } from "@medusajs/core-flows"
 
 export default async function seedDemoData({
