@@ -115,7 +115,7 @@ jobs:
           cache: "npm"
   
       - name: Install Dependencies
-        run: npm run install
+        run: npm install
 
       - name: run medusa build
         run: npm run build
