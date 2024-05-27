@@ -58,7 +58,7 @@ jobs:
       - name: Open PR with changes
         uses: peter-evans/create-pull-request@v5
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
           title: "chore(feat/v2-ci): updated preview dependencies"
           body: "This PR updates preview dependencies to the latest versions."
