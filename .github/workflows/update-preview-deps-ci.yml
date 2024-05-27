@@ -62,6 +62,6 @@ jobs:
           body: "This PR updates preview dependencies to the latest versions."
           branch: "chore/update-preview"
           branch-suffix: "timestamp"
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
           base: "feat/v2-ci"
           add-paths: yarn.lock
