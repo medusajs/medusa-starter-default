@@ -4,6 +4,7 @@ on:
 
 jobs:
   test-cli-yarn:
+    name: "Test CLI (Yarn)"
     env:
       NODE_ENV: CI
       REDIS_URL: redis://localhost:6379
@@ -78,6 +79,7 @@ jobs:
         run: kill -9 $(lsof -t -i :9000)
           
   test-cli-npm:
+    name: "Test CLI (npm)"
     env:
       NODE_ENV: CI
       REDIS_URL: redis://localhost:6379
