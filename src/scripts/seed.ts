@@ -24,6 +24,7 @@ import {
   linkSalesChannelsToApiKeyWorkflow,
   createProductCategoryWorkflow,
   createProductsWorkflow,
+  createTaxRegionsWorkflow
 } from "@medusajs/core-flows"
 
 export default async function seedDemoData({
@@ -41,6 +42,16 @@ export default async function seedDemoData({
   const salesChannelModuleService: ISalesChannelModuleService = container.resolve(
     ModuleRegistrationName.SALES_CHANNEL
   )
+
+  const countries = [
+    "gb",
+    "de",
+    "dk",
+    "se",
+    "fr",
+    "es",
+    "it"
+  ]
   
   try {
     logger.info("Seeding region data...")
@@ -50,21 +61,22 @@ export default async function seedDemoData({
           regions: [{
             name: "Europe",
             currency_code: "eur",
-            countries: [
-              "gb",
-              "de",
-              "dk",
-              "se",
-              "fr",
-              "es",
-              "it"
-            ],
+            countries,
             payment_providers: ["pp_system_default"]
           }]
         }
       })
     const region = regionResult[0]
     logger.info("Finished seeding regions.")
+
+    logger.info("Seeding tax regions...")
+    await createTaxRegionsWorkflow(container)
+      .run({
+        input: countries.map((country_code) => ({
+          country_code
+        }))
+      })
+    logger.info("Finished seeding tax regions.")
 
     logger.info("Seeding fulfillment data...")
     const { 
@@ -145,6 +157,11 @@ export default async function seedDemoData({
                 attribute: "enabled_in_store",
                 value: "true",
                 operator: "eq"
+              },
+              {
+                attribute: "is_return",
+                value: "false",
+                operator: "eq"
               }
             ]
           },
@@ -169,6 +186,11 @@ export default async function seedDemoData({
               {
                 attribute: "enabled_in_store",
                 value: "true",
+                operator: "eq"
+              },
+              {
+                attribute: "is_return",
+                value: "false",
                 operator: "eq"
               }
             ]

@@ -33,14 +33,11 @@ The function receives as a parameter an object having a `container` property, wh
 
 ## How to Run Custom CLI Script?
 
-To run the custom CLI script, `build` your code then run the `exec` command:
+To run the custom CLI script, run the `exec` command:
 
 ```bash
-npm run build
-npx medusa exec ./dist/scripts/my-script.js
+npx medusa exec ./src/scripts/my-script.ts
 ```
-
-Notice that you pass the path to the file in the `dist` directory.
 
 ---
 
@@ -63,6 +60,5 @@ export default async function myScript ({
 Then, pass the arguments in the `exec` command after the file path:
 
 ```bash
-npm run build
-npx medusa exec ./dist/scripts/my-script.js arg1 arg2
+npx medusa exec ./src/scripts/my-script.ts arg1 arg2
 ```
