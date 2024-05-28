@@ -44,10 +44,33 @@ export default async function seedDemoData({ container }: ExecArgs) {
   try {
     logger.info("Seeding store data...");
     const [store] = await storeModuleService.list();
+    let defaultSalesChannel = await salesChannelModuleService.list({
+      name: "Default Sales Channel",
+    });
+
+    if (!defaultSalesChannel.length) {
+      // create the default sales channel
+      const { result: salesChannelResult } = await createSalesChannelsWorkflow(
+        container
+      ).run({
+        input: {
+          salesChannelsData: [
+            {
+              name: "Default Sales Channel",
+            },
+          ],
+        },
+      });
+      defaultSalesChannel = salesChannelResult;
+    }
+
     await updateStoresWorkflow(container).run({
       input: {
         selector: { id: store.id },
-        update: { supported_currency_codes: ["usd", "eur"] },
+        update: {
+          supported_currency_codes: ["usd", "eur"],
+          default_sales_channel_id: defaultSalesChannel[0].id,
+        },
       },
     });
     logger.info("Seeding region data...");
@@ -211,26 +234,6 @@ export default async function seedDemoData({ container }: ExecArgs) {
       ],
     });
     logger.info("Finished seeding fulfillment data.");
-
-    let defaultSalesChannel = await salesChannelModuleService.list({
-      name: "Default Sales Channel",
-    });
-
-    if (!defaultSalesChannel.length) {
-      // create the default sales channel
-      const { result: salesChannelResult } = await createSalesChannelsWorkflow(
-        container
-      ).run({
-        input: {
-          salesChannelsData: [
-            {
-              name: "Default Sales Channel",
-            },
-          ],
-        },
-      });
-      defaultSalesChannel = salesChannelResult;
-    }
 
     logger.info("Seeding stock location data...");
     const { result: stockLocationResult } = await createStockLocationsWorkflow(
