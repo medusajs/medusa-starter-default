@@ -169,15 +169,15 @@ export default async function seedDemoData({ container }: ExecArgs) {
           prices: [
             {
               currency_code: "usd",
-              amount: 1000,
+              amount: 10,
             },
             {
               currency_code: "eur",
-              amount: 1000,
+              amount: 10,
             },
             {
               region_id: region.id,
-              amount: 1000,
+              amount: 10,
             },
           ],
           rules: [
@@ -207,15 +207,15 @@ export default async function seedDemoData({ container }: ExecArgs) {
           prices: [
             {
               currency_code: "usd",
-              amount: 1000,
+              amount: 10,
             },
             {
               currency_code: "eur",
-              amount: 1000,
+              amount: 10,
             },
             {
               region_id: region.id,
-              amount: 1000,
+              amount: 10,
             },
           ],
           rules: [
@@ -362,11 +362,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -381,11 +381,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -400,11 +400,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -419,11 +419,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -438,11 +438,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -457,11 +457,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -476,11 +476,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -495,11 +495,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -543,11 +543,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -561,11 +561,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -579,11 +579,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -597,11 +597,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -645,11 +645,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -663,11 +663,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -681,11 +681,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -699,11 +699,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -747,11 +747,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -765,11 +765,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -783,11 +783,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
@@ -801,11 +801,11 @@ export default async function seedDemoData({ container }: ExecArgs) {
                 manage_inventory: false,
                 prices: [
                   {
-                    amount: 1000,
+                    amount: 10,
                     currency_code: "eur",
                   },
                   {
-                    amount: 1500,
+                    amount: 15,
                     currency_code: "usd",
                   },
                 ],
