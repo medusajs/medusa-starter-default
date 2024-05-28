@@ -118,7 +118,7 @@ const modules = {
 
 /** @type {import('@medusajs/medusa').ConfigModule["projectConfig"]} */
 const projectConfig = {
-  database_url: DATABASE_URL,
+  databaseUrl: DATABASE_URL,
   http: {
     storeCors: STORE_CORS,
     adminCors: ADMIN_CORS,
@@ -126,7 +126,7 @@ const projectConfig = {
     jwtSecret: process.env.JWT_SECRET || "supersecret",
     cookieSecret: process.env.COOKIE_SECRET || "supersecret",
   },
-  // redis_url: REDIS_URL,
+  // redisUrl: REDIS_URL,
 };
 
 /** @type {import('@medusajs/types').ConfigModule} */
