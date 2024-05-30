@@ -1199,6 +1199,11 @@
     dotenv "^16.4.5"
     knex "2.4.2"
 
+"@medusajs/types@1.12.0-preview-20240529060557":
+  version "1.12.0-preview-20240529060557"
+  resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.12.0-preview-20240529060557.tgz#55a255fc30ae6a085f44f18345a43f8120a251c5"
+  integrity sha512-2wnauzU9CAv85fLm0VVhdSzM32oG8sAnXOhPDrHjNyYr4+8opvOKaD3Z/5o2iFLWx1TmiMAcLJgdcZpsHEo/Xg==
+
 "@medusajs/types@1.12.0-preview-20240529120643":
   version "1.12.0-preview-20240529120643"
   resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.12.0-preview-20240529120643.tgz#0d84d098e28a1dc2851dc19d45b2658c6443a25a"
@@ -1253,6 +1258,21 @@
     dotenv "^16.4.5"
     jsonwebtoken "^9.0.2"
     knex "2.4.2"
+
+"@medusajs/utils@1.12.0-preview-20240529060557":
+  version "1.12.0-preview-20240529060557"
+  resolved "https://registry.yarnpkg.com/@medusajs/utils/-/utils-1.12.0-preview-20240529060557.tgz#67abede073b540894764690a5c52ad39cf12ce53"
+  integrity sha512-ncolTPyeiBED8gGpe4IRuKNkZuFl0gBEP0B15wpkotODrtC+LpmqvlbsbLnGZbOAaqUTIT5n7EeLQncGZTjpiw==
+  dependencies:
+    "@medusajs/types" "1.12.0-preview-20240529060557"
+    "@mikro-orm/core" "5.9.7"
+    "@mikro-orm/migrations" "5.9.7"
+    "@mikro-orm/postgresql" "5.9.7"
+    awilix "^8.0.1"
+    bignumber.js "^9.1.2"
+    dotenv "^16.4.5"
+    knex "2.4.2"
+    ulid "^2.3.0"
 
 "@medusajs/utils@1.12.0-preview-20240529120643":
   version "1.12.0-preview-20240529120643"
@@ -5648,6 +5668,22 @@ media-typer@0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/media-typer/-/media-typer-0.3.0.tgz#8710d7af0aa626f8fffa1ce00168545263255748"
   integrity sha512-dq+qelQ9akHpcOl/gUVRTxVIOkAJ1wR3QAvb4RsVjS8oVoFjDGTc679wJYmUmknUF5HwMLOgb5O+a3KxfWapPQ==
+
+medusa-telemetry@0.0.18-preview-20240529060557:
+  version "0.0.18-preview-20240529060557"
+  resolved "https://registry.yarnpkg.com/medusa-telemetry/-/medusa-telemetry-0.0.18-preview-20240529060557.tgz#8feb78fcb42ec7cbda922adcb22873ef67f5e220"
+  integrity sha512-rjIsu2rZNeOt5JzfHU1+3HFxFh+k+XuHIgdQMnlPRDue9zlUJkYXT+HCAa7RF9cJzW/08setzHDBSt29CA6AZA==
+  dependencies:
+    "@babel/runtime" "^7.22.10"
+    axios "^0.21.4"
+    axios-retry "^3.1.9"
+    boxen "^5.0.1"
+    ci-info "^3.2.0"
+    configstore "5.0.1"
+    global "^4.4.0"
+    is-docker "^2.2.1"
+    remove-trailing-slash "^0.1.1"
+    uuid "^8.3.2"
 
 medusa-telemetry@0.0.18-preview-20240529120643:
   version "0.0.18-preview-20240529120643"
