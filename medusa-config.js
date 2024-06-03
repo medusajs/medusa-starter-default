@@ -33,6 +33,8 @@ const DATABASE_URL =
   process.env.DATABASE_URL || "postgres://localhost/medusa-starter-default";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+const REDIS_TLS = process.env.REDIS_TLS.toLowerCase() || "false";
+const REDIS_PASSWORD = process.env.REDIS_PASSWORD || "";
 
 const plugins = [
   `medusa-fulfillment-manual`,
@@ -103,9 +105,6 @@ const plugins = [
             filterableAttributes: process.env.MEILI_STOCK_LOCATIONS_FILTERABLE_ATTRIBUTES.split(' ') ?? [],
             sortableAttributes: process.env.MEILI_STOCK_LOCATIONS_SORTABLE_ATTRIBUTES.split(' ') ?? [],
           },
-          transformer: (location) => {
-            return location;
-          }
         },
       },
     },
@@ -130,13 +129,23 @@ const modules = {
   eventBus: {
     resolve: "@medusajs/event-bus-redis",
     options: {
-      redisUrl: REDIS_URL
+      redisUrl: REDIS_URL,
+      redisOptions: {
+        tls: REDIS_TLS === 'true',
+        password: REDIS_PASSWORD,
+        connectionTimeout: 10000
+      }
     }
   },
   cacheService: {
     resolve: "@medusajs/cache-redis",
     options: {
-      redisUrl: REDIS_URL
+      redisUrl: REDIS_URL,
+      redisOptions: {
+        tls: REDIS_TLS === 'true',
+        password: REDIS_PASSWORD,
+        connectionTimeout: 10000
+      }
     }
   },
   inventoryService: {
@@ -154,7 +163,12 @@ const projectConfig = {
   store_cors: STORE_CORS,
   database_url: DATABASE_URL,
   admin_cors: ADMIN_CORS,
-  redis_url: REDIS_URL
+  redis_url: REDIS_URL,
+  redis_options: {
+    tls: REDIS_TLS === 'true',
+    password: REDIS_PASSWORD,
+    connectionTimeout: 10000
+  }
 };
 
 /** @type {import('@medusajs/medusa').ConfigModule} */
