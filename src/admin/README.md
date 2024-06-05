@@ -1,7 +1,5 @@
 # Admin Customizations
 
-> Admin customizations are coming soon.
-
 You can extend the Medusa Admin to add widgets and new pages. Your customizations interact with API routes to provide merchants with custom functionalities.
 
 ## Example: Create a Widget
@@ -11,8 +9,9 @@ A widget is a React component that can be injected into an existing page in the 
 For example, create the file `src/admin/widgets/product-widget.tsx` with the following content:
 
 ```tsx title="src/admin/widgets/product-widget.tsx"
-import type { WidgetConfig } from "@medusajs/admin"
+import { defineWidgetConfig } from "@medusajs/admin-shared"
 
+// The widget
 const ProductWidget = () => {
   return (
     <div>
@@ -21,9 +20,10 @@ const ProductWidget = () => {
   )
 }
 
-export const config: WidgetConfig = {
+// The widget's configurations
+export const config = defineWidgetConfig({
   zone: "product.details.after",
-}
+})
 
 export default ProductWidget
 ```
