@@ -18,6 +18,7 @@ import {
   ExecArgs,
   IFulfillmentModuleService,
   ISalesChannelModuleService,
+  IStoreModuleService
 } from "@medusajs/types";
 import {
   ContainerRegistrationKeys,
@@ -35,7 +36,7 @@ export default async function seedDemoData({ container }: ExecArgs) {
   );
   const salesChannelModuleService: ISalesChannelModuleService =
     container.resolve(ModuleRegistrationName.SALES_CHANNEL);
-  const storeModuleService: ISalesChannelModuleService = container.resolve(
+  const storeModuleService: IStoreModuleService = container.resolve(
     ModuleRegistrationName.STORE
   );
 
