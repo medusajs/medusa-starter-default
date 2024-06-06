@@ -512,6 +512,12 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
             ],
           },
+        ],
+      },
+    });
+    await createProductsWorkflow(container).run({
+      input: {
+        products: [
           {
             title: "Medusa Sweatshirt",
             category_ids: [categories["Sweatshirts"]],
@@ -614,6 +620,12 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
             ],
           },
+        ],
+      },
+    });
+    await createProductsWorkflow(container).run({
+      input: {
+        products: [
           {
             title: "Medusa Sweatpants",
             category_ids: [categories["Pants"]],
@@ -716,6 +728,12 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
             ],
           },
+        ],
+      },
+    });
+    await createProductsWorkflow(container).run({
+      input: {
+        products: [
           {
             title: "Medusa Shorts",
             category_ids: [categories["Merch"]],
