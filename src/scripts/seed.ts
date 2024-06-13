@@ -1,6 +1,6 @@
 import {
   createApiKeysWorkflow,
-  createProductCategoryWorkflow,
+  createProductCategoriesWorkflow,
   createProductsWorkflow,
   createRegionsWorkflow,
   createSalesChannelsWorkflow,
@@ -302,20 +302,20 @@ export default async function seedDemoData({ container }: ExecArgs) {
       Sweatshirts: "",
       Pants: "",
       Merch: "",
-    };
+    }
     for (const category in categories) {
-      const { result: categoryResult } = await createProductCategoryWorkflow(
+      const { result: categoryResult } = await createProductCategoriesWorkflow(
         container
       ).run({
         input: {
-          product_category: {
+          product_categories: [{
             name: category,
             is_active: true,
-          },
+          }],
         },
       });
 
-      categories[category] = categoryResult.id;
+      categories[category] = categoryResult[0].id;
     }
     await createProductsWorkflow(container).run({
       input: {
