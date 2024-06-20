@@ -1,5 +1,5 @@
 const dotenv = require("dotenv");
-const { Modules } = require("@medusajs/modules-sdk");
+const { Modules } = require("@medusajs/utils");
 
 let ENV_FILE_NAME = "";
 switch (process.env.NODE_ENV) {
