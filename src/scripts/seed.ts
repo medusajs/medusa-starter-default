@@ -18,7 +18,7 @@ import {
   ExecArgs,
   IFulfillmentModuleService,
   ISalesChannelModuleService,
-  IStoreModuleService
+  IStoreModuleService,
 } from "@medusajs/types";
 import {
   ContainerRegistrationKeys,
@@ -43,8 +43,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
   const countries = ["gb", "de", "dk", "se", "fr", "es", "it"];
 
   logger.info("Seeding store data...");
-  const [store] = await storeModuleService.list();
-  let defaultSalesChannel = await salesChannelModuleService.list({
+  const [store] = await storeModuleService.listStores();
+  let defaultSalesChannel = await salesChannelModuleService.listSalesChannels({
     name: "Default Sales Channel",
   });
 
@@ -74,20 +74,18 @@ export default async function seedDemoData({ container }: ExecArgs) {
     },
   });
   logger.info("Seeding region data...");
-  const { result: regionResult } = await createRegionsWorkflow(container).run(
-    {
-      input: {
-        regions: [
-          {
-            name: "Europe",
-            currency_code: "eur",
-            countries,
-            payment_providers: ["pp_system_default"],
-          },
-        ],
-      },
-    }
-  );
+  const { result: regionResult } = await createRegionsWorkflow(container).run({
+    input: {
+      regions: [
+        {
+          name: "Europe",
+          currency_code: "eur",
+          countries,
+          payment_providers: ["pp_system_default"],
+        },
+      ],
+    },
+  });
   const region = regionResult[0];
   logger.info("Finished seeding regions.");
 
@@ -113,7 +111,7 @@ export default async function seedDemoData({ container }: ExecArgs) {
     });
   const shippingProfile = shippingProfileResult[0];
 
-  const fulfillmentSet = await fulfillmentModuleService.create({
+  const fulfillmentSet = await fulfillmentModuleService.createFulfillmentSets({
     name: "European Warehouse delivery",
     type: "delivery",
     service_zones: [
@@ -296,32 +294,40 @@ export default async function seedDemoData({ container }: ExecArgs) {
   logger.info("Finished seeding publishable API key data.");
 
   logger.info("Seeding product data...");
-  const categories = {
-    Shirts: "",
-    Sweatshirts: "",
-    Pants: "",
-    Merch: "",
-  }
-  for (const category in categories) {
-    const { result: categoryResult } = await createProductCategoriesWorkflow(
-      container
-    ).run({
-      input: {
-        product_categories: [{
-          name: category,
-          is_active: true,
-        }],
-      },
-    });
 
-    categories[category] = categoryResult[0].id;
-  }
+  const { result: categoryResult } = await createProductCategoriesWorkflow(
+    container
+  ).run({
+    input: {
+      product_categories: [
+        {
+          name: "Shirts",
+          is_active: true,
+        },
+        {
+          name: "Sweatshirts",
+          is_active: true,
+        },
+        {
+          name: "Pants",
+          is_active: true,
+        },
+        {
+          name: "Merch",
+          is_active: true,
+        },
+      ],
+    },
+  });
+
   await createProductsWorkflow(container).run({
     input: {
       products: [
         {
           title: "Medusa T-Shirt",
-          category_ids: [categories["Shirts"]],
+          category_ids: [
+            categoryResult.find((cat) => cat.name === "Shirts").id,
+          ],
           description:
             "Reimagine the feeling of a classic T-shirt. With our cotton T-shirts, everyday essentials no longer have to be ordinary.",
           handle: "t-shirt",
@@ -519,7 +525,9 @@ export default async function seedDemoData({ container }: ExecArgs) {
       products: [
         {
           title: "Medusa Sweatshirt",
-          category_ids: [categories["Sweatshirts"]],
+          category_ids: [
+            categoryResult.find((cat) => cat.name === "Sweatshirts").id,
+          ],
           description:
             "Reimagine the feeling of a classic sweatshirt. With our cotton sweatshirt, everyday essentials no longer have to be ordinary.",
           handle: "sweatshirt",
@@ -627,7 +635,7 @@ export default async function seedDemoData({ container }: ExecArgs) {
       products: [
         {
           title: "Medusa Sweatpants",
-          category_ids: [categories["Pants"]],
+          category_ids: [categoryResult.find((cat) => cat.name === "Pants").id],
           description:
             "Reimagine the feeling of classic sweatpants. With our cotton sweatpants, everyday essentials no longer have to be ordinary.",
           handle: "sweatpants",
@@ -735,7 +743,7 @@ export default async function seedDemoData({ container }: ExecArgs) {
       products: [
         {
           title: "Medusa Shorts",
-          category_ids: [categories["Merch"]],
+          category_ids: [categoryResult.find((cat) => cat.name === "Merch").id],
           description:
             "Reimagine the feeling of classic shorts. With our cotton shorts, everyday essentials no longer have to be ordinary.",
           handle: "shorts",
