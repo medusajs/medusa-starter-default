@@ -2426,9 +2426,9 @@
     uuid "^9.0.0"
 
 "@medusajs/medusa@^1.20.6":
-  version "1.20.6"
-  resolved "https://registry.yarnpkg.com/@medusajs/medusa/-/medusa-1.20.6.tgz#b36b471405cfc4c42ce18a56eddf454311876f78"
-  integrity sha512-HdJyoQkq82nWIlbIwvd/qCik6iO5Rv8ERMl4aivEtKr8G+zohL7ovJb9DLcwHvSaXONaA/+FTxO7PB5P5lXNPA==
+  version "1.20.7"
+  resolved "https://registry.yarnpkg.com/@medusajs/medusa/-/medusa-1.20.7.tgz#4db0febfc2ed6cdc0c51f3fdeed5d244879be932"
+  integrity sha512-RO/njahR7mtWmcF1fXKdE9CN+6ZoEVt81agziOJkLoH4EYppr7fq1hokIjLwqhLqyQeQ+EzA8zLVf3CTscSOuQ==
   dependencies:
     "@medusajs/core-flows" "^0.0.9"
     "@medusajs/link-modules" "^0.2.11"
@@ -2436,7 +2436,7 @@
     "@medusajs/modules-sdk" "^1.12.11"
     "@medusajs/orchestration" "^0.5.7"
     "@medusajs/utils" "^1.11.9"
-    "@medusajs/workflows-sdk" "^0.1.6"
+    "@medusajs/workflows-sdk" "^0.1.7"
     awilix "^8.0.0"
     body-parser "^1.19.0"
     boxen "^5.0.1"
@@ -2482,7 +2482,7 @@
     winston "^3.8.2"
     zod "^3.22.4"
 
-"@medusajs/modules-sdk@^1.12.11", "@medusajs/modules-sdk@^1.12.3":
+"@medusajs/modules-sdk@^1.12.11", "@medusajs/modules-sdk@^1.12.3", "@medusajs/modules-sdk@^1.12.8":
   version "1.12.11"
   resolved "https://registry.yarnpkg.com/@medusajs/modules-sdk/-/modules-sdk-1.12.11.tgz#9de7aae05fc7565f5131f80af4c3b9c301570854"
   integrity sha512-JDZ0BP1CD69cAqYQb/PHC2pZKhhzeM6krttt6/8pi9/h7HvpUvkMQ2gaL1ze8NTu5K66BjRu9MpRrzBFQzOrdg==
@@ -2498,23 +2498,7 @@
     pg "^8.11.2"
     resolve-cwd "^3.0.0"
 
-"@medusajs/modules-sdk@^1.12.8":
-  version "1.12.10"
-  resolved "https://registry.npmjs.org/@medusajs/modules-sdk/-/modules-sdk-1.12.10.tgz"
-  integrity sha512-qYybipV1RM7MmBCXCkNWOs8pIYDq33boQjKr0VzUT4BXH/LMvIRRJDvTCAjvoCnkpjI6EK45sKjg1jjiv+h6tA==
-  dependencies:
-    "@graphql-tools/merge" "^9.0.0"
-    "@graphql-tools/schema" "^10.0.0"
-    "@medusajs/orchestration" "^0.5.6"
-    "@medusajs/types" "^1.11.15"
-    "@medusajs/utils" "^1.11.8"
-    awilix "^8.0.0"
-    graphql "^16.6.0"
-    knex "2.4.2"
-    pg "^8.11.2"
-    resolve-cwd "^3.0.0"
-
-"@medusajs/orchestration@^0.5.6", "@medusajs/orchestration@^0.5.7":
+"@medusajs/orchestration@^0.5.7":
   version "0.5.7"
   resolved "https://registry.yarnpkg.com/@medusajs/orchestration/-/orchestration-0.5.7.tgz#2cf29c4ca71a59bed64765afdb7453607652aa45"
   integrity sha512-PlP93BKinb4WAUaMLqaxceNQ1QE3K7fXLRpKx2AvBb4b6m/g5Iz3A+K50NtC5CrSqr4PVH0UIV6AGCrdFUS8WQ==
@@ -2524,7 +2508,7 @@
     awilix "^8.0.0"
     graphql "^16.6.0"
 
-"@medusajs/types@^1.11.15", "@medusajs/types@^1.11.16":
+"@medusajs/types@^1.11.16":
   version "1.11.16"
   resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.11.16.tgz#27de07a7983ff6a551e03c3546aa11e40ca7cde3"
   integrity sha512-utgD9FdDH8u/m7d9Zj2IUBIhLHXBhkBZ9IvILvdaus6BfEk+grkk1qBsAmAdgQTfOM1DGmf8vWChCNTR++uF9Q==
@@ -2572,7 +2556,7 @@
     sonner "^1.4.41"
     tailwind-merge "^2.2.1"
 
-"@medusajs/utils@^1.11.2", "@medusajs/utils@^1.11.8", "@medusajs/utils@^1.11.9":
+"@medusajs/utils@^1.11.2", "@medusajs/utils@^1.11.5", "@medusajs/utils@^1.11.8", "@medusajs/utils@^1.11.9":
   version "1.11.9"
   resolved "https://registry.yarnpkg.com/@medusajs/utils/-/utils-1.11.9.tgz#f6862f534b66274589ab2775fff17b92838d7d92"
   integrity sha512-L9tKoan2aiCO+o3gJMvZyCMLX9Xj778V1O8dOpiEUTGMvOLC8pCGW+CgKpBf7Zq6qa2GKz1Xj3DA9pCluJIETA==
@@ -2586,24 +2570,10 @@
     knex "2.4.2"
     ulid "^2.3.0"
 
-"@medusajs/utils@^1.11.5":
-  version "1.11.8"
-  resolved "https://registry.npmjs.org/@medusajs/utils/-/utils-1.11.8.tgz"
-  integrity sha512-2H0MfaHvthU/+LIdO2uMorjQOKmaAQc9+MEaK8Ysd6zw7cI7V33KrzA/HV6BDFCS62lJ//S4kMGgnL14yVeEKA==
-  dependencies:
-    "@medusajs/types" "^1.11.15"
-    "@mikro-orm/core" "5.9.7"
-    "@mikro-orm/migrations" "5.9.7"
-    "@mikro-orm/postgresql" "5.9.7"
-    awilix "^8.0.1"
-    bignumber.js "^9.1.2"
-    knex "2.4.2"
-    ulid "^2.3.0"
-
-"@medusajs/workflows-sdk@^0.1.6":
-  version "0.1.6"
-  resolved "https://registry.yarnpkg.com/@medusajs/workflows-sdk/-/workflows-sdk-0.1.6.tgz#4f2709dcbac65bbefb02e21cef35246d7f3408b7"
-  integrity sha512-4P0xlxSEO0RHedf34kksIO+NmJ1A93obYjtmHjXdrp0vQnRdBfTi8t7y74lbFVFexnXndRsRc7V4VrvVdlqIHA==
+"@medusajs/workflows-sdk@^0.1.6", "@medusajs/workflows-sdk@^0.1.7":
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/@medusajs/workflows-sdk/-/workflows-sdk-0.1.7.tgz#9a63ca8599ab92e61cc619b5b1f80ed8825d1fe5"
+  integrity sha512-Bwg84SwHHXlLYiomc267UNRtY5tPk8OAOTYBj7B9dHh7GSry0T63IBbMfVc4W5y3HatKaC+SLt7zb6KpwPIpAA==
   dependencies:
     "@medusajs/modules-sdk" "^1.12.11"
     "@medusajs/orchestration" "^0.5.7"
@@ -6472,15 +6442,10 @@ core-js@^1.0.0:
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-1.2.7.tgz#652294c14651db28fa93bd2d5ff2983a4f08c636"
   integrity sha512-ZiPp9pZlgxpWRu0M+YWbm6+aQ84XEfH1JRXvfOc/fILWI0VKhLC2LX13X1NYq4fULzLMq7Hfh43CSo2/aIaUPA==
 
-core-js@^3.6.5:
+core-js@^3.6.5, core-js@^3.7.0:
   version "3.37.0"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-3.37.0.tgz#d8dde58e91d156b2547c19d8a4efd5c7f6c426bb"
   integrity sha512-fu5vHevQ8ZG4og+LXug8ulUtVxjOcEYvifJr7L5Bfq9GOztVqsKd9/59hUk2ZSbCrS3BqUr3EpaYGIYzq7g3Ug==
-
-core-js@^3.7.0:
-  version "3.36.1"
-  resolved "https://registry.npmjs.org/core-js/-/core-js-3.36.1.tgz"
-  integrity sha512-BTvUrwxVBezj5SZ3f10ImnX2oRByMxql3EimVqMysepbC9EeMUOpLwdy6Eoili2x6E4kf+ZUB5k/+Jv55alPfA==
 
 core-util-is@~1.0.0:
   version "1.0.3"
@@ -7012,12 +6977,12 @@ dotenv@16.0.3:
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.0.3.tgz#115aec42bac5053db3c456db30cc243a5a836a07"
   integrity sha512-7GO6HghkA5fYG9TYnNxi14/7K9f5occMlp3zXAuSxn7CKCxt9xbNWG7yF8hTCSUchlfWSe3uLmlPfigevRItzQ==
 
-dotenv@16.3.1, dotenv@^16.0.3:
+dotenv@16.3.1:
   version "16.3.1"
   resolved "https://registry.npmjs.org/dotenv/-/dotenv-16.3.1.tgz"
   integrity sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==
 
-dotenv@^16.4.5:
+dotenv@^16.0.3, dotenv@^16.4.5:
   version "16.4.5"
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.4.5.tgz#cdd3b3b604cb327e286b4762e13502f717cb099f"
   integrity sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==
@@ -10935,17 +10900,10 @@ qs@6.11.0:
   dependencies:
     side-channel "^1.0.4"
 
-qs@^6.10.3, qs@^6.11.2:
+qs@^6.10.3, qs@^6.11.0, qs@^6.11.2:
   version "6.12.1"
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.12.1.tgz#39422111ca7cbdb70425541cba20c7d7b216599a"
   integrity sha512-zWmv4RSuB9r2mYQw3zxQuHWeU+42aKi1wWig/j4ele4ygELZ7PEO6MM7rim9oAQH2A5MWfsAVf/jPvTPgCbvUQ==
-  dependencies:
-    side-channel "^1.0.6"
-
-qs@^6.11.0:
-  version "6.12.0"
-  resolved "https://registry.npmjs.org/qs/-/qs-6.12.0.tgz"
-  integrity sha512-trVZiI6RMOkO476zLGaBIzszOdFPnCCXHPG9kn0yuS1uz6xdVxPfZdB3vUig9pxPFDM9BRAgz/YUIVQ1/vuiUg==
   dependencies:
     side-channel "^1.0.6"
 
