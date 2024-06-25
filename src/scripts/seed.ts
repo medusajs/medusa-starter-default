@@ -68,7 +68,15 @@ export default async function seedDemoData({ container }: ExecArgs) {
     input: {
       selector: { id: store.id },
       update: {
-        supported_currency_codes: ["usd", "eur"],
+        supported_currencies: [
+          {
+            currency_code: "eur",
+            is_default: true
+          },
+          {
+            currency_code: "usd"
+          },
+        ],
         default_sales_channel_id: defaultSalesChannel[0].id,
       },
     },
