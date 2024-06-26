@@ -1,5 +1,6 @@
 import {
   createApiKeysWorkflow,
+  createPricingRuleTypesWorkflow,
   createProductCategoriesWorkflow,
   createProductsWorkflow,
   createRegionsWorkflow,
@@ -48,6 +49,21 @@ export default async function seedDemoData({ container }: ExecArgs) {
     name: "Default Sales Channel",
   });
 
+  await createPricingRuleTypesWorkflow(container).run({
+    input: {
+      data: [
+        {
+          rule_attribute: "region_id",
+          name: "Region",
+        },
+        {
+          rule_attribute: "customer_group_id",
+          name: "Customer Group",
+        },
+      ],
+    },
+  });
+
   if (!defaultSalesChannel.length) {
     // create the default sales channel
     const { result: salesChannelResult } = await createSalesChannelsWorkflow(
@@ -71,10 +87,10 @@ export default async function seedDemoData({ container }: ExecArgs) {
         supported_currencies: [
           {
             currency_code: "eur",
-            is_default: true
+            is_default: true,
           },
           {
-            currency_code: "usd"
+            currency_code: "usd",
           },
         ],
         default_sales_channel_id: defaultSalesChannel[0].id,
