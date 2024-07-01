@@ -1,6 +1,5 @@
 import {
   createApiKeysWorkflow,
-  createPricingRuleTypesWorkflow,
   createProductCategoriesWorkflow,
   createProductsWorkflow,
   createRegionsWorkflow,
@@ -47,21 +46,6 @@ export default async function seedDemoData({ container }: ExecArgs) {
   const [store] = await storeModuleService.listStores();
   let defaultSalesChannel = await salesChannelModuleService.listSalesChannels({
     name: "Default Sales Channel",
-  });
-
-  await createPricingRuleTypesWorkflow(container).run({
-    input: {
-      data: [
-        {
-          rule_attribute: "region_id",
-          name: "Region",
-        },
-        {
-          rule_attribute: "customer_group_id",
-          name: "Customer Group",
-        },
-      ],
-    },
   });
 
   if (!defaultSalesChannel.length) {
