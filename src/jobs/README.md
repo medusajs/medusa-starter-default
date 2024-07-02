@@ -8,13 +8,14 @@ For example, create the file `src/jobs/hello-world.ts` with the following conten
 
 ```ts
 import {
-  ProductService,
-  ScheduledJobArgs,
-  ScheduledJobConfig,
-} from "@medusajs/medusa";
+  IProductModuleService,
+  MedusaContainer,
+  ScheduledJobConfig
+} from "@medusajs/types";
+import { ModuleRegistrationName } from "@medusajs/utils";
 
-export default async function myCustomJob({ container }: ScheduledJobArgs) {
-  const productService: ProductService = container.resolve("productService");
+export default async function myCustomJob(container: MedusaContainer) {
+  const productService: IProductModuleService = container.resolve(ModuleRegistrationName.PRODUCT)
 
   const products = await productService.listAndCount();
 
