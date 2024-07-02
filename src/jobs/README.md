@@ -9,20 +9,19 @@ For example, create the file `src/jobs/hello-world.ts` with the following conten
 ```ts
 import {
   IProductModuleService,
-  MedusaContainer,
-  ScheduledJobConfig
+  MedusaContainer
 } from "@medusajs/types";
 import { ModuleRegistrationName } from "@medusajs/utils";
 
 export default async function myCustomJob(container: MedusaContainer) {
   const productService: IProductModuleService = container.resolve(ModuleRegistrationName.PRODUCT)
 
-  const products = await productService.listAndCount();
+  const products = await productService.listAndCountProducts();
 
   // Do something with the products
 }
 
-export const config: ScheduledJobConfig = {
+export const config = {
   name: "daily-product-report",
   schedule: "0 0 * * *", // Every day at midnight
 };
