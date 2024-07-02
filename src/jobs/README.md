@@ -1,7 +1,5 @@
 # Custom scheduled jobs
 
-> Scheduled jobs are coming soon.
-
 A scheduled job is a function executed at a specified interval of time in the background of your Medusa application.
 
 A scheduled job is created in a TypeScript or JavaScript file under the `src/jobs` directory.
@@ -10,20 +8,20 @@ For example, create the file `src/jobs/hello-world.ts` with the following conten
 
 ```ts
 import {
-  ProductService,
-  ScheduledJobArgs,
-  ScheduledJobConfig,
-} from "@medusajs/medusa";
+  IProductModuleService,
+  MedusaContainer
+} from "@medusajs/types";
+import { ModuleRegistrationName } from "@medusajs/utils";
 
-export default async function myCustomJob({ container }: ScheduledJobArgs) {
-  const productService: ProductService = container.resolve("productService");
+export default async function myCustomJob(container: MedusaContainer) {
+  const productService: IProductModuleService = container.resolve(ModuleRegistrationName.PRODUCT)
 
-  const products = await productService.listAndCount();
+  const products = await productService.listAndCountProducts();
 
   // Do something with the products
 }
 
-export const config: ScheduledJobConfig = {
+export const config = {
   name: "daily-product-report",
   schedule: "0 0 * * *", // Every day at midnight
 };
@@ -32,11 +30,9 @@ export const config: ScheduledJobConfig = {
 A scheduled job file must export:
 
 - The function to be executed whenever it’s time to run the scheduled job.
-- A configuration object defining the job. It has two properties:
+- A configuration object defining the job. It has three properties:
   - `name`: a unique name for the job.
   - `schedule`: a [cron expression](https://crontab.guru/).
+  - `numberOfExecutions`: an optional integer, specifying how many times the job will execute before being removed
 
-The `handler` is a function which takes one parameter, an `object` of type `ScheduledJobArgs` with the following properties:
-
-- `container` - a `MedusaContainer` instance which can be used to resolve services.
-- `data` - an `object` containing data passed to the job when it was scheduled. This object is passed in the `config` object.
+The `handler` is a function that accepts one parameter, `container`, which is a `MedusaContainer` instance used to resolve services.
