@@ -35,4 +35,4 @@ A scheduled job file must export:
   - `schedule`: a [cron expression](https://crontab.guru/).
   - `numberOfExecutions`: an optional integer, specifying how many times the job will execute before being removed
 
-The `handler` is a function which takes one parameter, `container`, a `MedusaContainer` instance which can be used to resolve services.
+The `handler` is a function that accepts one parameter, `container`, which is a `MedusaContainer` instance used to resolve services.
