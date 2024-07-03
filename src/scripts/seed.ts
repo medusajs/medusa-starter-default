@@ -13,7 +13,7 @@ import {
   updateStoresWorkflow,
 } from "@medusajs/core-flows";
 import { Logger } from "@medusajs/medusa";
-import { ModuleRegistrationName, RemoteLink } from "@medusajs/modules-sdk";
+import { RemoteLink } from "@medusajs/modules-sdk";
 import {
   ExecArgs,
   IFulfillmentModuleService,
@@ -24,6 +24,7 @@ import {
   ContainerRegistrationKeys,
   Modules,
   ProductStatus,
+  ModuleRegistrationName
 } from "@medusajs/utils";
 
 export default async function seedDemoData({ container }: ExecArgs) {
