@@ -48,20 +48,7 @@ const plugins = [];
 const modules = {
   [Modules.CACHE]: true,
   [Modules.EVENT_BUS]: true,
-  [Modules.AUTH]: {
-    resolve: "@medusajs/auth",
-    options: {
-      providers: [
-        {
-          name: "emailpass",
-          scopes: {
-            admin: {},
-            store: {},
-          },
-        },
-      ],
-    },
-  },
+  [Modules.AUTH]: true,
   [Modules.USER]: {
     resolve: "@medusajs/user",
     options: {
@@ -74,11 +61,7 @@ const modules = {
       providers: [
         {
           resolve: "@medusajs/file-local-next",
-          options: {
-            config: {
-              local: {},
-            },
-          },
+          id: "local"
         },
       ],
     },
@@ -105,11 +88,7 @@ const modules = {
       providers: [
         {
           resolve: "@medusajs/fulfillment-manual",
-          options: {
-            config: {
-              manual: {},
-            },
-          },
+          id: "manual"
         },
       ],
     },
