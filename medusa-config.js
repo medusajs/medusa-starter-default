@@ -12,5 +12,13 @@ module.exports = defineConfig({
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     }
-  }
+  },
+  modules: {
+    CustomModule: {
+      resolve: "./modules/custom-module",
+      definition: {
+        isQueryable: true
+      }
+    },
+  },
 })
