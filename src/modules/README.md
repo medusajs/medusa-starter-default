@@ -26,10 +26,11 @@ For example, create the file `src/modules/hello.index.ts` with the following con
 
 ```ts title="src/modules/hello.index.ts" highlights={[["4", "", "The main service of the module."]]}
 import HelloModuleService from "./service"
+import { Module } from "@medusajs/utils"
 
-export default {
+export default Module("hello", {
   service: HelloModuleService,
-}
+})
 ```
 
 ## 3. Add Module to Configurations
@@ -39,12 +40,14 @@ The last step is to add the module in Medusa’s configurations.
 In `medusa-config.js`, add the module to the `modules` object:
 
 ```js title="medusa-config.js" highlights={[["2", "helloModuleService", "The key of the main service to be registered in the Medusa container."]]}
-const modules = {
-  helloModuleService: {
-    resolve: "./dist/modules/hello",
+module.exports = defineConfig({
+  // ...
+  modules: {
+    helloModuleService: {
+      resolve: "./modules/hello",
+    },
   },
-  // other modules...
-}
+})
 ```
 
 Its key (`helloModuleService`) is the name of the module’s main service. It will be registered in the Medusa container with that name.
@@ -55,13 +58,13 @@ You can resolve the main service of the module in other resources, such as an AP
 
 ```ts
 import { MedusaRequest, MedusaResponse } from "@medusajs/medusa"
-import HelloService from "../../../modules/hello/service"
+import HelloModuleService from "../../../modules/hello/service"
 
 export async function GET(
   req: MedusaRequest,
   res: MedusaResponse
 ): Promise<void> {
-  const helloModuleService: HelloService = req.scope.resolve(
+  const helloModuleService: HelloModuleService = req.scope.resolve(
     "helloModuleService"
   )
 
