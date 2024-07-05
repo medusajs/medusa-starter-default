@@ -32,8 +32,8 @@ jobs:
       - name: Close Previous PRs
         shell: "bash"
         run: |
+
           TITLE="chore(feat/v2): updated preview dependencies [automated]"
-          
           # Get the list of pull requests with the specified title
           PR_LIST=$(gh pr list --search "$TITLE in:title" --json number)
           
