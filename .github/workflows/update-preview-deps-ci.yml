@@ -33,15 +33,14 @@ jobs:
         shell: "bash"
         run: |
 
-          TITLE="chore(feat/v2-ci): updated preview dependencies [automated]"  
           # Get the list of pull requests with the specified title
-          PR_LIST=$(gh pr list --search "$TITLE in:title" --json number)
+          PR_LIST=$(gh pr list --base feat/v2-ci --json number)
           
           echo "$PR_LIST"
           
           # Check if any pull requests were found
           if [ -z "$PR_LIST" ]; then
-            echo "No pull requests found with the title: $TITLE"
+            echo "No pull requests found on branch feat/v2-ci"
             exit 0
           fi
           
