@@ -58,19 +58,14 @@ For example, if you want to define a route that takes a `productId` parameter, y
 import type {
   MedusaRequest,
   MedusaResponse,
-  ProductService,
-} from "@medusajs/medusa";
+} from "@medusajs/medusa"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const { productId } = req.params;
 
-  const productService: ProductService = req.scope.resolve("productService");
-
-  const product = await productService.retrieve(productId);
-
   res.json({
-    product,
-  });
+    message: `You're looking for product ${productId}`
+  })
 }
 ```
 
@@ -88,7 +83,7 @@ import type {
   MedusaResponse,
 } from "@medusajs/medusa"
 import { IProductModuleService } from "@medusajs/types"
-import { ModuleRegistrationName } from "@medusajs/modules-sdk"
+import { ModuleRegistrationName } from "@medusajs/utils"
 
 export const GET = async (
   req: MedusaRequest,

@@ -40,7 +40,7 @@ import type {
   SubscriberConfig,
 } from "@medusajs/medusa"
 import { IProductModuleService } from "@medusajs/types"
-import { ModuleRegistrationName } from "@medusajs/modules-sdk"
+import { ModuleRegistrationName } from "@medusajs/utils"
 
 export default async function productCreateHandler({
   data,

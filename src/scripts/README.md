@@ -13,7 +13,7 @@ import {
   ExecArgs,
   IProductModuleService
 } from "@medusajs/types"
-import { ModuleRegistrationName } from "@medusajs/modules-sdk"
+import { ModuleRegistrationName } from "@medusajs/utils"
 
 export default async function myScript ({
   container
