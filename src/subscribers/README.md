@@ -46,7 +46,7 @@ export default async function productCreateHandler({
   data,
   container,
 }: SubscriberArgs<{ id: string }>) {
-  const productId = "data" in data ? data.data.id : data.id
+  const productId = data.data.id
 
   const productModuleService: IProductModuleService =
     container.resolve(ModuleRegistrationName.PRODUCT)
