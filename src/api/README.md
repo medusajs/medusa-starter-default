@@ -107,8 +107,8 @@ You can apply middleware to your routes by creating a file called `/api/middlewa
 For example, if you want to apply a custom middleware function to the `/store/custom` route, you can do so by adding the following to your `/api/middlewares.ts` file:
 
 ```ts
+import { defineMiddlewares } from "@medusajs/medusa"
 import type {
-  MiddlewaresConfig,
   MedusaRequest,
   MedusaResponse,
   MedusaNextFunction,
@@ -123,14 +123,14 @@ async function logger(
   next();
 }
 
-export const config: MiddlewaresConfig = {
+export default defineMiddlewares({
   routes: [
     {
       matcher: "/store/custom",
       middlewares: [logger],
     },
   ],
-};
+})
 ```
 
 The `matcher` property can be either a string or a regular expression. The `middlewares` property accepts an array of middleware functions.
