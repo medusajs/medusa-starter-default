@@ -48,7 +48,6 @@ const plugins = [];
 const modules = {
   [Modules.CACHE]: true,
   [Modules.EVENT_BUS]: true,
-  [Modules.AUTH]: true,
   [Modules.USER]: {
     resolve: "@medusajs/user",
     options: {
