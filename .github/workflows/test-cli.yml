@@ -187,18 +187,14 @@ jobs:
         with:
           access_token: ${{ github.token }}
 
-      - name: Create pnpm-lock.yaml
-        run: touch pnpm-lock.yaml
-
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 6.32.9
-
       - name: Setup Node.js environment
         uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: "pnpm"
+          cache: "npm"
+
+      - name: Install pnpm
+        run: npm i -g pnpm
   
       - name: Install Dependencies
         run: pnpm install
