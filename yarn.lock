@@ -1216,6 +1216,11 @@
   resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.12.0-preview-20240823090445.tgz#37c0c8573e8b14db8029c05f69633e8b1db34512"
   integrity sha512-gutP/sFEETvpmEB6l5CmI4b29dUZLp9oktJttzWguaQ2/dhETXIJ93qI9G8Ihk/zO4vG6LjdkWY0dRtYKd6vCA==
 
+"@medusajs/types@1.12.0-preview-20240823120634", "@medusajs/types@preview":
+  version "1.12.0-preview-20240823120634"
+  resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.12.0-preview-20240823120634.tgz#f76eef4f595f9c467fc40b0f51bbf4cb20e07d9d"
+  integrity sha512-dWyWpT47O7vdUvqzsfQbr8GYUjTq7rKq5yN0lI8Q766gX7Hy3Ki8WeFeEGhaK+plJCU4BUM0neV/24Ev9bFAHQ==
+
 "@medusajs/ui@3.0.1-preview-20240823090445":
   version "3.0.1-preview-20240823090445"
   resolved "https://registry.yarnpkg.com/@medusajs/ui/-/ui-3.0.1-preview-20240823090445.tgz#ea98afad69dc2a8727f86184afc1a7791791b75b"
@@ -1277,6 +1282,23 @@
     json-2-csv "^5.5.4"
     jsonwebtoken "^9.0.2"
     knex "2.4.2"
+    pluralize "^8.0.0"
+    ulid "^2.3.0"
+
+"@medusajs/utils@preview":
+  version "1.12.0-preview-20240823120634"
+  resolved "https://registry.yarnpkg.com/@medusajs/utils/-/utils-1.12.0-preview-20240823120634.tgz#19fdb6119c85ffba11f2cfa0e3a044c84fa395e7"
+  integrity sha512-XaBDD+3VaPnNSLyKwBSW3aiuNSpLenyT/bmQvBQqZODWD+GOwoj02C1X3wab+RciejSBJgI+hRoDhO+wRExu/Q==
+  dependencies:
+    "@medusajs/types" "1.12.0-preview-20240823120634"
+    "@mikro-orm/core" "5.9.7"
+    "@mikro-orm/migrations" "5.9.7"
+    "@mikro-orm/postgresql" "5.9.7"
+    awilix "^8.0.1"
+    bignumber.js "^9.1.2"
+    dotenv "^16.4.5"
+    dotenv-expand "^11.0.6"
+    jsonwebtoken "^9.0.2"
     pluralize "^8.0.0"
     ulid "^2.3.0"
 
