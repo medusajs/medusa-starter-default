@@ -54,6 +54,9 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+
+      - name: Install yarn
+        run: npm i -g yarn
   
       - name: Install Dependencies
         run: yarn install
