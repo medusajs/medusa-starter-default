@@ -59,7 +59,7 @@ jobs:
         run: yarn install
 
       - name: Check CLI tool is installed
-        run: ./node_modules/.bin/medusa -v
+        run: yarn medusa -v
 
       - name: run build
         run: yarn build
