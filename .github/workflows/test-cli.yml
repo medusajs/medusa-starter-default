@@ -187,6 +187,9 @@ jobs:
         with:
           access_token: ${{ github.token }}
 
+      - name: Create pnpm-lock.yaml
+        run: touch pnpm-lock.yaml
+
       - uses: pnpm/action-setup@v2
         with:
           version: 6.32.9
