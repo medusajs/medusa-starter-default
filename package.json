@@ -68,10 +68,32 @@
     "@medusajs/icons": "*",
     "@medusajs/modules-sdk": "*",
     "@medusajs/ui": "*",
-    "@mikro-orm/cli": "*",
     "@mikro-orm/core": "*",
     "@mikro-orm/migrations": "*",
     "@mikro-orm/postgresql": "*"
+  },
+  "peerDependenciesMeta": {
+    "@medusajs/admin-shared": {
+      "optional": true
+    },
+    "@medusajs/icons": {
+      "optional": true
+    },
+    "@medusajs/modules-sdk": {
+      "optional": true
+    },
+    "@medusajs/ui": {
+      "optional": true
+    },
+    "@mikro-orm/core": {
+      "optional": true
+    },
+    "@mikro-orm/migrations": {
+      "optional": true
+    },
+    "@mikro-orm/postgresql": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=20"
