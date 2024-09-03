@@ -1472,16 +1472,6 @@
     "@medusajs/modules-sdk" "1.13.0-preview-20240903060622"
     "@medusajs/utils" "1.12.0-preview-20240903060622"
 
-"@medusajs/types@1.12.0-preview-20240902120719":
-  version "1.12.0-preview-20240902120719"
-  resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.12.0-preview-20240902120719.tgz#58105a77b1ee853cdb358d9ebe3776833a81f8bc"
-  integrity sha512-P4yEaujlhlqI0dPm/sODCus/ZKad1fxxg7RGlRx/9nVeMYcw1DacXG8CrvOnZYVvrZaqMf3J0INaxHtlyTULkQ==
-
-"@medusajs/types@1.12.0-preview-20240903001652":
-  version "1.12.0-preview-20240903001652"
-  resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.12.0-preview-20240903001652.tgz#a660187c84d4569a5869f545c76246d715934f78"
-  integrity sha512-+9t0tMDdqK/l5OKwu20y6qK6/xpeOYCU7w1vmPHExmoAYVMwruXEixZcy72dtt0e4s85I33wq/iydgHDYlcUoA==
-
 "@medusajs/types@1.12.0-preview-20240903060622":
   version "1.12.0-preview-20240903060622"
   resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.12.0-preview-20240903060622.tgz#423903875878dbfebfce392cecd911347a48c653"
@@ -1527,44 +1517,6 @@
   dependencies:
     "@medusajs/utils" "1.12.0-preview-20240903060622"
     jsonwebtoken "^9.0.2"
-
-"@medusajs/utils@1.12.0-preview-20240902120719":
-  version "1.12.0-preview-20240902120719"
-  resolved "https://registry.yarnpkg.com/@medusajs/utils/-/utils-1.12.0-preview-20240902120719.tgz#11a880265a043bbf0e44bdebe611935f4b98f3fa"
-  integrity sha512-7GVlnwehcItyItYQ7ereyeaHyDFeR6e7sxfnWmJOnnrGvBvYBu2Om7MDaSaI4jQBwyhv3r4jIEpfd/pGUauE8Q==
-  dependencies:
-    "@medusajs/types" "1.12.0-preview-20240902120719"
-    "@mikro-orm/core" "5.9.7"
-    "@mikro-orm/migrations" "5.9.7"
-    "@mikro-orm/postgresql" "5.9.7"
-    awilix "^8.0.1"
-    bignumber.js "^9.1.2"
-    dotenv "^16.4.5"
-    dotenv-expand "^11.0.6"
-    jsonwebtoken "^9.0.2"
-    pg "^8.12.0"
-    pg-connection-string "^2.6.4"
-    pluralize "^8.0.0"
-    ulid "^2.3.0"
-
-"@medusajs/utils@1.12.0-preview-20240903001652":
-  version "1.12.0-preview-20240903001652"
-  resolved "https://registry.yarnpkg.com/@medusajs/utils/-/utils-1.12.0-preview-20240903001652.tgz#92b7cbe5d68ec27382ff8e9340b1f2bc7d5eeb0b"
-  integrity sha512-y7z6M7Qyf7qUZnY6FGwUtzLsNXe35h49N7NpWJqAnKNRMp5ixLDv/5JOGjhDKJ0O131gfY8YwwtJViP1PKoNKw==
-  dependencies:
-    "@medusajs/types" "1.12.0-preview-20240903001652"
-    "@mikro-orm/core" "5.9.7"
-    "@mikro-orm/migrations" "5.9.7"
-    "@mikro-orm/postgresql" "5.9.7"
-    awilix "^8.0.1"
-    bignumber.js "^9.1.2"
-    dotenv "^16.4.5"
-    dotenv-expand "^11.0.6"
-    jsonwebtoken "^9.0.2"
-    pg "^8.12.0"
-    pg-connection-string "^2.6.4"
-    pluralize "^8.0.0"
-    ulid "^2.3.0"
 
 "@medusajs/utils@1.12.0-preview-20240903060622":
   version "1.12.0-preview-20240903060622"
@@ -7418,22 +7370,6 @@ media-typer@0.3.0:
   resolved "https://registry.yarnpkg.com/media-typer/-/media-typer-0.3.0.tgz#8710d7af0aa626f8fffa1ce00168545263255748"
   integrity sha512-dq+qelQ9akHpcOl/gUVRTxVIOkAJ1wR3QAvb4RsVjS8oVoFjDGTc679wJYmUmknUF5HwMLOgb5O+a3KxfWapPQ==
 
-medusa-telemetry@0.0.18-preview-20240902120719:
-  version "0.0.18-preview-20240902120719"
-  resolved "https://registry.yarnpkg.com/medusa-telemetry/-/medusa-telemetry-0.0.18-preview-20240902120719.tgz#063cffd484a38765ad4bff65ec43fdfd426ff1b0"
-  integrity sha512-fFWeLACfmq+l0O5YXz871xCempnaSHDtLwhIC0OVtAjgm3PJnTdWdKVZo/25giyHjAfYj8c3c8FnL00Rmw0PnA==
-  dependencies:
-    "@babel/runtime" "^7.22.10"
-    axios "^0.21.4"
-    axios-retry "^3.1.9"
-    boxen "^5.0.1"
-    ci-info "^3.2.0"
-    configstore "5.0.1"
-    global "^4.4.0"
-    is-docker "^2.2.1"
-    remove-trailing-slash "^0.1.1"
-    uuid "^8.3.2"
-
 medusa-telemetry@0.0.18-preview-20240903060622:
   version "0.0.18-preview-20240903060622"
   resolved "https://registry.yarnpkg.com/medusa-telemetry/-/medusa-telemetry-0.0.18-preview-20240903060622.tgz#12a1ab473b0358e248d0d573de8ba9dd03eee966"
@@ -7450,12 +7386,12 @@ medusa-telemetry@0.0.18-preview-20240903060622:
     remove-trailing-slash "^0.1.1"
     uuid "^8.3.2"
 
-medusa-test-utils@1.1.45-preview-20240903001652:
-  version "1.1.45-preview-20240903001652"
-  resolved "https://registry.yarnpkg.com/medusa-test-utils/-/medusa-test-utils-1.1.45-preview-20240903001652.tgz#78f8bd0b3c0abe925d6fc99e1e7553d8bddf4a1d"
-  integrity sha512-474LGbBazl4UdCbMy84p1AhvcBr7WIQRTbrRRKGFt/6ZTf3RIvy5VKr5w079lO9CYLXKTe9GsSQJOJpQok8OXA==
+medusa-test-utils@preview:
+  version "1.1.45-preview-20240903060622"
+  resolved "https://registry.yarnpkg.com/medusa-test-utils/-/medusa-test-utils-1.1.45-preview-20240903060622.tgz#d671883685823a3e60dcfc2361ff617002c1f27a"
+  integrity sha512-Hj5DLjQO8ZW7/tnLAgga8Dd/Rgtg8XiiaE7dMmbKIIXCMXWX9KxkvQlRYPuz+xiIHG+WAE7P0yGMLSeVqNkaog==
   dependencies:
-    "@medusajs/utils" "1.12.0-preview-20240903001652"
+    "@medusajs/utils" "1.12.0-preview-20240903060622"
     get-port "^5.1"
     randomatic "^3.1.1"
 
