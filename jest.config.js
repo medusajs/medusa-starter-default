@@ -19,8 +19,6 @@ module.exports = {
 
 if (process.env.TEST_TYPE === "integration:http") {
   module.exports.testMatch = ["**/integration-tests/http/*.spec.[jt]s"]
-} else if (process.env.TEST_TYPE === "integration:e2e") {
-  module.exports.testMatch = ["**/integration-tests/e2e/*.spec.[jt]s"]
 } else if (process.env.TEST_TYPE === "integration:modules") {
   module.exports.testMatch = ["**/src/modules/*/__tests__/**/*.[jt]s"]
 } else if (process.env.TEST_TYPE === "unit") {
