@@ -2037,6 +2037,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@medusajs/types@npm:1.12.0-preview-20240903001652":
+  version: 1.12.0-preview-20240903001652
+  resolution: "@medusajs/types@npm:1.12.0-preview-20240903001652"
+  checksum: 10c0/c613c04302293152b9d09ad90f96aefe3a1888c2590e780b76d1bfdd2f46e0e347df1c629481e4a93ad7aed4334422498711142cb141f86b626432f11b48e39c
+  languageName: node
+  linkType: hard
+
 "@medusajs/ui@npm:3.0.1-preview-20240902120719":
   version: 3.0.1-preview-20240902120719
   resolution: "@medusajs/ui@npm:3.0.1-preview-20240902120719"
@@ -2108,6 +2115,27 @@ __metadata:
     pluralize: "npm:^8.0.0"
     ulid: "npm:^2.3.0"
   checksum: 10c0/1c34bddf7eb23b036cd7c0eec01bca5691d776f8d836a67c968e3928897b2a85f1e83068efbf4703c921652a53442412e8a2dbd0709463739bb583d08b55d950
+  languageName: node
+  linkType: hard
+
+"@medusajs/utils@npm:1.12.0-preview-20240903001652":
+  version: 1.12.0-preview-20240903001652
+  resolution: "@medusajs/utils@npm:1.12.0-preview-20240903001652"
+  dependencies:
+    "@medusajs/types": "npm:1.12.0-preview-20240903001652"
+    "@mikro-orm/core": "npm:5.9.7"
+    "@mikro-orm/migrations": "npm:5.9.7"
+    "@mikro-orm/postgresql": "npm:5.9.7"
+    awilix: "npm:^8.0.1"
+    bignumber.js: "npm:^9.1.2"
+    dotenv: "npm:^16.4.5"
+    dotenv-expand: "npm:^11.0.6"
+    jsonwebtoken: "npm:^9.0.2"
+    pg: "npm:^8.12.0"
+    pg-connection-string: "npm:^2.6.4"
+    pluralize: "npm:^8.0.0"
+    ulid: "npm:^2.3.0"
+  checksum: 10c0/f141493a478272e347d04cc76f00d1a9087873e8bdf8663d53110a5c2c8f1d8850b27f0324371e7fb3ad8a85cad1e7240877bdb66c0b5b2e24849bd03c575178
   languageName: node
   linkType: hard
 
@@ -8962,6 +8990,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"get-port@npm:^5.1":
+  version: 5.1.1
+  resolution: "get-port@npm:5.1.1"
+  checksum: 10c0/2873877a469b24e6d5e0be490724a17edb39fafc795d1d662e7bea951ca649713b4a50117a473f9d162312cb0e946597bd0e049ed2f866e79e576e8e213d3d1c
+  languageName: node
+  linkType: hard
+
 "get-stream@npm:^6.0.0":
   version: 6.0.1
   resolution: "get-stream@npm:6.0.1"
@@ -10700,7 +10735,7 @@ __metadata:
     "@types/react": "npm:^18.3.2"
     express: "npm:^4.17.2"
     jest: "npm:^29.7.0"
-    medusa-test-utils: "npm:1.1.45-preview-20240902120719"
+    medusa-test-utils: "npm:1.1.45-preview-20240903001652"
     prop-types: "npm:^15.8.1"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.1.6"
@@ -10725,21 +10760,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"medusa-test-utils@npm:1.1.45-preview-20240902120719":
-  version: 1.1.45-preview-20240902120719
-  resolution: "medusa-test-utils@npm:1.1.45-preview-20240902120719"
+"medusa-test-utils@npm:1.1.45-preview-20240903001652":
+  version: 1.1.45-preview-20240903001652
+  resolution: "medusa-test-utils@npm:1.1.45-preview-20240903001652"
   dependencies:
-    "@medusajs/utils": "npm:1.12.0-preview-20240902120719"
+    "@medusajs/utils": "npm:1.12.0-preview-20240903001652"
+    get-port: "npm:^5.1"
     randomatic: "npm:^3.1.1"
   peerDependencies:
-    "@medusajs/medusa": 1.20.6-preview-20240902120719
-    "@medusajs/modules-sdk": 1.13.0-preview-20240902120719
+    "@medusajs/medusa": 1.20.6-preview-20240903001652
+    "@medusajs/modules-sdk": 1.13.0-preview-20240903001652
     "@mikro-orm/core": 5.9.7
     "@mikro-orm/migrations": 5.9.7
     "@mikro-orm/postgresql": 5.9.7
     axios: ^0.28.0
     express: ^4.18.3
-    get-port: ^5.1.0
     pg-god: ^1.0.12
   peerDependenciesMeta:
     "@medusajs/core":
@@ -10756,11 +10791,9 @@ __metadata:
       optional: true
     express:
       optional: true
-    get-port:
-      optional: true
     pg-god:
       optional: true
-  checksum: 10c0/c761168701a7f78ab2e1b7f8cc5ccc895864883568c8057fff74e07d0857b2778d85ebe6bef3314d19cc0cee5adcf2ccee818fee46d521e7763d7403c67203bc
+  checksum: 10c0/b6786c135e45fabd4fe3233f6e949c3b3097c17683b5358fc06d2a6d585bcce009caf04c92607d63e360191e625d6344531659ca2bca5d0b5e4e4c32dddc0b0c
   languageName: node
   linkType: hard
 
