@@ -22,6 +22,10 @@
   "ts-node": {
     "swc": true
   },
+  "include": [
+    "src",
+    ".medusa/**/*"
+  ],
   "exclude": [
     "**/__tests__",
     "**/__fixtures__",
