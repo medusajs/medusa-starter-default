@@ -1845,6 +1845,11 @@
     "@medusajs/modules-sdk" "1.13.0-preview-20240925030844"
     "@medusajs/utils" "1.12.0-preview-20240925030844"
 
+"@medusajs/types@1.12.0-preview-20240903060622":
+  version "1.12.0-preview-20240903060622"
+  resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.12.0-preview-20240903060622.tgz#423903875878dbfebfce392cecd911347a48c653"
+  integrity sha512-UZJD0cuZn3978lMWn+KbFPKoHblhEmI7iZncyOuuiU61ioL6N6M/PnNGMknMWlL83cGyfMiSnRYCX8SrA/guZw==
+
 "@medusajs/types@1.12.0-preview-20240925030844":
   version "1.12.0-preview-20240925030844"
   resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-1.12.0-preview-20240925030844.tgz#32e786c2797488d17195d56ab0ef501ec687765f"
@@ -1890,6 +1895,25 @@
   dependencies:
     "@medusajs/utils" "1.12.0-preview-20240925030844"
     jsonwebtoken "^9.0.2"
+
+"@medusajs/utils@1.12.0-preview-20240903060622":
+  version "1.12.0-preview-20240903060622"
+  resolved "https://registry.yarnpkg.com/@medusajs/utils/-/utils-1.12.0-preview-20240903060622.tgz#ad67d1169e10d443201aed8330bdd3e5d0177ac6"
+  integrity sha512-Ky1sk/F2QapicaTxSlqBfYfjJ+B2DUvOiTQexiZNOqgNb7IHSfjJMyXo9+bkxHlk6DgB3C2dFunGQOmCtqltUg==
+  dependencies:
+    "@medusajs/types" "1.12.0-preview-20240903060622"
+    "@mikro-orm/core" "5.9.7"
+    "@mikro-orm/migrations" "5.9.7"
+    "@mikro-orm/postgresql" "5.9.7"
+    awilix "^8.0.1"
+    bignumber.js "^9.1.2"
+    dotenv "^16.4.5"
+    dotenv-expand "^11.0.6"
+    jsonwebtoken "^9.0.2"
+    pg "^8.12.0"
+    pg-connection-string "^2.6.4"
+    pluralize "^8.0.0"
+    ulid "^2.3.0"
 
 "@medusajs/utils@1.12.0-preview-20240925030844":
   version "1.12.0-preview-20240925030844"
@@ -7576,6 +7600,22 @@ media-typer@0.3.0:
   resolved "https://registry.yarnpkg.com/media-typer/-/media-typer-0.3.0.tgz#8710d7af0aa626f8fffa1ce00168545263255748"
   integrity sha512-dq+qelQ9akHpcOl/gUVRTxVIOkAJ1wR3QAvb4RsVjS8oVoFjDGTc679wJYmUmknUF5HwMLOgb5O+a3KxfWapPQ==
 
+medusa-telemetry@0.0.18-preview-20240903060622:
+  version "0.0.18-preview-20240903060622"
+  resolved "https://registry.yarnpkg.com/medusa-telemetry/-/medusa-telemetry-0.0.18-preview-20240903060622.tgz#12a1ab473b0358e248d0d573de8ba9dd03eee966"
+  integrity sha512-RiAP0y/XWn5DkrFkkLw4IQOO4WYmxqeMCQVYGD6Uzw2oz2zJSUT+KSGyODAXTkxHQwiL9kAIfbdK4HodNIlllA==
+  dependencies:
+    "@babel/runtime" "^7.22.10"
+    axios "^0.21.4"
+    axios-retry "^3.1.9"
+    boxen "^5.0.1"
+    ci-info "^3.2.0"
+    configstore "5.0.1"
+    global "^4.4.0"
+    is-docker "^2.2.1"
+    remove-trailing-slash "^0.1.1"
+    uuid "^8.3.2"
+
 medusa-telemetry@0.0.18-preview-20240925030844:
   version "0.0.18-preview-20240925030844"
   resolved "https://registry.yarnpkg.com/medusa-telemetry/-/medusa-telemetry-0.0.18-preview-20240925030844.tgz#159e4e04f639847320898d90b214038acf1228db"
@@ -8098,7 +8138,7 @@ pg-connection-string@2.6.1:
   resolved "https://registry.yarnpkg.com/pg-connection-string/-/pg-connection-string-2.6.1.tgz#78c23c21a35dd116f48e12e23c0965e8d9e2cbfb"
   integrity sha512-w6ZzNu6oMmIzEAYVw+RLK0+nqHPt8K3ZnknKi+g48Ak2pr3dtljJW3o+D/n2zzCG07Zoe9VOX3aiKpj+BN0pjg==
 
-pg-connection-string@^2.6.2, pg-connection-string@^2.7.0:
+pg-connection-string@^2.6.2, pg-connection-string@^2.6.4, pg-connection-string@^2.7.0:
   version "2.7.0"
   resolved "https://registry.yarnpkg.com/pg-connection-string/-/pg-connection-string-2.7.0.tgz#f1d3489e427c62ece022dba98d5262efcb168b37"
   integrity sha512-PI2W9mv53rXJQEOb8xNR8lH7Hr+EKa6oJa38zsK0S/ky2er16ios1wLKhZyxzD7jUReiWokc9WK5nxSnC7W1TA==
@@ -8156,7 +8196,7 @@ pg@8.11.3:
   optionalDependencies:
     pg-cloudflare "^1.1.1"
 
-pg@^8.11.3, pg@^8.13.0, pg@^8.3.0:
+pg@^8.11.3, pg@^8.12.0, pg@^8.13.0, pg@^8.3.0:
   version "8.13.0"
   resolved "https://registry.yarnpkg.com/pg/-/pg-8.13.0.tgz#e3d245342eb0158112553fcc1890a60720ae2a3d"
   integrity sha512-34wkUTh3SxTClfoHB3pQ7bIMvw9dpFU1audQQeZG837fmHfHpr14n/AELVDoOYVDW2h5RDWU78tFjkD+erSBsw==
