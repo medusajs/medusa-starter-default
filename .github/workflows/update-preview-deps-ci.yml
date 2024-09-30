@@ -1,5 +1,7 @@
 name: "Update Preview Dependencies (feat/v2-ci)"
 on:
+  schedule:
+    - cron: "15 */3 * * *" # every three hours
   workflow_dispatch:
 
 jobs:
