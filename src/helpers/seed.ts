@@ -2,7 +2,7 @@ import { Logger } from "@medusajs/medusa"
 import { 
   ModuleRegistrationName, 
   RemoteLink
-} from "@medusajs/modules-sdk"
+} from "@medusajs/framework/modules-sdk"
 import { 
   IRegionModuleService,
   IStockLocationServiceNext,
@@ -13,7 +13,7 @@ import {
   IProductModuleService,
   IPricingModuleService,
   IInventoryServiceNext
-} from "@medusajs/types"
+} from "@medusajs/framework/types"
 import { 
   ContainerRegistrationKeys,
   Modules,
