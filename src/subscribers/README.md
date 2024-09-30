@@ -39,8 +39,8 @@ import type {
   SubscriberArgs,
   SubscriberConfig,
 } from "@medusajs/medusa"
-import { IProductModuleService } from "@medusajs/types"
-import { Modules } from "@medusajs/utils"
+import { IProductModuleService } from "@medusajs/framework/types"
+import { Modules } from "@medusajs/framework/utils"
 
 export default async function productCreateHandler({
   event: { data },

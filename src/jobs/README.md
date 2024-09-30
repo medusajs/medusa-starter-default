@@ -10,8 +10,8 @@ For example, create the file `src/jobs/hello-world.ts` with the following conten
 import {
   IProductModuleService,
   MedusaContainer
-} from "@medusajs/types";
-import { Modules } from "@medusajs/utils";
+} from "@medusajs/framework/types";
+import { Modules } from "@medusajs/framework/utils";
 
 export default async function myCustomJob(container: MedusaContainer) {
   const productService: IProductModuleService = container.resolve(Modules.PRODUCT)
