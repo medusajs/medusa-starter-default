@@ -1,11 +1,8 @@
-const { loadEnv, defineConfig } = require("@medusajs/framework/utils");
+const { loadEnv, defineConfig } = require('@medusajs/framework/utils')
 
-loadEnv(process.env.NODE_ENV, process.cwd());
+loadEnv(process.env.NODE_ENV, process.cwd())
 
 module.exports = defineConfig({
-  admin: {
-    disable: true,
-  },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     http: {
@@ -14,6 +11,6 @@ module.exports = defineConfig({
       authCors: process.env.AUTH_CORS,
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
-    },
-  },
-});
+    }
+  }
+})
