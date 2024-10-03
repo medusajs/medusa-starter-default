@@ -187,6 +187,13 @@ jobs:
         with:
           access_token: ${{ github.token }}
 
+      - name: Create pnpm-lock.yaml
+        run: touch pnpm-lock.yaml
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
       - name: Setup Node.js environment
         uses: actions/setup-node@v3
         with:
@@ -221,4 +228,3 @@ jobs:
       - name: Kill server
         shell: "bash"
         run: kill -9 $(lsof -t -i :9000)
-          
