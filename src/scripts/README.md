@@ -21,7 +21,7 @@ export default async function myScript ({
   const productModuleService: IProductModuleService = 
     container.resolve(Modules.PRODUCT)
 
-  const [, count] = await productModuleService.listAndCount()
+  const [, count] = await productModuleService.listAndCountProducts()
 
   console.log(`You have ${count} product(s)`)
 }
