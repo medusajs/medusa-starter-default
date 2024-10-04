@@ -7,7 +7,7 @@ An API Route is created in a TypeScript or JavaScript file under the `/src/api` 
 For example, to create a `GET` API Route at `/store/hello-world`, create the file `src/api/store/hello-world/route.ts` with the following content:
 
 ```ts
-import type { MedusaRequest, MedusaResponse } from "@medusajs/medusa";
+import type { MedusaRequest, MedusaResponse } from "@medusajs/framework";
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   res.json({
@@ -33,7 +33,7 @@ You can define a handler for each of these methods by exporting a function with 
 For example:
 
 ```ts
-import type { MedusaRequest, MedusaResponse } from "@medusajs/medusa";
+import type { MedusaRequest, MedusaResponse } from "@medusajs/framework";
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   // Handle GET requests
@@ -58,7 +58,7 @@ For example, if you want to define a route that takes a `productId` parameter, y
 import type {
   MedusaRequest,
   MedusaResponse,
-} from "@medusajs/medusa"
+} from "@medusajs/framework"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const { productId } = req.params;
@@ -81,7 +81,7 @@ The Medusa container is available on `req.scope`. Use it to access modules' main
 import type {
   MedusaRequest,
   MedusaResponse,
-} from "@medusajs/medusa"
+} from "@medusajs/framework"
 import { IProductModuleService } from "@medusajs/framework/types"
 import { Modules } from "@medusajs/framework/utils"
 
@@ -112,7 +112,7 @@ import type {
   MedusaRequest,
   MedusaResponse,
   MedusaNextFunction,
-} from "@medusajs/medusa";
+} from "@medusajs/framework";
 
 async function logger(
   req: MedusaRequest,
