@@ -65,10 +65,7 @@ jobs:
         run: yarn build
 
       - name: Run migrations
-        run: npx medusa migrations run
-
-      - name: Sync links
-        run: npx medusa links sync
+        run: npx medusa db:migrate
 
       - name: Run seed
         run: yarn seed
@@ -134,10 +131,7 @@ jobs:
         run: npm run build
 
       - name: Run migrations
-        run: npx medusa migrations run
-
-      - name: Sync links
-        run: npx medusa links sync
+        run: npx medusa db:migrate
 
       - name: Run seed
         run: npm run seed
@@ -210,10 +204,7 @@ jobs:
         run: pnpm run build
 
       - name: Run migrations
-        run: npx medusa migrations run
-
-      - name: Sync links
-        run: npx medusa links sync
+        run: npx medusa db:migrate
 
       - name: Run seed
         run: pnpm run seed
