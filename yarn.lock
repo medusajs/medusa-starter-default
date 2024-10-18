@@ -2053,6 +2053,36 @@
   resolved "https://registry.yarnpkg.com/@medusajs/cart/-/cart-1.0.0-rc-20241016093905.tgz#b86bea9ced896ce3e8dedf1a7e2839348a7079b0"
   integrity sha512-YRsx93tj8HwobMHDmbCuKdtAWMdl8XhS6PzFy7JQy35RtFay4W8FBcPH5so9HNGHXFtPb83yO5kDq+XGhwmY2Q==
 
+"@medusajs/cli@rc":
+  version "2.0.0-rc-20241018141633"
+  resolved "https://registry.yarnpkg.com/@medusajs/cli/-/cli-2.0.0-rc-20241018141633.tgz#c736060363fa336bbcb5f1c9f7c9fb73c94870a0"
+  integrity sha512-Nj8Lhm4V9PUirxXDGLkzTd/Snk6MPsW85o2f6w5ES6fyZoUTITgDNkCWQsNEfMUZj1IwMLSAIpMPQl1axnCaGQ==
+  dependencies:
+    "@medusajs/telemetry" "1.0.0-rc-20241018141633"
+    "@medusajs/utils" "2.0.0-rc-20241018141633"
+    "@types/express" "^4.17.17"
+    chalk "^4.0.0"
+    configstore "5.0.1"
+    dotenv "^16.4.5"
+    execa "^5.1.1"
+    express "^4.21.0"
+    fs-exists-cached "^1.0.0"
+    fs-extra "^10.0.0"
+    glob "^7.1.6"
+    hosted-git-info "^4.0.2"
+    inquirer "^8.0.0"
+    is-valid-path "^0.1.1"
+    meant "^1.0.3"
+    ora "^5.4.1"
+    pg "^8.11.3"
+    pg-god "^1.0.12"
+    prompts "^2.4.2"
+    resolve-cwd "^3.0.0"
+    stack-trace "^0.0.10"
+    ulid "^2.3.0"
+    winston "^3.8.2"
+    yargs "^15.3.1"
+
 "@medusajs/core-flows@1.0.0-rc-20241016093905":
   version "1.0.0-rc-20241016093905"
   resolved "https://registry.yarnpkg.com/@medusajs/core-flows/-/core-flows-1.0.0-rc-20241016093905.tgz#1ab428a9acddeff5b3aea1ad9e5aab53eb8da761"
@@ -2218,36 +2248,6 @@
   resolved "https://registry.yarnpkg.com/@medusajs/locking/-/locking-1.0.0-rc-20241016093905.tgz#f34dda90e9d8a6988f1c287893bb256452d69f73"
   integrity sha512-0b9JXLDHsgFnQkW2Qr6kN+9uR1n1XNoxiwS5fB7Cf4AWq2caDFbABIoA4uCfXuFqc9GddB120fT2n1wp6poXQA==
 
-"@medusajs/medusa-cli@rc":
-  version "2.0.0-rc-20241016093905"
-  resolved "https://registry.yarnpkg.com/@medusajs/medusa-cli/-/medusa-cli-2.0.0-rc-20241016093905.tgz#c034309b6868be42571e06d73ebc4bf7fd0f20b6"
-  integrity sha512-WtMDHY9M3Fp6xNDtgmCW1PCCDddjeQxc3MfazEQJpM4vIqhcbH+o+NLATx1QfkV5eDXHqJCCiwsdohjTKHcCdA==
-  dependencies:
-    "@medusajs/utils" "2.0.0-rc-20241016093905"
-    "@types/express" "^4.17.17"
-    chalk "^4.0.0"
-    configstore "5.0.1"
-    dotenv "^16.4.5"
-    execa "^5.1.1"
-    express "^4.21.0"
-    fs-exists-cached "^1.0.0"
-    fs-extra "^10.0.0"
-    glob "^7.1.6"
-    hosted-git-info "^4.0.2"
-    inquirer "^8.0.0"
-    is-valid-path "^0.1.1"
-    meant "^1.0.3"
-    medusa-telemetry "1.0.0-rc-20241016093905"
-    ora "^5.4.1"
-    pg "^8.11.3"
-    pg-god "^1.0.12"
-    prompts "^2.4.2"
-    resolve-cwd "^3.0.0"
-    stack-trace "^0.0.10"
-    ulid "^2.3.0"
-    winston "^3.8.2"
-    yargs "^15.3.1"
-
 "@medusajs/medusa@rc":
   version "2.0.0-rc-20241016093905"
   resolved "https://registry.yarnpkg.com/@medusajs/medusa/-/medusa-2.0.0-rc-20241016093905.tgz#a6cce303e71da8c99c0bfe7df8b17f60ee5d68d6"
@@ -2407,10 +2407,44 @@
   resolved "https://registry.yarnpkg.com/@medusajs/tax/-/tax-1.0.0-rc-20241016093905.tgz#4b871e85dc476b1f822215962cfa303896c8077b"
   integrity sha512-PjLYEPmtOltk88X2038WrSAfc4xZko3MhVNIkufyCtsVAoJFQjgj0HMFkx6yqCKzAbx//b7+1Wne7oLCwrNfog==
 
+"@medusajs/telemetry@1.0.0-rc-20241018141633":
+  version "1.0.0-rc-20241018141633"
+  resolved "https://registry.yarnpkg.com/@medusajs/telemetry/-/telemetry-1.0.0-rc-20241018141633.tgz#059c2805a8bdd3ce88343f88ed35130cf217b653"
+  integrity sha512-qgQ/BmPkAq220H43yRU2l/Zn7J7K7buWlvm5ukpJWOP2SyyMvlIOepGU2x7RGvJ6uai0RBdLOOg6DCN4OUd5gQ==
+  dependencies:
+    "@babel/runtime" "^7.22.10"
+    axios "^0.21.4"
+    axios-retry "^3.1.9"
+    boxen "^5.0.1"
+    ci-info "^3.2.0"
+    configstore "5.0.1"
+    global "^4.4.0"
+    is-docker "^2.2.1"
+    remove-trailing-slash "^0.1.1"
+    uuid "^8.3.2"
+
+"@medusajs/test-utils@rc":
+  version "2.0.0-rc-20241018141633"
+  resolved "https://registry.yarnpkg.com/@medusajs/test-utils/-/test-utils-2.0.0-rc-20241018141633.tgz#f4a0e8dd46393f67787d3f8661e3818465e0c9e4"
+  integrity sha512-Tj3u1O9zmHYF7VZVpc4PUA7mT5kQaQMxq38+hXdAdaspZR5dVG95yLJDMwVU70NSmZtnO2LxtGlaQD0cwOsNXw==
+  dependencies:
+    "@types/express" "^4.17.17"
+    axios "^0.21.4"
+    express "^4.21.0"
+    get-port "^5.1.0"
+    randomatic "^3.1.1"
+
 "@medusajs/types@2.0.0-rc-20241016093905":
   version "2.0.0-rc-20241016093905"
   resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-2.0.0-rc-20241016093905.tgz#f32a9024f7b7e808e4e796ec6d9d700e12a3905b"
   integrity sha512-7qSh4fxkIH7SDlMAiIfZ7P7YIan+gj5lXMBnDx5sTlWwKJAMzd+nG1Mf+/0nuWsFKuZGmwml7P12u780Iiyz4Q==
+  dependencies:
+    bignumber.js "^9.1.2"
+
+"@medusajs/types@2.0.0-rc-20241018141633":
+  version "2.0.0-rc-20241018141633"
+  resolved "https://registry.yarnpkg.com/@medusajs/types/-/types-2.0.0-rc-20241018141633.tgz#31c8b33687f42c919adf063f8032b4727758de31"
+  integrity sha512-/9dBf1W9gs5UHGe3AQAzEYMIruwwXtH/PZU8/vxEz/Thp+NQkTK6wgxs6xLfjV0ESbiy+KBejPr4uP2vNjOCXQ==
   dependencies:
     bignumber.js "^9.1.2"
 
@@ -2463,6 +2497,25 @@
     "@graphql-tools/merge" "^9.0.7"
     "@graphql-tools/schema" "^10.0.6"
     "@medusajs/types" "2.0.0-rc-20241016093905"
+    bignumber.js "^9.1.2"
+    dotenv "^16.4.5"
+    dotenv-expand "^11.0.6"
+    graphql "^16.9.0"
+    jsonwebtoken "^9.0.2"
+    pg-connection-string "^2.7.0"
+    pluralize "^8.0.0"
+    ulid "^2.3.0"
+
+"@medusajs/utils@2.0.0-rc-20241018141633":
+  version "2.0.0-rc-20241018141633"
+  resolved "https://registry.yarnpkg.com/@medusajs/utils/-/utils-2.0.0-rc-20241018141633.tgz#b07ff1234837f6973c9e0cc9b7ab0065777d76aa"
+  integrity sha512-scMXYGrDjFCgdIISl5KOxdk/UJemQ4ud44DkwSaMbYnyQJuVdGJWNdiw1jopCiTskteu8OwqkbEqzB/IP+qvQw==
+  dependencies:
+    "@graphql-codegen/core" "^4.0.2"
+    "@graphql-codegen/typescript" "^4.0.9"
+    "@graphql-tools/merge" "^9.0.7"
+    "@graphql-tools/schema" "^10.0.6"
+    "@medusajs/types" "2.0.0-rc-20241018141633"
     bignumber.js "^9.1.2"
     dotenv "^16.4.5"
     dotenv-expand "^11.0.6"
@@ -8454,17 +8507,6 @@ medusa-telemetry@1.0.0-rc-20241016093905:
     remove-trailing-slash "^0.1.1"
     uuid "^8.3.2"
 
-medusa-test-utils@rc:
-  version "2.0.0-rc-20241016093905"
-  resolved "https://registry.yarnpkg.com/medusa-test-utils/-/medusa-test-utils-2.0.0-rc-20241016093905.tgz#db1f6ce706095fa07fce3e801f6bd6eac9c8a981"
-  integrity sha512-qqTGrQklg5sId7Sd+jBmoEFC32ht+qmrTvW2WIfYK0yBh2nuNgXxtbN9rx6MFjPrNQ7TeoHuukcjsodkaI/VNg==
-  dependencies:
-    "@types/express" "^4.17.17"
-    axios "^0.21.4"
-    express "^4.21.0"
-    get-port "^5.1.0"
-    randomatic "^3.1.1"
-
 merge-descriptors@1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/merge-descriptors/-/merge-descriptors-1.0.3.tgz#d80319a65f3c7935351e5cfdac8f9318504dbed5"
@@ -9972,16 +10014,7 @@ string-length@^4.0.1:
     char-regex "^1.0.2"
     strip-ansi "^6.0.0"
 
-"string-width-cjs@npm:string-width@^4.2.0":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
-  integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
-  dependencies:
-    emoji-regex "^8.0.0"
-    is-fullwidth-code-point "^3.0.0"
-    strip-ansi "^6.0.1"
-
-string-width@^4.0.0, string-width@^4.1.0, string-width@^4.2.0, string-width@^4.2.2, string-width@^4.2.3:
+"string-width-cjs@npm:string-width@^4.2.0", string-width@^4.0.0, string-width@^4.1.0, string-width@^4.2.0, string-width@^4.2.2, string-width@^4.2.3:
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
   integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
@@ -10013,14 +10046,7 @@ string_decoder@~1.1.1:
   dependencies:
     safe-buffer "~5.1.0"
 
-"strip-ansi-cjs@npm:strip-ansi@^6.0.1":
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
-  integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
-  dependencies:
-    ansi-regex "^5.0.1"
-
-strip-ansi@^6.0.0, strip-ansi@^6.0.1:
+"strip-ansi-cjs@npm:strip-ansi@^6.0.1", strip-ansi@^6.0.0, strip-ansi@^6.0.1:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
   integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
@@ -10582,7 +10608,7 @@ winston@^3.8.2:
     triple-beam "^1.3.0"
     winston-transport "^4.7.0"
 
-"wrap-ansi-cjs@npm:wrap-ansi@^7.0.0":
+"wrap-ansi-cjs@npm:wrap-ansi@^7.0.0", wrap-ansi@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
   integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==
@@ -10595,15 +10621,6 @@ wrap-ansi@^6.0.1, wrap-ansi@^6.2.0:
   version "6.2.0"
   resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-6.2.0.tgz#e9393ba07102e6c91a3b221478f0257cd2856e53"
   integrity sha512-r6lPcBGxZXlIcymEu7InxDMhdW0KDxpLgoFLcguasxCaJ/SOIZwINatK9KY/tf+ZrlywOKU0UDj3ATXUBfxJXA==
-  dependencies:
-    ansi-styles "^4.0.0"
-    string-width "^4.1.0"
-    strip-ansi "^6.0.0"
-
-wrap-ansi@^7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
-  integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==
   dependencies:
     ansi-styles "^4.0.0"
     string-width "^4.1.0"
