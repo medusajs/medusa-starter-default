@@ -22,7 +22,7 @@ export default class HelloModuleService {
 
 A module must have an `index.ts` file in its root directory that exports its definition. The definition specifies the main service of the module.
 
-For example, create the file `src/modules/hello.index.ts` with the following content:
+For example, create the file `src/modules/hello/index.ts` with the following content:
 
 ```ts title="src/modules/hello.index.ts" highlights={[["4", "", "The main service of the module."]]}
 import HelloModuleService from "./service"
