@@ -28,11 +28,10 @@ jobs:
 
       - name: Install Dependencies
         run: yarn
-        
+
       - name: Close Previous PRs
         shell: "bash"
         run: |
-
           # Get the list of pull requests with the specified title
           PR_LIST=$(gh pr list --base feat/v2-ci --json number)
           
