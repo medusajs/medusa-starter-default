@@ -36,9 +36,9 @@ type WorkflowOutput = {
 
 const helloWorldWorkflow = createWorkflow(
   "hello-world",
-  async (input: WorkflowInput) => {
-    const greeting1 = await step1()
-    const greeting2 = await step2(input)
+  (input: WorkflowInput) => {
+    const greeting1 = step1()
+    const greeting2 = step2(input)
     
     return new WorkflowResponse({
       message1: greeting1,
