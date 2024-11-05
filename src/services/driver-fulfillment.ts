@@ -1,13 +1,7 @@
-import {
-  AbstractFulfillmentService,
-  Cart,
-  Fulfillment,
-  LineItem,
-  Order,
-} from "@medusajs/medusa";
-import { CreateReturnType } from "@medusajs/medusa/dist/types/fulfillment-provider";
+import { CartDTO, CartLineItemDTO, CreateOrderReturnDTO, FulfillmentDTO, OrderDTO } from "@medusajs/framework/types";
+import { MedusaService } from "@medusajs/framework/utils"
 
-class DriverFulfillmentService extends AbstractFulfillmentService {
+class DriverFulfillmentService extends MedusaService({}) {
   public static identifier = "driver-fulfillment";
 
   constructor(container, options) {
@@ -25,7 +19,7 @@ class DriverFulfillmentService extends AbstractFulfillmentService {
   public async validateFulfillmentData(
     optionData: Record<string, unknown>,
     data: Record<string, unknown>,
-    cart: Cart
+    cart: CartDTO
   ): Promise<Record<string, unknown>> {
     if (data.id !== "driver-fulfillment") {
       throw new Error("invalid data");
@@ -47,16 +41,16 @@ class DriverFulfillmentService extends AbstractFulfillmentService {
   public async calculatePrice(
     optionData: Record<string, unknown>,
     data: Record<string, unknown>,
-    cart: Cart
+    cart: CartDTO
   ): Promise<number> {
     return cart.items.length * 1000;
   }
 
   public async createFulfillment(
     data: Record<string, unknown>,
-    items: LineItem[],
-    order: Order,
-    fulfillment: Fulfillment
+    items: CartLineItemDTO,
+    order: OrderDTO,
+    fulfillment: FulfillmentDTO
   ) {
     // No data is being sent anywhere
     // No data to be stored in the fulfillment's data object
@@ -70,7 +64,7 @@ class DriverFulfillmentService extends AbstractFulfillmentService {
   }
 
   public async createReturn(
-    returnOrder: CreateReturnType
+    returnOrder: CreateOrderReturnDTO
   ): Promise<Record<string, unknown>> {
     return {};
   }

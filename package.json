@@ -13,10 +13,10 @@
     "medusa"
   ],
   "scripts": {
-    "build": "npx medusa build",
-    "seed": "npx medusa exec ./src/scripts/seed.ts",
-    "start": "npx medusa start",
-    "dev": "npx medusa develop",
+    "build": "medusa build",
+    "seed": "medusa exec ./src/scripts/seed.ts",
+    "start": "medusa start",
+    "dev": "medusa develop",
     "test:integration:http": "TEST_TYPE=integration:http NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit",
     "test:integration:modules": "TEST_TYPE=integration:modules NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit",
     "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit"
@@ -30,18 +30,11 @@
     "@mikro-orm/knex": "5.9.7",
     "@mikro-orm/migrations": "5.9.7",
     "@mikro-orm/postgresql": "5.9.7",
-    "@medusajs/inventory": "^1.11.6",
-    "@medusajs/stock-location": "^1.11.5",
     "awilix": "^8.0.1",
     "pg": "^8.13.0",
-    "medusa-file-spaces": "^1.4.0",
-    "medusa-plugin-sendgrid": "^1.3.12",
-    "medusa-plugin-meilisearch": "^2.0.10",
-    "medusa-fulfillment-manual": "^1.1.40",
-    "medusa-interfaces": "^1.3.9",
-    "medusa-payment-manual": "^1.0.24",
-    "medusa-payment-stripe": "^6.0.9",
-    "medusa-telegram-notification": "^0.0.3"
+    "medusa-file-spaces": "^1.4.1",
+    "medusa-plugin-meilisearch": "^2.0.11",
+    "medusa-payment-stripe": "^6.0.11"
   },
   "devDependencies": {
     "@medusajs/test-utils": "latest",
@@ -53,12 +46,11 @@
     "@types/react": "^18.3.2",
     "@types/react-dom": "^18.2.25",
     "jest": "^29.7.0",
-    "typescript": "^5.6.2",
+    "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "pg": "^8.13.0",
-    "prop-types": "^15.8.1",
     "ts-node": "^10.9.2",
+    "typescript": "^5.6.2",
     "vite": "^5.2.11"
   },
   "engines": {
