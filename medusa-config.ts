@@ -12,7 +12,10 @@ const STORE_CORS = process.env.STORE_CORS || "http://localhost:8000";
 const DATABASE_URL =
   process.env.DATABASE_URL || "postgres://localhost/medusa-starter-default";
 
-const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+  const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+  const REDIS_TLS = process.env.REDIS_TLS.toLowerCase() || "false";
+  const REDIS_PASSWORD = process.env.REDIS_PASSWORD || "";
+  
 
 const plugins = [
   `medusa-fulfillment-manual`,
@@ -131,6 +134,10 @@ module.exports = defineConfig({
   projectConfig: {
     databaseUrl: DATABASE_URL,
     redisUrl: REDIS_URL,
+    redisOptions: {
+      password: REDIS_PASSWORD,
+      commandTimeout: 10000
+    },
     http: {
       storeCors: STORE_CORS!,
       adminCors: ADMIN_CORS!,
