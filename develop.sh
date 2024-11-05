@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 #Run migrations to ensure the database is updated
-medusa migrations run
+npx medusa db:migrate
 
 npm run build
 
 #Start development environment
-medusa start
+npx medusa start
