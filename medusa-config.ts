@@ -1,4 +1,4 @@
-import { loadEnv, defineConfig } from '@medusajs/framework/utils'
+import { loadEnv, defineConfig, Modules } from '@medusajs/framework/utils'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
@@ -12,34 +12,31 @@ const STORE_CORS = process.env.STORE_CORS || "http://localhost:8000"
 const DATABASE_URL =
   process.env.DATABASE_URL || "postgres://localhost/medusa-starter-default"
 
-  const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379"
-  const REDIS_PASSWORD = process.env.REDIS_PASSWORD || ""
+const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379"
+const REDIS_PASSWORD = process.env.REDIS_PASSWORD || ""
   
 
 const plugins = [
 
 ]
 
-const modules = {
-  eventBus: {
-    resolve: "@medusajs/event-bus-redis",
+const modules = [
+  {
+    resolve: "@medusajs/medusa/payment",
     options: {
-      redisUrl: REDIS_URL
-    }
+      providers: [
+        {
+          resolve: "@medusajs/medusa/payment-stripe",
+          id: "stripe",
+          options: {
+            apiKey: process.env.STRIPE_API_KEY,
+          },
+        },
+      ],
+    },
   },
-  cacheService: {
-    resolve: "@medusajs/cache-redis",
-    options: {
-      redisUrl: REDIS_URL
-    }
-  },
-  inventoryService: {
-    resolve: "@medusajs/inventory",
-  },
-  stockLocationService: {
-    resolve: "@medusajs/stock-location",
-  },
-}
+
+]
 
 module.exports = defineConfig({
   projectConfig: {
