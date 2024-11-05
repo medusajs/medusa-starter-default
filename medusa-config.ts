@@ -1,20 +1,20 @@
-import { loadEnv, defineConfig } from '@medusajs/framework/utils';
+import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 
-loadEnv(process.env.NODE_ENV || 'development', process.cwd());
+loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
 // CORS when consuming Medusa from admin
 const ADMIN_CORS =
-  process.env.ADMIN_CORS || "http://localhost:9000,http://localhost:9001";
+  process.env.ADMIN_CORS || "http://localhost:9000,http://localhost:9001"
 
 // CORS to avoid issues when consuming Medusa from a client
-const STORE_CORS = process.env.STORE_CORS || "http://localhost:8000";
+const STORE_CORS = process.env.STORE_CORS || "http://localhost:8000"
 
 const DATABASE_URL =
-  process.env.DATABASE_URL || "postgres://localhost/medusa-starter-default";
+  process.env.DATABASE_URL || "postgres://localhost/medusa-starter-default"
 
-  const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
-  const REDIS_TLS = process.env.REDIS_TLS.toLowerCase() || "false";
-  const REDIS_PASSWORD = process.env.REDIS_PASSWORD || "";
+  const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379"
+  const REDIS_TLS = process.env.REDIS_TLS.toLowerCase() || "false"
+  const REDIS_PASSWORD = process.env.REDIS_PASSWORD || ""
   
 
 const plugins = [
@@ -87,7 +87,7 @@ const plugins = [
             sortableAttributes: process.env.MEILI_STOCK_LOCATIONS_SORTABLE_ATTRIBUTES.split(' ') ?? [],
           },
           transformer: (location) => {
-            return location;
+            return location
           }
         },
       },
@@ -107,7 +107,7 @@ const plugins = [
       debug: true || process.env.NODE_ENV === "development",
     },
   }
-];
+]
 
 const modules = {
   eventBus: {
@@ -128,7 +128,7 @@ const modules = {
   stockLocationService: {
     resolve: "@medusajs/stock-location",
   },
-};
+}
 
 module.exports = defineConfig({
   projectConfig: {
