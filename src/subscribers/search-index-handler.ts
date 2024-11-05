@@ -5,11 +5,6 @@ import {
   SubscriberArgs,
   MedusaContainer
 } from "@medusajs/framework";
-import {
-  FlagRouter,
-  defaultSearchIndexingProductRelations,
-} from "@medusajs/utils";
-import { indexTypes } from "medusa-core-utils";
 
 class SearchStockLocationsIndexing {
   private readonly _indexName: string;
