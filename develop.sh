@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #Run migrations to ensure the database is updated
-medusa db:migrate
+npx medusa db:migrate --skip-links
 
 npm run build
 

@@ -41,6 +41,8 @@ const modules = [
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: DATABASE_URL,
+    databaseDriverOptions: process.env.NODE_ENV !== "development" ?
+      { ssl: { rejectUnauthorized: false } } : {},
     redisUrl: REDIS_URL,
     redisOptions: {
       password: REDIS_PASSWORD,

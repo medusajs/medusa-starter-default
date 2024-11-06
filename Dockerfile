@@ -1,4 +1,4 @@
-FROM node:22.11.0
+FROM node:20-slim as base
 
 WORKDIR /app
 
@@ -9,7 +9,9 @@ RUN apt-get update
 
 RUN npm install -g npm@8.1.2
 
-RUN npm install -f
+RUN npm i -g yarn -f
+
+RUN yarn
 
 COPY . .
 
