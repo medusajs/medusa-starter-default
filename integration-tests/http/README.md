@@ -26,4 +26,4 @@ medusaIntegrationTestRunner({
 })
 ```
 
-Learn more in [this documentation](https://docs.medusajs.com/v2/debugging-and-testing/testing-tools/integration-tests).
+Learn more in [this documentation](https://docs.medusajs.com/learn/debugging-and-testing/testing-tools/integration-tests).
