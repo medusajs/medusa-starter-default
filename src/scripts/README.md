@@ -11,15 +11,12 @@ For example, create the file `src/scripts/my-script.ts` with the following conte
 ```ts title="src/scripts/my-script.ts"
 import { 
   ExecArgs,
-  IProductModuleService
 } from "@medusajs/framework/types"
-import { Modules } from "@medusajs/framework/utils"
 
 export default async function myScript ({
   container
 }: ExecArgs) {
-  const productModuleService: IProductModuleService = 
-    container.resolve(Modules.PRODUCT)
+  const productModuleService = container.resolve("product")
 
   const [, count] = await productModuleService.listAndCountProducts()
 

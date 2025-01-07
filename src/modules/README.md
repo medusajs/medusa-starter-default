@@ -28,7 +28,7 @@ For example, create the file `src/modules/hello/index.ts` with the following con
 import HelloModuleService from "./service"
 import { Module } from "@medusajs/framework/utils"
 
-export const HELLO_MODULE = "helloModuleService"
+export const HELLO_MODULE = "hello"
 
 export default Module(HELLO_MODULE, {
   service: HelloModuleService,
@@ -46,15 +46,13 @@ import { HELLO_MODULE } from "./src/modules/hello"
 
 module.exports = defineConfig({
   // ...
-  modules: {
-    [HELLO_MODULE]: {
+  modules: [
+    {
       resolve: "./modules/hello",
-    },
-  },
+    }
+  ]
 })
 ```
-
-Its key (`helloModuleService` or `HELLO_MODULE`) is the name of the module’s main service. It will be registered in the Medusa container with that name.
 
 ## Use Module
 

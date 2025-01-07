@@ -39,8 +39,6 @@ import type {
   SubscriberArgs,
   SubscriberConfig,
 } from "@medusajs/framework"
-import { IProductModuleService } from "@medusajs/framework/types"
-import { Modules } from "@medusajs/framework/utils"
 
 export default async function productCreateHandler({
   event: { data },
@@ -48,8 +46,7 @@ export default async function productCreateHandler({
 }: SubscriberArgs<{ id: string }>) {
   const productId = data.id
 
-  const productModuleService: IProductModuleService =
-    container.resolve(Modules.PRODUCT)
+  const productModuleService = container.resolve("product")
 
   const product = await productModuleService.retrieveProduct(productId)
 

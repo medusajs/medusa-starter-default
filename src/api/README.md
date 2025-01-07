@@ -82,14 +82,12 @@ import type {
   MedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework/http"
-import { Modules } from "@medusajs/framework/utils"
 
 export const GET = async (
   req: MedusaRequest,
   res: MedusaResponse
 ) => {
-  const productModuleService =
-    req.scope.resolve(Modules.PRODUCT)
+  const productModuleService = req.scope.resolve("product")
 
   const [, count] = await productModuleService.listAndCount()
 
