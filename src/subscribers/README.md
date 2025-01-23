@@ -2,6 +2,8 @@
 
 Subscribers handle events emitted in the Medusa application.
 
+> Learn more about Subscribers in [this documentation](https://docs.medusajs.com/learn/fundamentals/events-and-subscribers).
+
 The subscriber is created in a TypeScript or JavaScript file under the `src/subscribers` directory.
 
 For example, create the file `src/subscribers/product-created.ts` with the following content:
