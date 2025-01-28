@@ -10,7 +10,7 @@ if [ ! -e $CONTAINER_ALREADY_STARTED ]; then
 	if [ $PROJECT_RUN_MODE == "dev" ]; then
 		echo "-- Adding test data... --"
 		yarn seed
-		npx medusa user -e ${PROJECT_ADMIN_EMAIL:-eumeadi@gmail.com} -p ${PROJECT_ADMIN_PASSWORD:-chigozie}
+		npx medusa user -e ${PROJECT_ADMIN_EMAIL:-eumeadi@gmail.com} -p ${PROJECT_ADMIN_PASSWORD:-medusa123}
 		echo "-- ...finished adding test data --"
 	fi
     echo "-- ...finished running db setup --"
