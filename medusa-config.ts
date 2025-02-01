@@ -21,9 +21,9 @@ module.exports = defineConfig({
 			// redisUrl: process.env.REDIS_URL,
 		// },
 	// },
-    // {
-      // resolve: "./src/modules/marketplace",
-    // },
+    {
+      resolve: "./src/modules/marketplace",
+    },
     // {
       // resolve: "./modules/sanity",
       // options: {
