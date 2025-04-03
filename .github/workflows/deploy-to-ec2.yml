@@ -1,0 +1,75 @@
+name: Copy latest to EC2
+
+on:
+  push:
+    branches: [ main ]  # Triggers on every push to main branch
+  workflow_dispatch:    # Allows manual triggering
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2.key
+        chmod 600 ~/.ssh/ec2.key
+        echo -e "Host ec2\n\tHostName ${{ secrets.EC2_HOST }}\n\tUser ${{ secrets.EC2_USERNAME }}\n\tIdentityFile ~/.ssh/ec2.key\n\tStrictHostKeyChecking no" > ~/.ssh/config
+        
+    - name: Create .env.docker file
+      run: |
+        # Create the .env.docker with the GitHub variables
+        touch .env.docker
+        echo "Creating environment file..."
+        cat > .env.docker << EOF
+        # Environment Variables for Medusa
+        # Created by github action on $(date '+%Y-%m-%d %H:%M:%S')
+        
+        MEDUSA_ADMIN_ONBOARDING_TYPE=default
+        STORE_CORS=http://localhost:8000,https://docs.medusajs.com
+        ADMIN_CORS=http://localhost:5173,http://localhost:9000,https://docs.medusajs.com
+        AUTH_CORS=http://localhost:5173,http://localhost:9000,https://docs.medusajs.com
+        
+        REDIS_URL=redis://localhost:6379 # On Docker containers, use IP returned by Docker command: docker network inspect <NETWORK> 
+        
+        # From env secrets...(includes JWT_SECRET,COOKIE_SECRET, DB_NAME, DATABASE_URL, STRIPE_API_KEY,PAYSTACK_SECRET_KEY, SANITY_API_TOKEN, SANITY_PROJECT_ID)
+        ${{ secrets.MESERA_ENV }}
+        SANITY_STUDIO_URL=http://localhost:8000/studio
+        
+        # Application configuration
+        PORT=9000
+        
+        # Add all other environment variables here
+        EOF
+        
+        echo ".env.docker file created with environment variables"
+        
+    - name: Create empty .env
+      run: |
+        # First create .env.local if it does not exist.
+        touch .env
+        cat > .env << EOF
+        # This is created empty for security reasons.
+        EOF
+        
+        echo ".env created empty"
+      
+    - name: Deploy to EC2
+      run: |
+        # Now synch files
+        rsync -avz --exclude '.git/' --exclude '.github' --exclude 'node_modules/' ./ ec2:/home/ec2-user/medusa/
+        
+    - name: Make script executable
+      run: |
+        ssh ec2 "chmod +x /home/ec2-user/medusa/docker-build-run.sh"
+        ssh ec2 "echo 'Script made executable on $(date)'"
+        
+    - name: Verify deployment
+      run: |
+        ssh ec2 "ls -la /home/ec2-user/medusa/"
+        ssh ec2 "echo 'Deployment completed on $(date)'"
+
