@@ -62,8 +62,8 @@ jobs:
     - name: Create docker-bootstrap.sh
       run: |
         # Now create docker-bootstrap.sh
-        touch .env
-        cat > .env << EOF
+        touch docker-bootstrap.sh
+        cat > docker-bootstrap.sh << EOF
         # /home/ec2-user/mesera/docker-bootstrap.sh
         # Created by github action on $(date '+%Y-%m-%d %H:%M:%S')
         echo "-- Running medusa db setup... --"
@@ -90,7 +90,7 @@ jobs:
       run: |
         # Now synch files
         # rsync -avz --exclude '.git/' --exclude '.github' --exclude 'node_modules/' ./ ec2:/home/ec2-user/mesera/
-        rsync -avz --ignore-existing ./.env.* ec2:/home/ec2-user/mesera/
+        rsync -avz --ignore-existing ./.env* ec2:/home/ec2-user/mesera/
         rsync -avz ./*.sh ec2:/home/ec2-user/mesera/
      
     - name: Make script executable
