@@ -66,19 +66,13 @@ jobs:
         cat > docker-bootstrap.sh << EOF
         # /home/ec2-user/mesera/docker-bootstrap.sh
         # Created by github action on $(date '+%Y-%m-%d %H:%M:%S')
+        
         echo "-- Running medusa db setup... --"
         npx medusa db:setup --db ${{ secrets.DB_NAME }} 
-        CONTAINER_ALREADY_STARTED="CONTAINER_ALREADY_STARTED_PLACEHOLDER"
-        if [ ! -e $CONTAINER_ALREADY_STARTED ]; then
-          touch $CONTAINER_ALREADY_STARTED
-          # This segment is only run once...
-          echo "-- First container startup --"	
-          npx medusa user -e ${{ secrets.PROJECT_ADMIN_EMAIL }} -p ${{ secrets.PROJECT_ADMIN_PASSWORD }}
-          echo "-- ...finished running db setup --"
-          
-        else
-          echo "-- Not first container startup --"
-        fi
+        
+        echo "-- user setup --"	
+        npx medusa user -e ${{ secrets.PROJECT_ADMIN_EMAIL }} -p ${{ secrets.PROJECT_ADMIN_PASSWORD }}
+        echo "-- ...finished running db setup --"
         
         echo "-- Now starting application..."
         yarn "start"
