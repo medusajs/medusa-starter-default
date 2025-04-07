@@ -2,7 +2,7 @@ name: Copy latest to EC2
 
 on:
   push:
-    branches: [ main ]  # Triggers on every push to main branch
+    branches: [ mesera ]  # Triggers on every push to main branch
   workflow_dispatch:    # Allows manual triggering
 
 jobs:
@@ -34,6 +34,7 @@ jobs:
         ADMIN_CORS=http://localhost:5173,http://localhost:9000,https://docs.medusajs.com
         AUTH_CORS=http://localhost:5173,http://localhost:9000,https://docs.medusajs.com
         
+        # Url address or IP may differ on target environment (Please update with actual IP/address)...
         REDIS_URL=redis://localhost:6379 # On Docker containers, use IP returned by Docker command: docker network inspect <NETWORK> 
         
         # From env secrets...(includes JWT_SECRET,COOKIE_SECRET, DB_NAME, DATABASE_URL, STRIPE_API_KEY,PAYSTACK_SECRET_KEY, SANITY_API_TOKEN, SANITY_PROJECT_ID)
@@ -53,23 +54,52 @@ jobs:
         # First create .env.local if it does not exist.
         touch .env
         cat > .env << EOF
+        # Created by github action on $(date '+%Y-%m-%d %H:%M:%S')
         # This is created empty for security reasons.
         EOF
         
         echo ".env created empty"
+    - name: Create docker-bootstrap.sh
+      run: |
+        # Now create docker-bootstrap.sh
+        touch .env
+        cat > .env << EOF
+        # /home/ec2-user/mesera/docker-bootstrap.sh
+        # Created by github action on $(date '+%Y-%m-%d %H:%M:%S')
+        echo "-- Running medusa db setup... --"
+        npx medusa db:setup --db ${{ secrets.DB_NAME }} 
+        CONTAINER_ALREADY_STARTED="CONTAINER_ALREADY_STARTED_PLACEHOLDER"
+        if [ ! -e $CONTAINER_ALREADY_STARTED ]; then
+          touch $CONTAINER_ALREADY_STARTED
+          # This segment is only run once...
+          echo "-- First container startup --"	
+          npx medusa user -e ${{ secrets.PROJECT_ADMIN_EMAIL }} -p ${{ secrets.PROJECT_ADMIN_PASSWORD }}
+          echo "-- ...finished running db setup --"
+          
+        else
+          echo "-- Not first container startup --"
+        fi
+        
+        echo "-- Now starting application..."
+        yarn "start"
+        EOF
+        
+        echo "docker-bootstrap.sh successfully created"
       
     - name: Deploy to EC2
       run: |
         # Now synch files
-        rsync -avz --exclude '.git/' --exclude '.github' --exclude 'node_modules/' ./ ec2:/home/ec2-user/medusa/
-        
+        # rsync -avz --exclude '.git/' --exclude '.github' --exclude 'node_modules/' ./ ec2:/home/ec2-user/mesera/
+        rsync -avz --ignore-existing ./.env.* ec2:/home/ec2-user/mesera/
+        rsync -avz ./*.sh ec2:/home/ec2-user/mesera/
+     
     - name: Make script executable
       run: |
-        ssh ec2 "chmod +x /home/ec2-user/medusa/docker-build-run.sh"
+        ssh ec2 "chmod +x /home/ec2-user/mesera/*.sh"
         ssh ec2 "echo 'Script made executable on $(date)'"
         
     - name: Verify deployment
       run: |
-        ssh ec2 "ls -la /home/ec2-user/medusa/"
+        ssh ec2 "ls -la /home/ec2-user/mesera/"
         ssh ec2 "echo 'Deployment completed on $(date)'"
 
