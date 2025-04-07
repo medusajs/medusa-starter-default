@@ -90,7 +90,7 @@ jobs:
       run: |
         # Now synch files
         # rsync -avz --exclude '.git/' --exclude '.github' --exclude 'node_modules/' ./ ec2:/home/ec2-user/mesera/
-        rsync -avz ./.env.* ec2:/home/ec2-user/mesera/
+        rsync -avz --ignore-existing ./.env.* ec2:/home/ec2-user/mesera/
         rsync -avz ./*.sh ec2:/home/ec2-user/mesera/
      
     - name: Make script executable
