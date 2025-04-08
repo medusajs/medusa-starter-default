@@ -65,14 +65,14 @@ STORE_CORS=http://localhost:8000,https://docs.medusajs.com
 ADMIN_CORS=http://localhost:5173,http://localhost:9000,https://docs.medusajs.com
 AUTH_CORS=http://localhost:5173,http://localhost:9000,https://docs.medusajs.com
 
-REDIS_URL=redis://localhost:6379 # On Docker containers, use IP returned by Docker command: docker network inspect <NETWORK> 
+REDIS_URL=redis://mesera-redis:6379 # On Docker containers, use IP returned by Docker command: docker network inspect <NETWORK> 
 
 JWT_SECRET=supersecret # Replace supersecret by generating with:  openssl rand -base64 32
 COOKIE_SECRET=supersecret # Replace supersecret by generating with:  openssl rand -base64 32
 
 DB_NAME=example
-DATABASE_URL=postgres://example:******@localhost/$DB_NAME
-#DATABASE_URL=postgres://mesera:******@postgres:5432/$DB_NAME?ssl_mode=disable
+DATABASE_URL=postgres://example:******@mesera-postgres/$DB_NAME
+#DATABASE_URL=postgres://mesera:******@mesera-postgres:5432/$DB_NAME?ssl_mode=disable
 
 STRIPE_API_KEY= # The secret key of the stripe payment.
 PAYSTACK_SECRET_KEY= # The secret key of the paystack payment.
@@ -103,15 +103,15 @@ log "Successfully pulled latest Docker images"
 log "Stopping and removing existing containers if they exist"
 docker stop "$MEDUSAJS_CONTAINER_NAME" 2>/dev/null || true
 docker stop "$REDIS_CONTAINER_NAME" 2>/dev/null || true
-docker stop "$POSTGRES_CONTAINER_NAME_CONTAINER_NAME" 2>/dev/null || true
+docker stop "$POSTGRES_CONTAINER_NAME" 2>/dev/null || true
 docker rm "$MEDUSAJS_CONTAINER_NAME" 2>/dev/null || true
 docker rm "$REDIS_CONTAINER_NAME" 2>/dev/null || true
-docker rm "$POSTGRES_CONTAINER_NAME_CONTAINER_NAME" 2>/dev/null || true
+docker rm "$POSTGRES_CONTAINER_NAME" 2>/dev/null || true
 
 # Create Docker network if it doesn't exist
 if ! docker network inspect "$NETWORK_NAME" &>/dev/null; then
   log "Creating Docker network: $NETWORK_NAME"
-  docker network create "$NETWORK_NAME" || handle_error "Failed to create Docker network"
+  sudo docker network create "$NETWORK_NAME" || handle_error "Failed to create Docker network"
 fi
 
 # Start Postgres container
@@ -126,7 +126,6 @@ docker run -d \
   -e "POSTGRES_USER=$APP_NAME" \
   -e "POSTGRES_PASSWORD=supersecret" \
   -e "PGDATA='/var/lib/postgresql/data'" \
-  -e "POSTGRES_INITDB_ARGS='-E UTF8 --locale=C'" \
   "$POSTGRES_IMAGE" \
   || handle_error "Failed to start Postgres container"
 
@@ -146,7 +145,7 @@ docker run -d \
   --name "$MEDUSAJS_CONTAINER_NAME" \
   --network "$NETWORK_NAME" \
   --restart unless-stopped \
-  -v "$ENV_FILE:/application/.env:ro" \
+  -v "$ENV_FILE:/application/.env" \
   -v "$APP_PATH/docker-bootstrap.sh:/application/docker-bootstrap.sh:ro" \
   -e "PORT=$PORT" \
   "$MEDUSAJS_IMAGE" \
