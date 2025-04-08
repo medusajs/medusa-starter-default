@@ -35,7 +35,7 @@ jobs:
         AUTH_CORS=http://localhost:5173,http://localhost:9000,https://docs.medusajs.com
         
         # Url address or IP may differ on target environment (Please update with actual IP/address)...
-        REDIS_URL=redis://localhost:6379 # On Docker containers, use IP returned by Docker command: docker network inspect <NETWORK> 
+        REDIS_URL=redis://mesera-redis:6379 # On Docker containers, use IP returned by Docker command: docker network inspect <NETWORK> 
         
         # From env secrets...(includes JWT_SECRET,COOKIE_SECRET, DB_NAME, DATABASE_URL, STRIPE_API_KEY,PAYSTACK_SECRET_KEY, SANITY_API_TOKEN, SANITY_PROJECT_ID)
         ${{ secrets.MESERA_ENV }}
@@ -43,7 +43,12 @@ jobs:
         
         # Application configuration
         PORT=9000
-        
+        ######################################################
+        # For production, but do not worry about this.
+        NODE_ENV=development
+        # There's a bug in medusa that causes it to fail otherwise.
+        ######################################################
+
         # Add all other environment variables here
         EOF
         
