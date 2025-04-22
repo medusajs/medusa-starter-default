@@ -6,8 +6,8 @@ const plugins = [
   {
     resolve: "@medusajs/admin",
     options: {
-      serve: false,        // ❌ disables serving Admin UI
-      autoRebuild: false,  // ❌ disables auto rebuilding Admin UI
+      serve: false,        
+      autoRebuild: false,  
     },
   },
 ]
