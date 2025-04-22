@@ -11,8 +11,8 @@ module.exports = defineConfig({
       storeCors: process.env.STORE_CORS,
       adminCors: process.env.ADMIN_CORS,
       authCors: process.env.AUTH_CORS,
-      jwtSecret: process.env.JWT_SECRET || "supersecret",
-      cookieSecret: process.env.COOKIE_SECRET || "supersecret",
+      jwtSecret: process.env.JWT_SECRET || "s0D]qSe5lT,Voy5n",
+      cookieSecret: process.env.COOKIE_SECRET || "%P_sW5Pu-aCsG}5",
     },
   }
 })
