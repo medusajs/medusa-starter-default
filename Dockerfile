@@ -48,8 +48,6 @@ ENV NODE_ENV=production
 COPY --from=builder /app/package.json /app/yarn.lock* /app/package-lock.json* /app/pnpm-lock.yaml* ./
 
 # Copy essential configuration files
-COPY --from=builder /app/medusa-config.js /app/medusa-config.js
-
 # --- !!! KEY CHANGE HERE !!! ---
 # Copy the compiled backend code from the builder stage.
 # Medusa v1.18+ outputs the server build to `.medusa/server`.
