@@ -75,6 +75,10 @@ USER node
 # Expose the port Medusa runs on (default is 9000)
 EXPOSE 9000
 
-# Command to run the Medusa application
-# 'medusa start' will automatically load medusa-config.js and find the built code
+# ---- Add this line ----
+# Override the default 'node' entrypoint to ensure CMD is executed directly
+ENTRYPOINT []
+# ---- End Add ----
+
+# Keep this CMD (or ensure it's using npx)
 CMD ["npx", "medusa", "start"]
