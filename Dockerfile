@@ -46,19 +46,23 @@ FROM base AS production
 # Set Node environment to production
 ENV NODE_ENV=production
 
+# Set working directory for the final stage
+WORKDIR /app
+
 # Copy necessary package manager files from builder stage
 COPY --from=builder /app/package.json /app/yarn.lock* /app/package-lock.json* /app/pnpm-lock.yaml* ./
 
 # --- !!! KEY CHANGE HERE !!! ---
-# Copy tsconfig.json - may be needed by Medusa for path resolution at runtime
-COPY --from=builder /app/tsconfig.json /app/tsconfig.json
+# Copy the original source config file. Medusa loader might require its presence at the root.
+COPY --from=builder /app/medusa-config.ts /app/medusa-config.ts
 # --- End Key Change ---
 
-# --- !!! KEY CHANGE HERE !!! ---
+# Copy tsconfig.json - may be needed by Medusa for path resolution at runtime
+COPY --from=builder /app/tsconfig.json /app/tsconfig.json
+
 # Copy the compiled backend code from the builder stage.
 # Copy it to the same relative path (.medusa/server) in the final image.
 COPY --from=builder /app/.medusa/server ./.medusa/server
-# --- End Key Change ---
 
 # OPTIONAL: Copy the compiled admin frontend if you want to serve it from the same container
 # COPY --from=builder /app/.medusa/build ./admin-build
@@ -80,12 +84,8 @@ USER node
 # Expose the port Medusa runs on (default is 9000)
 EXPOSE 9000
 
-# --- !!! KEY CHANGE HERE !!! ---
 # Override the default 'node' entrypoint to ensure CMD is executed directly
 ENTRYPOINT []
-# --- End Key Change ---
 
-# --- !!! KEY CHANGE HERE !!! ---
 # Command to run the Medusa application using npx to ensure CLI is found
 CMD ["npx", "medusa", "start"]
-# --- End Key Change ---
