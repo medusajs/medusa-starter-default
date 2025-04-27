@@ -7,7 +7,9 @@ FROM node:${NODE_VERSION}-alpine AS base
 WORKDIR /app
 
 # Install OS-level dependencies needed for native Node.js modules (e.g., node-gyp)
-RUN apk add --no-cache --virtual .gyp python3 make g++ git
+# AND essential runtime dependencies like ca-certificates
+RUN apk add --no-cache --virtual .gyp python3 make g++ git \
+    && apk add --no-cache ca-certificates tzdata
 
 
 # ---- Builder Stage ----
@@ -50,10 +52,8 @@ COPY --from=builder /app/tsconfig.json /app/tsconfig.json
 # Copy the entire compiled backend code directory first
 COPY --from=builder /app/.medusa/server ./.medusa/server
 
-# --- !!! KEY CHANGE HERE !!! ---
 # Explicitly copy the COMPILED medusa-config.js from the build output to the root directory
 COPY --from=builder /app/.medusa/server/medusa-config.js /app/medusa-config.js
-# --- End Key Change ---
 
 # Install ONLY production dependencies
 RUN if [ -f yarn.lock ]; then yarn install --production --frozen-lockfile; \
@@ -62,7 +62,7 @@ RUN if [ -f yarn.lock ]; then yarn install --production --frozen-lockfile; \
     else echo "Lockfile not found." && exit 1; \
     fi
 
-# Remove the build-time OS dependencies installed in the base stage
+# Remove the build-time OS dependencies (.gyp group) but keep runtime ones (ca-certificates)
 RUN apk del .gyp
 
 # Create and switch to a non-root user for security
