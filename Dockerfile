@@ -1,66 +1,82 @@
-# Dockerfile for Medusa Backend (Based on Node 18/20)
-
-# --- Base Stage ---
-# Use an official Node runtime. Medusa v1.20+ recommends Node 20.
-# Use Node 18 if you encounter issues with native dependencies on Node 20/Alpine.
-FROM node:20-alpine AS base
+# ---- Base Stage ----
+# Use an official Node.js LTS version on Alpine Linux for a small base
+ARG NODE_VERSION=20
+FROM node:${NODE_VERSION}-alpine AS base
 
 # Set working directory
 WORKDIR /app
 
-# Install dependencies needed for potential native modules (like sharp for images)
-# and git (sometimes needed for dependency fetching)
+# Install OS-level dependencies needed for native Node.js modules (e.g., node-gyp)
+# python3, make, g++ are required for compiling native addons.
+# git might be needed if you have git dependencies in package.json.
+# Using --virtual .gyp allows us to easily remove them later.
 RUN apk add --no-cache --virtual .gyp python3 make g++ git
 
-# --- Builder Stage ---
-FROM base AS builder
-WORKDIR /app
 
-# Copy package.json and lock file
+# ---- Builder Stage ----
+# This stage installs all dependencies (including dev) and builds the application
+FROM base AS builder
+
+# Copy package manager files
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-# Use yarn if yarn.lock exists, otherwise try pnpm or npm
+
+# Install dependencies based on the lock file found
+# Using --frozen-lockfile or ci ensures reproducible installs
 RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
     elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm install --frozen-lockfile; \
     elif [ -f package-lock.json ]; then npm ci; \
     else echo "Lockfile not found." && exit 1; \
     fi
 
-# Copy the rest of the application code
+# Copy the rest of the application source code
 COPY . .
 
-# Build the Medusa application (compile Typescript, etc.)
-# Check your package.json for the correct build script name
+# Build the Medusa application
+# This command compiles TypeScript, builds the admin panel (if included),
+# and places the output in the .medusa directory.
 RUN yarn build
-# Or: RUN npm run build
+# Or: npm run build / pnpm build, depending on your project setup
 
-# --- Production Stage ---
-# Use a clean base image for smaller size
-FROM base as production
-WORKDIR /app
+# ---- Production Stage ----
+# This stage creates the final, lean production image
+FROM base AS production
 
-# Copy necessary configuration files
+# Set Node environment to production
+ENV NODE_ENV=production
+
+# Copy necessary package manager files from builder stage
 COPY --from=builder /app/package.json /app/yarn.lock* /app/package-lock.json* /app/pnpm-lock.yaml* ./
-COPY --from=builder /app/medusa-config.js /app/medusa-config.js
-# Copy compiled code
-COPY --from=builder /app/dist ./dist
 
-# Install production dependencies only
-# Use yarn if yarn.lock exists, otherwise try pnpm or npm
+# Copy essential configuration files
+COPY --from=builder /app/medusa-config.js /app/medusa-config.js
+
+# --- !!! KEY CHANGE HERE !!! ---
+# Copy the compiled backend code from the builder stage.
+# Medusa v1.18+ outputs the server build to `.medusa/server`.
+# We copy it into a 'dist' folder in the final image, which is a common convention.
+COPY --from=builder /app/.medusa/server ./dist
+# --- End Key Change ---
+
+# OPTIONAL: Copy the compiled admin frontend if you want to serve it from the same container
+# COPY --from=builder /app/.medusa/build ./admin-build
+
+# Install ONLY production dependencies
 RUN if [ -f yarn.lock ]; then yarn install --production --frozen-lockfile; \
-    elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm install --prod --frozen-lockfile; \
+    elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm install --production --frozen-lockfile; \
     elif [ -f package-lock.json ]; then npm ci --omit=dev; \
     else echo "Lockfile not found." && exit 1; \
     fi
 
-# Expose port 9000 (or the port your Medusa app listens on)
+# Remove the build-time OS dependencies installed in the base stage
+RUN apk del .gyp
+
+# Create and switch to a non-root user for security
+# The 'node' user is created by the official Node.js image
+USER node
+
+# Expose the port Medusa runs on (default is 9000)
 EXPOSE 9000
 
-# Set environment variable for Node
-ENV NODE_ENV=production
-
-# Command to run the application
-# Check your package.json "start" script. Often it's 'medusa start' which runs dist/main.js
-# Or it might directly run the compiled file.
-CMD ["node", "dist/main.js"]
-# Alternative if your start script is different: CMD ["yarn", "start"] or ["npm", "run", "start"]
-
+# Command to run the Medusa application
+# 'medusa start' will automatically load medusa-config.js and find the built code
+CMD ["medusa", "start"]
