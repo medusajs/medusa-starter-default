@@ -77,4 +77,4 @@ EXPOSE 9000
 
 # Command to run the Medusa application
 # 'medusa start' will automatically load medusa-config.js and find the built code
-CMD ["medusa", "start"]
+CMD ["npx", "medusa", "start"]
