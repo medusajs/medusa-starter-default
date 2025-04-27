@@ -29,6 +29,7 @@ RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
     fi
 
 # Copy the rest of the application source code
+# This includes medusa-config.ts, tsconfig.json, src/, etc.
 COPY . .
 
 # Build the Medusa application
@@ -36,6 +37,7 @@ COPY . .
 # and places the output in the .medusa directory.
 RUN yarn build
 # Or: npm run build / pnpm build, depending on your project setup
+
 
 # ---- Production Stage ----
 # This stage creates the final, lean production image
@@ -47,12 +49,15 @@ ENV NODE_ENV=production
 # Copy necessary package manager files from builder stage
 COPY --from=builder /app/package.json /app/yarn.lock* /app/package-lock.json* /app/pnpm-lock.yaml* ./
 
-# Copy essential configuration files
+# --- !!! KEY CHANGE HERE !!! ---
+# Copy tsconfig.json - may be needed by Medusa for path resolution at runtime
+COPY --from=builder /app/tsconfig.json /app/tsconfig.json
+# --- End Key Change ---
+
 # --- !!! KEY CHANGE HERE !!! ---
 # Copy the compiled backend code from the builder stage.
-# Medusa v1.18+ outputs the server build to `.medusa/server`.
-# We copy it into a 'dist' folder in the final image, which is a common convention.
-COPY --from=builder /app/.medusa/server ./dist
+# Copy it to the same relative path (.medusa/server) in the final image.
+COPY --from=builder /app/.medusa/server ./.medusa/server
 # --- End Key Change ---
 
 # OPTIONAL: Copy the compiled admin frontend if you want to serve it from the same container
@@ -75,10 +80,12 @@ USER node
 # Expose the port Medusa runs on (default is 9000)
 EXPOSE 9000
 
-# ---- Add this line ----
+# --- !!! KEY CHANGE HERE !!! ---
 # Override the default 'node' entrypoint to ensure CMD is executed directly
 ENTRYPOINT []
-# ---- End Add ----
+# --- End Key Change ---
 
-# Keep this CMD (or ensure it's using npx)
+# --- !!! KEY CHANGE HERE !!! ---
+# Command to run the Medusa application using npx to ensure CLI is found
 CMD ["npx", "medusa", "start"]
+# --- End Key Change ---
