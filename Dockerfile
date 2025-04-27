@@ -7,9 +7,6 @@ FROM node:${NODE_VERSION}-alpine AS base
 WORKDIR /app
 
 # Install OS-level dependencies needed for native Node.js modules (e.g., node-gyp)
-# python3, make, g++ are required for compiling native addons.
-# git might be needed if you have git dependencies in package.json.
-# Using --virtual .gyp allows us to easily remove them later.
 RUN apk add --no-cache --virtual .gyp python3 make g++ git
 
 
@@ -20,8 +17,7 @@ FROM base AS builder
 # Copy package manager files
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 
-# Install dependencies based on the lock file found
-# Using --frozen-lockfile or ci ensures reproducible installs
+# Install dependencies
 RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
     elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm install --frozen-lockfile; \
     elif [ -f package-lock.json ]; then npm ci; \
@@ -29,14 +25,10 @@ RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
     fi
 
 # Copy the rest of the application source code
-# This includes medusa-config.ts, tsconfig.json, src/, etc.
 COPY . .
 
-# Build the Medusa application
-# This command compiles TypeScript, builds the admin panel (if included),
-# and places the output in the .medusa directory.
+# Build the Medusa application (creates .medusa/server/medusa-config.js)
 RUN yarn build
-# Or: npm run build / pnpm build, depending on your project setup
 
 
 # ---- Production Stage ----
@@ -52,20 +44,16 @@ WORKDIR /app
 # Copy necessary package manager files from builder stage
 COPY --from=builder /app/package.json /app/yarn.lock* /app/package-lock.json* /app/pnpm-lock.yaml* ./
 
-# --- !!! KEY CHANGE HERE !!! ---
-# Copy the original source config file. Medusa loader might require its presence at the root.
-COPY --from=builder /app/medusa-config.ts /app/medusa-config.ts
-# --- End Key Change ---
-
 # Copy tsconfig.json - may be needed by Medusa for path resolution at runtime
 COPY --from=builder /app/tsconfig.json /app/tsconfig.json
 
-# Copy the compiled backend code from the builder stage.
-# Copy it to the same relative path (.medusa/server) in the final image.
+# Copy the entire compiled backend code directory first
 COPY --from=builder /app/.medusa/server ./.medusa/server
 
-# OPTIONAL: Copy the compiled admin frontend if you want to serve it from the same container
-# COPY --from=builder /app/.medusa/build ./admin-build
+# --- !!! KEY CHANGE HERE !!! ---
+# Explicitly copy the COMPILED medusa-config.js from the build output to the root directory
+COPY --from=builder /app/.medusa/server/medusa-config.js /app/medusa-config.js
+# --- End Key Change ---
 
 # Install ONLY production dependencies
 RUN if [ -f yarn.lock ]; then yarn install --production --frozen-lockfile; \
@@ -78,7 +66,6 @@ RUN if [ -f yarn.lock ]; then yarn install --production --frozen-lockfile; \
 RUN apk del .gyp
 
 # Create and switch to a non-root user for security
-# The 'node' user is created by the official Node.js image
 USER node
 
 # Expose the port Medusa runs on (default is 9000)
