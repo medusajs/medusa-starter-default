@@ -1,5 +1,5 @@
 import { ExecArgs } from "@medusajs/framework/types"
-import { INVENTORY_LOCATION_MODULE } from "../modules/inventory-location"
+import { INVENTORY_LOCATION_MODULE } from "../modules/inventory_location"
 
 export default async function seedInventoryLocations({ container }: ExecArgs) {
   const inventoryLocationService = container.resolve(INVENTORY_LOCATION_MODULE)

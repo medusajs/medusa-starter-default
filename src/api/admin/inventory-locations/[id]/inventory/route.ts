@@ -1,5 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { INVENTORY_LOCATION_MODULE } from "../../../../../modules/inventory-location"
+import { INVENTORY_LOCATION_MODULE } from "../../../../../modules/inventory_location"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const inventoryLocationService = req.scope.resolve(INVENTORY_LOCATION_MODULE)
