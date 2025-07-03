@@ -199,25 +199,29 @@ const MachinesPage = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Select
-            value={statusFilter}
-            onValueChange={setStatusFilter}
-          >
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="maintenance">Maintenance</option>
-            <option value="retired">Retired</option>
-            <option value="sold">Sold</option>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select.Trigger>
+              <Select.Value placeholder="All Statuses" />
+            </Select.Trigger>
+            <Select.Content>
+              <Select.Item value="">All Statuses</Select.Item>
+              <Select.Item value="active">Active</Select.Item>
+              <Select.Item value="maintenance">Maintenance</Select.Item>
+              <Select.Item value="retired">Retired</Select.Item>
+              <Select.Item value="sold">Sold</Select.Item>
+            </Select.Content>
           </Select>
-          <Select
-            value={fuelTypeFilter}
-            onValueChange={setFuelTypeFilter}
-          >
-            <option value="">All Fuel Types</option>
-            <option value="diesel">Diesel</option>
-            <option value="petrol">Petrol</option>
-            <option value="electric">Electric</option>
-            <option value="hybrid">Hybrid</option>
+          <Select value={fuelTypeFilter} onValueChange={setFuelTypeFilter}>
+            <Select.Trigger>
+              <Select.Value placeholder="All Fuel Types" />
+            </Select.Trigger>
+            <Select.Content>
+              <Select.Item value="">All Fuel Types</Select.Item>
+              <Select.Item value="diesel">Diesel</Select.Item>
+              <Select.Item value="petrol">Petrol</Select.Item>
+              <Select.Item value="electric">Electric</Select.Item>
+              <Select.Item value="hybrid">Hybrid</Select.Item>
+            </Select.Content>
           </Select>
         </div>
       </div>
@@ -333,16 +337,23 @@ const MachinesPage = () => {
                   value={formData.engine_hours}
                   onChange={(e) => setFormData({...formData, engine_hours: e.target.value})}
                 />
-                <Select 
-                  label="Fuel Type"
-                  value={formData.fuel_type}
-                  onValueChange={(value) => setFormData({...formData, fuel_type: value})}
-                >
-                  <option value="diesel">Diesel</option>
-                  <option value="petrol">Petrol</option>
-                  <option value="electric">Electric</option>
-                  <option value="hybrid">Hybrid</option>
-                </Select>
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium mb-1">Fuel Type</label>
+                  <Select 
+                    value={formData.fuel_type}
+                    onValueChange={(value) => setFormData({...formData, fuel_type: value})}
+                  >
+                    <Select.Trigger>
+                      <Select.Value />
+                    </Select.Trigger>
+                    <Select.Content>
+                      <Select.Item value="diesel">Diesel</Select.Item>
+                      <Select.Item value="petrol">Petrol</Select.Item>
+                      <Select.Item value="electric">Electric</Select.Item>
+                      <Select.Item value="hybrid">Hybrid</Select.Item>
+                    </Select.Content>
+                  </Select>
+                </div>
                 <Input
                   label="Horsepower"
                   type="number"
@@ -375,16 +386,23 @@ const MachinesPage = () => {
                   value={formData.current_value}
                   onChange={(e) => setFormData({...formData, current_value: e.target.value})}
                 />
-                <Select 
-                  label="Status"
-                  value={formData.status}
-                  onValueChange={(value) => setFormData({...formData, status: value})}
-                >
-                  <option value="active">Active</option>
-                  <option value="maintenance">Maintenance</option>
-                  <option value="retired">Retired</option>
-                  <option value="sold">Sold</option>
-                </Select>
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium mb-1">Status</label>
+                  <Select 
+                    value={formData.status}
+                    onValueChange={(value) => setFormData({...formData, status: value})}
+                  >
+                    <Select.Trigger>
+                      <Select.Value />
+                    </Select.Trigger>
+                    <Select.Content>
+                      <Select.Item value="active">Active</Select.Item>
+                      <Select.Item value="maintenance">Maintenance</Select.Item>
+                      <Select.Item value="retired">Retired</Select.Item>
+                      <Select.Item value="sold">Sold</Select.Item>
+                    </Select.Content>
+                  </Select>
+                </div>
               </div>
 
               <Input
