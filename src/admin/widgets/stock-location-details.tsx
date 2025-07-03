@@ -199,7 +199,7 @@ const StockLocationDetailsWidget = () => {
 }
 
 export const config = defineWidgetConfig({
-  zone: "stock_location.details.after",
+  zone: "product_variant.inventory.locations.after",
 })
 
 export default StockLocationDetailsWidget 
