@@ -1,2 +1,1 @@
-export { navigation } from "./navigation"
-export { routes } from "./routes" 
+// Admin customizations are automatically discovered from the routes directory 
