@@ -7,6 +7,9 @@ export const STOCK_LOCATION_DETAILS_MODULE = "stockLocationDetails"
 const StockLocationDetailsModule = Module(STOCK_LOCATION_DETAILS_MODULE, {
   service: StockLocationDetailsService,
   models: [StockLocationDetail],
+  linkable: {
+    stockLocationDetail: StockLocationDetail,
+  },
 })
 
 export default StockLocationDetailsModule 
