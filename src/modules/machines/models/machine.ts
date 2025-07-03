@@ -18,8 +18,6 @@ const Machine = model.define("machine", {
   notes: model.text().nullable(),
   customer_id: model.text().nullable(),
   metadata: model.json().nullable(),
-  created_at: model.text().default(() => new Date().toISOString()),
-  updated_at: model.text().default(() => new Date().toISOString()),
 })
 
 export default Machine 
