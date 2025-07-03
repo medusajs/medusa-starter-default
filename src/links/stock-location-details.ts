@@ -4,10 +4,7 @@ import { Modules } from "@medusajs/framework/utils"
 
 // Link our custom stock location details to the built-in stock location module
 export const StockLocationDetailsLink = defineLink(
-  {
-    linkable: StockLocationDetailsModule.linkable.stockLocationDetail,
-    field: "stock_location_detail",
-  },
+  StockLocationDetailsModule.linkable.stockLocationDetail,
   {
     linkable: Modules.STOCK_LOCATION,
     field: "stock_location",

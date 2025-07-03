@@ -16,6 +16,11 @@ module.exports = defineConfig({
   modules: [
     {
       resolve: "./src/modules/stock-location-details",
+      options: {
+        definition: {
+          isQueryable: true,
+        },
+      },
     },
   ],
 })
