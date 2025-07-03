@@ -1,5 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { STOCK_LOCATION_DETAILS_MODULE } from "../../../../../modules/stock-location-details"
+import { STOCK_LOCATION_DETAILS_MODULE } from "../../../../modules/stock-location-details"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
