@@ -17,5 +17,8 @@ module.exports = defineConfig({
     {
       resolve: "./src/modules/stock-location-details",
     },
+    {
+      resolve: "./src/modules/machines",
+    },
   ],
 })
