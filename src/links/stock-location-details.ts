@@ -1,5 +1,5 @@
 import { defineLink } from "@medusajs/framework/utils"
-import StockLocationDetailsModule from "../modules/stock-location-details"
+import StockLocationDetailsModule from "../modules/stock-location-details/index"
 import { Modules } from "@medusajs/framework/utils"
 
 // Link our custom stock location details to the built-in stock location module
