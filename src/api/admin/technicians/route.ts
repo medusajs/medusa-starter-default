@@ -99,7 +99,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     const techniciansService = req.scope.resolve(TECHNICIANS_MODULE)
     
-    const technician = await techniciansService.createTechnician(req.body)
+    const technician = await techniciansService.createTechnicians(req.body)
     
     res.status(201).json({
       technician: technician
