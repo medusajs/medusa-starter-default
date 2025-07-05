@@ -120,7 +120,7 @@ const CreateMachinePage = () => {
     try {
       await createMachineMutation.mutateAsync(formData)
       toast.success("Machine created successfully!")
-      navigate("/app/machines")
+      navigate("/machines")
     } catch (error) {
       toast.error("Failed to create machine. Please try again.")
     }
@@ -147,7 +147,7 @@ const CreateMachinePage = () => {
               <Button 
                 variant="secondary" 
                 size="small" 
-                onClick={() => navigate("/app/machines")}
+                onClick={() => navigate("/machines")}
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
@@ -363,7 +363,7 @@ const CreateMachinePage = () => {
                 <Button 
                   variant="secondary" 
                   type="button" 
-                  onClick={() => navigate("/app/machines")}
+                  onClick={() => navigate("/machines")}
                 >
                   Cancel
                 </Button>

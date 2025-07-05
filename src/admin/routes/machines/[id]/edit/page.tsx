@@ -161,7 +161,7 @@ const EditMachinePage = () => {
     try {
       await updateMachineMutation.mutateAsync({ id, data: formData })
       toast.success("Machine updated successfully!")
-      navigate(`/app/machines?id=${id}`)
+      navigate(`/machines?id=${id}`)
     } catch (error) {
       toast.error("Failed to update machine. Please try again.")
     }
@@ -204,7 +204,7 @@ const EditMachinePage = () => {
           <div className="flex items-center justify-between px-6 py-4 border-b border-ui-border-base">
             <div className="flex items-center gap-4">
               <Button variant="secondary" size="small" asChild>
-                <Link to={`/app/machines?id=${id}`}>
+                <Link to={`/machines?id=${id}`}>
                   <ArrowLeft className="w-4 h-4" />
                 </Link>
               </Button>
@@ -418,7 +418,7 @@ const EditMachinePage = () => {
               {/* Form Actions */}
               <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-ui-border-base">
                 <Button variant="secondary" type="button" asChild>
-                  <Link to={`/app/machines?id=${id}`}>
+                  <Link to={`/machines?id=${id}`}>
                     Cancel
                   </Link>
                 </Button>
