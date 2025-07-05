@@ -43,7 +43,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     const machinesService = req.scope.resolve(MACHINES_MODULE)
     
-    const machine = await machinesService.createMachines(req.body)
+    const machine = await machinesService.createMachine(req.body)
     
     res.status(201).json({
       machine: machine
