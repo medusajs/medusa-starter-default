@@ -279,16 +279,24 @@ const MachinesList = () => {
                 </div>
               </div>
             ) : (
-              <DataTable
-                columns={columns}
-                data={machines}
-                count={machines.length}
-                enableSorting
-                enableRowSelection={false}
-                onRowClick={(row) => {
-                  navigate(`/machines?id=${row.original.id}`)
-                }}
-              />
+              <div>
+                {/* Debug info */}
+                <div className="p-4 bg-gray-100 text-xs">
+                  <p>Debug: machines.length = {machines.length}</p>
+                  <p>Debug: First machine = {JSON.stringify(machines[0], null, 2)}</p>
+                </div>
+                
+                <DataTable
+                  columns={columns}
+                  data={machines}
+                  count={machines.length}
+                  enableSorting={true}
+                  enableRowSelection={false}
+                  onRowClick={(row) => {
+                    navigate(`/machines?id=${row.original.id}`)
+                  }}
+                />
+              </div>
             )}
           </div>
 
