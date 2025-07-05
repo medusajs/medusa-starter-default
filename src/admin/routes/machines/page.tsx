@@ -86,25 +86,25 @@ const MachinesList = () => {
 
   return (
     <div className="flex h-full w-full flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4">
-        <div>
-          <Heading level="h1">Machines</Heading>
-          <Text className="text-ui-fg-subtle">
-            Manage your machine fleet
-          </Text>
-        </div>
-        <Button variant="primary" size="small" asChild>
-          <Link to="/app/machines/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Machine
-          </Link>
-        </Button>
-      </div>
-
       {/* Main Content Card */}
-      <div className="flex-1 overflow-hidden px-6 pb-6">
+      <div className="flex-1 overflow-hidden px-6 py-6">
         <div className="bg-ui-bg-base border border-ui-border-base rounded-lg overflow-hidden h-full flex flex-col">
+          {/* Header inside card */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-ui-border-base">
+            <div>
+              <Heading level="h1">Machines</Heading>
+              <Text className="text-ui-fg-subtle">
+                Manage your machine fleet
+              </Text>
+            </div>
+            <Button variant="primary" size="small" asChild>
+              <Link to="/app/machines/new">
+                <Plus className="w-4 h-4 mr-2" />
+                Aanmaken
+              </Link>
+            </Button>
+          </div>
+
           {/* Filter Section */}
           <div className="px-6 py-4 border-b border-ui-border-base">
             <div className="flex items-center justify-between">
