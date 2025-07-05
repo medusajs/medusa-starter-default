@@ -1,9 +1,6 @@
-import React from "react"
+import React, { useState } from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { Plus, Eye, PencilSquare, Trash, MagnifyingGlass, AdjustmentsHorizontal } from "@medusajs/icons"
-import { Container, Heading, Button, Table, Badge, IconButton, Text, Input } from "@medusajs/ui"
-import { Link, useSearchParams } from "react-router-dom"
-import { useQuery } from "@tanstack/react-query"
+import { Wrench, Plus, Eye } from "@medusajs/icons"
 
 // Types for our machine data
 interface Machine {
@@ -19,7 +16,7 @@ interface Machine {
   purchase_date?: string
   purchase_price?: string
   current_value?: string
-  status: "active" | "inactive" | "maintenance"
+  status: string
   location?: string
   notes?: string
   customer_id?: string
@@ -27,344 +24,394 @@ interface Machine {
   updated_at: string
 }
 
-// Data fetching hook
-const useMachines = () => {
-  return useQuery({
-    queryKey: ["machines"],
-    queryFn: async () => {
-      const response = await fetch("/admin/machines")
-      if (!response.ok) {
-        throw new Error("Failed to fetch machines")
-      }
-      const data = await response.json()
-      return data.machines || []
-    },
-  })
-}
-
-// Machine detail hook
-const useMachine = (id: string) => {
-  return useQuery({
-    queryKey: ["machine", id],
-    queryFn: async () => {
-      const response = await fetch(`/admin/machines/${id}`)
-      if (!response.ok) {
-        throw new Error("Failed to fetch machine")
-      }
-      const data = await response.json()
-      return data.machine
-    },
-    enabled: !!id,
-  })
-}
-
-// Main Machines Page Component
 const MachinesPage = () => {
-  const [searchParams] = useSearchParams()
-  const machineId = searchParams.get("id")
-  
-  if (machineId) {
-    return <MachineDetail machineId={machineId} />
+  const [machines, setMachines] = useState<Machine[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null)
+  const [showDetail, setShowDetail] = useState(false)
+
+  // Fetch machines data
+  React.useEffect(() => {
+    const fetchMachines = async () => {
+      try {
+        const response = await fetch('/admin/machines')
+        const data = await response.json()
+        setMachines(data.machines || [])
+      } catch (error) {
+        console.error('Error fetching machines:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchMachines()
+  }, [])
+
+  const handleRowClick = (machine: Machine) => {
+    setSelectedMachine(machine)
+    setShowDetail(true)
   }
-  
-  return <MachinesList />
-}
 
-// Machines List Component
-const MachinesList = () => {
-  const { data: machines = [], isLoading, error } = useMachines()
+  const handleBackToList = () => {
+    setShowDetail(false)
+    setSelectedMachine(null)
+  }
 
-  if (error) {
-    return (
-      <Container className="divide-y p-0">
-        <div className="flex items-center justify-between px-6 py-4">
-          <Heading level="h2">Machines</Heading>
-        </div>
-        <div className="px-6 py-4">
-          <Text className="text-ui-fg-error">
-            Failed to load machines. Please try again.
-          </Text>
-        </div>
-      </Container>
-    )
+  if (showDetail && selectedMachine) {
+    return <MachineDetail machine={selectedMachine} onBack={handleBackToList} />
   }
 
   return (
-    <Container className="divide-y p-0">
+    <div style={{ padding: "24px" }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-x-2">
-          <Heading level="h2">Machines</Heading>
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        marginBottom: "24px" 
+      }}>
+        <div>
+          <h1 style={{ 
+            fontSize: "24px", 
+            fontWeight: "600", 
+            margin: "0 0 8px 0" 
+          }}>
+            Machines
+          </h1>
+          <p style={{ 
+            color: "#6B7280", 
+            margin: "0" 
+          }}>
+            Manage your machine fleet
+          </p>
         </div>
-        <div className="flex items-center gap-x-2">
-          <Button variant="secondary" size="small">
-            <AdjustmentsHorizontal className="w-4 h-4" />
-            Filters
-          </Button>
-          <Button variant="primary" size="small" asChild>
-            <Link to="/app/machines/new">
-              <Plus className="w-4 h-4" />
-              Add Machine
-            </Link>
-          </Button>
-        </div>
+        <button
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            backgroundColor: "#3B82F6",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            padding: "8px 16px",
+            cursor: "pointer",
+            fontSize: "14px",
+            fontWeight: "500"
+          }}
+        >
+          <Plus size={16} />
+          Add Machine
+        </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="flex items-center gap-x-2 px-6 py-4">
-        <div className="flex w-full max-w-sm items-center gap-x-2">
-          <div className="relative flex-1">
-            <MagnifyingGlass className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-fg-muted" />
-            <Input
-              placeholder="Search machines..."
-              className="pl-8"
-              size="small"
-            />
-          </div>
+      {/* Loading State */}
+      {loading && (
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          alignItems: "center", 
+          height: "200px" 
+        }}>
+          <div>Loading machines...</div>
         </div>
-      </div>
+      )}
 
       {/* Table */}
-      <div className="overflow-hidden">
-        <Table>
-          <Table.Header className="border-t-0">
-            <Table.Row className="[&_th]:h-12">
-              <Table.HeaderCell>Brand</Table.HeaderCell>
-              <Table.HeaderCell>Model</Table.HeaderCell>
-              <Table.HeaderCell>Serial Number</Table.HeaderCell>
-              <Table.HeaderCell>Year</Table.HeaderCell>
-              <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell>Location</Table.HeaderCell>
-              <Table.HeaderCell className="w-[100px]">Actions</Table.HeaderCell>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body className="border-b-0">
-            {isLoading ? (
-              <Table.Row>
-                <Table.Cell colSpan={7} className="h-24 text-center">
-                  <Text className="text-ui-fg-subtle">Loading machines...</Text>
-                </Table.Cell>
-              </Table.Row>
-            ) : machines.length === 0 ? (
-              <Table.Row>
-                <Table.Cell colSpan={7} className="h-24 text-center">
-                  <Text className="text-ui-fg-subtle">No machines found</Text>
-                </Table.Cell>
-              </Table.Row>
-            ) : (
-              machines.map((machine: Machine) => (
-                <Table.Row 
-                  key={machine.id}
-                  className="[&_td]:h-12 cursor-pointer hover:bg-ui-bg-subtle transition-colors"
-                  onClick={() => window.location.href = `/app/machines?id=${machine.id}`}
-                >
-                  <Table.Cell>
-                    <Text weight="plus" size="small">{machine.brand}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text size="small">{machine.model}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text size="small" className="font-mono">{machine.serial_number}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text size="small">{machine.year}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Badge 
-                      variant={machine.status === "active" ? "green" : machine.status === "maintenance" ? "orange" : "red"}
-                      size="2xsmall"
-                    >
-                      {machine.status}
-                    </Badge>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text size="small" className="text-ui-fg-subtle">{machine.location || "-"}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <div className="flex items-center gap-x-2">
-                      <IconButton
-                        variant="transparent"
-                        size="small"
+      {!loading && (
+        <div style={{ 
+          backgroundColor: "white", 
+          borderRadius: "8px", 
+          border: "1px solid #E5E7EB",
+          overflow: "hidden" 
+        }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead style={{ backgroundColor: "#F9FAFB" }}>
+              <tr>
+                <th style={tableHeaderStyle}>Brand</th>
+                <th style={tableHeaderStyle}>Model</th>
+                <th style={tableHeaderStyle}>Serial Number</th>
+                <th style={tableHeaderStyle}>Year</th>
+                <th style={tableHeaderStyle}>Status</th>
+                <th style={tableHeaderStyle}>Location</th>
+                <th style={tableHeaderStyle}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {machines.length === 0 ? (
+                <tr>
+                  <td 
+                    colSpan={7} 
+                    style={{ 
+                      padding: "48px", 
+                      textAlign: "center", 
+                      color: "#6B7280" 
+                    }}
+                  >
+                    No machines found
+                  </td>
+                </tr>
+              ) : (
+                machines.map((machine) => (
+                  <tr 
+                    key={machine.id}
+                    style={{ 
+                      borderBottom: "1px solid #E5E7EB",
+                      cursor: "pointer"
+                    }}
+                    onClick={() => handleRowClick(machine)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#F9FAFB"
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent"
+                    }}
+                  >
+                    <td style={tableCellStyle}>{machine.brand}</td>
+                    <td style={tableCellStyle}>{machine.model}</td>
+                    <td style={tableCellStyle}>{machine.serial_number}</td>
+                    <td style={tableCellStyle}>{machine.year}</td>
+                    <td style={tableCellStyle}>
+                      <span style={{
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                        fontSize: "12px",
+                        fontWeight: "500",
+                        backgroundColor: machine.status === "active" ? "#DCFCE7" : "#FEF3C7",
+                        color: machine.status === "active" ? "#166534" : "#92400E"
+                      }}>
+                        {machine.status}
+                      </span>
+                    </td>
+                    <td style={tableCellStyle}>{machine.location || "-"}</td>
+                    <td style={tableCellStyle}>
+                      <button
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          backgroundColor: "transparent",
+                          border: "1px solid #D1D5DB",
+                          borderRadius: "4px",
+                          padding: "4px 8px",
+                          cursor: "pointer",
+                          fontSize: "12px"
+                        }}
                         onClick={(e) => {
                           e.stopPropagation()
-                          window.location.href = `/app/machines?id=${machine.id}`
+                          handleRowClick(machine)
                         }}
                       >
-                        <Eye className="w-4 h-4" />
-                      </IconButton>
-                      <IconButton
-                        variant="transparent"
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          window.location.href = `/app/machines/${machine.id}/edit`
-                        }}
-                      >
-                        <PencilSquare className="w-4 h-4" />
-                      </IconButton>
-                    </div>
-                  </Table.Cell>
-                </Table.Row>
-              ))
-            )}
-          </Table.Body>
-        </Table>
-      </div>
-    </Container>
+                        <Eye size={14} />
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   )
 }
 
 // Machine Detail Component
-const MachineDetail = ({ machineId }: { machineId: string }) => {
-  const { data: machine, isLoading, error } = useMachine(machineId)
-
-  if (isLoading) {
-    return (
-      <Container className="divide-y p-0">
-        <div className="flex items-center justify-between px-6 py-4">
-          <Heading level="h2">Machine Details</Heading>
-        </div>
-        <div className="px-6 py-4">
-          <Text>Loading machine details...</Text>
-        </div>
-      </Container>
-    )
-  }
-
-  if (error || !machine) {
-    return (
-      <Container className="divide-y p-0">
-        <div className="flex items-center justify-between px-6 py-4">
-          <Heading level="h2">Machine Details</Heading>
-        </div>
-        <div className="px-6 py-4">
-          <Text className="text-ui-fg-error">
-            Failed to load machine details. Please try again.
-          </Text>
-        </div>
-      </Container>
-    )
-  }
-
+const MachineDetail = ({ machine, onBack }: { machine: Machine; onBack: () => void }) => {
   return (
-    <Container className="divide-y p-0">
+    <div style={{ padding: "24px" }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-x-4">
-          <Button variant="transparent" size="small" asChild>
-            <Link to="/app/machines">
-              ← Back to Machines
-            </Link>
-          </Button>
-          <div>
-            <Heading level="h2">
-              {machine.brand} {machine.model}
-            </Heading>
-            <Text className="text-ui-fg-subtle" size="small">
-              Serial: {machine.serial_number}
-            </Text>
-          </div>
-        </div>
-        <div className="flex items-center gap-x-2">
-          <Button variant="secondary" size="small" asChild>
-            <Link to={`/app/machines/${machine.id}/edit`}>
-              <PencilSquare className="w-4 h-4" />
-              Edit
-            </Link>
-          </Button>
-          <Button variant="danger" size="small">
-            <Trash className="w-4 h-4" />
-            Delete
-          </Button>
-        </div>
+      <div style={{ marginBottom: "24px" }}>
+        <button
+          onClick={onBack}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            backgroundColor: "transparent",
+            border: "1px solid #D1D5DB",
+            borderRadius: "6px",
+            padding: "8px 12px",
+            cursor: "pointer",
+            fontSize: "14px",
+            marginBottom: "16px"
+          }}
+        >
+          ← Back to Machines
+        </button>
+        <h1 style={{ 
+          fontSize: "24px", 
+          fontWeight: "600", 
+          margin: "0 0 8px 0" 
+        }}>
+          {machine.brand} {machine.model}
+        </h1>
+        <p style={{ 
+          color: "#6B7280", 
+          margin: "0" 
+        }}>
+          Serial: {machine.serial_number}
+        </p>
       </div>
 
-      {/* Machine Details Content */}
-      <div className="px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Basic Information */}
-          <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
-            <Heading level="h3" className="mb-4">
-              Basic Information
-            </Heading>
-            <div className="space-y-4">
-              <DetailRow label="Brand" value={machine.brand} />
-              <DetailRow label="Model" value={machine.model} />
-              <DetailRow label="Serial Number" value={machine.serial_number} />
-              <DetailRow label="Year" value={machine.year} />
-              <DetailRow label="Status" value={machine.status} />
-              <DetailRow label="Fuel Type" value={machine.fuel_type} />
-            </div>
-          </div>
-
-          {/* Technical Specifications */}
-          <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
-            <Heading level="h3" className="mb-4">
-              Technical Specifications
-            </Heading>
-            <div className="space-y-4">
-              <DetailRow label="Engine Hours" value={machine.engine_hours || "-"} />
-              <DetailRow label="Horsepower" value={machine.horsepower || "-"} />
-              <DetailRow label="Weight" value={machine.weight || "-"} />
-              <DetailRow label="Location" value={machine.location || "-"} />
-            </div>
-          </div>
-
-          {/* Financial Information */}
-          <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
-            <Heading level="h3" className="mb-4">
-              Financial Information
-            </Heading>
-            <div className="space-y-4">
-              <DetailRow label="Purchase Date" value={machine.purchase_date || "-"} />
-              <DetailRow label="Purchase Price" value={machine.purchase_price || "-"} />
-              <DetailRow label="Current Value" value={machine.current_value || "-"} />
-            </div>
-          </div>
-
-          {/* Additional Information */}
-          <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
-            <Heading level="h3" className="mb-4">
-              Additional Information
-            </Heading>
-            <div className="space-y-4">
-              <DetailRow label="Customer ID" value={machine.customer_id || "-"} />
-              <DetailRow label="Created" value={new Date(machine.created_at).toLocaleDateString()} />
-              <DetailRow label="Updated" value={new Date(machine.updated_at).toLocaleDateString()} />
-            </div>
-            {machine.notes && (
-              <div className="mt-4">
-                <Text size="small" weight="plus" className="text-ui-fg-base mb-2">
-                  Notes
-                </Text>
-                <Text size="small" className="text-ui-fg-subtle">
-                  {machine.notes}
-                </Text>
-              </div>
-            )}
+      {/* Machine Details */}
+      <div style={{ 
+        display: "grid", 
+        gridTemplateColumns: "1fr 1fr", 
+        gap: "24px" 
+      }}>
+        {/* Basic Information */}
+        <div style={{ 
+          backgroundColor: "white", 
+          padding: "24px", 
+          borderRadius: "8px", 
+          border: "1px solid #E5E7EB" 
+        }}>
+          <h3 style={{ 
+            fontSize: "18px", 
+            fontWeight: "600", 
+            marginBottom: "16px" 
+          }}>
+            Basic Information
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <DetailRow label="Brand" value={machine.brand} />
+            <DetailRow label="Model" value={machine.model} />
+            <DetailRow label="Serial Number" value={machine.serial_number} />
+            <DetailRow label="Year" value={machine.year} />
+            <DetailRow label="Status" value={machine.status} />
+            <DetailRow label="Fuel Type" value={machine.fuel_type} />
           </div>
         </div>
+
+        {/* Technical Specifications */}
+        <div style={{ 
+          backgroundColor: "white", 
+          padding: "24px", 
+          borderRadius: "8px", 
+          border: "1px solid #E5E7EB" 
+        }}>
+          <h3 style={{ 
+            fontSize: "18px", 
+            fontWeight: "600", 
+            marginBottom: "16px" 
+          }}>
+            Technical Specifications
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <DetailRow label="Engine Hours" value={machine.engine_hours || "-"} />
+            <DetailRow label="Horsepower" value={machine.horsepower || "-"} />
+            <DetailRow label="Weight" value={machine.weight || "-"} />
+            <DetailRow label="Location" value={machine.location || "-"} />
+          </div>
+        </div>
+
+        {/* Financial Information */}
+        <div style={{ 
+          backgroundColor: "white", 
+          padding: "24px", 
+          borderRadius: "8px", 
+          border: "1px solid #E5E7EB" 
+        }}>
+          <h3 style={{ 
+            fontSize: "18px", 
+            fontWeight: "600", 
+            marginBottom: "16px" 
+          }}>
+            Financial Information
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <DetailRow label="Purchase Date" value={machine.purchase_date || "-"} />
+            <DetailRow label="Purchase Price" value={machine.purchase_price || "-"} />
+            <DetailRow label="Current Value" value={machine.current_value || "-"} />
+          </div>
+        </div>
+
+        {/* Additional Information */}
+        <div style={{ 
+          backgroundColor: "white", 
+          padding: "24px", 
+          borderRadius: "8px", 
+          border: "1px solid #E5E7EB" 
+        }}>
+          <h3 style={{ 
+            fontSize: "18px", 
+            fontWeight: "600", 
+            marginBottom: "16px" 
+          }}>
+            Additional Information
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <DetailRow label="Customer ID" value={machine.customer_id || "-"} />
+            <DetailRow label="Created" value={new Date(machine.created_at).toLocaleDateString()} />
+            <DetailRow label="Updated" value={new Date(machine.updated_at).toLocaleDateString()} />
+          </div>
+          {machine.notes && (
+            <div style={{ marginTop: "16px" }}>
+              <label style={{ 
+                fontSize: "14px", 
+                fontWeight: "500", 
+                color: "#374151" 
+              }}>
+                Notes
+              </label>
+              <p style={{ 
+                marginTop: "4px", 
+                fontSize: "14px", 
+                color: "#6B7280" 
+              }}>
+                {machine.notes}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-    </Container>
+    </div>
   )
 }
 
 // Helper component for detail rows
 const DetailRow = ({ label, value }: { label: string; value: string }) => (
   <div>
-    <Text size="xsmall" weight="plus" className="text-ui-fg-base">
+    <label style={{ 
+      fontSize: "14px", 
+      fontWeight: "500", 
+      color: "#374151" 
+    }}>
       {label}
-    </Text>
-    <Text size="small" className="text-ui-fg-subtle mt-1">
+    </label>
+    <p style={{ 
+      marginTop: "2px", 
+      fontSize: "14px", 
+      color: "#6B7280" 
+    }}>
       {value}
-    </Text>
+    </p>
   </div>
 )
+
+// Styles
+const tableHeaderStyle: React.CSSProperties = {
+  padding: "12px 16px",
+  textAlign: "left",
+  fontSize: "12px",
+  fontWeight: "600",
+  color: "#374151",
+  textTransform: "uppercase",
+  letterSpacing: "0.05em"
+}
+
+const tableCellStyle: React.CSSProperties = {
+  padding: "12px 16px",
+  fontSize: "14px",
+  color: "#374151"
+}
 
 export const config = defineRouteConfig({
   label: "Machines",
   path: "/machines",
+  icon: Wrench,
 })
 
 export default MachinesPage
