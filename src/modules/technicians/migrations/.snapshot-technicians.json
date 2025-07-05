@@ -224,33 +224,6 @@
       "schema": "public",
       "indexes": [
         {
-          "keyName": "IDX_technician_email_unique",
-          "columnNames": [],
-          "composite": false,
-          "constraint": false,
-          "primary": false,
-          "unique": false,
-          "expression": "CREATE UNIQUE INDEX IF NOT EXISTS \"IDX_technician_email_unique\" ON \"technician\" (email) WHERE deleted_at IS NULL"
-        },
-        {
-          "keyName": "IDX_technician_employee_id_unique",
-          "columnNames": [],
-          "composite": false,
-          "constraint": false,
-          "primary": false,
-          "unique": false,
-          "expression": "CREATE UNIQUE INDEX IF NOT EXISTS \"IDX_technician_employee_id_unique\" ON \"technician\" (employee_id) WHERE deleted_at IS NULL"
-        },
-        {
-          "keyName": "IDX_technician_deleted_at",
-          "columnNames": [],
-          "composite": false,
-          "constraint": false,
-          "primary": false,
-          "unique": false,
-          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_technician_deleted_at\" ON \"technician\" (deleted_at) WHERE deleted_at IS NULL"
-        },
-        {
           "keyName": "technician_pkey",
           "columnNames": [
             "id"
@@ -259,11 +232,65 @@
           "constraint": true,
           "primary": true,
           "unique": true
+        },
+        {
+          "keyName": "IDX_technician_email_unique",
+          "columnNames": [
+            "email"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": true,
+          "expression": "CREATE UNIQUE INDEX \"IDX_technician_email_unique\" ON \"technician\" (email) WHERE deleted_at IS NULL"
+        },
+        {
+          "keyName": "IDX_technician_employee_id_unique",
+          "columnNames": [
+            "employee_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": true,
+          "expression": "CREATE UNIQUE INDEX \"IDX_technician_employee_id_unique\" ON \"technician\" (employee_id) WHERE deleted_at IS NULL AND employee_id IS NOT NULL"
+        },
+        {
+          "keyName": "IDX_technician_deleted_at",
+          "columnNames": [
+            "deleted_at"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX \"IDX_technician_deleted_at\" ON \"technician\" (deleted_at) WHERE deleted_at IS NULL"
+        },
+        {
+          "keyName": "IDX_technician_status",
+          "columnNames": [
+            "status"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX \"IDX_technician_status\" ON \"technician\" (status) WHERE deleted_at IS NULL"
+        },
+        {
+          "keyName": "IDX_technician_department",
+          "columnNames": [
+            "department"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX \"IDX_technician_department\" ON \"technician\" (department) WHERE deleted_at IS NULL"
         }
       ],
       "checks": [],
-      "foreignKeys": {},
-      "nativeEnums": {}
+      "foreignKeys": []
     }
   ],
   "nativeEnums": {}

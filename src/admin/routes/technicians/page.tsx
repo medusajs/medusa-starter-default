@@ -1,9 +1,25 @@
 import React from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Plus, Eye, PencilSquare, Trash } from "@medusajs/icons"
-import { Container, Heading, Button, Table, Badge, IconButton, Text, createDataTableColumnHelper, DataTable, toast, useDataTable } from "@medusajs/ui"
-import { Link, useSearchParams, useNavigate } from "react-router-dom"
+import { 
+  Container, 
+  Heading, 
+  Button, 
+  Badge, 
+  IconButton, 
+  Text, 
+  createDataTableColumnHelper,
+  createDataTableFilterHelper,
+  DataTable,
+  DataTablePaginationState,
+  DataTableFilteringState,
+  DataTableSortingState,
+  toast, 
+  useDataTable 
+} from "@medusajs/ui"
+import { useSearchParams, useNavigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMemo, useState } from "react"
 import { CreateTechnicianForm } from "../../components/create-technician-form"
 import { EditTechnicianForm } from "../../components/edit-technician-form"
 
@@ -32,53 +48,16 @@ interface Technician {
   updated_at: string
 }
 
-// Data fetching hook
-const useTechnicians = () => {
-  return useQuery({
-    queryKey: ["technicians"],
-    queryFn: async () => {
-      console.log("Fetching technicians from API...")
-      const response = await fetch("/admin/technicians")
-      console.log("Response status:", response.status)
-      
-      if (!response.ok) {
-        console.error("API response not ok:", response.status, response.statusText)
-        throw new Error("Failed to fetch technicians")
-      }
-      
-      const data = await response.json()
-      console.log("API response data:", data)
-      console.log("Technicians array:", data.technicians)
-      console.log("Technicians count:", data.technicians?.length || 0)
-      
-      return data.technicians || []
-    },
-  })
-}
-
-// Delete technician mutation
-const useDeleteTechnician = () => {
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/admin/technicians/${id}`, {
-        method: "DELETE",
-      })
-      
-      if (!response.ok) {
-        throw new Error("Failed to delete technician")
-      }
-      
-      return response.json()
-    },
-  })
-}
-
 // Define columns for the table
 const columnHelper = createDataTableColumnHelper<Technician>()
 
 const columns = [
   columnHelper.accessor("first_name", {
     header: "Name",
+    enableSorting: true,
+    sortLabel: "Name",
+    sortAscLabel: "A-Z",
+    sortDescLabel: "Z-A",
     cell: ({ row }) => (
       <div className="flex flex-col">
         <span className="font-medium">
@@ -92,6 +71,8 @@ const columns = [
   }),
   columnHelper.accessor("employee_id", {
     header: "Employee ID",
+    enableSorting: true,
+    sortLabel: "Employee ID",
     cell: ({ getValue }) => {
       const value = getValue()
       return value || "-"
@@ -99,6 +80,8 @@ const columns = [
   }),
   columnHelper.accessor("department", {
     header: "Department",
+    enableSorting: true,
+    sortLabel: "Department",
     cell: ({ getValue }) => {
       const value = getValue()
       return value || "-"
@@ -106,6 +89,8 @@ const columns = [
   }),
   columnHelper.accessor("position", {
     header: "Position",
+    enableSorting: true,
+    sortLabel: "Position",
     cell: ({ getValue }) => {
       const value = getValue()
       return value || "-"
@@ -113,6 +98,8 @@ const columns = [
   }),
   columnHelper.accessor("status", {
     header: "Status",
+    enableSorting: true,
+    sortLabel: "Status",
     cell: ({ getValue }) => {
       const status = getValue()
       return (
@@ -144,6 +131,131 @@ const columns = [
     cell: ({ row }) => <TechnicianActions technician={row.original} />,
   }),
 ]
+
+// Define filters for the table
+const filterHelper = createDataTableFilterHelper<Technician>()
+
+const filters = [
+  filterHelper.accessor("status", {
+    type: "select",
+    label: "Status",
+    options: [
+      {
+        label: "Active",
+        value: "active",
+      },
+      {
+        label: "Inactive",
+        value: "inactive",
+      },
+      {
+        label: "On Leave",
+        value: "on_leave",
+      },
+    ],
+  }),
+  filterHelper.accessor("department", {
+    type: "select",
+    label: "Department",
+    options: [
+      {
+        label: "Field Service",
+        value: "Field Service",
+      },
+      {
+        label: "Workshop",
+        value: "Workshop",
+      },
+      {
+        label: "Maintenance",
+        value: "Maintenance",
+      },
+    ],
+  }),
+]
+
+const limit = 15
+
+// Data fetching hook with pagination, filtering, sorting, and search
+const useTechnicians = (
+  pagination: DataTablePaginationState,
+  search: string,
+  filtering: DataTableFilteringState,
+  sorting: DataTableSortingState | null
+) => {
+  const offset = useMemo(() => {
+    return pagination.pageIndex * limit
+  }, [pagination])
+
+  const statusFilters = useMemo(() => {
+    return (filtering.status || []) as string[]
+  }, [filtering])
+
+  const departmentFilters = useMemo(() => {
+    return (filtering.department || []) as string[]
+  }, [filtering])
+
+  return useQuery({
+    queryKey: ["technicians", limit, offset, search, statusFilters, departmentFilters, sorting?.id, sorting?.desc],
+    queryFn: async () => {
+      console.log("Fetching technicians from API...")
+      const params = new URLSearchParams({
+        limit: limit.toString(),
+        offset: offset.toString(),
+      })
+
+      if (search) {
+        params.append("q", search)
+      }
+
+      if (statusFilters.length > 0) {
+        statusFilters.forEach(status => params.append("status", status))
+      }
+
+      if (departmentFilters.length > 0) {
+        departmentFilters.forEach(dept => params.append("department", dept))
+      }
+
+      if (sorting) {
+        const order = `${sorting.desc ? "-" : ""}${sorting.id}`
+        params.append("order", order)
+      }
+
+      const response = await fetch(`/admin/technicians?${params.toString()}`)
+      console.log("Response status:", response.status)
+      
+      if (!response.ok) {
+        console.error("API response not ok:", response.status, response.statusText)
+        throw new Error("Failed to fetch technicians")
+      }
+      
+      const data = await response.json()
+      console.log("API response data:", data)
+      
+      return {
+        technicians: data.technicians || [],
+        count: data.count || 0
+      }
+    },
+  })
+}
+
+// Delete technician mutation
+const useDeleteTechnician = () => {
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/admin/technicians/${id}`, {
+        method: "DELETE",
+      })
+      
+      if (!response.ok) {
+        throw new Error("Failed to delete technician")
+      }
+      
+      return response.json()
+    },
+  })
+}
 
 // Actions component for each row
 const TechnicianActions = ({ technician }: { technician: Technician }) => {
@@ -390,8 +502,18 @@ const TechniciansPage = () => {
 
 // Technicians List Component
 const TechniciansList = () => {
-  const { data: technicians = [], isLoading, error } = useTechnicians()
   const navigate = useNavigate()
+  
+  // State for pagination, search, filtering, and sorting
+  const [pagination, setPagination] = useState<DataTablePaginationState>({
+    pageSize: limit,
+    pageIndex: 0,
+  })
+  const [search, setSearch] = useState<string>("")
+  const [filtering, setFiltering] = useState<DataTableFilteringState>({})
+  const [sorting, setSorting] = useState<DataTableSortingState | null>(null)
+
+  const { data, isLoading, error } = useTechnicians(pagination, search, filtering, sorting)
 
   if (error) {
     return (
@@ -405,38 +527,53 @@ const TechniciansList = () => {
 
   const table = useDataTable({
     columns,
-    data: technicians,
+    data: data?.technicians || [],
     getRowId: (row) => row.id,
-    rowCount: technicians.length,
+    rowCount: data?.count || 0,
     isLoading,
+    pagination: {
+      state: pagination,
+      onPaginationChange: setPagination,
+    },
+    search: {
+      state: search,
+      onSearchChange: setSearch,
+    },
+    filtering: {
+      state: filtering,
+      onFilteringChange: setFiltering,
+    },
+    filters,
+    sorting: {
+      state: sorting,
+      onSortingChange: setSorting,
+    },
     onRowClick: (row) => {
       navigate(`/technicians?id=${row.original.id}`)
     },
   })
 
   return (
-    <div className="flex h-full w-full flex-col">
-      {/* Main Content Card */}
-      <div className="flex-1 overflow-hidden">
-        <div className="bg-ui-bg-base border border-ui-border-base rounded-lg overflow-hidden h-full flex flex-col">
-          {/* Header inside card */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-ui-border-base">
-            <div>
-              <Heading level="h1">Technicians</Heading>
-              <Text className="text-ui-fg-subtle">
-                Manage your technician team
-              </Text>
-            </div>
+    <Container>
+      <DataTable instance={table}>
+        <DataTable.Toolbar className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
+          <div>
+            <Heading level="h1">Technicians</Heading>
+            <Text className="text-ui-fg-subtle">
+              Manage your technician team
+            </Text>
+          </div>
+          <div className="flex gap-2">
+            <DataTable.FilterMenu tooltip="Filter" />
+            <DataTable.SortingMenu tooltip="Sort" />
+            <DataTable.Search placeholder="Search technicians..." />
             <CreateTechnicianForm />
           </div>
-
-          {/* Table */}
-          <div className="flex-1 overflow-hidden">
-            <DataTable table={table} />
-          </div>
-        </div>
-      </div>
-    </div>
+        </DataTable.Toolbar>
+        <DataTable.Table />
+        <DataTable.Pagination />
+      </DataTable>
+    </Container>
   )
 }
 
