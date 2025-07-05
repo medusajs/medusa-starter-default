@@ -87,8 +87,8 @@ const MachinesList = () => {
   return (
     <div className="flex h-full w-full flex-col">
       {/* Main Content Card */}
-      <div className="flex-1 overflow-hidden">
-        <div className="bg-ui-bg-base border border-ui-border-base rounded-lg overflow-hidden h-full flex flex-col m-6">
+      <div className="flex-1 overflow-hidden p-6">
+        <div className="bg-ui-bg-base border border-ui-border-base rounded-lg overflow-hidden h-full flex flex-col">
           {/* Header inside card */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-ui-border-base">
             <div>
