@@ -1,9 +1,9 @@
 import React from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Plus, Eye, PencilSquare, Trash } from "@medusajs/icons"
-import { Container, Heading, Button, Table, Badge, IconButton, Text, createDataTableColumnHelper, DataTable } from "@medusajs/ui"
+import { Container, Heading, Button, Table, Badge, IconButton, Text, createDataTableColumnHelper, DataTable, toast } from "@medusajs/ui"
 import { Link, useSearchParams } from "react-router-dom"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 // Types for our machine data
 interface Machine {
@@ -38,6 +38,23 @@ const useMachines = () => {
       }
       const data = await response.json()
       return data.machines || []
+    },
+  })
+}
+
+// Delete machine mutation
+const useDeleteMachine = () => {
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/admin/machines/${id}`, {
+        method: "DELETE",
+      })
+      
+      if (!response.ok) {
+        throw new Error("Failed to delete machine")
+      }
+      
+      return response.json()
     },
   })
 }
@@ -95,33 +112,66 @@ const columns = [
     header: "Actions",
     cell: ({ row }) => {
       const machine = row.original
-      return (
-        <div className="flex items-center gap-2">
-          <IconButton
-            variant="transparent"
-            size="small"
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation()
-              window.location.href = `/app/machines?id=${machine.id}`
-            }}
-          >
-            <Eye className="w-4 h-4" />
-          </IconButton>
-          <IconButton
-            variant="transparent"
-            size="small"
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation()
-              window.location.href = `/app/machines/${machine.id}/edit`
-            }}
-          >
-            <PencilSquare className="w-4 h-4" />
-          </IconButton>
-        </div>
-      )
+      return <MachineActions machine={machine} />
     },
   }),
 ]
+
+// Machine Actions Component
+const MachineActions = ({ machine }: { machine: Machine }) => {
+  const queryClient = useQueryClient()
+  const deleteMachineMutation = useDeleteMachine()
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    
+    if (!confirm(`Are you sure you want to delete ${machine.brand} ${machine.model}?`)) {
+      return
+    }
+
+    try {
+      await deleteMachineMutation.mutateAsync(machine.id)
+      toast.success("Machine deleted successfully!")
+      // Refresh the machines list
+      queryClient.invalidateQueries({ queryKey: ["machines"] })
+    } catch (error) {
+      toast.error("Failed to delete machine. Please try again.")
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <IconButton
+        variant="transparent"
+        size="small"
+        onClick={(e: React.MouseEvent) => {
+          e.stopPropagation()
+          window.location.href = `/app/machines?id=${machine.id}`
+        }}
+      >
+        <Eye className="w-4 h-4" />
+      </IconButton>
+      <IconButton
+        variant="transparent"
+        size="small"
+        onClick={(e: React.MouseEvent) => {
+          e.stopPropagation()
+          window.location.href = `/app/machines/${machine.id}/edit`
+        }}
+      >
+        <PencilSquare className="w-4 h-4" />
+      </IconButton>
+      <IconButton
+        variant="transparent"
+        size="small"
+        onClick={handleDelete}
+        disabled={deleteMachineMutation.isPending}
+      >
+        <Trash className="w-4 h-4" />
+      </IconButton>
+    </div>
+  )
+}
 
 // Machine detail hook
 const useMachine = (id: string) => {
