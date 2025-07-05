@@ -76,18 +76,18 @@ const MachinesList = () => {
 
   if (error) {
     return (
-      <Container className="p-6">
+      <div className="flex h-full w-full items-center justify-center">
         <Text className="text-ui-fg-error">
           Failed to load machines. Please try again.
         </Text>
-      </Container>
+      </div>
     )
   }
 
   return (
-    <Container className="p-6">
+    <div className="flex h-full w-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between px-6 py-4">
         <div>
           <Heading level="h1">Machines</Heading>
           <Text className="text-ui-fg-subtle">
@@ -102,8 +102,8 @@ const MachinesList = () => {
         </Button>
       </div>
 
-      {/* Table */}
-      <div className="bg-ui-bg-base border border-ui-border-base rounded-lg overflow-hidden">
+      {/* Table Container */}
+      <div className="flex-1 overflow-hidden">
         <Table>
           <Table.Header>
             <Table.Row>
@@ -164,7 +164,7 @@ const MachinesList = () => {
                       <IconButton
                         variant="transparent"
                         size="small"
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent) => {
                           e.stopPropagation()
                           window.location.href = `/app/machines?id=${machine.id}`
                         }}
@@ -174,7 +174,7 @@ const MachinesList = () => {
                       <IconButton
                         variant="transparent"
                         size="small"
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent) => {
                           e.stopPropagation()
                           window.location.href = `/app/machines/${machine.id}/edit`
                         }}
@@ -189,7 +189,7 @@ const MachinesList = () => {
           </Table.Body>
         </Table>
       </div>
-    </Container>
+    </div>
   )
 }
 
@@ -199,26 +199,26 @@ const MachineDetail = ({ machineId }: { machineId: string }) => {
 
   if (isLoading) {
     return (
-      <Container className="p-6">
+      <div className="flex h-full w-full items-center justify-center">
         <Text>Loading machine details...</Text>
-      </Container>
+      </div>
     )
   }
 
   if (error || !machine) {
     return (
-      <Container className="p-6">
+      <div className="flex h-full w-full items-center justify-center">
         <Text className="text-ui-fg-error">
           Failed to load machine details. Please try again.
         </Text>
-      </Container>
+      </div>
     )
   }
 
   return (
-    <Container className="p-6">
+    <div className="flex h-full w-full flex-col">
       {/* Header */}
-      <div className="mb-6">
+      <div className="px-6 py-4">
         <Button variant="secondary" size="small" asChild className="mb-4">
           <Link to="/app/machines">
             ← Back to Machines
@@ -249,70 +249,72 @@ const MachineDetail = ({ machineId }: { machineId: string }) => {
       </div>
 
       {/* Machine Details Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Basic Information */}
-        <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
-          <Heading level="h3" className="mb-4">
-            Basic Information
-          </Heading>
-          <div className="space-y-4">
-            <DetailRow label="Brand" value={machine.brand} />
-            <DetailRow label="Model" value={machine.model} />
-            <DetailRow label="Serial Number" value={machine.serial_number} />
-            <DetailRow label="Year" value={machine.year} />
-            <DetailRow label="Status" value={machine.status} />
-            <DetailRow label="Fuel Type" value={machine.fuel_type} />
-          </div>
-        </div>
-
-        {/* Technical Specifications */}
-        <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
-          <Heading level="h3" className="mb-4">
-            Technical Specifications
-          </Heading>
-          <div className="space-y-4">
-            <DetailRow label="Engine Hours" value={machine.engine_hours || "-"} />
-            <DetailRow label="Horsepower" value={machine.horsepower || "-"} />
-            <DetailRow label="Weight" value={machine.weight || "-"} />
-            <DetailRow label="Location" value={machine.location || "-"} />
-          </div>
-        </div>
-
-        {/* Financial Information */}
-        <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
-          <Heading level="h3" className="mb-4">
-            Financial Information
-          </Heading>
-          <div className="space-y-4">
-            <DetailRow label="Purchase Date" value={machine.purchase_date || "-"} />
-            <DetailRow label="Purchase Price" value={machine.purchase_price || "-"} />
-            <DetailRow label="Current Value" value={machine.current_value || "-"} />
-          </div>
-        </div>
-
-        {/* Additional Information */}
-        <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
-          <Heading level="h3" className="mb-4">
-            Additional Information
-          </Heading>
-          <div className="space-y-4">
-            <DetailRow label="Customer ID" value={machine.customer_id || "-"} />
-            <DetailRow label="Created" value={new Date(machine.created_at).toLocaleDateString()} />
-            <DetailRow label="Updated" value={new Date(machine.updated_at).toLocaleDateString()} />
-          </div>
-          {machine.notes && (
-            <div className="mt-4">
-              <Text size="small" weight="medium" className="text-ui-fg-base mb-2">
-                Notes
-              </Text>
-              <Text size="small" className="text-ui-fg-subtle">
-                {machine.notes}
-              </Text>
+      <div className="flex-1 overflow-auto px-6 pb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Basic Information */}
+          <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
+            <Heading level="h3" className="mb-4">
+              Basic Information
+            </Heading>
+            <div className="space-y-4">
+              <DetailRow label="Brand" value={machine.brand} />
+              <DetailRow label="Model" value={machine.model} />
+              <DetailRow label="Serial Number" value={machine.serial_number} />
+              <DetailRow label="Year" value={machine.year} />
+              <DetailRow label="Status" value={machine.status} />
+              <DetailRow label="Fuel Type" value={machine.fuel_type} />
             </div>
-          )}
+          </div>
+
+          {/* Technical Specifications */}
+          <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
+            <Heading level="h3" className="mb-4">
+              Technical Specifications
+            </Heading>
+            <div className="space-y-4">
+              <DetailRow label="Engine Hours" value={machine.engine_hours || "-"} />
+              <DetailRow label="Horsepower" value={machine.horsepower || "-"} />
+              <DetailRow label="Weight" value={machine.weight || "-"} />
+              <DetailRow label="Location" value={machine.location || "-"} />
+            </div>
+          </div>
+
+          {/* Financial Information */}
+          <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
+            <Heading level="h3" className="mb-4">
+              Financial Information
+            </Heading>
+            <div className="space-y-4">
+              <DetailRow label="Purchase Date" value={machine.purchase_date || "-"} />
+              <DetailRow label="Purchase Price" value={machine.purchase_price || "-"} />
+              <DetailRow label="Current Value" value={machine.current_value || "-"} />
+            </div>
+          </div>
+
+          {/* Additional Information */}
+          <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
+            <Heading level="h3" className="mb-4">
+              Additional Information
+            </Heading>
+            <div className="space-y-4">
+              <DetailRow label="Customer ID" value={machine.customer_id || "-"} />
+              <DetailRow label="Created" value={new Date(machine.created_at).toLocaleDateString()} />
+              <DetailRow label="Updated" value={new Date(machine.updated_at).toLocaleDateString()} />
+            </div>
+            {machine.notes && (
+              <div className="mt-4">
+                <Text size="small" weight="medium" className="text-ui-fg-base mb-2">
+                  Notes
+                </Text>
+                <Text size="small" className="text-ui-fg-subtle">
+                  {machine.notes}
+                </Text>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </Container>
+    </div>
   )
 }
 
