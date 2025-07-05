@@ -4,6 +4,8 @@ import { Plus, Eye, PencilSquare, Trash } from "@medusajs/icons"
 import { Container, Heading, Button, Table, Badge, IconButton, Text, createDataTableColumnHelper, DataTable, toast, useDataTable } from "@medusajs/ui"
 import { Link, useSearchParams, useNavigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { CreateMachineForm } from "../../components/create-machine-form"
+import { EditMachineForm } from "../../components/edit-machine-form"
 
 // Types for our machine data
 interface Machine {
@@ -161,16 +163,20 @@ const MachineActions = ({ machine }: { machine: Machine }) => {
       >
         <Eye className="w-4 h-4" />
       </IconButton>
-      <IconButton
-        variant="transparent"
-        size="small"
-        onClick={(e: React.MouseEvent) => {
-          e.stopPropagation()
-          navigate(`/machines/${machine.id}/edit`)
-        }}
-      >
-        <PencilSquare className="w-4 h-4" />
-      </IconButton>
+      <EditMachineForm 
+        machine={machine}
+        trigger={
+          <IconButton
+            variant="transparent"
+            size="small"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation()
+            }}
+          >
+            <PencilSquare className="w-4 h-4" />
+          </IconButton>
+        }
+      />
       <IconButton
         variant="transparent"
         size="small"
@@ -250,14 +256,7 @@ const MachinesList = () => {
                 Manage your machine fleet
               </Text>
             </div>
-            <Button 
-              variant="primary" 
-              size="small" 
-              onClick={() => navigate("/machines/create")}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Aanmaken
-            </Button>
+            <CreateMachineForm />
           </div>
 
           {/* Filter Section */}
@@ -364,12 +363,15 @@ const MachineDetail = ({ machineId }: { machineId: string }) => {
             </Text>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="secondary" size="small" asChild>
-              <Link to={`/machines/${machine.id}/edit`}>
-                <PencilSquare className="w-4 h-4 mr-2" />
-                Edit
-              </Link>
-            </Button>
+            <EditMachineForm 
+              machine={machine}
+              trigger={
+                <Button variant="secondary" size="small">
+                  <PencilSquare className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+              }
+            />
             <Button variant="danger" size="small">
               <Trash className="w-4 h-4 mr-2" />
               Delete
