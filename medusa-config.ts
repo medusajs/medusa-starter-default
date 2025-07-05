@@ -20,5 +20,8 @@ module.exports = defineConfig({
     {
       resolve: "./src/modules/machines",
     },
+    {
+      resolve: "./src/modules/technicians",
+    },
   ],
 })
