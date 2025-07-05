@@ -2,7 +2,7 @@ import React from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Plus, Eye, PencilSquare, Trash } from "@medusajs/icons"
 import { Container, Heading, Button, Table, Badge, IconButton, Text, createDataTableColumnHelper, DataTable, toast } from "@medusajs/ui"
-import { Link, useSearchParams } from "react-router-dom"
+import { Link, useSearchParams, useNavigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 // Types for our machine data
@@ -121,6 +121,7 @@ const columns = [
 const MachineActions = ({ machine }: { machine: Machine }) => {
   const queryClient = useQueryClient()
   const deleteMachineMutation = useDeleteMachine()
+  const navigate = useNavigate()
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -146,7 +147,7 @@ const MachineActions = ({ machine }: { machine: Machine }) => {
         size="small"
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation()
-          window.location.href = `/app/machines?id=${machine.id}`
+          navigate(`/app/machines?id=${machine.id}`)
         }}
       >
         <Eye className="w-4 h-4" />
@@ -156,7 +157,7 @@ const MachineActions = ({ machine }: { machine: Machine }) => {
         size="small"
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation()
-          window.location.href = `/app/machines/${machine.id}/edit`
+          navigate(`/app/machines/${machine.id}/edit`)
         }}
       >
         <PencilSquare className="w-4 h-4" />
@@ -204,6 +205,7 @@ const MachinesPage = () => {
 // Machines List Component
 const MachinesList = () => {
   const { data: machines = [], isLoading, error } = useMachines()
+  const navigate = useNavigate()
 
   if (error) {
     return (
@@ -228,11 +230,13 @@ const MachinesList = () => {
                 Manage your machine fleet
               </Text>
             </div>
-            <Button variant="primary" size="small" asChild>
-              <Link to="/app/machines/new">
-                <Plus className="w-4 h-4 mr-2" />
-                Aanmaken
-              </Link>
+            <Button 
+              variant="primary" 
+              size="small" 
+              onClick={() => navigate("/app/machines/create")}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Aanmaken
             </Button>
           </div>
 
@@ -263,7 +267,7 @@ const MachinesList = () => {
               enableSorting
               enableRowSelection={false}
               onRowClick={(row) => {
-                window.location.href = `/app/machines?id=${row.original.id}`
+                navigate(`/app/machines?id=${row.original.id}`)
               }}
             />
           </div>
@@ -352,69 +356,69 @@ const MachineDetail = ({ machineId }: { machineId: string }) => {
 
       {/* Machine Details Grid */}
       <div className="flex-1 overflow-auto px-6 pb-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Basic Information */}
-          <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
-            <Heading level="h3" className="mb-4">
-              Basic Information
-            </Heading>
-            <div className="space-y-4">
-              <DetailRow label="Brand" value={machine.brand} />
-              <DetailRow label="Model" value={machine.model} />
-              <DetailRow label="Serial Number" value={machine.serial_number} />
-              <DetailRow label="Year" value={machine.year} />
-              <DetailRow label="Status" value={machine.status} />
-              <DetailRow label="Fuel Type" value={machine.fuel_type} />
-            </div>
-          </div>
-
-          {/* Technical Specifications */}
-          <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
-            <Heading level="h3" className="mb-4">
-              Technical Specifications
-            </Heading>
-            <div className="space-y-4">
-              <DetailRow label="Engine Hours" value={machine.engine_hours || "-"} />
-              <DetailRow label="Horsepower" value={machine.horsepower || "-"} />
-              <DetailRow label="Weight" value={machine.weight || "-"} />
-              <DetailRow label="Location" value={machine.location || "-"} />
-            </div>
-          </div>
-
-          {/* Financial Information */}
-          <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
-            <Heading level="h3" className="mb-4">
-              Financial Information
-            </Heading>
-            <div className="space-y-4">
-              <DetailRow label="Purchase Date" value={machine.purchase_date || "-"} />
-              <DetailRow label="Purchase Price" value={machine.purchase_price || "-"} />
-              <DetailRow label="Current Value" value={machine.current_value || "-"} />
-            </div>
-          </div>
-
-          {/* Additional Information */}
-          <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
-            <Heading level="h3" className="mb-4">
-              Additional Information
-            </Heading>
-            <div className="space-y-4">
-              <DetailRow label="Customer ID" value={machine.customer_id || "-"} />
-              <DetailRow label="Created" value={new Date(machine.created_at).toLocaleDateString()} />
-              <DetailRow label="Updated" value={new Date(machine.updated_at).toLocaleDateString()} />
-            </div>
-            {machine.notes && (
-              <div className="mt-4">
-                <Text size="small" weight="medium" className="text-ui-fg-base mb-2">
-                  Notes
-                </Text>
-                <Text size="small" className="text-ui-fg-subtle">
-                  {machine.notes}
-                </Text>
-              </div>
-            )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Basic Information */}
+        <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
+          <Heading level="h3" className="mb-4">
+            Basic Information
+          </Heading>
+          <div className="space-y-4">
+            <DetailRow label="Brand" value={machine.brand} />
+            <DetailRow label="Model" value={machine.model} />
+            <DetailRow label="Serial Number" value={machine.serial_number} />
+            <DetailRow label="Year" value={machine.year} />
+            <DetailRow label="Status" value={machine.status} />
+            <DetailRow label="Fuel Type" value={machine.fuel_type} />
           </div>
         </div>
+
+        {/* Technical Specifications */}
+        <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
+          <Heading level="h3" className="mb-4">
+            Technical Specifications
+          </Heading>
+          <div className="space-y-4">
+            <DetailRow label="Engine Hours" value={machine.engine_hours || "-"} />
+            <DetailRow label="Horsepower" value={machine.horsepower || "-"} />
+            <DetailRow label="Weight" value={machine.weight || "-"} />
+            <DetailRow label="Location" value={machine.location || "-"} />
+          </div>
+        </div>
+
+        {/* Financial Information */}
+        <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
+          <Heading level="h3" className="mb-4">
+            Financial Information
+          </Heading>
+          <div className="space-y-4">
+            <DetailRow label="Purchase Date" value={machine.purchase_date || "-"} />
+            <DetailRow label="Purchase Price" value={machine.purchase_price || "-"} />
+            <DetailRow label="Current Value" value={machine.current_value || "-"} />
+          </div>
+        </div>
+
+        {/* Additional Information */}
+        <div className="bg-ui-bg-base border border-ui-border-base rounded-lg p-6">
+          <Heading level="h3" className="mb-4">
+            Additional Information
+          </Heading>
+          <div className="space-y-4">
+            <DetailRow label="Customer ID" value={machine.customer_id || "-"} />
+            <DetailRow label="Created" value={new Date(machine.created_at).toLocaleDateString()} />
+            <DetailRow label="Updated" value={new Date(machine.updated_at).toLocaleDateString()} />
+          </div>
+          {machine.notes && (
+            <div className="mt-4">
+              <Text size="small" weight="medium" className="text-ui-fg-base mb-2">
+                Notes
+              </Text>
+              <Text size="small" className="text-ui-fg-subtle">
+                {machine.notes}
+              </Text>
+            </div>
+          )}
+        </div>
+      </div>
       </div>
     </div>
   )

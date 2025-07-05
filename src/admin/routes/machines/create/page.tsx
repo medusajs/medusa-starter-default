@@ -144,10 +144,12 @@ const CreateMachinePage = () => {
           {/* Header inside card */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-ui-border-base">
             <div className="flex items-center gap-4">
-              <Button variant="secondary" size="small" asChild>
-                <Link to="/app/machines">
-                  <ArrowLeft className="w-4 h-4" />
-                </Link>
+              <Button 
+                variant="secondary" 
+                size="small" 
+                onClick={() => navigate("/app/machines")}
+              >
+                <ArrowLeft className="w-4 h-4" />
               </Button>
               <div>
                 <Heading level="h1">Create New Machine</Heading>
@@ -358,10 +360,12 @@ const CreateMachinePage = () => {
 
               {/* Form Actions */}
               <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-ui-border-base">
-                <Button variant="secondary" type="button" asChild>
-                  <Link to="/app/machines">
-                    Cancel
-                  </Link>
+                <Button 
+                  variant="secondary" 
+                  type="button" 
+                  onClick={() => navigate("/app/machines")}
+                >
+                  Cancel
                 </Button>
                 <Button 
                   variant="primary" 
