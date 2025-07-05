@@ -1,7 +1,7 @@
 import React from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Plus, Eye, PencilSquare, Trash } from "@medusajs/icons"
-import { Container, Heading, Button, Table, Badge, IconButton, Text, createDataTableColumnHelper, DataTable, toast } from "@medusajs/ui"
+import { Container, Heading, Button, Table, Badge, IconButton, Text, createDataTableColumnHelper, DataTable, toast, useDataTable } from "@medusajs/ui"
 import { Link, useSearchParams, useNavigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
@@ -226,6 +226,17 @@ const MachinesList = () => {
     )
   }
 
+  const table = useDataTable({
+    columns,
+    data: machines,
+    getRowId: (row) => row.id,
+    rowCount: machines.length,
+    isLoading,
+    onRowClick: (row) => {
+      navigate(`/machines?id=${row.original.id}`)
+    },
+  })
+
   return (
     <div className="flex h-full w-full flex-col">
       {/* Main Content Card */}
@@ -279,24 +290,9 @@ const MachinesList = () => {
                 </div>
               </div>
             ) : (
-              <div>
-                {/* Debug info */}
-                <div className="p-4 bg-gray-100 text-xs">
-                  <p>Debug: machines.length = {machines.length}</p>
-                  <p>Debug: First machine = {JSON.stringify(machines[0], null, 2)}</p>
-                </div>
-                
-                <DataTable
-                  columns={columns}
-                  data={machines}
-                  count={machines.length}
-                  enableSorting={true}
-                  enableRowSelection={false}
-                  onRowClick={(row) => {
-                    navigate(`/machines?id=${row.original.id}`)
-                  }}
-                />
-              </div>
+              <DataTable instance={table}>
+                <DataTable.Table />
+              </DataTable>
             )}
           </div>
 
