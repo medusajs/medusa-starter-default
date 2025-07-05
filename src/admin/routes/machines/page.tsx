@@ -1,6 +1,6 @@
 import React from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { Wrench, Plus, Eye, PencilSquare, Trash } from "@medusajs/icons"
+import { Plus, Eye, PencilSquare, Trash } from "@medusajs/icons"
 import { Container, Heading, Button, Table, Badge, IconButton, Text } from "@medusajs/ui"
 import { Link, useSearchParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
@@ -331,7 +331,6 @@ const DetailRow = ({ label, value }: { label: string; value: string }) => (
 export const config = defineRouteConfig({
   label: "Machines",
   path: "/machines",
-  icon: Wrench,
 })
 
 export default MachinesPage
