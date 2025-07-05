@@ -1,7 +1,7 @@
 import React from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Plus, Eye, PencilSquare, Trash } from "@medusajs/icons"
-import { Container, Heading, Button, Table, Badge, IconButton, Text } from "@medusajs/ui"
+import { Container, Heading, Button, Table, Badge, IconButton, Text, createDataTableColumnHelper, DataTable } from "@medusajs/ui"
 import { Link, useSearchParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 
@@ -41,6 +41,87 @@ const useMachines = () => {
     },
   })
 }
+
+// Column helper for type-safe table columns
+const columnHelper = createDataTableColumnHelper<Machine>()
+
+// Table column definitions
+const columns = [
+  columnHelper.accessor("brand", {
+    header: "Brand",
+    enableSorting: true,
+    sortLabel: "Brand",
+    sortAscLabel: "A-Z",
+    sortDescLabel: "Z-A",
+  }),
+  columnHelper.accessor("model", {
+    header: "Model",
+    enableSorting: true,
+    sortLabel: "Model",
+  }),
+  columnHelper.accessor("serial_number", {
+    header: "Serial Number",
+    cell: ({ getValue }) => (
+      <Text className="font-mono text-sm">{getValue()}</Text>
+    ),
+  }),
+  columnHelper.accessor("year", {
+    header: "Year",
+    enableSorting: true,
+    sortLabel: "Year",
+  }),
+  columnHelper.accessor("status", {
+    header: "Status",
+    cell: ({ getValue }) => {
+      const status = getValue()
+      return (
+        <Badge 
+          variant={status === "active" ? "green" : status === "maintenance" ? "orange" : "red"}
+          size="small"
+        >
+          {status}
+        </Badge>
+      )
+    },
+  }),
+  columnHelper.accessor("location", {
+    header: "Location",
+    cell: ({ getValue }) => (
+      <Text>{getValue() || "-"}</Text>
+    ),
+  }),
+  columnHelper.display({
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      const machine = row.original
+      return (
+        <div className="flex items-center gap-2">
+          <IconButton
+            variant="transparent"
+            size="small"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation()
+              window.location.href = `/app/machines?id=${machine.id}`
+            }}
+          >
+            <Eye className="w-4 h-4" />
+          </IconButton>
+          <IconButton
+            variant="transparent"
+            size="small"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation()
+              window.location.href = `/app/machines/${machine.id}/edit`
+            }}
+          >
+            <PencilSquare className="w-4 h-4" />
+          </IconButton>
+        </div>
+      )
+    },
+  }),
+]
 
 // Machine detail hook
 const useMachine = (id: string) => {
@@ -88,7 +169,7 @@ const MachinesList = () => {
     <div className="flex h-full w-full flex-col">
       {/* Main Content Card */}
       <div className="flex-1 overflow-hidden">
-        <div className="bg-ui-bg-base border border-ui-border-base overflow-hidden h-full flex flex-col">
+        <div className="bg-ui-bg-base border border-ui-border-base rounded-lg overflow-hidden h-full flex flex-col">
           {/* Header inside card */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-ui-border-base">
             <div>
@@ -123,92 +204,18 @@ const MachinesList = () => {
             </div>
           </div>
 
-          {/* Table */}
+          {/* DataTable */}
           <div className="flex-1 overflow-auto">
-            <Table>
-              <Table.Header>
-                <Table.Row>
-                  <Table.HeaderCell>Brand</Table.HeaderCell>
-                  <Table.HeaderCell>Model</Table.HeaderCell>
-                  <Table.HeaderCell>Serial Number</Table.HeaderCell>
-                  <Table.HeaderCell>Year</Table.HeaderCell>
-                  <Table.HeaderCell>Status</Table.HeaderCell>
-                  <Table.HeaderCell>Location</Table.HeaderCell>
-                  <Table.HeaderCell className="w-[100px]">Actions</Table.HeaderCell>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {isLoading ? (
-                  <Table.Row>
-                    <Table.Cell colSpan={7} className="text-center py-8">
-                      <Text className="text-ui-fg-subtle">Loading machines...</Text>
-                    </Table.Cell>
-                  </Table.Row>
-                ) : machines.length === 0 ? (
-                  <Table.Row>
-                    <Table.Cell colSpan={7} className="text-center py-8">
-                      <Text className="text-ui-fg-subtle">No machines found</Text>
-                    </Table.Cell>
-                  </Table.Row>
-                ) : (
-                  machines.map((machine: Machine) => (
-                    <Table.Row 
-                      key={machine.id}
-                      className="cursor-pointer hover:bg-ui-bg-subtle"
-                      onClick={() => window.location.href = `/app/machines?id=${machine.id}`}
-                    >
-                      <Table.Cell>
-                        <Text weight="medium">{machine.brand}</Text>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Text>{machine.model}</Text>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Text className="font-mono text-sm">{machine.serial_number}</Text>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Text>{machine.year}</Text>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Badge 
-                          variant={machine.status === "active" ? "green" : machine.status === "maintenance" ? "orange" : "red"}
-                          size="small"
-                        >
-                          {machine.status}
-                        </Badge>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Text>{machine.location || "-"}</Text>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <div className="flex items-center gap-2">
-                          <IconButton
-                            variant="transparent"
-                            size="small"
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation()
-                              window.location.href = `/app/machines?id=${machine.id}`
-                            }}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </IconButton>
-                          <IconButton
-                            variant="transparent"
-                            size="small"
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation()
-                              window.location.href = `/app/machines/${machine.id}/edit`
-                            }}
-                          >
-                            <PencilSquare className="w-4 h-4" />
-                          </IconButton>
-                        </div>
-                      </Table.Cell>
-                    </Table.Row>
-                  ))
-                )}
-              </Table.Body>
-            </Table>
+            <DataTable
+              columns={columns}
+              data={machines}
+              count={machines.length}
+              enableSorting
+              enableRowSelection={false}
+              onRowClick={(row) => {
+                window.location.href = `/app/machines?id=${row.original.id}`
+              }}
+            />
           </div>
 
           {/* Pagination Footer */}
