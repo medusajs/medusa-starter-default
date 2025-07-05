@@ -7,7 +7,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     
     const { limit = 50, offset = 0, ...filters } = req.query
     
-    const [data, count] = await machinesService.listAndCountMachines(
+    const [data, count] = await machinesService.listAndCountMachine(
       filters,
       {
         limit: Number(limit),
@@ -34,7 +34,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     const machinesService = req.scope.resolve(MACHINES_MODULE)
     
-    const machine = await machinesService.createMachines(req.body)
+    const machine = await machinesService.createMachine(req.body)
     
     res.status(201).json({
       machine: machine

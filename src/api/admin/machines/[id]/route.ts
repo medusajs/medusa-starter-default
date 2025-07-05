@@ -25,7 +25,7 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     const machinesService = req.scope.resolve(MACHINES_MODULE)
     
-    const machine = await machinesService.updateMachines(id, req.body)
+    const machine = await machinesService.updateMachine(id, req.body)
     
     res.json({
       machine: machine
@@ -44,7 +44,7 @@ export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     const machinesService = req.scope.resolve(MACHINES_MODULE)
     
-    await machinesService.deleteMachines(id)
+    await machinesService.deleteMachine(id)
     
     res.status(204).send()
   } catch (error) {

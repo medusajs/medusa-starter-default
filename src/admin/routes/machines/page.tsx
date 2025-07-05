@@ -32,11 +32,20 @@ const useMachines = () => {
   return useQuery({
     queryKey: ["machines"],
     queryFn: async () => {
+      console.log("Fetching machines from API...")
       const response = await fetch("/admin/machines")
+      console.log("Response status:", response.status)
+      
       if (!response.ok) {
+        console.error("API response not ok:", response.status, response.statusText)
         throw new Error("Failed to fetch machines")
       }
+      
       const data = await response.json()
+      console.log("API response data:", data)
+      console.log("Machines array:", data.machines)
+      console.log("Machines count:", data.machines?.length || 0)
+      
       return data.machines || []
     },
   })
@@ -207,6 +216,14 @@ const MachinesList = () => {
   const { data: machines = [], isLoading, error } = useMachines()
   const navigate = useNavigate()
 
+  if (isLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Text>Loading machines...</Text>
+      </div>
+    )
+  }
+
   if (error) {
     return (
       <div className="flex h-full w-full items-center justify-center">
@@ -260,16 +277,27 @@ const MachinesList = () => {
 
           {/* DataTable */}
           <div className="flex-1 overflow-auto">
-            <DataTable
-              columns={columns}
-              data={machines}
-              count={machines.length}
-              enableSorting
-              enableRowSelection={false}
-              onRowClick={(row) => {
-                navigate(`/machines?id=${row.original.id}`)
-              }}
-            />
+            {machines.length === 0 ? (
+              <div className="flex h-full items-center justify-center">
+                <div className="text-center">
+                  <Text className="text-ui-fg-subtle mb-2">No machines found</Text>
+                  <Text className="text-ui-fg-muted text-sm">
+                    Create your first machine to get started
+                  </Text>
+                </div>
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={machines}
+                count={machines.length}
+                enableSorting
+                enableRowSelection={false}
+                onRowClick={(row) => {
+                  navigate(`/machines?id=${row.original.id}`)
+                }}
+              />
+            )}
           </div>
 
           {/* Pagination Footer */}
