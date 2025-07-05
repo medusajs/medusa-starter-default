@@ -103,91 +103,93 @@ const MachinesList = () => {
       </div>
 
       {/* Table Container */}
-      <div className="flex-1 overflow-hidden">
-        <Table>
-          <Table.Header>
-            <Table.Row>
-              <Table.HeaderCell>Brand</Table.HeaderCell>
-              <Table.HeaderCell>Model</Table.HeaderCell>
-              <Table.HeaderCell>Serial Number</Table.HeaderCell>
-              <Table.HeaderCell>Year</Table.HeaderCell>
-              <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell>Location</Table.HeaderCell>
-              <Table.HeaderCell className="w-[100px]">Actions</Table.HeaderCell>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {isLoading ? (
+      <div className="flex-1 overflow-hidden px-6">
+        <div className="bg-ui-bg-base border border-ui-border-base rounded-lg overflow-hidden">
+          <Table>
+            <Table.Header>
               <Table.Row>
-                <Table.Cell colSpan={7} className="text-center py-8">
-                  <Text className="text-ui-fg-subtle">Loading machines...</Text>
-                </Table.Cell>
+                <Table.HeaderCell>Brand</Table.HeaderCell>
+                <Table.HeaderCell>Model</Table.HeaderCell>
+                <Table.HeaderCell>Serial Number</Table.HeaderCell>
+                <Table.HeaderCell>Year</Table.HeaderCell>
+                <Table.HeaderCell>Status</Table.HeaderCell>
+                <Table.HeaderCell>Location</Table.HeaderCell>
+                <Table.HeaderCell className="w-[100px]">Actions</Table.HeaderCell>
               </Table.Row>
-            ) : machines.length === 0 ? (
-              <Table.Row>
-                <Table.Cell colSpan={7} className="text-center py-8">
-                  <Text className="text-ui-fg-subtle">No machines found</Text>
-                </Table.Cell>
-              </Table.Row>
-            ) : (
-              machines.map((machine: Machine) => (
-                <Table.Row 
-                  key={machine.id}
-                  className="cursor-pointer hover:bg-ui-bg-subtle"
-                  onClick={() => window.location.href = `/app/machines?id=${machine.id}`}
-                >
-                  <Table.Cell>
-                    <Text weight="medium">{machine.brand}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text>{machine.model}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text className="font-mono text-sm">{machine.serial_number}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text>{machine.year}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Badge 
-                      variant={machine.status === "active" ? "green" : machine.status === "maintenance" ? "orange" : "red"}
-                      size="small"
-                    >
-                      {machine.status}
-                    </Badge>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text>{machine.location || "-"}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <div className="flex items-center gap-2">
-                      <IconButton
-                        variant="transparent"
-                        size="small"
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation()
-                          window.location.href = `/app/machines?id=${machine.id}`
-                        }}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </IconButton>
-                      <IconButton
-                        variant="transparent"
-                        size="small"
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation()
-                          window.location.href = `/app/machines/${machine.id}/edit`
-                        }}
-                      >
-                        <PencilSquare className="w-4 h-4" />
-                      </IconButton>
-                    </div>
+            </Table.Header>
+            <Table.Body>
+              {isLoading ? (
+                <Table.Row>
+                  <Table.Cell colSpan={7} className="text-center py-8">
+                    <Text className="text-ui-fg-subtle">Loading machines...</Text>
                   </Table.Cell>
                 </Table.Row>
-              ))
-            )}
-          </Table.Body>
-        </Table>
+              ) : machines.length === 0 ? (
+                <Table.Row>
+                  <Table.Cell colSpan={7} className="text-center py-8">
+                    <Text className="text-ui-fg-subtle">No machines found</Text>
+                  </Table.Cell>
+                </Table.Row>
+              ) : (
+                machines.map((machine: Machine) => (
+                  <Table.Row 
+                    key={machine.id}
+                    className="cursor-pointer hover:bg-ui-bg-subtle"
+                    onClick={() => window.location.href = `/app/machines?id=${machine.id}`}
+                  >
+                    <Table.Cell>
+                      <Text weight="medium">{machine.brand}</Text>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Text>{machine.model}</Text>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Text className="font-mono text-sm">{machine.serial_number}</Text>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Text>{machine.year}</Text>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Badge 
+                        variant={machine.status === "active" ? "green" : machine.status === "maintenance" ? "orange" : "red"}
+                        size="small"
+                      >
+                        {machine.status}
+                      </Badge>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Text>{machine.location || "-"}</Text>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <div className="flex items-center gap-2">
+                        <IconButton
+                          variant="transparent"
+                          size="small"
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation()
+                            window.location.href = `/app/machines?id=${machine.id}`
+                          }}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </IconButton>
+                        <IconButton
+                          variant="transparent"
+                          size="small"
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation()
+                            window.location.href = `/app/machines/${machine.id}/edit`
+                          }}
+                        >
+                          <PencilSquare className="w-4 h-4" />
+                        </IconButton>
+                      </div>
+                    </Table.Cell>
+                  </Table.Row>
+                ))
+              )}
+            </Table.Body>
+          </Table>
+        </div>
       </div>
     </div>
   )
