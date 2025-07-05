@@ -216,14 +216,6 @@ const MachinesList = () => {
   const { data: machines = [], isLoading, error } = useMachines()
   const navigate = useNavigate()
 
-  if (isLoading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <Text>Loading machines...</Text>
-      </div>
-    )
-  }
-
   if (error) {
     return (
       <div className="flex h-full w-full items-center justify-center">
