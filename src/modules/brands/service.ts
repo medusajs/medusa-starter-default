@@ -58,7 +58,6 @@ class BrandsService extends MedusaService({
 
   // Search brands by name or code
   async searchBrands(searchTerm: string, config: any = {}) {
-    // Note: This is a simplified search. In production, you might want to use a proper search engine
     const brands = await this.list({}, config)
     return brands.filter(brand => 
       brand.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -80,8 +79,6 @@ class BrandsService extends MedusaService({
     return count
   }
 
-  // Business logic methods
-  
   // Check if brand code is unique
   async isBrandCodeUnique(code: string, excludeId?: string) {
     const filters: any = { code }
@@ -96,16 +93,6 @@ class BrandsService extends MedusaService({
   async toggleBrandStatus(id: string) {
     const brand = await this.retrieveBrand(id)
     return await this.updateBrand(id, { is_active: !brand.is_active })
-  }
-
-  // Bulk update brands
-  async bulkUpdateBrands(updates: Array<{ id: string; data: any }>) {
-    const results = []
-    for (const update of updates) {
-      const result = await this.updateBrand(update.id, update.data)
-      results.push(result)
-    }
-    return results
   }
 }
 

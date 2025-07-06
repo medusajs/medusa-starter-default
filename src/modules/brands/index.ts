@@ -4,8 +4,14 @@ import { Module } from "@medusajs/framework/utils"
 
 export const BRANDS_MODULE = "brands"
 
-export default Module(BRANDS_MODULE, {
+const BrandsModule = Module(BRANDS_MODULE, {
   service: BrandsService,
+  models: [Brand],
+  linkable: {
+    brand: Brand,
+  },
 })
+
+export default BrandsModule
 
 export { Brand, BrandsService } 

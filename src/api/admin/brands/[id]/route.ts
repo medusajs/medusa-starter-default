@@ -9,7 +9,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     const brand = await brandsService.retrieveBrand(id)
     
     res.json({
-      brand
+      brand: brand
     })
   } catch (error) {
     console.error("Error fetching brand:", error)
@@ -39,7 +39,7 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     const brand = await brandsService.updateBrand(id, req.body)
     
     res.json({
-      brand
+      brand: brand
     })
   } catch (error) {
     console.error("Error updating brand:", error)
