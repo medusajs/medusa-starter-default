@@ -2,7 +2,6 @@ import { model } from "@medusajs/framework/utils"
 
 const Machine = model.define("machine", {
   id: model.id().primaryKey(),
-  brand: model.text(),
   model: model.text(),
   serial_number: model.text().unique(),
   year: model.text(),
