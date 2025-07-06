@@ -23,5 +23,11 @@ module.exports = defineConfig({
     {
       resolve: "./src/modules/technicians",
     },
+    {
+      resolve: "./src/modules/brands",
+    },
+    {
+      resolve: "@medusajs/index",
+    },
   ],
 })
