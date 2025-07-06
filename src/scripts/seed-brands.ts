@@ -237,8 +237,8 @@ export default async function seedBrands({ container }: ExecArgs) {
   
   for (const brandData of sampleBrands) {
     try {
-      // Try to create the brand directly
-      const brand = await brandsService.createBrand(brandData)
+      // Use the generated method from MedusaService
+      const brand = await brandsService.createBrands(brandData)
       console.log(`Created brand: ${brand.name} (${brand.code})`)
     } catch (error) {
       if (error.message && error.message.includes('unique')) {

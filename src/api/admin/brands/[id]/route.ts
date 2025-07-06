@@ -6,7 +6,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     const brandsService = req.scope.resolve(BRANDS_MODULE)
     
-    const brand = await brandsService.retrieveBrand(id)
+    const brand = await brandsService.retrieveBrands(id)
     
     res.json({
       brand: brand
@@ -27,8 +27,11 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     
     // If updating code, check uniqueness
     if (req.body.code) {
-      const isUnique = await brandsService.isBrandCodeUnique(req.body.code, id)
-      if (!isUnique) {
+      const existingBrands = await brandsService.listBrands({ 
+        code: req.body.code,
+        id: { $ne: id }
+      })
+      if (existingBrands.length > 0) {
         return res.status(400).json({
           error: "Brand code already exists",
           details: `Brand with code "${req.body.code}" already exists`
@@ -36,7 +39,7 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
       }
     }
     
-    const brand = await brandsService.updateBrand(id, req.body)
+    const brand = await brandsService.updateBrands(id, req.body)
     
     res.json({
       brand: brand
@@ -55,7 +58,7 @@ export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     const brandsService = req.scope.resolve(BRANDS_MODULE)
     
-    await brandsService.deleteBrand(id)
+    await brandsService.deleteBrands(id)
     
     res.status(204).send()
   } catch (error) {

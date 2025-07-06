@@ -21,26 +21,15 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     if (is_oem !== undefined) queryFilters.is_oem = is_oem === 'true'
     if (authorized_dealer !== undefined) queryFilters.authorized_dealer = authorized_dealer === 'true'
     
-    let brands, count
-    
-    if (search) {
-      // Use search functionality
-      brands = await brandsService.searchBrands(search as string, {
-        limit: Number(limit),
-        offset: Number(offset),
-      })
-      count = brands.length
-    } else {
-      // Regular list with count
-      [brands, count] = await brandsService.listAndCountBrands(
-        queryFilters,
-        {
-          limit: Number(limit),
-          offset: Number(offset),
-          order: { display_order: "ASC", name: "ASC" }
-        }
-      )
-    }
+    // Use the generated method from MedusaService
+    const [brands, count] = await brandsService.listAndCountBrands(
+      queryFilters,
+      {
+        take: Number(limit),
+        skip: Number(offset),
+        order: { display_order: "ASC", name: "ASC" }
+      }
+    )
     
     res.json({
       brands,
@@ -71,15 +60,16 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     }
     
     // Check if brand code is unique
-    const isUnique = await brandsService.isBrandCodeUnique(code)
-    if (!isUnique) {
+    const existingBrands = await brandsService.listBrands({ code })
+    if (existingBrands.length > 0) {
       return res.status(400).json({
         error: "Brand code already exists",
         details: `Brand with code "${code}" already exists`
       })
     }
     
-    const brand = await brandsService.createBrand(req.body)
+    // Use the generated method from MedusaService
+    const brand = await brandsService.createBrands(req.body)
     
     res.status(201).json({
       brand
