@@ -39,8 +39,8 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     
     const { brand_id, ...machineData } = req.body
     
-    // Update the machine data
-    const machine = await machinesService.updateMachine(id, machineData)
+    // Update the machine using the generated method
+    const machine = await machinesService.updateMachines(id, machineData)
     
     // If brand_id is provided, update the machine-brand link
     if (brand_id) {
@@ -89,8 +89,8 @@ export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
       brands: "*", // Remove all brand links for this machine
     })
     
-    // Delete the machine
-    await machinesService.deleteMachine(id)
+    // Delete the machine using the generated method
+    await machinesService.deleteMachines(id)
     
     res.status(204).send()
   } catch (error) {

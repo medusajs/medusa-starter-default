@@ -6,7 +6,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     const techniciansService = req.scope.resolve(TECHNICIANS_MODULE)
     
-    const technician = await techniciansService.retrieveTechnician(id)
+    const technician = await techniciansService.retrieveTechnicians(id)
     
     res.json({
       technician: technician

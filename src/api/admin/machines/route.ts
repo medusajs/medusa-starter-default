@@ -23,8 +23,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       },
     })
     
-    // Get count
-    const count = await machinesService.countMachines(filters)
+    // Get count using the generated method
+    const [, count] = await machinesService.listAndCountMachines(filters, {
+      take: Number(limit),
+      skip: Number(offset),
+    })
     
     res.json({
       machines,
@@ -56,8 +59,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       })
     }
     
-    // Create the machine first
-    const machine = await machinesService.createMachine(machineData)
+    // Create the machine using the generated method
+    const machine = await machinesService.createMachines(machineData)
     
     // Create the machine-brand link
     if (brand_id) {

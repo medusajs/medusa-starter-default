@@ -56,8 +56,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     
     // Build options object
     const options: any = {
-      limit: Number(limit),
-      offset: Number(offset),
+      take: Number(limit),
+      skip: Number(offset),
     }
     
     // Add sorting
@@ -70,6 +70,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     console.log("Technicians API: Calling listAndCountTechnicians with filters:", filterObj)
     console.log("Technicians API: Options:", options)
     
+    // Use the generated method from MedusaService
     const [data, count] = await techniciansService.listAndCountTechnicians(
       filterObj,
       options

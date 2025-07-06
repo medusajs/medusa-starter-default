@@ -6,97 +6,77 @@ export default async function seedMachines({ container }: ExecArgs) {
   
   const sampleMachines = [
     {
-      brand: "Caterpillar",
-      model: "320D",
-      serial_number: "CAT320D001",
-      year: "2020",
-      engine_hours: "1250",
-      fuel_type: "Diesel",
-      horsepower: "158",
-      weight: "20000",
-      purchase_date: "2020-03-15",
-      purchase_price: "150000",
-      current_value: "125000",
-      status: "active" as const,
-      location: "Main Site",
-      notes: "Excellent condition, recently serviced"
+      model: "320D2",
+      serial_number: "CAT0320D2001",
+      year: 2020,
+      hours: 1250,
+      location: "Construction Site A",
+      status: "operational",
+      last_service_date: new Date("2023-01-15"),
+      next_service_due: new Date("2023-07-15"),
+      notes: "Regular maintenance completed",
     },
     {
-      brand: "Komatsu",
-      model: "PC200",
-      serial_number: "KOM200001",
-      year: "2019",
-      engine_hours: "2100",
-      fuel_type: "Diesel",
-      horsepower: "148",
-      weight: "19500",
-      purchase_date: "2019-08-20",
-      purchase_price: "140000",
-      current_value: "110000",
-      status: "active" as const,
-      location: "Site B",
-      notes: "Good working condition"
+      model: "PC200-8",
+      serial_number: "KOM0200001",
+      year: 2019,
+      hours: 2100,
+      location: "Warehouse B",
+      status: "maintenance",
+      last_service_date: new Date("2022-12-10"),
+      next_service_due: new Date("2023-06-10"),
+      notes: "Hydraulic system repair needed",
     },
     {
-      brand: "Volvo",
-      model: "EC240",
-      serial_number: "VOL240001",
-      year: "2021",
-      engine_hours: "800",
-      fuel_type: "Diesel",
-      horsepower: "177",
-      weight: "24000",
-      purchase_date: "2021-01-10",
-      purchase_price: "175000",
-      current_value: "155000",
-      status: "maintenance" as const,
-      location: "Workshop",
-      notes: "Currently in for scheduled maintenance"
-    },
-    {
-      brand: "JCB",
-      model: "JS220",
-      serial_number: "JCB220001",
-      year: "2018",
-      engine_hours: "3200",
-      fuel_type: "Diesel",
-      horsepower: "160",
-      weight: "21500",
-      purchase_date: "2018-05-12",
-      purchase_price: "135000",
-      current_value: "95000",
-      status: "inactive" as const,
-      location: "Storage",
-      notes: "Needs major repairs"
-    },
-    {
-      brand: "Hitachi",
-      model: "ZX200",
-      serial_number: "HIT200001",
-      year: "2022",
-      engine_hours: "450",
-      fuel_type: "Diesel",
-      horsepower: "141",
-      weight: "19800",
-      purchase_date: "2022-09-05",
-      purchase_price: "165000",
-      current_value: "160000",
-      status: "active" as const,
+      model: "EC220E",
+      serial_number: "VOL0220001",
+      year: 2021,
+      hours: 800,
       location: "Site C",
-      notes: "Latest model, under warranty"
+      status: "operational",
+      last_service_date: new Date("2023-02-20"),
+      next_service_due: new Date("2023-08-20"),
+      notes: "New machine, minimal wear",
+    },
+    {
+      model: "JS220",
+      serial_number: "JCB0220001",
+      year: 2018,
+      hours: 3200,
+      location: "Depot D",
+      status: "out_of_service",
+      last_service_date: new Date("2022-11-05"),
+      next_service_due: new Date("2023-05-05"),
+      notes: "Engine overhaul required",
+    },
+    {
+      model: "R924",
+      serial_number: "LIE0924001",
+      year: 2022,
+      hours: 450,
+      location: "Project Site E",
+      status: "operational",
+      last_service_date: new Date("2023-03-01"),
+      next_service_due: new Date("2023-09-01"),
+      notes: "Under warranty, excellent condition",
     }
   ]
-
-  console.log("Seeding sample machines...")
+  
+  console.log("Seeding machines...")
   
   for (const machineData of sampleMachines) {
     try {
-      await machinesService.createMachine(machineData)
-      console.log(`Created machine: ${machineData.brand} ${machineData.model}`)
+      // Use the generated method from MedusaService
+      const machine = await machinesService.createMachines(machineData)
+      console.log(`Created machine: ${machine.model} (${machine.serial_number})`)
     } catch (error) {
-      console.error(`Failed to create machine ${machineData.brand} ${machineData.model}:`, error)
+      if (error.message && error.message.includes('unique')) {
+        console.log(`Machine ${machineData.serial_number} already exists, skipping...`)
+      } else {
+        console.error(`Error creating machine ${machineData.serial_number}:`, error.message)
+      }
     }
   }
   
-  console.log("Finished seeding machines!")
+  console.log("Finished seeding machines.")
 } 
