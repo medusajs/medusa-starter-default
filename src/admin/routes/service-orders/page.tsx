@@ -1,5 +1,5 @@
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { PencilSquare, Plus, Tools } from "@medusajs/icons"
+import { PencilSquare, Plus, Tools, EllipsisHorizontal } from "@medusajs/icons"
 import {
   Button,
   Container,
@@ -7,7 +7,6 @@ import {
   Table,
   Badge,
   StatusBadge,
-  ActionMenu,
   Text,
   Input,
   Select,
@@ -16,6 +15,7 @@ import {
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { DropdownMenu, IconButton } from "@medusajs/ui"
 
 const ServiceOrdersList = () => {
   const [searchParams, setSearchParams] = useState({
@@ -237,25 +237,19 @@ const ServiceOrdersList = () => {
                     </Text>
                   </Table.Cell>
                   <Table.Cell>
-                    <ActionMenu>
-                      <ActionMenu.Trigger asChild>
-                        <Button variant="transparent" className="w-5 h-5">
-                          <PencilSquare className="w-3 h-3" />
-                        </Button>
-                      </ActionMenu.Trigger>
-                      <ActionMenu.Content>
-                        <ActionMenu.Item asChild>
-                          <Link to={`/service-orders/${serviceOrder.id}`}>
-                            View Details
-                          </Link>
-                        </ActionMenu.Item>
-                        <ActionMenu.Item asChild>
-                          <Link to={`/service-orders/${serviceOrder.id}/edit`}>
-                            Edit
-                          </Link>
-                        </ActionMenu.Item>
-                      </ActionMenu.Content>
-                    </ActionMenu>
+                    <DropdownMenu>
+                      <DropdownMenu.Trigger asChild>
+                        <IconButton variant="ghost" size="small">
+                          <EllipsisHorizontal className="w-4 h-4" />
+                        </IconButton>
+                      </DropdownMenu.Trigger>
+                      <DropdownMenu.Content>
+                        <DropdownMenu.Item onClick={() => window.location.href = `/service-orders/${serviceOrder.id}`}>
+                          <PencilSquare className="w-4 h-4 mr-2" />
+                          View
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Content>
+                    </DropdownMenu>
                   </Table.Cell>
                 </Table.Row>
               ))}
