@@ -3,7 +3,7 @@ import { BRANDS_MODULE } from "../../../modules/brands"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
-    const brandsService = req.scope.resolve(BRANDS_MODULE)
+    const brandsService = req.scope.resolve(BRANDS_MODULE) as any
     
     const { 
       limit = 50, 
@@ -12,14 +12,66 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       is_oem,
       authorized_dealer,
       search,
+      order,
+      q, // Alternative search parameter
       ...filters 
     } = req.query
     
     // Build filters
     const queryFilters: any = { ...filters }
-    if (is_active !== undefined) queryFilters.is_active = is_active === 'true'
-    if (is_oem !== undefined) queryFilters.is_oem = is_oem === 'true'
-    if (authorized_dealer !== undefined) queryFilters.authorized_dealer = authorized_dealer === 'true'
+    
+    // Handle array values for filters (when multiple values are selected)
+    if (is_active !== undefined) {
+      if (Array.isArray(is_active)) {
+        queryFilters.is_active = { $in: is_active.map(val => val === 'true') }
+      } else {
+        queryFilters.is_active = is_active === 'true'
+      }
+    }
+    
+    if (is_oem !== undefined) {
+      if (Array.isArray(is_oem)) {
+        queryFilters.is_oem = { $in: is_oem.map(val => val === 'true') }
+      } else {
+        queryFilters.is_oem = is_oem === 'true'
+      }
+    }
+    
+    if (authorized_dealer !== undefined) {
+      if (Array.isArray(authorized_dealer)) {
+        queryFilters.authorized_dealer = { $in: authorized_dealer.map(val => val === 'true') }
+      } else {
+        queryFilters.authorized_dealer = authorized_dealer === 'true'
+      }
+    }
+    
+    // Handle search - search in name and code
+    const searchTerm = search || q
+    if (searchTerm && typeof searchTerm === 'string') {
+      queryFilters.$or = [
+        { name: { $ilike: `%${searchTerm}%` } },
+        { code: { $ilike: `%${searchTerm}%` } },
+      ]
+    }
+    
+    // Handle sorting
+    let orderBy: any = { display_order: "ASC", name: "ASC" } // Default order
+    
+    if (order && typeof order === 'string') {
+      const isDescending = order.startsWith('-')
+      const field = isDescending ? order.substring(1) : order
+      
+      // Map frontend field names to database field names if needed
+      const fieldMapping: { [key: string]: string } = {
+        'code': 'code',
+        'name': 'name',
+        'country_of_origin': 'country_of_origin',
+        'is_active': 'is_active',
+      }
+      
+      const dbField = fieldMapping[field] || field
+      orderBy = { [dbField]: isDescending ? "DESC" : "ASC" }
+    }
     
     // Use the generated method from MedusaService
     const [brands, count] = await brandsService.listAndCountBrands(
@@ -27,7 +79,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       {
         take: Number(limit),
         skip: Number(offset),
-        order: { display_order: "ASC", name: "ASC" }
+        order: orderBy
       }
     )
     
@@ -48,10 +100,10 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
-    const brandsService = req.scope.resolve(BRANDS_MODULE)
+    const brandsService = req.scope.resolve(BRANDS_MODULE) as any
     
     // Validate required fields
-    const { name, code } = req.body
+    const { name, code } = req.body as any
     if (!name || !code) {
       return res.status(400).json({
         error: "Missing required fields",
