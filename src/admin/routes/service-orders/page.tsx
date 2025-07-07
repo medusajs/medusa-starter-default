@@ -1,5 +1,5 @@
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { PencilSquare, Plus, Wrench } from "@medusajs/icons"
+import { PencilSquare, Plus, Tools } from "@medusajs/icons"
 import {
   Button,
   Container,
@@ -164,7 +164,7 @@ const ServiceOrdersList = () => {
           </div>
         ) : !serviceOrders?.service_orders?.length ? (
           <div className="p-8 text-center">
-            <Wrench className="w-12 h-12 mx-auto mb-4 text-ui-fg-muted" />
+            <Tools className="w-12 h-12 mx-auto mb-4 text-ui-fg-muted" />
             <Heading level="h3" className="mb-2">No service orders yet</Heading>
             <Text className="text-ui-fg-subtle mb-4">
               Create your first service order to get started
@@ -269,7 +269,7 @@ const ServiceOrdersList = () => {
 
 export const config = defineRouteConfig({
   label: "Service Orders",
-  icon: Wrench,
+  icon: Tools,
 })
 
 export default ServiceOrdersList 
