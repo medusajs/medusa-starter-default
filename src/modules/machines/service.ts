@@ -16,6 +16,8 @@ import {
 import Machine from "./models/machine"
 import { joinerConfig } from "./joiner-config"
 import { MachineDTO, CreateMachineDTO, FilterableMachineProps } from "./types"
+import { ModuleTranslator, I18nContext } from "../../utils/i18n-helper"
+import { machineTranslations } from "./translations"
 
 type InjectedDependencies = {
   baseRepository: DAL.RepositoryService
@@ -33,6 +35,7 @@ export default class MachinesModuleService
   protected machineService_: ModulesSdkTypes.IMedusaInternalService<
     InferEntityType<typeof Machine>
   >
+  private translator: ModuleTranslator
 
   constructor(
     {
@@ -46,25 +49,33 @@ export default class MachinesModuleService
 
     this.baseRepository_ = baseRepository
     this.machineService_ = machineService
+    
+    // Initialize translator with machine translations
+    this.translator = new ModuleTranslator(machineTranslations)
   }
 
   __joinerConfig(): ModuleJoinerConfig {
     return joinerConfig
   }
 
-  // Validation methods
-  validateMachineData(data: CreateMachineDTO | Partial<CreateMachineDTO>) {
+  // Helper method to get translation
+  private t(key: string, language: string = "en", fallback?: string): string {
+    return this.translator.translate(key, language, fallback)
+  }
+
+  // Enhanced validation methods with i18n support
+  validateMachineData(data: CreateMachineDTO | Partial<CreateMachineDTO>, language: string = "en") {
     if (data.model !== undefined && !data.model?.trim()) {
       throw new MedusaError(
         MedusaError.Types.INVALID_DATA,
-        "Machine model cannot be empty"
+        this.t("machine.validation.model_required", language, "Machine model cannot be empty")
       )
     }
 
     if (data.serial_number !== undefined && !data.serial_number?.trim()) {
       throw new MedusaError(
         MedusaError.Types.INVALID_DATA,
-        "Machine serial number cannot be empty"
+        this.t("machine.validation.serial_required", language, "Machine serial number cannot be empty")
       )
     }
 
@@ -74,7 +85,7 @@ export default class MachinesModuleService
       if (data.year < 1900 || data.year > currentYear + 1) {
         throw new MedusaError(
           MedusaError.Types.INVALID_DATA,
-          `Invalid year. Must be between 1900 and ${currentYear + 1}`
+          this.t("machine.validation.invalid_year", language, `Invalid year. Must be between 1900 and ${currentYear + 1}`)
         )
       }
     }
@@ -104,7 +115,62 @@ export default class MachinesModuleService
     }
   }
 
-  // Business logic methods
+  // Enhanced methods with i18n context
+  async createMachineWithI18n(
+    data: CreateMachineDTO,
+    i18nContext: I18nContext,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<MachineDTO> {
+    this.validateMachineData(data, i18nContext.language)
+    
+    const [machine] = await this.createMachines([data], sharedContext)
+    return machine
+  }
+
+  async updateMachineWithI18n(
+    id: string,
+    data: Partial<CreateMachineDTO>,
+    i18nContext: I18nContext,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<MachineDTO> {
+    this.validateMachineData(data, i18nContext.language)
+    
+    const [machine] = await this.updateMachines([{ id, ...data }], sharedContext)
+    return machine
+  }
+
+  // Enhanced status update with localized status values
+  async updateMachineStatusWithI18n(
+    machineId: string,
+    status: "active" | "inactive" | "maintenance" | "sold",
+    i18nContext: I18nContext,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<{ machine: MachineDTO; statusText: string }> {
+    const [machine] = await this.updateMachines(
+      [{ id: machineId, status }],
+      sharedContext
+    )
+    
+    const statusText = this.t(`machine.status.${status}`, i18nContext.language)
+    
+    return { machine, statusText }
+  }
+
+  // Get localized machine data
+  async getMachineWithLocalizedData(
+    id: string,
+    i18nContext: I18nContext,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<MachineDTO & { localizedStatus?: string }> {
+    const machine = await this.retrieveMachine(id, {}, sharedContext)
+    
+    return {
+      ...machine,
+      localizedStatus: this.t(`machine.status.${machine.status}`, i18nContext.language)
+    }
+  }
+
+  // Original methods (maintained for backward compatibility)
   async getMachinesByCustomer(
     customerId: string,
     config?: any,

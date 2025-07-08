@@ -1,10 +1,12 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { MACHINES_MODULE } from "../../../modules/machines"
+import { MACHINES_MODULE, MachinesModuleService } from "../../../modules/machines"
+import { createI18nContext } from "../../../utils/i18n-helper"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
-    const machinesService = req.scope.resolve(MACHINES_MODULE)
+    const machinesService: MachinesModuleService = req.scope.resolve(MACHINES_MODULE)
     const query = req.scope.resolve("query")
+    const i18nContext = createI18nContext(req)
     
     const { 
       limit = 50, 
@@ -18,10 +20,16 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       fields: ["*", "brand.*"],
       filters,
       pagination: {
-        limit: Number(limit),
-        offset: Number(offset),
+        take: Number(limit),
+        skip: Number(offset),
       },
     })
+    
+    // Add localized status to each machine
+    const localizedMachines = machines.map(machine => ({
+      ...machine,
+      localizedStatus: (machinesService as any).t(`machine.status.${machine.status}`, i18nContext.language)
+    }))
     
     // Get count using the generated method
     const [, count] = await machinesService.listAndCountMachines(filters, {
@@ -30,10 +38,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     })
     
     res.json({
-      machines,
+      machines: localizedMachines,
       count,
       offset: Number(offset),
       limit: Number(limit),
+      language: i18nContext.language,
     })
   } catch (error) {
     console.error("Error fetching machines:", error)
@@ -46,10 +55,12 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
-    const machinesService = req.scope.resolve(MACHINES_MODULE)
+    const machinesService: MachinesModuleService = req.scope.resolve(MACHINES_MODULE)
     const linkService = req.scope.resolve("linkService")
+    const i18nContext = createI18nContext(req)
     
-    const { brand_id, ...machineData } = req.body
+    const body = req.body as any
+    const { brand_id, ...machineData } = body
     
     // Validate required fields
     if (!brand_id) {
@@ -59,12 +70,15 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       })
     }
     
-    // Create the machine using the generated method
-    const machine = await machinesService.createMachines(machineData)
+    // Create the machine using the i18n-aware method
+    const machine = await (machinesService as any).createMachineWithI18n(
+      machineData, 
+      i18nContext
+    )
     
     // Create the machine-brand link
     if (brand_id) {
-      await linkService.create({
+      await (linkService as any).create({
         [MACHINES_MODULE]: {
           machine_id: machine.id,
         },
@@ -74,8 +88,17 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       })
     }
     
+    // Get localized success message
+    const successMessage = (machinesService as any).t(
+      "machine.message.created", 
+      i18nContext.language,
+      "Machine created successfully"
+    )
+    
     res.status(201).json({
-      machine
+      machine,
+      message: successMessage,
+      language: i18nContext.language,
     })
   } catch (error) {
     console.error("Error creating machine:", error)

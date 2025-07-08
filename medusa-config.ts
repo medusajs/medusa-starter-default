@@ -15,6 +15,9 @@ module.exports = defineConfig({
   },
   modules: [
     {
+      resolve: "./src/modules/user-preferences",
+    },
+    {
       resolve: "./src/modules/stock-location-details",
     },
     {
