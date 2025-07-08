@@ -1,6 +1,6 @@
 import React from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { Plus, Eye, PencilSquare, Trash } from "@medusajs/icons"
+import { Plus, Eye, PencilSquare, Trash, Users } from "@medusajs/icons"
 import { 
   Container, 
   Heading, 
@@ -582,4 +582,5 @@ export default TechniciansPage
 export const config = defineRouteConfig({
   label: "Technicians",
   path: "/technicians",
+  icon: Users,
 }) 
