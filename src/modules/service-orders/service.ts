@@ -84,51 +84,31 @@ class ServiceOrdersService extends MedusaService({
     userId: string, 
     reason?: string
   ) {
-    console.log("=== SERVICE: updateServiceOrderStatus called ===")
-    console.log(`Service order ID: ${id}`)
-    console.log(`New status: ${newStatus}`)
-    console.log(`User ID: ${userId}`)
-    console.log(`Reason: ${reason}`)
-    
-    // First, get the current service order
+    // Get the current service order
     const serviceOrder = await this.retrieveServiceOrder(id)
     if (!serviceOrder) {
-      console.log("Service order not found!")
       throw new Error("Service order not found")
     }
     
     const oldStatus = serviceOrder.status
-    console.log(`Current status from DB: ${oldStatus}`)
-    console.log(`Changing from ${oldStatus} to ${newStatus}`)
-    
-    // MedusaJS Best Practice: Use proper update method with ID and data
-    console.log("Using MedusaJS best practice update pattern...")
     
     try {
-      // Use the correct MedusaJS update pattern: pass update object with id
+      // Update the service order status
       const updatedServiceOrder = await this.updateServiceOrders({
         id: id,
         status: newStatus,
         updated_by: userId,
       })
       
-      console.log("Update completed, result:", JSON.stringify(updatedServiceOrder, null, 2))
-      
       // Verify the update worked
       const verifyUpdate = await this.retrieveServiceOrder(id)
-      console.log(`Verification - status after update: ${verifyUpdate?.status}`)
       
       if (verifyUpdate?.status !== newStatus) {
-        console.log("Standard update failed, database is not persisting the change")
-        
-        // This appears to be a deeper database schema or transaction issue
-        // The update call succeeds but the database doesn't persist the status change
         throw new Error(`Database persistence failure: Status change from '${oldStatus}' to '${newStatus}' was not saved. This suggests a database schema, constraint, or transaction issue.`)
       }
       
       // Create status history
-      console.log("Creating status history entry...")
-      const historyEntry = await this.createServiceOrderStatusHistories({
+      await this.createServiceOrderStatusHistories({
         service_order_id: id,
         from_status: oldStatus,
         to_status: newStatus,
@@ -136,13 +116,10 @@ class ServiceOrdersService extends MedusaService({
         changed_at: new Date(),
         reason,
       })
-      console.log("Status history created:", historyEntry.id)
       
-      console.log("=== SERVICE: updateServiceOrderStatus complete ===")
       return updatedServiceOrder
       
     } catch (error) {
-      console.error("Error in updateServiceOrderStatus:", error)
       throw error
     }
   }
