@@ -3,6 +3,12 @@ description:
 globs: 
 alwaysApply: false
 ---
+---
+description:medusa-native-patterns
+glob:
+alwaysApply: true
+---
+
 Rule Name: medusa-native-patterns
 Description: MedusaJS development guide that references native source patterns from .medusa-source folder for accurate implementation following official conventions and architecture.
 
@@ -37,4 +43,5 @@ AI Reasoning:
 - Always reference native source patterns from `.medusa-source` before suggesting implementations
 - Ask clarifying questions when multiple approaches exist in the source
 - Prioritize consistency with MedusaJS conventions
+
 - Consider performance and maintainability implications

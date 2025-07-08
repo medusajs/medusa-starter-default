@@ -7,7 +7,7 @@ export default defineLink(
     linkable: ServiceOrdersModule.linkable.serviceOrderItem,
     field: "variant_id",
   },
-  ProductModule.linkable.product_variant,
+  ProductModule.linkable.productVariant,
   {
     readOnly: true,
   }
