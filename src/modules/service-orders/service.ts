@@ -100,40 +100,77 @@ class ServiceOrdersService extends MedusaService({
     console.log(`Current status from DB: ${oldStatus}`)
     console.log(`Changing from ${oldStatus} to ${newStatus}`)
     
-    // Update service order
-    console.log("Calling updateServiceOrders...")
-    const updatedServiceOrders = await this.updateServiceOrders(
-      { id }, 
-      { 
-        status: newStatus,
-        updated_by: userId,
+    // Try a more direct approach - update the specific service order by ID
+    console.log("Attempting direct update...")
+    try {
+      // Use the repository directly to update the status
+      const updatedServiceOrders = await this.updateServiceOrders(
+        { id }, 
+        { 
+          status: newStatus,
+          updated_by: userId,
+        }
+      )
+      
+      console.log("Direct update completed")
+      console.log("Raw result:", JSON.stringify(updatedServiceOrders, null, 2))
+      
+      // Get the updated service order to verify the change
+      const verifyUpdate = await this.retrieveServiceOrder(id)
+      console.log(`Verification check - status after update: ${verifyUpdate?.status}`)
+      
+      // If the verification shows the status wasn't updated, try alternative approach
+      if (verifyUpdate?.status !== newStatus) {
+        console.log("Status update failed, trying alternative approach...")
+        
+        // Alternative: Try creating a new service order with all existing data but new status
+        const { id: _, ...serviceOrderData } = serviceOrder
+        const updatedData = {
+          ...serviceOrderData,
+          status: newStatus,
+          updated_by: userId,
+        }
+        
+        console.log("Trying update with full data...")
+        const alternativeUpdate = await this.updateServiceOrders(
+          { id }, 
+          updatedData
+        )
+        
+        console.log("Alternative update result:", JSON.stringify(alternativeUpdate, null, 2))
+        
+        // Verify again
+        const verifyAlternative = await this.retrieveServiceOrder(id)
+        console.log(`After alternative update - status: ${verifyAlternative?.status}`)
+        
+        if (verifyAlternative?.status !== newStatus) {
+          throw new Error(`Failed to update status. Expected: ${newStatus}, Got: ${verifyAlternative?.status}`)
+        }
       }
-    )
-    
-    console.log("updateServiceOrders completed")
-    console.log("Raw result:", JSON.stringify(updatedServiceOrders, null, 2))
-    
-    // updateServiceOrders returns an array, get the first item
-    const updatedServiceOrder = Array.isArray(updatedServiceOrders) 
-      ? updatedServiceOrders[0] 
-      : updatedServiceOrders
-    
-    console.log(`Final updated service order status: ${updatedServiceOrder?.status}`)
-    
-    // Create status history
-    console.log("Creating status history entry...")
-    const historyEntry = await this.createServiceOrderStatusHistories({
-      service_order_id: id,
-      from_status: oldStatus,
-      to_status: newStatus,
-      changed_by: userId,
-      changed_at: new Date(),
-      reason,
-    })
-    console.log("Status history created:", historyEntry.id)
-    
-    console.log("=== SERVICE: updateServiceOrderStatus complete ===")
-    return updatedServiceOrder
+      
+      // Get the final updated service order
+      const finalServiceOrder = await this.retrieveServiceOrder(id)
+      console.log(`Final service order status: ${finalServiceOrder?.status}`)
+      
+      // Create status history
+      console.log("Creating status history entry...")
+      const historyEntry = await this.createServiceOrderStatusHistories({
+        service_order_id: id,
+        from_status: oldStatus,
+        to_status: newStatus,
+        changed_by: userId,
+        changed_at: new Date(),
+        reason,
+      })
+      console.log("Status history created:", historyEntry.id)
+      
+      console.log("=== SERVICE: updateServiceOrderStatus complete ===")
+      return finalServiceOrder
+      
+    } catch (error) {
+      console.error("Error in updateServiceOrderStatus:", error)
+      throw error
+    }
   }
   
   async addServiceOrderItem(serviceOrderId: string, itemData: CreateServiceOrderItemInput) {
