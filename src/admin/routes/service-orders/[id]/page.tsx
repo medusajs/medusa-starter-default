@@ -1,5 +1,5 @@
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { ArrowLeft, Clock, Package, ReceiptPercent, Settings, Wrench } from "@medusajs/icons"
+import { ArrowLeft, Clock, ReceiptPercent, CogSixTooth, Tools } from "@medusajs/icons"
 import {
   Badge,
   Button,
@@ -9,7 +9,6 @@ import {
   Tabs,
   Text,
   Table,
-  Card,
   Input,
   Select,
   Textarea,
@@ -122,7 +121,7 @@ const ServiceOrderDetails = () => {
     draft: "orange",
     scheduled: "blue",
     in_progress: "purple", 
-    waiting_parts: "yellow",
+    waiting_parts: "orange",
     customer_approval: "orange",
     completed: "green",
     cancelled: "red",
@@ -168,11 +167,11 @@ const ServiceOrderDetails = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <Tabs.List>
           <Tabs.Trigger value="overview">
-            <Settings className="w-4 h-4" />
+            <CogSixTooth className="w-4 h-4" />
             Overview
           </Tabs.Trigger>
           <Tabs.Trigger value="items">
-            <Package className="w-4 h-4" />
+            <Tools className="w-4 h-4" />
             Parts & Items ({items?.items?.length || 0})
           </Tabs.Trigger>
           <Tabs.Trigger value="time">
@@ -215,11 +214,9 @@ const ServiceOrderDetails = () => {
 const OverviewTab = ({ serviceOrder }: { serviceOrder: any }) => (
   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div className="lg:col-span-2">
-      <Card>
-        <Card.Header>
-          <Heading level="h3">Service Details</Heading>
-        </Card.Header>
-        <Card.Body className="space-y-4">
+      <Container className="p-6 bg-ui-bg-subtle rounded-lg">
+        <Heading level="h3">Service Details</Heading>
+        <div className="space-y-4 mt-4">
           <div>
             <Text size="small" weight="plus" className="text-ui-fg-subtle">Description</Text>
             <Text>{serviceOrder.description}</Text>
@@ -240,16 +237,14 @@ const OverviewTab = ({ serviceOrder }: { serviceOrder: any }) => (
               <Badge>{serviceOrder.priority}</Badge>
             </div>
           </div>
-        </Card.Body>
-      </Card>
+        </div>
+      </Container>
     </div>
     
     <div>
-      <Card>
-        <Card.Header>
-          <Heading level="h3">Cost Summary</Heading>
-        </Card.Header>
-        <Card.Body className="space-y-3">
+      <Container className="p-6 bg-ui-bg-subtle rounded-lg">
+        <Heading level="h3">Cost Summary</Heading>
+        <div className="space-y-3 mt-4">
           <div className="flex justify-between">
             <Text size="small">Labor Cost:</Text>
             <Text size="small">${serviceOrder.total_labor_cost?.toFixed(2) || '0.00'}</Text>
@@ -266,8 +261,8 @@ const OverviewTab = ({ serviceOrder }: { serviceOrder: any }) => (
             <Text size="small">Hours (Est/Actual):</Text>
             <Text size="small">{serviceOrder.estimated_hours || 0}/{serviceOrder.actual_hours || 0}</Text>
           </div>
-        </Card.Body>
-      </Card>
+        </div>
+      </Container>
     </div>
   </div>
 )
@@ -308,11 +303,9 @@ const ItemsTab = ({ items, onAddItem }: { items: any[]; onAddItem: (data: any) =
       </div>
 
       {showAddForm && (
-        <Card>
-          <Card.Header>
-            <Heading level="h4">Add New Item</Heading>
-          </Card.Header>
-          <Card.Body>
+        <Container className="p-6 bg-ui-bg-subtle rounded-lg">
+          <Heading level="h3">Add New Item</Heading>
+          <div className="space-y-4 mt-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
@@ -354,13 +347,13 @@ const ItemsTab = ({ items, onAddItem }: { items: any[]; onAddItem: (data: any) =
                 </Button>
               </div>
             </form>
-          </Card.Body>
-        </Card>
+          </div>
+        </Container>
       )}
 
       {items.length === 0 ? (
         <div className="text-center py-8">
-          <Package className="w-12 h-12 mx-auto mb-4 text-ui-fg-muted" />
+          <Tools className="w-12 h-12 mx-auto mb-4 text-ui-fg-muted" />
           <Text>No items added yet</Text>
         </div>
       ) : (
@@ -452,11 +445,9 @@ const TimeEntriesTab = ({ timeEntries, onAddTimeEntry }: { timeEntries: any[]; o
       </div>
 
       {showAddForm && (
-        <Card>
-          <Card.Header>
-            <Heading level="h4">Add Time Entry</Heading>
-          </Card.Header>
-          <Card.Body>
+        <Container className="p-6 bg-ui-bg-subtle rounded-lg">
+          <Heading level="h3">Add Time Entry</Heading>
+          <div className="space-y-4 mt-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <Textarea
                 placeholder="Work description"
@@ -517,8 +508,8 @@ const TimeEntriesTab = ({ timeEntries, onAddTimeEntry }: { timeEntries: any[]; o
                 </Button>
               </div>
             </form>
-          </Card.Body>
-        </Card>
+          </div>
+        </Container>
       )}
 
       {timeEntries.length === 0 ? (
@@ -656,40 +647,36 @@ const StatusUpdateForm = ({ currentStatus, onStatusUpdate }: { currentStatus: st
   }
 
   return (
-    <Card className="w-80">
-      <Card.Header>
-        <Heading level="h4">Update Status</Heading>
-      </Card.Header>
-      <Card.Body>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Select value={newStatus} onValueChange={setNewStatus}>
-            <Select.Trigger>
-              <Select.Value placeholder="Select new status" />
-            </Select.Trigger>
-            <Select.Content>
-              {statuses.filter(s => s !== currentStatus).map(status => (
-                <Select.Item key={status} value={status}>
-                  {status.replace('_', ' ')}
-                </Select.Item>
-              ))}
-            </Select.Content>
-          </Select>
-          <Textarea
-            placeholder="Reason for status change (optional)"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-          />
-          <div className="flex gap-2">
-            <Button type="submit" size="small" disabled={!newStatus}>
-              Update
-            </Button>
-            <Button type="button" variant="secondary" size="small" onClick={() => setShowForm(false)}>
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </Card.Body>
-    </Card>
+    <Container className="w-80 p-6 bg-ui-bg-subtle rounded-lg">
+      <Heading level="h3">Update Status</Heading>
+      <div className="space-y-4 mt-4">
+        <Select value={newStatus} onValueChange={setNewStatus}>
+          <Select.Trigger>
+            <Select.Value placeholder="Select new status" />
+          </Select.Trigger>
+          <Select.Content>
+            {statuses.filter(s => s !== currentStatus).map(status => (
+              <Select.Item key={status} value={status}>
+                {status.replace('_', ' ')}
+              </Select.Item>
+            ))}
+          </Select.Content>
+        </Select>
+        <Textarea
+          placeholder="Reason for status change (optional)"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+        />
+        <div className="flex gap-2">
+          <Button type="submit" size="small" disabled={!newStatus}>
+            Update
+          </Button>
+          <Button type="button" variant="secondary" size="small" onClick={() => setShowForm(false)}>
+            Cancel
+          </Button>
+        </div>
+      </div>
+    </Container>
   )
 }
 

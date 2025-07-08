@@ -8,7 +8,6 @@ import {
   Input,
   Textarea,
   Select,
-  Card,
   DatePicker,
   toast,
 } from "@medusajs/ui"
@@ -96,14 +95,12 @@ const CreateServiceOrder = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Details */}
           <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <Card.Header>
-                <Heading level="h3">Service Details</Heading>
-                <Text size="small" className="text-ui-fg-subtle">
-                  Basic information about the service order
-                </Text>
-              </Card.Header>
-              <Card.Body className="space-y-4">
+            <div className="bg-ui-surface-base rounded-lg p-6">
+              <Heading level="h3">Service Details</Heading>
+              <Text size="small" className="text-ui-fg-subtle">
+                Basic information about the service order
+              </Text>
+              <div className="mt-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Description *
@@ -152,17 +149,15 @@ const CreateServiceOrder = () => {
                     rows={2}
                   />
                 </div>
-              </Card.Body>
-            </Card>
+              </div>
+            </div>
 
-            <Card>
-              <Card.Header>
-                <Heading level="h3">Scheduling</Heading>
-                <Text size="small" className="text-ui-fg-subtle">
-                  Schedule the service work
-                </Text>
-              </Card.Header>
-              <Card.Body className="space-y-4">
+            <div className="bg-ui-surface-base rounded-lg p-6">
+              <Heading level="h3">Scheduling</Heading>
+              <Text size="small" className="text-ui-fg-subtle">
+                Schedule the service work
+              </Text>
+              <div className="mt-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">
@@ -214,20 +209,18 @@ const CreateServiceOrder = () => {
                     />
                   </div>
                 </div>
-              </Card.Body>
-            </Card>
+              </div>
+            </div>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            <Card>
-              <Card.Header>
-                <Heading level="h3">Classification</Heading>
-                <Text size="small" className="text-ui-fg-subtle">
-                  Categorize this service order
-                </Text>
-              </Card.Header>
-              <Card.Body className="space-y-4">
+            <div className="bg-ui-surface-base rounded-lg p-6">
+              <Heading level="h3">Classification</Heading>
+              <Text size="small" className="text-ui-fg-subtle">
+                Categorize this service order
+              </Text>
+              <div className="mt-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Service Type
@@ -268,38 +261,34 @@ const CreateServiceOrder = () => {
                     </Select.Content>
                   </Select>
                 </div>
-              </Card.Body>
-            </Card>
+              </div>
+            </div>
 
-            <Card>
-              <Card.Header>
-                <Heading level="h3">Cost Estimate</Heading>
-                <Text size="small" className="text-ui-fg-subtle">
-                  Estimated labor cost
-                </Text>
-              </Card.Header>
-              <Card.Body>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <Text>Estimated Hours:</Text>
-                    <Text>{formData.estimated_hours || 0}h</Text>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <Text>Labor Rate:</Text>
-                    <Text>${formData.labor_rate}/hr</Text>
-                  </div>
-                  <div className="flex justify-between text-sm border-t pt-2">
-                    <Text weight="plus">Estimated Labor Cost:</Text>
-                    <Text weight="plus">
-                      ${((formData.estimated_hours || 0) * (formData.labor_rate || 0)).toFixed(2)}
-                    </Text>
-                  </div>
-                  <Text size="small" className="text-ui-fg-subtle">
-                    * Parts cost will be added separately
+            <div className="bg-ui-surface-base rounded-lg p-6">
+              <Heading level="h3">Cost Estimate</Heading>
+              <Text size="small" className="text-ui-fg-subtle">
+                Estimated labor cost
+              </Text>
+              <div className="mt-6 space-y-3">
+                <div className="flex justify-between text-sm">
+                  <Text>Estimated Hours:</Text>
+                  <Text>{formData.estimated_hours || 0}h</Text>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <Text>Labor Rate:</Text>
+                  <Text>${formData.labor_rate}/hr</Text>
+                </div>
+                <div className="flex justify-between text-sm border-t pt-2">
+                  <Text weight="plus">Estimated Labor Cost:</Text>
+                  <Text weight="plus">
+                    ${((formData.estimated_hours || 0) * (formData.labor_rate || 0)).toFixed(2)}
                   </Text>
                 </div>
-              </Card.Body>
-            </Card>
+                <Text size="small" className="text-ui-fg-subtle">
+                  * Parts cost will be added separately
+                </Text>
+              </div>
+            </div>
 
             {/* Action Buttons */}
             <div className="space-y-3">
