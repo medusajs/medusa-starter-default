@@ -6,6 +6,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     const serviceOrdersService: any = req.scope.resolve(SERVICE_ORDERS_MODULE)
     const { id } = req.params
     
+    console.log(`Fetching service order: ${id}`)
+    
     const serviceOrder = await serviceOrdersService.getServiceOrdersWithItems(id)
     
     if (!serviceOrder) {
@@ -14,8 +16,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       })
     }
     
+    console.log(`Service order status: ${serviceOrder.status}`)
+    
     res.json({ service_order: serviceOrder })
   } catch (error) {
+    console.error("Error fetching service order:", error)
     res.status(500).json({ 
       error: "Failed to fetch service order",
       details: error instanceof Error ? error.message : "Unknown error"

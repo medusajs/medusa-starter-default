@@ -92,13 +92,18 @@ class ServiceOrdersService extends MedusaService({
     const oldStatus = serviceOrder.status
     
     // Update service order
-    const updatedServiceOrder = await this.updateServiceOrders(
+    const updatedServiceOrders = await this.updateServiceOrders(
       { id }, 
       { 
         status: newStatus,
         updated_by: userId,
       }
     )
+    
+    // updateServiceOrders returns an array, get the first item
+    const updatedServiceOrder = Array.isArray(updatedServiceOrders) 
+      ? updatedServiceOrders[0] 
+      : updatedServiceOrders
     
     // Create status history
     await this.createServiceOrderStatusHistories({

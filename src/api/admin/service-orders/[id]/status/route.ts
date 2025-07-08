@@ -17,6 +17,8 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     const { status, reason } = req.body as any
     
+    console.log(`Updating service order ${id} status from ? to ${status}, reason: ${reason}`)
+    
     // Validate status
     if (!status || !VALID_STATUSES.includes(status)) {
       return res.status(400).json({ 
@@ -32,8 +34,11 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
       reason
     )
     
+    console.log(`Service order ${id} updated successfully. New status: ${updatedServiceOrder?.status}`)
+    
     res.json({ service_order: updatedServiceOrder })
   } catch (error) {
+    console.error("Error updating service order status:", error)
     res.status(500).json({ 
       error: "Failed to update service order status",
       details: error instanceof Error ? error.message : "Unknown error"

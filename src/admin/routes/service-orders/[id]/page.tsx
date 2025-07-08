@@ -23,7 +23,7 @@ const ServiceOrderDetails = () => {
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState("overview")
 
-  const { data: serviceOrder, isLoading } = useQuery({
+  const { data: serviceOrder, isLoading, refetch } = useQuery({
     queryKey: ["service-order", id],
     queryFn: async () => {
       const response = await fetch(`/admin/service-orders/${id}`)
@@ -60,15 +60,28 @@ const ServiceOrderDetails = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status, reason }),
       })
-      if (!response.ok) throw new Error("Failed to update status")
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.details || "Failed to update status")
+      }
+      
       return response.json()
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      console.log("Status update successful:", data)
       toast.success("Service order status updated successfully!")
+      
+      // Force refetch the service order data
+      await refetch()
+      
+      // Also invalidate all related queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["service-order", id] })
+      queryClient.invalidateQueries({ queryKey: ["service-orders"] })
     },
     onError: (error: Error) => {
-      toast.error(error.message)
+      console.error("Status update failed:", error)
+      toast.error(`Failed to update status: ${error.message}`)
     },
   })
 
@@ -653,20 +666,19 @@ const StatusUpdateForm = ({ currentStatus, onStatusUpdate }: { currentStatus: st
     { value: 'cancelled', label: 'Cancelled' }
   ]
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (newStatus && newStatus !== currentStatus && !isUpdating) {
       setIsUpdating(true)
-      try {
-        await onStatusUpdate(newStatus, reason)
-        setShowForm(false)
-        setReason('')
-        setNewStatus('')
-      } catch (error) {
-        // Error handling is done in the mutation
-      } finally {
-        setIsUpdating(false)
-      }
+      console.log("Submitting status update:", newStatus, reason)
+      
+      onStatusUpdate(newStatus, reason)
+      
+      // Close form immediately and reset
+      setShowForm(false)
+      setReason('')
+      setNewStatus('')
+      setIsUpdating(false)
     }
   }
 
@@ -680,7 +692,7 @@ const StatusUpdateForm = ({ currentStatus, onStatusUpdate }: { currentStatus: st
 
   return (
     <div className="relative">
-      <div className="absolute right-0 top-0 w-80 p-6 bg-ui-bg-base border border-ui-border-base rounded-lg shadow-lg z-10">
+      <div className="absolute right-0 top-0 w-80 p-6 bg-ui-bg-base border border-ui-border-base rounded-lg shadow-lg z-50">
         <form onSubmit={handleSubmit}>
           <Heading level="h3" className="mb-4">Update Status</Heading>
           <div className="space-y-4">
@@ -690,7 +702,7 @@ const StatusUpdateForm = ({ currentStatus, onStatusUpdate }: { currentStatus: st
                 <Select.Trigger>
                   <Select.Value placeholder="Select new status" />
                 </Select.Trigger>
-                <Select.Content>
+                <Select.Content className="z-[60]">
                   {statuses.filter(s => s.value !== currentStatus).map(status => (
                     <Select.Item key={status.value} value={status.value}>
                       {status.label}
