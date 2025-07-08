@@ -80,7 +80,7 @@ class ServiceOrdersService extends MedusaService({
   
   async updateServiceOrderStatus(
     id: string, 
-    newStatus: string, 
+    newStatus: typeof ServiceOrderStatus[keyof typeof ServiceOrderStatus], 
     userId: string, 
     reason?: string
   ) {
@@ -101,22 +101,16 @@ class ServiceOrdersService extends MedusaService({
     console.log(`Current status from DB: ${oldStatus}`)
     console.log(`Changing from ${oldStatus} to ${newStatus}`)
     
-    // MedusaJS Best Practice: Use proper update method with selector and data
+    // MedusaJS Best Practice: Use proper update method with ID and data
     console.log("Using MedusaJS best practice update pattern...")
     
     try {
-      // Method 1: Direct entity update using the base service
-      const updateData = {
+      // Use the correct MedusaJS update pattern: pass update object with id
+      const updatedServiceOrder = await this.updateServiceOrders({
+        id: id,
         status: newStatus,
         updated_by: userId,
-      }
-      
-      console.log("Update data:", updateData)
-      
-      // Use the standard MedusaJS update pattern
-      const updatedServiceOrder = await this.updateServiceOrders(
-        { id: id, ...updateData }
-      )
+      })
       
       console.log("Update completed, result:", JSON.stringify(updatedServiceOrder, null, 2))
       
@@ -125,26 +119,11 @@ class ServiceOrdersService extends MedusaService({
       console.log(`Verification - status after update: ${verifyUpdate?.status}`)
       
       if (verifyUpdate?.status !== newStatus) {
-        console.log("Standard update failed, trying alternative approach...")
+        console.log("Standard update failed, database is not persisting the change")
         
-        // Alternative: Use update with selector/data pattern
-        const alternativeResult = await this.updateServiceOrders({
-          selector: { id: id },
-          data: { status: newStatus, updated_by: userId }
-        })
-        
-        console.log("Alternative update result:", JSON.stringify(alternativeResult, null, 2))
-        
-        // Final verification
-        const finalVerify = await this.retrieveServiceOrder(id)
-        console.log(`Final verification - status: ${finalVerify?.status}`)
-        
-        if (finalVerify?.status !== newStatus) {
-          throw new Error(`Failed to update status. Database is not accepting the change. Expected: ${newStatus}, Got: ${finalVerify?.status}`)
-        }
-        
-        // Use the verified service order
-        return finalVerify
+        // This appears to be a deeper database schema or transaction issue
+        // The update call succeeds but the database doesn't persist the status change
+        throw new Error(`Database persistence failure: Status change from '${oldStatus}' to '${newStatus}' was not saved. This suggests a database schema, constraint, or transaction issue.`)
       }
       
       // Create status history
