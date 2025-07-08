@@ -33,16 +33,12 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
         { notes: { $ilike: `%${q}%` } },
       ]
     }
-    
-    // Use Query to get machines with their related data
+
+    // Use Query to get machines with basic data for now
+    // TODO: Add relationships once module links are properly configured
     const { data: machines } = await query.graph({
       entity: "machine",
-      fields: [
-        "*",
-        "brand.*", // Include brand information
-        "customer.*", // Include customer information
-        "service_orders.*", // Include service orders
-      ],
+      fields: ["*"],
       filters: queryFilters,
       pagination: {
         take: Number(limit),
@@ -51,7 +47,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     })
     
     // Get count using the machines service
-    const machinesService: MachinesModuleService = req.scope.resolve(MACHINES_MODULE)
+    const machinesService = req.scope.resolve(MACHINES_MODULE) as MachinesModuleService
     const [, count] = await machinesService.listAndCountMachines(queryFilters, {
       take: Number(limit),
       skip: Number(offset),
@@ -74,8 +70,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
-    const machinesService: MachinesModuleService = req.scope.resolve(MACHINES_MODULE)
-    const linkService = req.scope.resolve("linkService")
+    const machinesService = req.scope.resolve(MACHINES_MODULE) as MachinesModuleService
     
     const body = req.body as any
     const { brand_id, customer_id, ...machineData } = body
@@ -94,38 +89,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       customer_id, // Store for backward compatibility
     }])
     
-    // Create module links
-    const linkPromises = []
-    
-    // Link to brand if provided
-    if (brand_id) {
-      linkPromises.push(
-        linkService.create({
-          machines: {
-            machine_id: machine.id,
-          },
-          brands: {
-            brand_id: brand_id,
-          },
-        })
-      )
-    }
-    
-    // Link to customer if provided
-    if (customer_id) {
-      linkPromises.push(
-        linkService.create({
-          machines: {
-            machine_id: machine.id,
-          },
-          customer: {
-            customer_id: customer_id,
-          },
-        })
-      )
-    }
-    
-    await Promise.all(linkPromises)
+    // TODO: Add module link creation once links are properly configured
+    // For now, we'll store the relationships in the traditional way
     
     res.status(201).json({
       machine,

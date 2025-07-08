@@ -7,15 +7,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
     
-    // Use query.graph to get machine with all its relationships
+    // Use query.graph to get machine with basic data for now
+    // TODO: Add relationships once module links are properly configured
     const { data: machines } = await query.graph({
       entity: "machine",
-      fields: [
-        "*",
-        "brand.*", // Include brand information
-        "customer.*", // Include customer information  
-        "service_orders.*", // Include service orders
-      ],
+      fields: ["*"],
       filters: { id },
     })
     
@@ -41,60 +37,17 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
   try {
     const { id } = req.params
     const machinesService = req.scope.resolve(MACHINES_MODULE) as MachinesModuleService
-    const linkService = req.scope.resolve("linkService") as any
     
     const body = req.body as any
     const { brand_id, customer_id, ...machineData } = body
     
     // Update the machine
-    const [machine] = await machinesService.updateMachines({ id }, machineData)
+    const machines = await machinesService.updateMachines({ id }, machineData)
+    const machine = Array.isArray(machines) ? machines[0] : machines
     
-    // Handle brand link updates
-    if (brand_id !== undefined) {
-      // Remove existing brand links for this machine
-      await linkService.dismiss({
-        machines: {
-          machine_id: id,
-        },
-        brands: "*", // Remove all brand links for this machine
-      })
-      
-      // Create new brand link if brand_id is provided
-      if (brand_id) {
-        await linkService.create({
-          machines: {
-            machine_id: id,
-          },
-          brands: {
-            brand_id: brand_id,
-          },
-        })
-      }
-    }
-    
-    // Handle customer link updates
+    // TODO: Handle module links once they are properly configured
+    // For now, if customer_id is provided, update it directly
     if (customer_id !== undefined) {
-      // Remove existing customer links for this machine
-      await linkService.dismiss({
-        machines: {
-          machine_id: id,
-        },
-        customer: "*", // Remove all customer links for this machine
-      })
-      
-      // Create new customer link if customer_id is provided
-      if (customer_id) {
-        await linkService.create({
-          machines: {
-            machine_id: id,
-          },
-          customer: {
-            customer_id: customer_id,
-          },
-        })
-      }
-      
-      // Also update the machine's customer_id field for backward compatibility
       await machinesService.updateMachines({ id }, { customer_id })
     }
     
@@ -114,22 +67,8 @@ export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
   try {
     const { id } = req.params
     const machinesService = req.scope.resolve(MACHINES_MODULE) as MachinesModuleService
-    const linkService = req.scope.resolve("linkService") as any
     
-    // Remove all module links for this machine
-    await linkService.dismiss({
-      machines: {
-        machine_id: id,
-      },
-      brands: "*",
-    })
-    
-    await linkService.dismiss({
-      machines: {
-        machine_id: id,
-      },
-      customer: "*",
-    })
+    // TODO: Remove module links once they are properly configured
     
     // Delete the machine
     await machinesService.deleteMachines([id])

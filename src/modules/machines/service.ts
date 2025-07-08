@@ -111,12 +111,12 @@ export default class MachinesModuleService
     status: "active" | "inactive" | "maintenance" | "sold",
     @MedusaContext() sharedContext: Context = {}
   ): Promise<MachineDTO> {
-    const [machine] = await this.updateMachines(
-      machineId,
+    const machines = await this.updateMachines(
+      { id: machineId },
       { status },
       sharedContext
     )
-    return machine
+    return Array.isArray(machines) ? machines[0] : machines
   }
 
   @InjectManager()
