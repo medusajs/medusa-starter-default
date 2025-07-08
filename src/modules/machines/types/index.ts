@@ -1,6 +1,7 @@
 export type MachineDTO = {
   id: string
-  model: string
+  name: string
+  model_number: string
   serial_number: string
   year?: number | null
   engine_hours?: number | null
@@ -13,6 +14,7 @@ export type MachineDTO = {
   status: "active" | "inactive" | "maintenance" | "sold"
   location?: string | null
   customer_id?: string | null
+  description?: string | null
   notes?: string | null
   metadata?: Record<string, any> | null
   created_at: Date
@@ -21,30 +23,78 @@ export type MachineDTO = {
 }
 
 export type CreateMachineDTO = {
-  model: string
+  name: string
+  model_number: string
   serial_number: string
-  year?: number
-  engine_hours?: number
-  fuel_type?: string
-  horsepower?: number
-  weight?: number
-  purchase_date?: Date
-  purchase_price?: string
-  current_value?: string
+  year?: number | null
+  engine_hours?: number | null
+  fuel_type?: string | null
+  horsepower?: number | null
+  weight?: number | null
+  purchase_date?: Date | null
+  purchase_price?: string | null
+  current_value?: string | null
   status?: "active" | "inactive" | "maintenance" | "sold"
-  location?: string
-  customer_id?: string
-  notes?: string
-  metadata?: Record<string, any>
+  location?: string | null
+  customer_id?: string | null
+  description?: string | null
+  notes?: string | null
+  metadata?: Record<string, any> | null
+}
+
+export type UpdateMachineDTO = {
+  id: string
+  name?: string
+  model_number?: string
+  serial_number?: string
+  year?: number | null
+  engine_hours?: number | null
+  fuel_type?: string | null
+  horsepower?: number | null
+  weight?: number | null
+  purchase_date?: Date | null
+  purchase_price?: string | null
+  current_value?: string | null
+  status?: "active" | "inactive" | "maintenance" | "sold"
+  location?: string | null
+  customer_id?: string | null
+  description?: string | null
+  notes?: string | null
+  metadata?: Record<string, any> | null
+}
+
+export type UpsertMachineDTO = {
+  id?: string
+  name?: string
+  model_number?: string
+  serial_number?: string
+  year?: number | null
+  engine_hours?: number | null
+  fuel_type?: string | null
+  horsepower?: number | null
+  weight?: number | null
+  purchase_date?: Date | null
+  purchase_price?: string | null
+  current_value?: string | null
+  status?: "active" | "inactive" | "maintenance" | "sold"
+  location?: string | null
+  customer_id?: string | null
+  description?: string | null
+  notes?: string | null
+  metadata?: Record<string, any> | null
 }
 
 export type FilterableMachineProps = {
   id?: string | string[]
-  model?: string | string[]
+  name?: string | string[]
+  model_number?: string | string[]
   serial_number?: string | string[]
-  status?: string | string[]
+  year?: number | number[]
+  status?: "active" | "inactive" | "maintenance" | "sold" | string[]
+  location?: string | string[]
   customer_id?: string | string[]
-  location?: string
-  year?: number | { gte?: number; lte?: number }
-  engine_hours?: number | { gte?: number; lte?: number }
+  fuel_type?: string | string[]
+  created_at?: Date
+  updated_at?: Date
+  deleted_at?: Date
 } 

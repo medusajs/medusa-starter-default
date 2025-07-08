@@ -1,54 +1,73 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MACHINES_MODULE, MachinesModuleService } from "../../../modules/machines"
-import { createI18nContext } from "../../../utils/i18n-helper"
+import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
-    const machinesService: MachinesModuleService = req.scope.resolve(MACHINES_MODULE)
-    const query = req.scope.resolve("query")
-    const i18nContext = createI18nContext(req)
+    const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
     
     const { 
       limit = 50, 
       offset = 0,
+      q,
+      status,
+      customer_id,
+      location,
       ...filters 
     } = req.query
     
-    // Use query.graph to get machines with their brand relationships
-    const { data: machines, metadata } = await query.graph({
+    // Build filters
+    const queryFilters: any = { ...filters }
+    
+    if (status) queryFilters.status = status
+    if (customer_id) queryFilters.customer_id = customer_id
+    if (location) queryFilters.location = { $ilike: `%${location}%` }
+    
+    // Add search functionality
+    if (q) {
+      queryFilters.$or = [
+        { name: { $ilike: `%${q}%` } },
+        { model_number: { $ilike: `%${q}%` } },
+        { serial_number: { $ilike: `%${q}%` } },
+        { description: { $ilike: `%${q}%` } },
+        { notes: { $ilike: `%${q}%` } },
+      ]
+    }
+    
+    // Use Query to get machines with their related data
+    const { data: machines } = await query.graph({
       entity: "machine",
-      fields: ["*", "brand.*"],
-      filters,
+      fields: [
+        "*",
+        "brand.*", // Include brand information
+        "customer.*", // Include customer information
+        "service_orders.*", // Include service orders
+      ],
+      filters: queryFilters,
       pagination: {
         take: Number(limit),
         skip: Number(offset),
       },
     })
     
-    // Add localized status to each machine
-    const localizedMachines = machines.map(machine => ({
-      ...machine,
-      localizedStatus: (machinesService as any).t(`machine.status.${machine.status}`, i18nContext.language)
-    }))
-    
-    // Get count using the generated method
-    const [, count] = await machinesService.listAndCountMachines(filters, {
+    // Get count using the machines service
+    const machinesService: MachinesModuleService = req.scope.resolve(MACHINES_MODULE)
+    const [, count] = await machinesService.listAndCountMachines(queryFilters, {
       take: Number(limit),
       skip: Number(offset),
     })
     
     res.json({
-      machines: localizedMachines,
+      machines,
       count,
       offset: Number(offset),
       limit: Number(limit),
-      language: i18nContext.language,
     })
   } catch (error) {
     console.error("Error fetching machines:", error)
     res.status(500).json({ 
       error: "Failed to fetch machines",
-      details: error.message 
+      details: error instanceof Error ? error.message : "Unknown error"
     })
   }
 }
@@ -57,54 +76,65 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     const machinesService: MachinesModuleService = req.scope.resolve(MACHINES_MODULE)
     const linkService = req.scope.resolve("linkService")
-    const i18nContext = createI18nContext(req)
     
     const body = req.body as any
-    const { brand_id, ...machineData } = body
+    const { brand_id, customer_id, ...machineData } = body
     
     // Validate required fields
-    if (!brand_id) {
+    if (!machineData.name || !machineData.model_number || !machineData.serial_number) {
       return res.status(400).json({
-        error: "Missing required field",
-        details: "brand_id is required"
+        error: "Missing required fields",
+        details: "name, model_number, and serial_number are required"
       })
     }
     
-    // Create the machine using the i18n-aware method
-    const machine = await (machinesService as any).createMachineWithI18n(
-      machineData, 
-      i18nContext
-    )
+    // Create the machine
+    const [machine] = await machinesService.createMachines([{
+      ...machineData,
+      customer_id, // Store for backward compatibility
+    }])
     
-    // Create the machine-brand link
+    // Create module links
+    const linkPromises = []
+    
+    // Link to brand if provided
     if (brand_id) {
-      await (linkService as any).create({
-        [MACHINES_MODULE]: {
-          machine_id: machine.id,
-        },
-        brands: {
-          brand_id: brand_id,
-        },
-      })
+      linkPromises.push(
+        linkService.create({
+          machines: {
+            machine_id: machine.id,
+          },
+          brands: {
+            brand_id: brand_id,
+          },
+        })
+      )
     }
     
-    // Get localized success message
-    const successMessage = (machinesService as any).t(
-      "machine.message.created", 
-      i18nContext.language,
-      "Machine created successfully"
-    )
+    // Link to customer if provided
+    if (customer_id) {
+      linkPromises.push(
+        linkService.create({
+          machines: {
+            machine_id: machine.id,
+          },
+          customer: {
+            customer_id: customer_id,
+          },
+        })
+      )
+    }
+    
+    await Promise.all(linkPromises)
     
     res.status(201).json({
       machine,
-      message: successMessage,
-      language: i18nContext.language,
     })
   } catch (error) {
     console.error("Error creating machine:", error)
     res.status(500).json({ 
       error: "Failed to create machine",
-      details: error.message 
+      details: error instanceof Error ? error.message : "Unknown error"
     })
   }
 } 

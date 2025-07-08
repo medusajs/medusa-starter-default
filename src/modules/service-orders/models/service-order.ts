@@ -31,6 +31,7 @@ const ServiceOrder = model.define("service_order", {
   
   // Links to other modules - these will be used for module links
   customer_id: model.text().nullable(), // Links to Customer module
+  machine_id: model.text().nullable(), // Links to Machine module
   technician_id: model.text().nullable(), // Links to Technician module
   
   // Service Details

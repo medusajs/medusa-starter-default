@@ -5,7 +5,8 @@ const Machine = model
     id: model.id({ prefix: "machine" }).primaryKey(),
     
     // Basic Information
-    model: model.text().searchable(),
+    name: model.text().searchable(), // Changed from model to name for consistency
+    model_number: model.text().searchable(), // More descriptive than just "model"
     serial_number: model.text().searchable(),
     year: model.number().nullable(),
     
@@ -13,7 +14,7 @@ const Machine = model
     engine_hours: model.number().nullable(),
     fuel_type: model.text().nullable(),
     horsepower: model.number().nullable(),
-    weight: model.number().nullable(), // in kg or lbs
+    weight: model.number().nullable(), // in kg
     
     // Financial Information
     purchase_date: model.dateTime().nullable(),
@@ -24,10 +25,12 @@ const Machine = model
     status: model.enum(["active", "inactive", "maintenance", "sold"]).default("active"),
     location: model.text().searchable().nullable(),
     
-    // Customer Assignment
+    // Customer Assignment - This will be linked via module links
+    // We keep the ID for backward compatibility but relationships are handled via links
     customer_id: model.text().nullable(),
     
     // Additional Information
+    description: model.text().searchable().nullable(), // Added description field
     notes: model.text().searchable().nullable(),
     metadata: model.json().nullable(),
   })
@@ -51,8 +54,14 @@ const Machine = model
       where: "deleted_at IS NULL",
     },
     {
-      name: "IDX_machine_model",
-      on: ["model"],
+      name: "IDX_machine_model_number",
+      on: ["model_number"],
+      unique: false,
+      where: "deleted_at IS NULL",
+    },
+    {
+      name: "IDX_machine_year",
+      on: ["year"],
       unique: false,
       where: "deleted_at IS NULL",
     },
