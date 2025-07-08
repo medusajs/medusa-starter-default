@@ -29,6 +29,10 @@ const ServiceOrder = model.define("service_order", {
   id: model.id().primaryKey(),
   service_order_number: model.text().unique(), // Auto-generated: SO-2024-001
   
+  // Links to other modules - these will be used for module links
+  customer_id: model.text().nullable(), // Links to Customer module
+  technician_id: model.text().nullable(), // Links to Technician module
+  
   // Service Details
   service_type: model.enum(ServiceOrderType).default(ServiceOrderType.NORMAL),
   status: model.enum(ServiceOrderStatus).default(ServiceOrderStatus.DRAFT),

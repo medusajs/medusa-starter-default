@@ -23,6 +23,8 @@ const ServiceOrdersList = () => {
     status: "",
     priority: "",
     service_type: "",
+    customer_id: "",
+    technician_id: "",
     limit: 50,
     offset: 0,
   })
@@ -40,6 +42,28 @@ const ServiceOrdersList = () => {
       return response.json()
     },
     placeholderData: keepPreviousData,
+  })
+
+  // Fetch customers for filter dropdown
+  const { data: customers = [] } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const response = await fetch('/admin/customers?limit=100')
+      if (!response.ok) throw new Error('Failed to fetch customers')
+      const data = await response.json()
+      return data.customers || []
+    },
+  })
+
+  // Fetch technicians for filter dropdown
+  const { data: technicians = [] } = useQuery({
+    queryKey: ['technicians'],
+    queryFn: async () => {
+      const response = await fetch('/admin/technicians?limit=100')
+      if (!response.ok) throw new Error('Failed to fetch technicians')
+      const data = await response.json()
+      return data.technicians || []
+    },
   })
 
   const statusVariants = {
@@ -86,7 +110,7 @@ const ServiceOrdersList = () => {
 
       {/* Filters */}
       <div className="bg-ui-bg-subtle p-4 rounded-lg mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <Input
             placeholder="Search service orders..."
             value={searchParams.q}
@@ -179,6 +203,65 @@ const ServiceOrdersList = () => {
               </Button>
             )}
           </div>
+          <div className="flex gap-2">
+            <Select
+              value={searchParams.customer_id}
+              onValueChange={(value) =>
+                setSearchParams((prev) => ({ ...prev, customer_id: value }))
+              }
+            >
+              <Select.Trigger>
+                <Select.Value placeholder="All Customers" />
+              </Select.Trigger>
+              <Select.Content>
+                {customers.map((customer: any) => (
+                  <Select.Item key={customer.id} value={customer.id}>
+                    {customer.first_name && customer.last_name 
+                      ? `${customer.first_name} ${customer.last_name}` 
+                      : customer.email}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select>
+            {searchParams.customer_id && (
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => setSearchParams((prev) => ({ ...prev, customer_id: "" }))}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Select
+              value={searchParams.technician_id}
+              onValueChange={(value) =>
+                setSearchParams((prev) => ({ ...prev, technician_id: value }))
+              }
+            >
+              <Select.Trigger>
+                <Select.Value placeholder="All Technicians" />
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="">Unassigned</Select.Item>
+                {technicians.map((technician: any) => (
+                  <Select.Item key={technician.id} value={technician.id}>
+                    {technician.first_name} {technician.last_name}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select>
+            {searchParams.technician_id && (
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => setSearchParams((prev) => ({ ...prev, technician_id: "" }))}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -211,6 +294,8 @@ const ServiceOrdersList = () => {
             <Table.Header>
               <Table.Row>
                 <Table.HeaderCell>Service Order</Table.HeaderCell>
+                <Table.HeaderCell>Customer</Table.HeaderCell>
+                <Table.HeaderCell>Technician</Table.HeaderCell>
                 <Table.HeaderCell>Description</Table.HeaderCell>
                 <Table.HeaderCell>Type</Table.HeaderCell>
                 <Table.HeaderCell>Status</Table.HeaderCell>
@@ -232,6 +317,36 @@ const ServiceOrdersList = () => {
                         {serviceOrder.service_order_number}
                       </Text>
                     </Link>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text size="small">
+                      {serviceOrder.customer ? (
+                        serviceOrder.customer.first_name && serviceOrder.customer.last_name 
+                          ? `${serviceOrder.customer.first_name} ${serviceOrder.customer.last_name}`
+                          : serviceOrder.customer.email
+                      ) : (
+                        <Text className="text-ui-fg-muted">No customer</Text>
+                      )}
+                    </Text>
+                    {serviceOrder.customer?.company_name && (
+                      <Text size="small" className="text-ui-fg-subtle">
+                        {serviceOrder.customer.company_name}
+                      </Text>
+                    )}
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text size="small">
+                      {serviceOrder.technician ? (
+                        `${serviceOrder.technician.first_name} ${serviceOrder.technician.last_name}`
+                      ) : (
+                        <Text className="text-ui-fg-muted">Unassigned</Text>
+                      )}
+                    </Text>
+                    {serviceOrder.technician?.position && (
+                      <Text size="small" className="text-ui-fg-subtle">
+                        {serviceOrder.technician.position}
+                      </Text>
+                    )}
                   </Table.Cell>
                   <Table.Cell>
                     <Text size="small" className="line-clamp-2">

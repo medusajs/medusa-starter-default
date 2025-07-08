@@ -9,6 +9,13 @@ export const SERVICE_ORDERS_MODULE = "serviceOrders"
 
 const ServiceOrdersModule = Module(SERVICE_ORDERS_MODULE, {
   service: ServiceOrdersService,
+  models: [ServiceOrder, ServiceOrderItem, ServiceOrderTimeEntry, ServiceOrderStatusHistory],
+  linkable: {
+    service_order: ServiceOrder,
+    service_order_item: ServiceOrderItem,
+    service_order_time_entry: ServiceOrderTimeEntry,
+    service_order_status_history: ServiceOrderStatusHistory,
+  },
 })
 
 export default ServiceOrdersModule

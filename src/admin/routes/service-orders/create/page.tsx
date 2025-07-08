@@ -11,7 +11,7 @@ import {
   DatePicker,
   toast,
 } from "@medusajs/ui"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 
@@ -21,6 +21,8 @@ const CreateServiceOrder = () => {
     description: '',
     service_type: 'normal',
     priority: 'normal',
+    customer_id: '',
+    technician_id: '',
     customer_complaint: '',
     scheduled_start_date: '',
     scheduled_end_date: '',
@@ -28,6 +30,28 @@ const CreateServiceOrder = () => {
     labor_rate: 85,
     diagnosis: '',
     notes: '',
+  })
+
+  // Fetch customers
+  const { data: customers = [] } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const response = await fetch('/admin/customers?limit=100')
+      if (!response.ok) throw new Error('Failed to fetch customers')
+      const data = await response.json()
+      return data.customers || []
+    },
+  })
+
+  // Fetch technicians
+  const { data: technicians = [] } = useQuery({
+    queryKey: ['technicians'],
+    queryFn: async () => {
+      const response = await fetch('/admin/technicians?limit=100&status=active')
+      if (!response.ok) throw new Error('Failed to fetch technicians')
+      const data = await response.json()
+      return data.technicians || []
+    },
   })
 
   const createMutation = useMutation({
@@ -66,6 +90,10 @@ const CreateServiceOrder = () => {
       toast.error('Description is required')
       return
     }
+    if (!formData.customer_id) {
+      toast.error('Customer is required')
+      return
+    }
     createMutation.mutate(formData)
   }
 
@@ -101,6 +129,54 @@ const CreateServiceOrder = () => {
                 Basic information about the service order
               </Text>
               <div className="mt-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Customer *
+                    </label>
+                    <Select
+                      value={formData.customer_id}
+                      onValueChange={(value) => handleInputChange('customer_id', value)}
+                    >
+                      <Select.Trigger>
+                        <Select.Value placeholder="Select a customer" />
+                      </Select.Trigger>
+                      <Select.Content>
+                        {customers.map((customer: any) => (
+                          <Select.Item key={customer.id} value={customer.id}>
+                            {customer.first_name && customer.last_name 
+                              ? `${customer.first_name} ${customer.last_name}` 
+                              : customer.email}
+                            {customer.company_name && ` (${customer.company_name})`}
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Assigned Technician
+                    </label>
+                    <Select
+                      value={formData.technician_id}
+                      onValueChange={(value) => handleInputChange('technician_id', value)}
+                    >
+                      <Select.Trigger>
+                        <Select.Value placeholder="Select a technician" />
+                      </Select.Trigger>
+                      <Select.Content>
+                        <Select.Item value="">No technician assigned</Select.Item>
+                        {technicians.map((technician: any) => (
+                          <Select.Item key={technician.id} value={technician.id}>
+                            {technician.first_name} {technician.last_name}
+                            {technician.position && ` - ${technician.position}`}
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Description *
