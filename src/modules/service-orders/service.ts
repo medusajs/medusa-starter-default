@@ -84,14 +84,24 @@ class ServiceOrdersService extends MedusaService({
     userId: string, 
     reason?: string
   ) {
+    console.log("=== SERVICE: updateServiceOrderStatus called ===")
+    console.log(`Service order ID: ${id}`)
+    console.log(`New status: ${newStatus}`)
+    console.log(`User ID: ${userId}`)
+    console.log(`Reason: ${reason}`)
+    
     const serviceOrder = await this.retrieveServiceOrder(id)
     if (!serviceOrder) {
+      console.log("Service order not found!")
       throw new Error("Service order not found")
     }
     
     const oldStatus = serviceOrder.status
+    console.log(`Current status from DB: ${oldStatus}`)
+    console.log(`Changing from ${oldStatus} to ${newStatus}`)
     
     // Update service order
+    console.log("Calling updateServiceOrders...")
     const updatedServiceOrders = await this.updateServiceOrders(
       { id }, 
       { 
@@ -100,13 +110,19 @@ class ServiceOrdersService extends MedusaService({
       }
     )
     
+    console.log("updateServiceOrders completed")
+    console.log("Raw result:", JSON.stringify(updatedServiceOrders, null, 2))
+    
     // updateServiceOrders returns an array, get the first item
     const updatedServiceOrder = Array.isArray(updatedServiceOrders) 
       ? updatedServiceOrders[0] 
       : updatedServiceOrders
     
+    console.log(`Final updated service order status: ${updatedServiceOrder?.status}`)
+    
     // Create status history
-    await this.createServiceOrderStatusHistories({
+    console.log("Creating status history entry...")
+    const historyEntry = await this.createServiceOrderStatusHistories({
       service_order_id: id,
       from_status: oldStatus,
       to_status: newStatus,
@@ -114,7 +130,9 @@ class ServiceOrdersService extends MedusaService({
       changed_at: new Date(),
       reason,
     })
+    console.log("Status history created:", historyEntry.id)
     
+    console.log("=== SERVICE: updateServiceOrderStatus complete ===")
     return updatedServiceOrder
   }
   
