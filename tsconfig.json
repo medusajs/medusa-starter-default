@@ -17,19 +17,34 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "checkJs": false,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@medusajs/*": ["./.medusa-source/packages/*/src", "./node_modules/@medusajs/*/dist"]
+    }
   },
   "ts-node": {
     "swc": true
   },
   "include": [
     "**/*",
-    ".medusa/types/*"
+    ".medusa/types/*",
+    ".medusa-source/packages/modules/*/src/**/*.ts",
+    ".medusa-source/packages/core/*/src/**/*.ts",
+    ".medusa-source/packages/medusa/src/**/*.ts",
+    ".medusa-source/integration-tests/modules/src/**/*.ts",
+    ".medusa-source/integration-tests/modules/__tests__/**/*.ts",
+    ".medusa-source/integration-tests/helpers/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     ".medusa/server",
     ".medusa/admin",
-    ".cache"
+    ".cache",
+    ".medusa-source/node_modules",
+    ".medusa-source/**/node_modules",
+    ".medusa-source/**/*.d.ts",
+    ".medusa-source/**/dist"
   ]
 }
