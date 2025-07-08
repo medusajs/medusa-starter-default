@@ -15,15 +15,6 @@
           "nullable": false,
           "mappedType": "text"
         },
-        "brand": {
-          "name": "brand",
-          "type": "text",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "text"
-        },
         "model": {
           "name": "model",
           "type": "text",
@@ -44,21 +35,21 @@
         },
         "year": {
           "name": "year",
-          "type": "text",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "text"
-        },
-        "engine_hours": {
-          "name": "engine_hours",
-          "type": "text",
+          "type": "integer",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "mappedType": "text"
+          "mappedType": "integer"
+        },
+        "engine_hours": {
+          "name": "engine_hours",
+          "type": "integer",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
         },
         "fuel_type": {
           "name": "fuel_type",
@@ -66,53 +57,54 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "mappedType": "text"
         },
         "horsepower": {
           "name": "horsepower",
-          "type": "text",
+          "type": "integer",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "mappedType": "text"
+          "mappedType": "integer"
         },
         "weight": {
           "name": "weight",
-          "type": "text",
+          "type": "integer",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "mappedType": "text"
+          "mappedType": "integer"
         },
         "purchase_date": {
           "name": "purchase_date",
-          "type": "text",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "mappedType": "text"
+          "length": 6,
+          "mappedType": "datetime"
         },
         "purchase_price": {
           "name": "purchase_price",
-          "type": "text",
+          "type": "numeric",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "mappedType": "text"
+          "mappedType": "decimal"
         },
         "current_value": {
           "name": "current_value",
-          "type": "text",
+          "type": "numeric",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "mappedType": "text"
+          "mappedType": "decimal"
         },
         "status": {
           "name": "status",
@@ -122,19 +114,16 @@
           "primary": false,
           "nullable": false,
           "default": "'active'",
-          "mappedType": "text"
+          "enumItems": [
+            "active",
+            "inactive",
+            "maintenance",
+            "sold"
+          ],
+          "mappedType": "enum"
         },
         "location": {
           "name": "location",
-          "type": "text",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "text"
-        },
-        "notes": {
-          "name": "notes",
           "type": "text",
           "unsigned": false,
           "autoincrement": false,
@@ -151,8 +140,35 @@
           "nullable": true,
           "mappedType": "text"
         },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
         "metadata": {
           "name": "metadata",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
+        },
+        "raw_purchase_price": {
+          "name": "raw_purchase_price",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
+        },
+        "raw_current_value": {
+          "name": "raw_current_value",
           "type": "jsonb",
           "unsigned": false,
           "autoincrement": false,
@@ -197,6 +213,15 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "IDX_machine_deleted_at",
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_machine_deleted_at\" ON \"machine\" (deleted_at) WHERE deleted_at IS NULL"
+        },
+        {
           "keyName": "IDX_machine_serial_number_unique",
           "columnNames": [],
           "composite": false,
@@ -206,13 +231,31 @@
           "expression": "CREATE UNIQUE INDEX IF NOT EXISTS \"IDX_machine_serial_number_unique\" ON \"machine\" (serial_number) WHERE deleted_at IS NULL"
         },
         {
-          "keyName": "IDX_machine_deleted_at",
+          "keyName": "IDX_machine_customer_id",
           "columnNames": [],
           "composite": false,
           "constraint": false,
           "primary": false,
           "unique": false,
-          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_machine_deleted_at\" ON \"machine\" (deleted_at) WHERE deleted_at IS NULL"
+          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_machine_customer_id\" ON \"machine\" (customer_id) WHERE deleted_at IS NULL"
+        },
+        {
+          "keyName": "IDX_machine_status",
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_machine_status\" ON \"machine\" (status) WHERE deleted_at IS NULL"
+        },
+        {
+          "keyName": "IDX_machine_model",
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_machine_model\" ON \"machine\" (model) WHERE deleted_at IS NULL"
         },
         {
           "keyName": "machine_pkey",
