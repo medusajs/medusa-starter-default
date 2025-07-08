@@ -90,6 +90,7 @@ class ServiceOrdersService extends MedusaService({
     console.log(`User ID: ${userId}`)
     console.log(`Reason: ${reason}`)
     
+    // First, get the current service order
     const serviceOrder = await this.retrieveServiceOrder(id)
     if (!serviceOrder) {
       console.log("Service order not found!")
@@ -100,57 +101,51 @@ class ServiceOrdersService extends MedusaService({
     console.log(`Current status from DB: ${oldStatus}`)
     console.log(`Changing from ${oldStatus} to ${newStatus}`)
     
-    // Try a more direct approach - update the specific service order by ID
-    console.log("Attempting direct update...")
+    // MedusaJS Best Practice: Use proper update method with selector and data
+    console.log("Using MedusaJS best practice update pattern...")
+    
     try {
-      // Use the repository directly to update the status
-      const updatedServiceOrders = await this.updateServiceOrders(
-        { id }, 
-        { 
-          status: newStatus,
-          updated_by: userId,
-        }
-      )
-      
-      console.log("Direct update completed")
-      console.log("Raw result:", JSON.stringify(updatedServiceOrders, null, 2))
-      
-      // Get the updated service order to verify the change
-      const verifyUpdate = await this.retrieveServiceOrder(id)
-      console.log(`Verification check - status after update: ${verifyUpdate?.status}`)
-      
-      // If the verification shows the status wasn't updated, try alternative approach
-      if (verifyUpdate?.status !== newStatus) {
-        console.log("Status update failed, trying alternative approach...")
-        
-        // Alternative: Try creating a new service order with all existing data but new status
-        const { id: _, ...serviceOrderData } = serviceOrder
-        const updatedData = {
-          ...serviceOrderData,
-          status: newStatus,
-          updated_by: userId,
-        }
-        
-        console.log("Trying update with full data...")
-        const alternativeUpdate = await this.updateServiceOrders(
-          { id }, 
-          updatedData
-        )
-        
-        console.log("Alternative update result:", JSON.stringify(alternativeUpdate, null, 2))
-        
-        // Verify again
-        const verifyAlternative = await this.retrieveServiceOrder(id)
-        console.log(`After alternative update - status: ${verifyAlternative?.status}`)
-        
-        if (verifyAlternative?.status !== newStatus) {
-          throw new Error(`Failed to update status. Expected: ${newStatus}, Got: ${verifyAlternative?.status}`)
-        }
+      // Method 1: Direct entity update using the base service
+      const updateData = {
+        status: newStatus,
+        updated_by: userId,
       }
       
-      // Get the final updated service order
-      const finalServiceOrder = await this.retrieveServiceOrder(id)
-      console.log(`Final service order status: ${finalServiceOrder?.status}`)
+      console.log("Update data:", updateData)
+      
+      // Use the standard MedusaJS update pattern
+      const updatedServiceOrder = await this.updateServiceOrders(
+        { id: id, ...updateData }
+      )
+      
+      console.log("Update completed, result:", JSON.stringify(updatedServiceOrder, null, 2))
+      
+      // Verify the update worked
+      const verifyUpdate = await this.retrieveServiceOrder(id)
+      console.log(`Verification - status after update: ${verifyUpdate?.status}`)
+      
+      if (verifyUpdate?.status !== newStatus) {
+        console.log("Standard update failed, trying alternative approach...")
+        
+        // Alternative: Use update with selector/data pattern
+        const alternativeResult = await this.updateServiceOrders({
+          selector: { id: id },
+          data: { status: newStatus, updated_by: userId }
+        })
+        
+        console.log("Alternative update result:", JSON.stringify(alternativeResult, null, 2))
+        
+        // Final verification
+        const finalVerify = await this.retrieveServiceOrder(id)
+        console.log(`Final verification - status: ${finalVerify?.status}`)
+        
+        if (finalVerify?.status !== newStatus) {
+          throw new Error(`Failed to update status. Database is not accepting the change. Expected: ${newStatus}, Got: ${finalVerify?.status}`)
+        }
+        
+        // Use the verified service order
+        return finalVerify
+      }
       
       // Create status history
       console.log("Creating status history entry...")
@@ -165,7 +160,7 @@ class ServiceOrdersService extends MedusaService({
       console.log("Status history created:", historyEntry.id)
       
       console.log("=== SERVICE: updateServiceOrderStatus complete ===")
-      return finalServiceOrder
+      return updatedServiceOrder
       
     } catch (error) {
       console.error("Error in updateServiceOrderStatus:", error)
