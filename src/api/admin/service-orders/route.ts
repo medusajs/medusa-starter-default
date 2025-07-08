@@ -24,7 +24,13 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     if (priority) filters.priority = priority
     if (service_type) filters.service_type = service_type
     if (customer_id) filters.customer_id = customer_id
-    if (technician_id) filters.technician_id = technician_id
+    if (technician_id) {
+      if (technician_id === "unassigned") {
+        filters.technician_id = null
+      } else {
+        filters.technician_id = technician_id
+      }
+    }
     
     // Add search functionality
     if (q) {
@@ -68,7 +74,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     // Validate required fields
-    const { description, customer_id } = req.body as any
+    const { description, customer_id, technician_id, ...rest } = req.body as any
     if (!description) {
       return res.status(400).json({ 
         error: "Validation failed", 
@@ -83,8 +89,16 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       })
     }
 
+    // Convert "unassigned" to null for technician_id
+    const processedData = {
+      ...rest,
+      description,
+      customer_id,
+      technician_id: technician_id === "unassigned" ? null : technician_id,
+    }
+
     const { result } = await createServiceOrderWorkflow(req.scope).run({
-      input: req.body as any
+      input: processedData
     })
     
     res.status(201).json({ service_order: result })

@@ -165,7 +165,7 @@ const CreateServiceOrder = () => {
                         <Select.Value placeholder="Select a technician" />
                       </Select.Trigger>
                       <Select.Content>
-                        <Select.Item value="">No technician assigned</Select.Item>
+                        <Select.Item value="unassigned">No technician assigned</Select.Item>
                         {technicians.map((technician: any) => (
                           <Select.Item key={technician.id} value={technician.id}>
                             {technician.first_name} {technician.last_name}

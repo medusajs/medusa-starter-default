@@ -244,7 +244,7 @@ const ServiceOrdersList = () => {
                 <Select.Value placeholder="All Technicians" />
               </Select.Trigger>
               <Select.Content>
-                <Select.Item value="">Unassigned</Select.Item>
+                <Select.Item value="unassigned">Unassigned</Select.Item>
                 {technicians.map((technician: any) => (
                   <Select.Item key={technician.id} value={technician.id}>
                     {technician.first_name} {technician.last_name}
