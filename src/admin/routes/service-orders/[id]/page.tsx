@@ -12,6 +12,7 @@ import {
   Input,
   Select,
   Textarea,
+  toast,
 } from "@medusajs/ui"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
@@ -63,7 +64,11 @@ const ServiceOrderDetails = () => {
       return response.json()
     },
     onSuccess: () => {
+      toast.success("Service order status updated successfully!")
       queryClient.invalidateQueries({ queryKey: ["service-order", id] })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
     },
   })
 
@@ -203,7 +208,7 @@ const ServiceOrderDetails = () => {
         </Tabs.Content>
 
         <Tabs.Content value="history" className="mt-6">
-          <StatusHistoryTab statusHistory={so.status_history || []} />
+          <StatusHistoryTab statusHistory={serviceOrder?.service_order?.status_history || []} />
         </Tabs.Content>
       </Tabs>
     </Container>
@@ -562,79 +567,106 @@ const TimeEntriesTab = ({ timeEntries, onAddTimeEntry }: { timeEntries: any[]; o
 }
 
 // Status History Tab Component
-const StatusHistoryTab = ({ statusHistory }: { statusHistory: any[] }) => (
-  <div className="space-y-6">
-    <Heading level="h3">Status History</Heading>
-    {statusHistory.length === 0 ? (
-      <div className="text-center py-8">
-        <ReceiptPercent className="w-12 h-12 mx-auto mb-4 text-ui-fg-muted" />
-        <Text>No status changes recorded</Text>
+const StatusHistoryTab = ({ statusHistory }: { statusHistory: any[] }) => {
+  // Sort status history by date (newest first)
+  const sortedHistory = [...statusHistory].sort((a, b) => 
+    new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime()
+  )
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <Heading level="h3">Status History</Heading>
+        <Text size="small" className="text-ui-fg-subtle">
+          {statusHistory.length} status change{statusHistory.length !== 1 ? 's' : ''}
+        </Text>
       </div>
-    ) : (
-      <Table>
-        <Table.Header>
-          <Table.Row>
-            <Table.HeaderCell>From</Table.HeaderCell>
-            <Table.HeaderCell>To</Table.HeaderCell>
-            <Table.HeaderCell>Changed By</Table.HeaderCell>
-            <Table.HeaderCell>Reason</Table.HeaderCell>
-            <Table.HeaderCell>Date</Table.HeaderCell>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {statusHistory.map((history: any) => (
-            <Table.Row key={history.id}>
-              <Table.Cell>
-                {history.from_status ? (
-                  <Badge size="2xsmall">{history.from_status}</Badge>
-                ) : (
-                  <Text size="small" className="text-ui-fg-muted">-</Text>
-                )}
-              </Table.Cell>
-              <Table.Cell>
-                <Badge size="2xsmall">{history.to_status}</Badge>
-              </Table.Cell>
-              <Table.Cell>
-                <Text size="small">{history.changed_by}</Text>
-              </Table.Cell>
-              <Table.Cell>
-                <Text size="small">{history.reason || '-'}</Text>
-              </Table.Cell>
-              <Table.Cell>
-                <Text size="small" className="text-ui-fg-subtle">
-                  {new Date(history.changed_at).toLocaleString()}
-                </Text>
-              </Table.Cell>
+      {sortedHistory.length === 0 ? (
+        <div className="text-center py-8">
+          <ReceiptPercent className="w-12 h-12 mx-auto mb-4 text-ui-fg-muted" />
+          <Text>No status changes recorded</Text>
+        </div>
+      ) : (
+        <Table>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell>From</Table.HeaderCell>
+              <Table.HeaderCell>To</Table.HeaderCell>
+              <Table.HeaderCell>Changed By</Table.HeaderCell>
+              <Table.HeaderCell>Reason</Table.HeaderCell>
+              <Table.HeaderCell>Date</Table.HeaderCell>
             </Table.Row>
-          ))}
-        </Table.Body>
-      </Table>
-    )}
-  </div>
-)
+          </Table.Header>
+          <Table.Body>
+            {sortedHistory.map((history: any) => (
+              <Table.Row key={history.id}>
+                <Table.Cell>
+                  {history.from_status ? (
+                    <Badge size="2xsmall" color="grey">
+                      {history.from_status.replace('_', ' ')}
+                    </Badge>
+                  ) : (
+                    <Text size="small" className="text-ui-fg-muted">-</Text>
+                  )}
+                </Table.Cell>
+                <Table.Cell>
+                  <Badge size="2xsmall" color="blue">
+                    {history.to_status.replace('_', ' ')}
+                  </Badge>
+                </Table.Cell>
+                <Table.Cell>
+                  <Text size="small">{history.changed_by}</Text>
+                </Table.Cell>
+                <Table.Cell>
+                  <Text size="small" className={history.reason ? '' : 'text-ui-fg-muted'}>
+                    {history.reason || 'No reason provided'}
+                  </Text>
+                </Table.Cell>
+                <Table.Cell>
+                  <Text size="small" className="text-ui-fg-subtle">
+                    {new Date(history.changed_at).toLocaleString()}
+                  </Text>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table>
+      )}
+    </div>
+  )
+}
 
 // Status Update Form Component
 const StatusUpdateForm = ({ currentStatus, onStatusUpdate }: { currentStatus: string; onStatusUpdate: (status: string, reason?: string) => void }) => {
   const [showForm, setShowForm] = useState(false)
   const [newStatus, setNewStatus] = useState('')
   const [reason, setReason] = useState('')
+  const [isUpdating, setIsUpdating] = useState(false)
 
   const statuses = [
-    'draft',
-    'scheduled', 
-    'in_progress',
-    'waiting_parts',
-    'customer_approval',
-    'completed',
-    'cancelled'
+    { value: 'draft', label: 'Draft' },
+    { value: 'scheduled', label: 'Scheduled' }, 
+    { value: 'in_progress', label: 'In Progress' },
+    { value: 'waiting_parts', label: 'Waiting for Parts' },
+    { value: 'customer_approval', label: 'Customer Approval' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'cancelled', label: 'Cancelled' }
   ]
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (newStatus && newStatus !== currentStatus) {
-      onStatusUpdate(newStatus, reason)
-      setShowForm(false)
-      setReason('')
+    if (newStatus && newStatus !== currentStatus && !isUpdating) {
+      setIsUpdating(true)
+      try {
+        await onStatusUpdate(newStatus, reason)
+        setShowForm(false)
+        setReason('')
+        setNewStatus('')
+      } catch (error) {
+        // Error handling is done in the mutation
+      } finally {
+        setIsUpdating(false)
+      }
     }
   }
 
@@ -647,36 +679,51 @@ const StatusUpdateForm = ({ currentStatus, onStatusUpdate }: { currentStatus: st
   }
 
   return (
-    <Container className="w-80 p-6 bg-ui-bg-subtle rounded-lg">
-      <Heading level="h3">Update Status</Heading>
-      <div className="space-y-4 mt-4">
-        <Select value={newStatus} onValueChange={setNewStatus}>
-          <Select.Trigger>
-            <Select.Value placeholder="Select new status" />
-          </Select.Trigger>
-          <Select.Content>
-            {statuses.filter(s => s !== currentStatus).map(status => (
-              <Select.Item key={status} value={status}>
-                {status.replace('_', ' ')}
-              </Select.Item>
-            ))}
-          </Select.Content>
-        </Select>
-        <Textarea
-          placeholder="Reason for status change (optional)"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-        />
-        <div className="flex gap-2">
-          <Button type="submit" size="small" disabled={!newStatus}>
-            Update
-          </Button>
-          <Button type="button" variant="secondary" size="small" onClick={() => setShowForm(false)}>
-            Cancel
-          </Button>
-        </div>
+    <div className="relative">
+      <div className="absolute right-0 top-0 w-80 p-6 bg-ui-bg-base border border-ui-border-base rounded-lg shadow-lg z-10">
+        <form onSubmit={handleSubmit}>
+          <Heading level="h3" className="mb-4">Update Status</Heading>
+          <div className="space-y-4">
+            <div>
+              <Text size="small" className="mb-2 text-ui-fg-subtle">Current Status: {currentStatus.replace('_', ' ')}</Text>
+              <Select value={newStatus} onValueChange={setNewStatus} disabled={isUpdating}>
+                <Select.Trigger>
+                  <Select.Value placeholder="Select new status" />
+                </Select.Trigger>
+                <Select.Content>
+                  {statuses.filter(s => s.value !== currentStatus).map(status => (
+                    <Select.Item key={status.value} value={status.value}>
+                      {status.label}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select>
+            </div>
+            <Textarea
+              placeholder="Reason for status change (optional)"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={3}
+              disabled={isUpdating}
+            />
+            <div className="flex gap-2">
+              <Button type="submit" size="small" disabled={!newStatus || isUpdating}>
+                {isUpdating ? 'Updating...' : 'Update Status'}
+              </Button>
+              <Button 
+                type="button" 
+                variant="secondary" 
+                size="small" 
+                onClick={() => setShowForm(false)}
+                disabled={isUpdating}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </form>
       </div>
-    </Container>
+    </div>
   )
 }
 
