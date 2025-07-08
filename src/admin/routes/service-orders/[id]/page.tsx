@@ -55,6 +55,7 @@ const ServiceOrderDetails = () => {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ status, reason }: { status: string; reason?: string }) => {
+      console.log("Mutation starting for status:", status)
       const response = await fetch(`/admin/service-orders/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -63,10 +64,13 @@ const ServiceOrderDetails = () => {
       
       if (!response.ok) {
         const errorData = await response.json()
+        console.error("Status update API error:", errorData)
         throw new Error(errorData.details || "Failed to update status")
       }
       
-      return response.json()
+      const result = await response.json()
+      console.log("Status update API response:", result)
+      return result
     },
     onSuccess: async (data) => {
       console.log("Status update successful:", data)
@@ -83,6 +87,10 @@ const ServiceOrderDetails = () => {
       console.error("Status update failed:", error)
       toast.error(`Failed to update status: ${error.message}`)
     },
+    onSettled: () => {
+      // This runs regardless of success or failure
+      console.log("Status update mutation settled")
+    }
   })
 
   const addItemMutation = useMutation({
@@ -654,7 +662,7 @@ const StatusUpdateForm = ({ currentStatus, onStatusUpdate }: { currentStatus: st
   const [showForm, setShowForm] = useState(false)
   const [newStatus, setNewStatus] = useState('')
   const [reason, setReason] = useState('')
-  const [isUpdating, setIsUpdating] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const statuses = [
     { value: 'draft', label: 'Draft' },
@@ -668,18 +676,26 @@ const StatusUpdateForm = ({ currentStatus, onStatusUpdate }: { currentStatus: st
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (newStatus && newStatus !== currentStatus && !isUpdating) {
-      setIsUpdating(true)
-      console.log("Submitting status update:", newStatus, reason)
-      
-      onStatusUpdate(newStatus, reason)
-      
-      // Close form immediately and reset
+    
+    // Prevent multiple submissions
+    if (isSubmitting || !newStatus || newStatus === currentStatus) {
+      console.log("Preventing submission:", { isSubmitting, newStatus, currentStatus })
+      return
+    }
+    
+    setIsSubmitting(true)
+    console.log("Submitting status update:", newStatus, reason)
+    
+    // Call the mutation
+    onStatusUpdate(newStatus, reason)
+    
+    // Reset form after a brief delay to prevent multiple submissions
+    setTimeout(() => {
       setShowForm(false)
       setReason('')
       setNewStatus('')
-      setIsUpdating(false)
-    }
+      setIsSubmitting(false)
+    }, 1000)
   }
 
   if (!showForm) {
@@ -698,7 +714,7 @@ const StatusUpdateForm = ({ currentStatus, onStatusUpdate }: { currentStatus: st
           <div className="space-y-4">
             <div>
               <Text size="small" className="mb-2 text-ui-fg-subtle">Current Status: {currentStatus.replace('_', ' ')}</Text>
-              <Select value={newStatus} onValueChange={setNewStatus} disabled={isUpdating}>
+              <Select value={newStatus} onValueChange={setNewStatus} disabled={isSubmitting}>
                 <Select.Trigger>
                   <Select.Value placeholder="Select new status" />
                 </Select.Trigger>
@@ -716,18 +732,22 @@ const StatusUpdateForm = ({ currentStatus, onStatusUpdate }: { currentStatus: st
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
-              disabled={isUpdating}
+              disabled={isSubmitting}
             />
             <div className="flex gap-2">
-              <Button type="submit" size="small" disabled={!newStatus || isUpdating}>
-                {isUpdating ? 'Updating...' : 'Update Status'}
+              <Button type="submit" size="small" disabled={!newStatus || isSubmitting}>
+                {isSubmitting ? 'Updating...' : 'Update Status'}
               </Button>
               <Button 
                 type="button" 
                 variant="secondary" 
                 size="small" 
-                onClick={() => setShowForm(false)}
-                disabled={isUpdating}
+                onClick={() => {
+                  setShowForm(false)
+                  setReason('')
+                  setNewStatus('')
+                }}
+                disabled={isSubmitting}
               >
                 Cancel
               </Button>
