@@ -1,14 +1,14 @@
 import { defineLink } from "@medusajs/framework/utils"
-import { SERVICE_ORDERS_MODULE } from "../modules/service-orders"
-import { TECHNICIANS_MODULE } from "../modules/technicians"
+import ServiceOrdersModule from "../modules/service-orders"
+import TechniciansModule from "../modules/technicians"
 
 export default defineLink(
   {
-    linkable: { serviceName: SERVICE_ORDERS_MODULE, alias: "service_order" },
+    linkable: ServiceOrdersModule.linkable.serviceOrder,
     field: "technician_id",
   },
   {
-    linkable: { serviceName: TECHNICIANS_MODULE, alias: "technician" },
+    linkable: TechniciansModule.linkable.technician,
   },
   {
     readOnly: true,
