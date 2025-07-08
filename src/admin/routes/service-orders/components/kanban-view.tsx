@@ -19,7 +19,17 @@ import { toast } from "@medusajs/ui"
 
 import { KanbanColumn } from "./kanban-column"
 import { KanbanCard } from "./kanban-card"
-import { ServiceOrderStatus } from "../../../../modules/service-orders/models/service-order"
+
+// Define status constants locally to avoid potential import issues
+const SERVICE_ORDER_STATUS = {
+  DRAFT: "draft",
+  SCHEDULED: "scheduled",
+  IN_PROGRESS: "in_progress",
+  WAITING_PARTS: "waiting_parts",
+  CUSTOMER_APPROVAL: "customer_approval",
+  COMPLETED: "completed",
+  CANCELLED: "cancelled",
+} as const
 
 type ServiceOrder = {
   id: string
@@ -48,37 +58,37 @@ type KanbanViewProps = {
 
 const statusConfig = [
   {
-    id: ServiceOrderStatus.DRAFT,
+    id: SERVICE_ORDER_STATUS.DRAFT,
     label: "Draft",
     color: "orange" as const,
   },
   {
-    id: ServiceOrderStatus.SCHEDULED,
+    id: SERVICE_ORDER_STATUS.SCHEDULED,
     label: "Scheduled",
     color: "blue" as const,
   },
   {
-    id: ServiceOrderStatus.IN_PROGRESS,
+    id: SERVICE_ORDER_STATUS.IN_PROGRESS,
     label: "In Progress",
     color: "purple" as const,
   },
   {
-    id: ServiceOrderStatus.WAITING_PARTS,
+    id: SERVICE_ORDER_STATUS.WAITING_PARTS,
     label: "Waiting for Parts",
     color: "orange" as const,
   },
   {
-    id: ServiceOrderStatus.CUSTOMER_APPROVAL,
+    id: SERVICE_ORDER_STATUS.CUSTOMER_APPROVAL,
     label: "Customer Approval",
     color: "orange" as const,
   },
   {
-    id: ServiceOrderStatus.COMPLETED,
+    id: SERVICE_ORDER_STATUS.COMPLETED,
     label: "Completed",
     color: "green" as const,
   },
   {
-    id: ServiceOrderStatus.CANCELLED,
+    id: SERVICE_ORDER_STATUS.CANCELLED,
     label: "Cancelled",
     color: "red" as const,
   },
