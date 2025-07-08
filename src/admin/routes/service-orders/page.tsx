@@ -46,7 +46,7 @@ const ServiceOrdersList = () => {
     draft: "orange",
     scheduled: "blue", 
     in_progress: "purple",
-    waiting_parts: "yellow",
+    waiting_parts: "orange",
     customer_approval: "orange",
     completed: "green",
     cancelled: "red",
@@ -76,7 +76,7 @@ const ServiceOrdersList = () => {
             Manage repair and maintenance work orders
           </Text>
         </div>
-        <Button size="small" variant="secondary" asChild>
+        <Button size="small" variant="transparent" asChild>
           <Link to="/service-orders/create">
             <Plus className="w-4 h-4" />
             Create Service Order
@@ -94,61 +94,91 @@ const ServiceOrdersList = () => {
               setSearchParams((prev) => ({ ...prev, q: e.target.value }))
             }
           />
-          <Select
-            value={searchParams.status}
-            onValueChange={(value) =>
-              setSearchParams((prev) => ({ ...prev, status: value }))
-            }
-          >
-            <Select.Trigger>
-              <Select.Value placeholder="All Statuses" />
-            </Select.Trigger>
-            <Select.Content>
-              <Select.Item value="">All Statuses</Select.Item>
-              <Select.Item value="draft">Draft</Select.Item>
-              <Select.Item value="scheduled">Scheduled</Select.Item>
-              <Select.Item value="in_progress">In Progress</Select.Item>
-              <Select.Item value="waiting_parts">Waiting Parts</Select.Item>
-              <Select.Item value="customer_approval">Customer Approval</Select.Item>
-              <Select.Item value="completed">Completed</Select.Item>
-              <Select.Item value="cancelled">Cancelled</Select.Item>
-            </Select.Content>
-          </Select>
-          <Select
-            value={searchParams.priority}
-            onValueChange={(value) =>
-              setSearchParams((prev) => ({ ...prev, priority: value }))
-            }
-          >
-            <Select.Trigger>
-              <Select.Value placeholder="All Priorities" />
-            </Select.Trigger>
-            <Select.Content>
-              <Select.Item value="">All Priorities</Select.Item>
-              <Select.Item value="low">Low</Select.Item>
-              <Select.Item value="normal">Normal</Select.Item>
-              <Select.Item value="high">High</Select.Item>
-              <Select.Item value="urgent">Urgent</Select.Item>
-            </Select.Content>
-          </Select>
-          <Select
-            value={searchParams.service_type}
-            onValueChange={(value) =>
-              setSearchParams((prev) => ({ ...prev, service_type: value }))
-            }
-          >
-            <Select.Trigger>
-              <Select.Value placeholder="All Types" />
-            </Select.Trigger>
-            <Select.Content>
-              <Select.Item value="">All Types</Select.Item>
-              <Select.Item value="normal">Normal</Select.Item>
-              <Select.Item value="warranty">Warranty</Select.Item>
-              <Select.Item value="setup">Setup</Select.Item>
-              <Select.Item value="emergency">Emergency</Select.Item>
-              <Select.Item value="preventive">Preventive</Select.Item>
-            </Select.Content>
-          </Select>
+          <div className="flex gap-2">
+            <Select
+              value={searchParams.status}
+              onValueChange={(value) =>
+                setSearchParams((prev) => ({ ...prev, status: value }))
+              }
+            >
+              <Select.Trigger>
+                <Select.Value placeholder="All Statuses" />
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="draft">Draft</Select.Item>
+                <Select.Item value="scheduled">Scheduled</Select.Item>
+                <Select.Item value="in_progress">In Progress</Select.Item>
+                <Select.Item value="waiting_parts">Waiting Parts</Select.Item>
+                <Select.Item value="customer_approval">Customer Approval</Select.Item>
+                <Select.Item value="completed">Completed</Select.Item>
+                <Select.Item value="cancelled">Cancelled</Select.Item>
+              </Select.Content>
+            </Select>
+            {searchParams.status && (
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => setSearchParams((prev) => ({ ...prev, status: "" }))}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Select
+              value={searchParams.priority}
+              onValueChange={(value) =>
+                setSearchParams((prev) => ({ ...prev, priority: value }))
+              }
+            >
+              <Select.Trigger>
+                <Select.Value placeholder="All Priorities" />
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="low">Low</Select.Item>
+                <Select.Item value="normal">Normal</Select.Item>
+                <Select.Item value="high">High</Select.Item>
+                <Select.Item value="urgent">Urgent</Select.Item>
+              </Select.Content>
+            </Select>
+            {searchParams.priority && (
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => setSearchParams((prev) => ({ ...prev, priority: "" }))}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Select
+              value={searchParams.service_type}
+              onValueChange={(value) =>
+                setSearchParams((prev) => ({ ...prev, service_type: value }))
+              }
+            >
+              <Select.Trigger>
+                <Select.Value placeholder="All Types" />
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="normal">Normal</Select.Item>
+                <Select.Item value="warranty">Warranty</Select.Item>
+                <Select.Item value="setup">Setup</Select.Item>
+                <Select.Item value="emergency">Emergency</Select.Item>
+                <Select.Item value="preventive">Preventive</Select.Item>
+              </Select.Content>
+            </Select>
+            {searchParams.service_type && (
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => setSearchParams((prev) => ({ ...prev, service_type: "" }))}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -215,14 +245,11 @@ const ServiceOrdersList = () => {
                   </Table.Cell>
                   <Table.Cell>
                     <StatusBadge color={statusVariants[serviceOrder.status as keyof typeof statusVariants]}>
-                      {serviceOrder.status.replace('_', ' ')}
+                      {serviceOrder.status.replace("_", " ")}
                     </StatusBadge>
                   </Table.Cell>
                   <Table.Cell>
-                    <Badge 
-                      size="2xsmall"
-                      color={priorityVariants[serviceOrder.priority as keyof typeof priorityVariants]}
-                    >
+                    <Badge color={priorityVariants[serviceOrder.priority as keyof typeof priorityVariants]}>
                       {serviceOrder.priority}
                     </Badge>
                   </Table.Cell>
@@ -239,7 +266,7 @@ const ServiceOrdersList = () => {
                   <Table.Cell>
                     <DropdownMenu>
                       <DropdownMenu.Trigger asChild>
-                        <IconButton variant="ghost" size="small">
+                        <IconButton variant="transparent" size="small">
                           <EllipsisHorizontal className="w-4 h-4" />
                         </IconButton>
                       </DropdownMenu.Trigger>
