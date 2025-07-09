@@ -2,9 +2,7 @@ import { ExecArgs } from "@medusajs/framework/types"
 import { 
   ContainerRegistrationKeys, 
   Modules,
-  OrderStatus,
-  PaymentStatus,
-  FulfillmentStatus
+  OrderStatus
 } from "@medusajs/framework/utils"
 import { 
   createOrderWorkflow,
@@ -25,10 +23,7 @@ export default async function loadOrders({ container }: ExecArgs) {
   const [region] = await regionModuleService.listRegions()
   const [salesChannel] = await salesChannelModuleService.listSalesChannels()
   const customers = await customerModuleService.listCustomers()
-  const products = await productModuleService.listProducts({
-    include_draft_orders: false,
-    include_discounts: false,
-  })
+  const products = await productModuleService.listProducts()
 
   if (!customers.length) {
     logger.error("No customers found. Please create customers first.")
@@ -41,7 +36,7 @@ export default async function loadOrders({ container }: ExecArgs) {
   }
 
   // Get product variants
-  const productVariants = []
+  const productVariants: any[] = []
   for (const product of products) {
     const variants = await productModuleService.listProductVariants({
       product_id: product.id
@@ -57,10 +52,8 @@ export default async function loadOrders({ container }: ExecArgs) {
   // Create orders with Belgian addresses and realistic data
   const orders = [
     {
-      customer: customers[0],
+      customer_id: customers[0].id,
       status: OrderStatus.COMPLETED,
-      payment_status: PaymentStatus.CAPTURED,
-      fulfillment_status: FulfillmentStatus.FULFILLED,
       items: [
         {
           variant_id: productVariants[0].id,
@@ -107,7 +100,7 @@ export default async function loadOrders({ container }: ExecArgs) {
       
       logger.info(`Created order: ${order.display_id} (${orderData.status})`)
     } catch (error) {
-      logger.error(`Failed to create order for ${orderData.customer.email}:`, error)
+      logger.error(`Failed to create order for customer ${orderData.customer_id}:`, error)
     }
   }
 

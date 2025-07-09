@@ -2,9 +2,7 @@ import { ExecArgs } from "@medusajs/framework/types"
 import { 
   ContainerRegistrationKeys, 
   Modules,
-  OrderStatus,
-  PaymentStatus,
-  FulfillmentStatus
+  OrderStatus
 } from "@medusajs/framework/utils"
 import { 
   createOrderWorkflow,
@@ -26,10 +24,7 @@ export default async function seedOrders({ container }: ExecArgs) {
   const [region] = await regionModuleService.listRegions()
   const [salesChannel] = await salesChannelModuleService.listSalesChannels()
   const customers = await customerModuleService.listCustomers()
-  const products = await productModuleService.listProducts({
-    include_draft_orders: false,
-    include_discounts: false,
-  })
+  const products = await productModuleService.listProducts()
 
   if (!customers.length) {
     logger.info("No customers found. Creating sample customers first...")
@@ -72,7 +67,7 @@ export default async function seedOrders({ container }: ExecArgs) {
   }
 
   // Get product variants for orders
-  const productVariants = []
+  const productVariants: any[] = []
   for (const product of products) {
     const variants = await productModuleService.listProductVariants({
       product_id: product.id
@@ -90,8 +85,8 @@ export default async function seedOrders({ container }: ExecArgs) {
     {
       customer: customers[0],
       status: OrderStatus.COMPLETED,
-      payment_status: PaymentStatus.CAPTURED,
-      fulfillment_status: FulfillmentStatus.FULFILLED,
+      payment_status: "captured",
+      fulfillment_status: "fulfilled",
       items: [
         {
           variant_id: productVariants[0].id,
@@ -130,8 +125,8 @@ export default async function seedOrders({ container }: ExecArgs) {
     {
       customer: customers[1],
       status: OrderStatus.PENDING,
-      payment_status: PaymentStatus.AWAITING,
-      fulfillment_status: FulfillmentStatus.NOT_FULFILLED,
+      payment_status: "awaiting",
+      fulfillment_status: "not_fulfilled",
       items: [
         {
           variant_id: productVariants[1]?.id || productVariants[0].id,
@@ -176,8 +171,8 @@ export default async function seedOrders({ container }: ExecArgs) {
     {
       customer: customers[2],
       status: OrderStatus.COMPLETED,
-      payment_status: PaymentStatus.CAPTURED,
-      fulfillment_status: FulfillmentStatus.SHIPPED,
+      payment_status: "captured",
+      fulfillment_status: "shipped",
       items: [
         {
           variant_id: productVariants[3]?.id || productVariants[0].id,
@@ -216,8 +211,8 @@ export default async function seedOrders({ container }: ExecArgs) {
     {
       customer: customers[0],
       status: OrderStatus.DRAFT,
-      payment_status: PaymentStatus.NOT_PAID,
-      fulfillment_status: FulfillmentStatus.NOT_FULFILLED,
+      payment_status: "not_paid",
+      fulfillment_status: "not_fulfilled",
       items: [
         {
           variant_id: productVariants[4]?.id || productVariants[0].id,
@@ -256,8 +251,8 @@ export default async function seedOrders({ container }: ExecArgs) {
     {
       customer: customers[1],
       status: OrderStatus.CANCELED,
-      payment_status: PaymentStatus.CANCELED,
-      fulfillment_status: FulfillmentStatus.CANCELED,
+      payment_status: "canceled",
+      fulfillment_status: "canceled",
       items: [
         {
           variant_id: productVariants[5]?.id || productVariants[0].id,
@@ -304,8 +299,7 @@ export default async function seedOrders({ container }: ExecArgs) {
         const { result: draftOrder } = await createOrderWorkflow(container).run({
           input: {
             ...orderData,
-            status: OrderStatus.DRAFT,
-            is_draft_order: true
+            status: OrderStatus.DRAFT
           }
         })
         
