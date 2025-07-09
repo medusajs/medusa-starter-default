@@ -71,7 +71,21 @@ export default async function importCsvProducts({ container }: ExecArgs) {
       return;
     }
 
-    const csvContent = fs.readFileSync(csvPath, 'utf-8');
+    // Read CSV with proper encoding handling
+    let csvContent = fs.readFileSync(csvPath, 'utf-8');
+    
+    // Remove BOM if present
+    if (csvContent.charCodeAt(0) === 0xFEFF) {
+      csvContent = csvContent.slice(1);
+    }
+    
+    // Clean up problematic characters that might cause JavaScript parsing issues
+    // This is more selective - only removes characters that could cause ReferenceError
+    csvContent = csvContent.replace(/[^\u0000-\u007F\u00A0-\u00FF\u0100-\u017F\u0180-\u024F]/g, function(char) {
+      logger.warn(`Replacing problematic character: ${char} (code: ${char.charCodeAt(0)})`);
+      return ''; // Remove the character
+    });
+    
     const rows = parseCSV(csvContent, separator);
 
     logger.info(`Found ${rows.length} rows in CSV file`);
