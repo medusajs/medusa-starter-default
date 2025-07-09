@@ -11,17 +11,17 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 
-// Simple CSV parser function with configurable separator
+// Proper CSV parser function that handles quoted values with commas
 function parseCSV(csvContent: string, separator: string = ','): any[] {
   const lines = csvContent.split('\n');
-  const headers = lines[0].split(separator);
+  const headers = parseCSVLine(lines[0], separator);
   const rows: any[] = [];
   
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
     
-    const values = line.split(separator);
+    const values = parseCSVLine(line, separator);
     const row: any = {};
     
     headers.forEach((header, index) => {
@@ -36,6 +36,39 @@ function parseCSV(csvContent: string, separator: string = ','): any[] {
   }
   
   return rows;
+}
+
+// Helper function to parse a single CSV line properly handling quoted values
+function parseCSVLine(line: string, separator: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        // Handle escaped quotes
+        current += '"';
+        i++; // Skip next quote
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+      }
+    } else if (char === separator && !inQuotes) {
+      // End of field
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  // Add the last field
+  result.push(current);
+  
+  return result;
 }
 
 export default async function importCsvProducts({ container }: ExecArgs) {
