@@ -115,6 +115,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
   const [activeId, setActiveId] = useState<string | null>(null)
   const [draggedOrder, setDraggedOrder] = useState<ServiceOrder | null>(null)
   const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, string>>({})
+  const [isUpdating, setIsUpdating] = useState<Record<string, boolean>>({})
   const queryClient = useQueryClient()
 
   const sensors = useSensors(
@@ -170,8 +171,12 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     onSuccess: (data, variables) => {
       toast.success("Service order status updated successfully!")
       
-      // Clear optimistic update
+      // Clear optimistic update and updating state
       setOptimisticUpdates(prev => {
+        const { [variables.orderId]: removed, ...rest } = prev
+        return rest
+      })
+      setIsUpdating(prev => {
         const { [variables.orderId]: removed, ...rest } = prev
         return rest
       })
@@ -192,8 +197,12 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     onError: (error: Error, variables) => {
       toast.error(`Failed to update status: ${error.message}`)
       
-      // Clear optimistic update on error
+      // Clear optimistic update and updating state on error
       setOptimisticUpdates(prev => {
+        const { [variables.orderId]: removed, ...rest } = prev
+        return rest
+      })
+      setIsUpdating(prev => {
         const { [variables.orderId]: removed, ...rest } = prev
         return rest
       })
@@ -229,6 +238,12 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     // Find the current order
     const currentOrder = serviceOrders.find(o => o.id === orderId)
     if (!currentOrder || currentOrder.status === newStatus) return
+    
+    // Set updating state to prevent any animations
+    setIsUpdating(prev => ({
+      ...prev,
+      [orderId]: true,
+    }))
     
     // Apply optimistic update immediately
     setOptimisticUpdates(prev => ({
@@ -273,13 +288,20 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                   items={orders.map(o => o.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {orders.map((order) => (
-                    <KanbanCard
-                      key={order.id}
-                      order={order}
-                      isDragging={activeId === order.id}
-                    />
-                  ))}
+                  {orders.map((order) => {
+                    // Skip rendering cards that are currently being updated to prevent return animation
+                    if (isUpdating[order.id]) {
+                      return null
+                    }
+                    
+                    return (
+                      <KanbanCard
+                        key={order.id}
+                        order={order}
+                        isDragging={activeId === order.id}
+                      />
+                    )
+                  })}
                 </SortableContext>
               </KanbanColumn>
             )

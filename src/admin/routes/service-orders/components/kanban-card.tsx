@@ -53,10 +53,16 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
     id: order.id,
   })
 
+  // Completely disable transitions during drag to prevent return animation
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: isOverlay ? "none" : transition || "transform 200ms ease, opacity 200ms ease",
+    transition: isOverlay || isDragging || isSortableDragging ? "none" : "transform 200ms ease, opacity 200ms ease",
     opacity: isDragging || isSortableDragging ? 0.4 : 1,
+    // Force immediate positioning during drag
+    ...(isDragging || isSortableDragging ? { 
+      transform: "none",
+      transition: "none" 
+    } : {}),
   }
 
   const formatDate = (dateString?: string) => {
@@ -80,7 +86,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
     <Container
       className={`cursor-grab touch-none select-none rounded-lg border bg-ui-bg-base p-4 shadow-sm transition-all duration-200 ease-out hover:shadow-md ${
         isOverlay ? "rotate-2 shadow-lg scale-105" : ""
-      }`}
+      } ${isDragging || isSortableDragging ? "pointer-events-none" : ""}`}
       ref={setNodeRef}
       style={style}
       {...attributes}
