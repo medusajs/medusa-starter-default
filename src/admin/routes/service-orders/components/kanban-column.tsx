@@ -38,16 +38,16 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       {/* Droppable Area */}
       <div
         ref={setNodeRef}
-        className={`flex min-h-[500px] flex-1 flex-col gap-3 rounded-lg border-2 border-dashed p-3 transition-colors ${
+        className={`flex min-h-[500px] flex-1 flex-col gap-3 rounded-lg border-2 border-dashed p-3 transition-all duration-200 ease-out ${
           isOver
-            ? "border-ui-border-interactive bg-ui-bg-highlight"
-            : "border-ui-border-base bg-ui-bg-subtle"
+            ? "border-ui-border-interactive bg-ui-bg-highlight shadow-md scale-[1.02]"
+            : "border-ui-border-base bg-ui-bg-subtle hover:border-ui-border-base-hover"
         }`}
       >
         {count === 0 ? (
           <div className="flex flex-1 items-center justify-center">
             <Text size="small" className="text-ui-fg-muted">
-              No orders
+              {isOver ? "Drop here" : "No orders"}
             </Text>
           </div>
         ) : (

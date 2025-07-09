@@ -55,8 +55,8 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging || isSortableDragging ? 0.5 : 1,
+    transition: isOverlay ? "none" : transition || "transform 200ms ease, opacity 200ms ease",
+    opacity: isDragging || isSortableDragging ? 0.4 : 1,
   }
 
   const formatDate = (dateString?: string) => {
@@ -78,8 +78,8 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
 
   const cardContent = (
     <Container
-      className={`cursor-grab touch-none select-none rounded-lg border bg-ui-bg-base p-4 shadow-sm transition-shadow hover:shadow-md ${
-        isOverlay ? "rotate-2 shadow-lg" : ""
+      className={`cursor-grab touch-none select-none rounded-lg border bg-ui-bg-base p-4 shadow-sm transition-all duration-200 ease-out hover:shadow-md ${
+        isOverlay ? "rotate-2 shadow-lg scale-105" : ""
       }`}
       ref={setNodeRef}
       style={style}

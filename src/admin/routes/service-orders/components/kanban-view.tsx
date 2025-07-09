@@ -9,6 +9,8 @@ import {
   useSensors,
   closestCenter,
   DragOverEvent,
+  DropAnimation,
+  defaultDropAnimationSideEffects,
 } from "@dnd-kit/core"
 import {
   SortableContext,
@@ -94,6 +96,17 @@ const statusConfig = [
   },
 ]
 
+// Drop animation configuration following Medusa patterns
+const dropAnimationConfig: DropAnimation = {
+  sideEffects: defaultDropAnimationSideEffects({
+    styles: {
+      active: {
+        opacity: "0.4",
+      },
+    },
+  }),
+}
+
 export const KanbanView: React.FC<KanbanViewProps> = ({
   serviceOrders,
   isLoading,
@@ -101,6 +114,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [draggedOrder, setDraggedOrder] = useState<ServiceOrder | null>(null)
+  const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, string>>({})
   const queryClient = useQueryClient()
 
   const sensors = useSensors(
@@ -111,7 +125,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     })
   )
 
-  // Group orders by status
+  // Group orders by status with optimistic updates
   const ordersByStatus = useMemo(() => {
     const grouped: Record<string, ServiceOrder[]> = {}
     
@@ -120,15 +134,19 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
       grouped[status.id] = []
     })
     
-    // Group orders by their status
+    // Group orders by their status, applying optimistic updates
     serviceOrders.forEach(order => {
-      if (grouped[order.status]) {
-        grouped[order.status].push(order)
+      const effectiveStatus = optimisticUpdates[order.id] || order.status
+      if (grouped[effectiveStatus]) {
+        grouped[effectiveStatus].push({
+          ...order,
+          status: effectiveStatus,
+        })
       }
     })
     
     return grouped
-  }, [serviceOrders])
+  }, [serviceOrders, optimisticUpdates])
 
   // Mutation for updating order status
   const updateStatusMutation = useMutation({
@@ -151,6 +169,13 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     },
     onSuccess: (data, variables) => {
       toast.success("Service order status updated successfully!")
+      
+      // Clear optimistic update
+      setOptimisticUpdates(prev => {
+        const { [variables.orderId]: removed, ...rest } = prev
+        return rest
+      })
+      
       onRefetch()
       
       // Invalidate all service order related queries to ensure consistency
@@ -164,8 +189,15 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
           (Array.isArray(query.queryKey) && query.queryKey[0] === "service-order")
       })
     },
-    onError: (error: Error) => {
+    onError: (error: Error, variables) => {
       toast.error(`Failed to update status: ${error.message}`)
+      
+      // Clear optimistic update on error
+      setOptimisticUpdates(prev => {
+        const { [variables.orderId]: removed, ...rest } = prev
+        return rest
+      })
+      
       onRefetch() // Refresh to revert optimistic update
     },
   })
@@ -197,6 +229,12 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     // Find the current order
     const currentOrder = serviceOrders.find(o => o.id === orderId)
     if (!currentOrder || currentOrder.status === newStatus) return
+    
+    // Apply optimistic update immediately
+    setOptimisticUpdates(prev => ({
+      ...prev,
+      [orderId]: newStatus,
+    }))
     
     // Update status via API
     updateStatusMutation.mutate({ orderId, newStatus })
@@ -248,7 +286,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
           })}
         </div>
         
-        <DragOverlay>
+        <DragOverlay dropAnimation={dropAnimationConfig}>
           {draggedOrder ? (
             <KanbanCard
               order={draggedOrder}
