@@ -11,17 +11,17 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 
-// Simple CSV parser function
-function parseCSV(csvContent: string): any[] {
+// Simple CSV parser function with configurable separator
+function parseCSV(csvContent: string, separator: string = ','): any[] {
   const lines = csvContent.split('\n');
-  const headers = lines[0].split(',');
+  const headers = lines[0].split(separator);
   const rows: any[] = [];
   
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
     
-    const values = line.split(',');
+    const values = line.split(separator);
     const row: any = {};
     
     headers.forEach((header, index) => {
@@ -43,16 +43,22 @@ export default async function importCsvProducts({ container }: ExecArgs) {
   logger.info("Starting CSV import process...");
 
   try {
-    // Read the CSV file
-    const csvPath = path.join(process.cwd(), "test import.csv");
+    // Read the CSV file - try product-import-template.csv first, then fallback to test import.csv
+    let csvPath = path.join(process.cwd(), "product-import-template.csv");
+    let separator = ';';
     
     if (!fs.existsSync(csvPath)) {
-      logger.error(`CSV file not found at: ${csvPath}`);
-      return;
+      csvPath = path.join(process.cwd(), "test import.csv");
+      separator = ',';
+      
+      if (!fs.existsSync(csvPath)) {
+        logger.error(`CSV file not found at: ${csvPath}`);
+        return;
+      }
     }
 
     const csvContent = fs.readFileSync(csvPath, 'utf-8');
-    const rows = parseCSV(csvContent);
+    const rows = parseCSV(csvContent, separator);
 
     logger.info(`Found ${rows.length} rows in CSV file`);
 
