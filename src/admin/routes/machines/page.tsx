@@ -8,10 +8,12 @@ import {
   Badge, 
   IconButton, 
   Text,
-  Table,
+  DataTable,
+  useDataTable,
+  createDataTableColumnHelper,
   toast
 } from "@medusajs/ui"
-import { useSearchParams, useNavigate } from "react-router-dom"
+import { useSearchParams, useNavigate, Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { CreateMachineForm } from "../../components/machines/create-machine-form"
 import { EditMachineForm } from "../../components/edit-machine-form"
@@ -38,20 +40,24 @@ interface Machine {
   updated_at: string
 }
 
-// Fetch machines
-const fetchMachines = async (params: URLSearchParams) => {
-  const searchParams = new URLSearchParams()
-  
-  // Add all params to search
-  for (const [key, value] of params.entries()) {
-    searchParams.append(key, value)
-  }
-  
-  const response = await fetch(`/admin/machines?${searchParams.toString()}`)
-  if (!response.ok) {
-    throw new Error('Failed to fetch machines')
-  }
-  return response.json()
+const PAGE_SIZE = 20
+
+// Data fetching hook
+const useMachines = () => {
+  return useQuery({
+    queryKey: ["machines"],
+    queryFn: async () => {
+      const response = await fetch(`/admin/machines`)
+      if (!response.ok) {
+        throw new Error("Failed to fetch machines")
+      }
+      const data = await response.json()
+      return {
+        machines: data.machines || [],
+        count: data.count || 0
+      }
+    },
+  })
 }
 
 // Delete machine mutation
@@ -59,43 +65,87 @@ const useDeleteMachine = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async (machineId: string) => {
-      const response = await fetch(`/admin/machines/${machineId}`, {
-        method: 'DELETE',
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/admin/machines/${id}`, {
+        method: "DELETE",
       })
       
       if (!response.ok) {
-        throw new Error('Failed to delete machine')
+        throw new Error("Failed to delete machine")
       }
       
       return response.json()
     },
     onSuccess: () => {
-      toast.success('Machine deleted successfully!')
-      queryClient.invalidateQueries({ queryKey: ['machines'] })
+      toast.success("Machine deleted successfully")
+      queryClient.invalidateQueries({ queryKey: ["machines"] })
     },
     onError: () => {
-      toast.error('Failed to delete machine')
+      toast.error("Failed to delete machine")
     },
   })
 }
 
-// Define route config
+// Machine actions component
+const MachineActions = ({ machine }: { machine: Machine }) => {
+  const navigate = useNavigate()
+  const deleteMachineMutation = useDeleteMachine()
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (window.confirm(`Are you sure you want to delete machine "${machine.brand} ${machine.model}"?`)) {
+      deleteMachineMutation.mutate(machine.id)
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <IconButton
+        size="small"
+        variant="transparent"
+        onClick={(e) => {
+          e.stopPropagation()
+          navigate(`/machines/${machine.id}`)
+        }}
+      >
+        <Eye className="h-4 w-4" />
+      </IconButton>
+      <EditMachineForm machine={machine} trigger={
+        <IconButton 
+          size="small"
+          variant="transparent"
+        >
+          <PencilSquare className="h-4 w-4" />
+        </IconButton>
+      } />
+      <IconButton
+        size="small"
+        variant="transparent"
+        onClick={handleDelete}
+        disabled={deleteMachineMutation.isPending}
+      >
+        <Trash className="h-4 w-4" />
+      </IconButton>
+    </div>
+  )
+}
+
+// Route config
 export const config = defineRouteConfig({
   label: "Machines",
   icon: Tools,
 })
 
-const MachinesList = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
+// Machines list table component - following official DataTable pattern
+const MachinesListTable = () => {
   const navigate = useNavigate()
-  const deleteMachineMutation = useDeleteMachine()
-  
-  // Get machines data
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['machines', searchParams.toString()],
-    queryFn: () => fetchMachines(searchParams),
-  })
+  const { data, isLoading, error } = useMachines()
+
+  if (error) {
+    throw error
+  }
 
   const machines = data?.machines || []
   const count = data?.count || 0
@@ -106,153 +156,107 @@ const MachinesList = () => {
       active: { color: "green", label: "Active" },
       inactive: { color: "red", label: "Inactive" },
       maintenance: { color: "orange", label: "Maintenance" },
-      sold: { color: "grey", label: "Sold" },
     } as const
 
     const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey", label: status }
     
     return (
-      <Badge size="2xsmall">
+      <Badge size="2xsmall" color={config.color as any}>
         {config.label}
       </Badge>
     )
   }
 
-  if (error) {
-    return (
-      <Container className="p-6">
-        <div className="text-center">
-          <Text className="text-ui-fg-error">Failed to load machines</Text>
-        </div>
-      </Container>
-    )
-  }
+  // Column helper - following official pattern
+  const columnHelper = createDataTableColumnHelper<Machine>()
+
+  const columns = [
+    columnHelper.accessor("brand", {
+      header: "Brand",
+      enableSorting: true,
+      cell: ({ getValue }) => (
+        <Text className="font-medium">{getValue()}</Text>
+      ),
+    }),
+    columnHelper.accessor("model", {
+      header: "Model",
+      enableSorting: true,
+      cell: ({ getValue }) => (
+        <Text>{getValue()}</Text>
+      ),
+    }),
+    columnHelper.accessor("serial_number", {
+      header: "Serial Number",
+      cell: ({ getValue }) => (
+        <Text className="font-mono text-sm">{getValue()}</Text>
+      ),
+    }),
+    columnHelper.accessor("fuel_type", {
+      header: "Fuel Type",
+      cell: ({ getValue }) => (
+        <Text className="capitalize">{getValue()}</Text>
+      ),
+    }),
+    columnHelper.accessor("year", {
+      header: "Year",
+      enableSorting: true,
+      cell: ({ getValue }) => (
+        <Text>{getValue()}</Text>
+      ),
+    }),
+    columnHelper.accessor("status", {
+      header: "Status",
+      cell: ({ getValue }) => getStatusBadge(getValue()),
+    }),
+    columnHelper.accessor("location", {
+      header: "Location",
+      cell: ({ getValue }) => (
+        <Text>{getValue() || "—"}</Text>
+      ),
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => <MachineActions machine={row.original} />,
+    }),
+  ]
+
+  // Table instance - following official pattern
+  const table = useDataTable({
+    data: machines,
+    columns,
+    getRowId: (row) => row.id,
+    rowCount: count,
+    isLoading,
+  })
 
   return (
-    <div className="flex h-full w-full flex-col">
-      <div className="flex-1 overflow-hidden">
-        <Container className="h-full flex flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-ui-border-base">
-            <div>
-              <Heading level="h1">Machines</Heading>
-              <Text className="text-ui-fg-subtle">
-                Manage your machine fleet ({count} machines)
-              </Text>
-            </div>
-            <CreateMachineForm />
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 overflow-hidden p-6">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <Text>Loading machines...</Text>
-              </div>
-            ) : machines.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <Tools className="h-12 w-12 text-ui-fg-muted mb-4" />
-                <Heading level="h2" className="mb-2">No machines found</Heading>
-                <Text className="text-ui-fg-subtle mb-6">
-                  Get started by creating your first machine.
-                </Text>
-                <CreateMachineForm />
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.HeaderCell>Machine</Table.HeaderCell>
-                      <Table.HeaderCell>Year</Table.HeaderCell>
-                      <Table.HeaderCell>Status</Table.HeaderCell>
-                      <Table.HeaderCell>Hours</Table.HeaderCell>
-                      <Table.HeaderCell>Location</Table.HeaderCell>
-                      <Table.HeaderCell>Fuel</Table.HeaderCell>
-                      <Table.HeaderCell>Actions</Table.HeaderCell>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {machines.map((machine: any) => {
-                      // Map new field names to old field names for compatibility
-                      const mappedMachine: Machine = {
-                        ...machine,
-                        brand: machine.name || '', // Map name to brand for compatibility
-                        model: machine.model_number || '', // Map model_number to model
-                      }
-                      
-                      return (
-                        <Table.Row key={machine.id}>
-                          <Table.Cell>
-                            <div className="flex flex-col">
-                              <Text weight="plus" size="small">{machine.name || machine.brand}</Text>
-                              <Text size="xsmall" className="text-ui-fg-subtle">
-                                {machine.model_number || machine.model} • {machine.serial_number}
-                              </Text>
-                            </div>
-                          </Table.Cell>
-                          <Table.Cell>
-                            <Text size="small">{machine.year || "—"}</Text>
-                          </Table.Cell>
-                          <Table.Cell>
-                            {getStatusBadge(machine.status)}
-                          </Table.Cell>
-                          <Table.Cell>
-                            <Text size="small">
-                              {machine.engine_hours ? `${machine.engine_hours}h` : "—"}
-                            </Text>
-                          </Table.Cell>
-                          <Table.Cell>
-                            <Text size="small">{machine.location || "—"}</Text>
-                          </Table.Cell>
-                          <Table.Cell>
-                            <Text size="small" className="capitalize">
-                              {machine.fuel_type || "—"}
-                            </Text>
-                          </Table.Cell>
-                          <Table.Cell>
-                            <div className="flex items-center gap-1">
-                              <IconButton 
-                                size="small"
-                                variant="transparent"
-                                onClick={() => navigate(`/machines/${machine.id}`)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </IconButton>
-                              <EditMachineForm machine={mappedMachine} trigger={
-                                <IconButton 
-                                  size="small"
-                                  variant="transparent"
-                                >
-                                  <PencilSquare className="h-4 w-4" />
-                                </IconButton>
-                              } />
-                              <IconButton 
-                                size="small"
-                                variant="transparent"
-                                onClick={() => {
-                                  if (window.confirm('Are you sure you want to delete this machine?')) {
-                                    deleteMachineMutation.mutate(machine.id)
-                                  }
-                                }}
-                                disabled={deleteMachineMutation.isPending}
-                              >
-                                <Trash className="h-4 w-4" />
-                              </IconButton>
-                            </div>
-                          </Table.Cell>
-                        </Table.Row>
-                      )
-                    })}
-                  </Table.Body>
-                </Table>
-              </div>
-            )}
-          </div>
-        </Container>
+    <Container className="divide-y p-0">
+      <div className="flex items-center justify-between px-6 py-4">
+        <div>
+          <Heading>Machines</Heading>
+          <Text className="text-ui-fg-subtle" size="small">
+            Manage your equipment and machinery ({count} machines)
+          </Text>
+        </div>
+        <CreateMachineForm />
       </div>
-    </div>
+      <DataTable instance={table}>
+        <DataTable.Toolbar className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
+          <div className="flex gap-2">
+            <DataTable.Search placeholder="Search machines..." />
+          </div>
+        </DataTable.Toolbar>
+        <DataTable.Table />
+        <DataTable.Pagination />
+      </DataTable>
+    </Container>
   )
 }
 
-export default MachinesList
+// Main machines page component
+const MachinesPage = () => {
+  return <MachinesListTable />
+}
+
+export default MachinesPage
