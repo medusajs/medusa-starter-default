@@ -146,6 +146,10 @@ export const config = defineRouteConfig({
 const TechniciansListTable = () => {
   const navigate = useNavigate()
   const { data, isLoading, error } = useTechnicians()
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  })
 
   if (error) {
     throw error
@@ -175,50 +179,41 @@ const TechniciansListTable = () => {
   const columnHelper = createDataTableColumnHelper<Technician>()
 
   const columns = [
-    columnHelper.display({
-      id: "name",
-      header: "Name",
-      cell: ({ row }) => {
-        const technician = row.original
-        return (
-          <div className="flex flex-col">
-            <Text weight="plus" size="small">
-              {technician.first_name} {technician.last_name}
-            </Text>
-            <Text size="xsmall" className="text-ui-fg-subtle">
-              {technician.email}
-            </Text>
-          </div>
-        )
-      },
-    }),
-    columnHelper.accessor("employee_id", {
-      header: "Employee ID",
+    columnHelper.accessor("first_name", {
+      header: "First Name",
+      enableSorting: true,
       cell: ({ getValue }) => (
-        <Text size="small">{getValue() || "—"}</Text>
+        <Text className="font-medium">{getValue()}</Text>
       ),
     }),
-    columnHelper.accessor("department", {
-      header: "Department",
+    columnHelper.accessor("last_name", {
+      header: "Last Name",
+      enableSorting: true,
       cell: ({ getValue }) => (
-        <Text size="small">{getValue() || "—"}</Text>
+        <Text className="font-medium">{getValue()}</Text>
       ),
     }),
-    columnHelper.accessor("position", {
-      header: "Position",
+    columnHelper.accessor("email", {
+      header: "Email",
       cell: ({ getValue }) => (
-        <Text size="small">{getValue() || "—"}</Text>
+        <Text>{getValue()}</Text>
+      ),
+    }),
+    columnHelper.accessor("phone", {
+      header: "Phone",
+      cell: ({ getValue }) => (
+        <Text>{getValue() || "—"}</Text>
+      ),
+    }),
+    columnHelper.accessor("specializations", {
+      header: "Specializations",
+      cell: ({ getValue }) => (
+        <Text className="capitalize">{getValue() || "—"}</Text>
       ),
     }),
     columnHelper.accessor("status", {
       header: "Status",
       cell: ({ getValue }) => getStatusBadge(getValue()),
-    }),
-    columnHelper.accessor("phone", {
-      header: "Phone",
-      cell: ({ getValue }) => (
-        <Text size="small">{getValue() || "—"}</Text>
-      ),
     }),
     columnHelper.display({
       id: "actions",
@@ -227,13 +222,16 @@ const TechniciansListTable = () => {
     }),
   ]
 
-  // Table instance - following official pattern
   const table = useDataTable({
     data: technicians,
     columns,
     getRowId: (row) => row.id,
     rowCount: count,
     isLoading,
+    pagination: {
+      state: pagination,
+      onPaginationChange: setPagination,
+    },
   })
 
   return (

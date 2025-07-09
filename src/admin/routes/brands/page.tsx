@@ -137,6 +137,10 @@ export const config = defineRouteConfig({
 const BrandsListTable = () => {
   const navigate = useNavigate()
   const { data, isLoading, error } = useBrands()
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  })
 
   if (error) {
     throw error
@@ -149,15 +153,8 @@ const BrandsListTable = () => {
   const columnHelper = createDataTableColumnHelper<Brand>()
 
   const columns = [
-    columnHelper.accessor("code", {
-      header: "Code",
-      enableSorting: true,
-      cell: ({ getValue }) => (
-        <Text className="font-mono text-sm font-medium">{getValue()}</Text>
-      ),
-    }),
     columnHelper.accessor("name", {
-      header: "Name",
+      header: "Brand Name",
       enableSorting: true,
       cell: ({ getValue }) => (
         <Text className="font-medium">{getValue()}</Text>
@@ -169,35 +166,10 @@ const BrandsListTable = () => {
         <Text>{getValue() || "—"}</Text>
       ),
     }),
-    columnHelper.display({
-      id: "type",
-      header: "Type",
-      cell: ({ row }) => {
-        const brand = row.original
-        return (
-          <div className="flex gap-1">
-            {brand.is_oem && (
-              <Badge color="green" size="2xsmall">OEM</Badge>
-            )}
-            {!brand.is_oem && (
-              <Badge color="orange" size="2xsmall">Aftermarket</Badge>
-            )}
-            {brand.authorized_dealer && (
-              <Badge color="blue" size="2xsmall">Authorized</Badge>
-            )}
-          </div>
-        )
-      },
-    }),
-    columnHelper.accessor("is_active", {
-      header: "Status",
+    columnHelper.accessor("description", {
+      header: "Description",
       cell: ({ getValue }) => (
-        <Badge 
-          color={getValue() ? "green" : "red"}
-          size="2xsmall"
-        >
-          {getValue() ? "Active" : "Inactive"}
-        </Badge>
+        <Text className="truncate max-w-xs">{getValue() || "—"}</Text>
       ),
     }),
     columnHelper.display({
@@ -207,13 +179,16 @@ const BrandsListTable = () => {
     }),
   ]
 
-  // Table instance - following official pattern
   const table = useDataTable({
     data: brands,
     columns,
     getRowId: (row) => row.id,
     rowCount: count,
     isLoading,
+    pagination: {
+      state: pagination,
+      onPaginationChange: setPagination,
+    },
   })
 
   return (

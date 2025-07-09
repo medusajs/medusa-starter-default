@@ -101,12 +101,14 @@ export const config = defineRouteConfig({
   icon: Tools,
 })
 
-// Service orders list component
-const ServiceOrdersList = () => {
+// Service Orders list table component - following official DataTable pattern
+const ServiceOrdersListTable = () => {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState("list")
-  
   const { data, isLoading, error } = useServiceOrders()
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  })
 
   if (error) {
     throw error
@@ -115,6 +117,7 @@ const ServiceOrdersList = () => {
   const serviceOrders = data?.service_orders || []
   const count = data?.count || 0
 
+  // Status and priority variants
   const statusVariants = {
     draft: "orange",
     scheduled: "blue", 
@@ -136,46 +139,28 @@ const ServiceOrdersList = () => {
   const columnHelper = createDataTableColumnHelper<ServiceOrder>()
 
   const columns = [
-    columnHelper.display({
-      id: "order",
-      header: "Order #",
-      cell: ({ row }) => {
-        const order = row.original
-        return (
-          <div className="flex flex-col">
-            <Text weight="plus" size="small">{order.service_order_number}</Text>
-            <Text size="xsmall" className="text-ui-fg-subtle truncate max-w-48">
-              {order.description || "No description"}
-            </Text>
-          </div>
-        )
-      },
+    columnHelper.accessor("service_order_number", {
+      header: "Order Number",
+      enableSorting: true,
+      cell: ({ getValue }) => (
+        <Text className="font-medium">{getValue()}</Text>
+      ),
     }),
-    columnHelper.display({
-      id: "customer",
+    columnHelper.accessor("customer", {
       header: "Customer",
-      cell: ({ row }) => {
-        const order = row.original
+      cell: ({ getValue }) => {
+        const customer = getValue()
         return (
-          <Text size="small">
-            {order.customer 
-              ? `${order.customer.first_name} ${order.customer.last_name}`
-              : "—"}
-          </Text>
+          <Text>{customer ? `${customer.first_name} ${customer.last_name}` : "—"}</Text>
         )
       },
     }),
-    columnHelper.display({
-      id: "technician",
-      header: "Technician",
-      cell: ({ row }) => {
-        const order = row.original
+    columnHelper.accessor("technician", {
+      header: "Technician", 
+      cell: ({ getValue }) => {
+        const technician = getValue()
         return (
-          <Text size="small">
-            {order.technician 
-              ? `${order.technician.first_name} ${order.technician.last_name}`
-              : "—"}
-          </Text>
+          <Text>{technician ? `${technician.first_name} ${technician.last_name}` : "—"}</Text>
         )
       },
     }),
@@ -222,14 +207,44 @@ const ServiceOrdersList = () => {
     }),
   ]
 
-  // Table instance - following official pattern
   const table = useDataTable({
     data: serviceOrders,
     columns,
     getRowId: (row) => row.id,
     rowCount: count,
     isLoading,
+    pagination: {
+      state: pagination,
+      onPaginationChange: setPagination,
+    },
   })
+
+  return (
+    <DataTable instance={table}>
+      <DataTable.Toolbar className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
+        <div className="flex gap-2">
+          <DataTable.Search placeholder="Search service orders..." />
+        </div>
+      </DataTable.Toolbar>
+      <DataTable.Table />
+      <DataTable.Pagination />
+    </DataTable>
+  )
+}
+
+// Service orders list component
+const ServiceOrdersList = () => {
+  const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState("list")
+  
+  const { data, isLoading, error } = useServiceOrders()
+
+  if (error) {
+    throw error
+  }
+
+  const serviceOrders = data?.service_orders || []
+  const count = data?.count || 0
 
   return (
     <Container className="divide-y p-0">
@@ -266,15 +281,7 @@ const ServiceOrdersList = () => {
 
       <div className="overflow-hidden">
         <Tabs.Content value="list">
-          <DataTable instance={table}>
-            <DataTable.Toolbar className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
-              <div className="flex gap-2">
-                <DataTable.Search placeholder="Search service orders..." />
-              </div>
-            </DataTable.Toolbar>
-            <DataTable.Table />
-            <DataTable.Pagination />
-          </DataTable>
+          <ServiceOrdersListTable />
         </Tabs.Content>
 
         <Tabs.Content value="kanban">

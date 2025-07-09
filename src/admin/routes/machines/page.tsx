@@ -142,6 +142,10 @@ export const config = defineRouteConfig({
 const MachinesListTable = () => {
   const navigate = useNavigate()
   const { data, isLoading, error } = useMachines()
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  })
 
   if (error) {
     throw error
@@ -228,6 +232,10 @@ const MachinesListTable = () => {
     getRowId: (row) => row.id,
     rowCount: count,
     isLoading,
+    pagination: {
+      state: pagination,
+      onPaginationChange: setPagination,
+    },
   })
 
   return (
