@@ -109,6 +109,7 @@ const ServiceOrdersListTable = () => {
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   })
+  const [searchQuery, setSearchQuery] = React.useState("")
 
   if (error) {
     throw error
@@ -116,6 +117,18 @@ const ServiceOrdersListTable = () => {
 
   const serviceOrders = data?.service_orders || []
   const count = data?.count || 0
+
+  // Filter service orders based on search query
+  const filteredServiceOrders = React.useMemo(() => {
+    if (!searchQuery) return serviceOrders
+    
+    return serviceOrders.filter((order: ServiceOrder) =>
+      order.service_order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      `${order.customer?.first_name} ${order.customer?.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      `${order.technician?.first_name} ${order.technician?.last_name}`.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [serviceOrders, searchQuery])
 
   // Status and priority variants
   const statusVariants = {
@@ -208,14 +221,18 @@ const ServiceOrdersListTable = () => {
   ]
 
   const table = useDataTable({
-    data: serviceOrders,
+    data: filteredServiceOrders,
     columns,
     getRowId: (row) => row.id,
-    rowCount: count,
+    rowCount: filteredServiceOrders.length,
     isLoading,
     pagination: {
       state: pagination,
       onPaginationChange: setPagination,
+    },
+    search: {
+      state: searchQuery,
+      onSearchChange: setSearchQuery,
     },
   })
 

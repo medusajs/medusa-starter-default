@@ -150,6 +150,7 @@ const TechniciansListTable = () => {
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   })
+  const [searchQuery, setSearchQuery] = React.useState("")
 
   if (error) {
     throw error
@@ -157,6 +158,20 @@ const TechniciansListTable = () => {
 
   const technicians = data?.technicians || []
   const count = data?.count || 0
+
+  // Filter technicians based on search query
+  const filteredTechnicians = React.useMemo(() => {
+    if (!searchQuery) return technicians
+    
+    return technicians.filter((technician: Technician) =>
+      technician.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      technician.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      technician.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      technician.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      technician.specializations?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      technician.department?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [technicians, searchQuery])
 
   // Status badge helper
   const getStatusBadge = (status: string) => {
@@ -223,14 +238,18 @@ const TechniciansListTable = () => {
   ]
 
   const table = useDataTable({
-    data: technicians,
+    data: filteredTechnicians,
     columns,
     getRowId: (row) => row.id,
-    rowCount: count,
+    rowCount: filteredTechnicians.length,
     isLoading,
     pagination: {
       state: pagination,
       onPaginationChange: setPagination,
+    },
+    search: {
+      state: searchQuery,
+      onSearchChange: setSearchQuery,
     },
   })
 

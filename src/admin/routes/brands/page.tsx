@@ -141,6 +141,7 @@ const BrandsListTable = () => {
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   })
+  const [searchQuery, setSearchQuery] = React.useState("")
 
   if (error) {
     throw error
@@ -148,6 +149,18 @@ const BrandsListTable = () => {
 
   const brands = data?.brands || []
   const count = data?.count || 0
+
+  // Filter brands based on search query
+  const filteredBrands = React.useMemo(() => {
+    if (!searchQuery) return brands
+    
+    return brands.filter((brand: Brand) =>
+      brand.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      brand.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      brand.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      brand.country_of_origin?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [brands, searchQuery])
 
   // Column helper - following official pattern
   const columnHelper = createDataTableColumnHelper<Brand>()
@@ -180,14 +193,18 @@ const BrandsListTable = () => {
   ]
 
   const table = useDataTable({
-    data: brands,
+    data: filteredBrands,
     columns,
     getRowId: (row) => row.id,
-    rowCount: count,
+    rowCount: filteredBrands.length,
     isLoading,
     pagination: {
       state: pagination,
       onPaginationChange: setPagination,
+    },
+    search: {
+      state: searchQuery,
+      onSearchChange: setSearchQuery,
     },
   })
 

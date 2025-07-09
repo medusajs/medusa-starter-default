@@ -146,6 +146,7 @@ const MachinesListTable = () => {
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   })
+  const [searchQuery, setSearchQuery] = React.useState("")
 
   if (error) {
     throw error
@@ -153,6 +154,19 @@ const MachinesListTable = () => {
 
   const machines = data?.machines || []
   const count = data?.count || 0
+
+  // Filter machines based on search query
+  const filteredMachines = React.useMemo(() => {
+    if (!searchQuery) return machines
+    
+    return machines.filter((machine: Machine) =>
+      machine.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      machine.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      machine.serial_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      machine.fuel_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      machine.location?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [machines, searchQuery])
 
   // Status badge helper
   const getStatusBadge = (status: string) => {
@@ -227,14 +241,18 @@ const MachinesListTable = () => {
 
   // Table instance - following official pattern
   const table = useDataTable({
-    data: machines,
+    data: filteredMachines,
     columns,
     getRowId: (row) => row.id,
-    rowCount: count,
+    rowCount: filteredMachines.length,
     isLoading,
     pagination: {
       state: pagination,
       onPaginationChange: setPagination,
+    },
+    search: {
+      state: searchQuery,
+      onSearchChange: setSearchQuery,
     },
   })
 
