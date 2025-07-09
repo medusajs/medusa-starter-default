@@ -117,11 +117,11 @@ export default async function importCsvProducts({ container }: ExecArgs) {
           values: ["Default Option Value"]
         }];
 
-        const variantOptions = hasOptions ? [{
-          value: row['Variant Option 1 Value']
-        }] : [{
-          value: "Default Option Value"
-        }];
+        const variantOptions = hasOptions ? {
+          [row['Variant Option 1 Name']]: row['Variant Option 1 Value']
+        } : {
+          "Default Option": "Default Option Value"
+        };
 
         const productData = {
           title: row['Product Title'],
