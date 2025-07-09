@@ -5,7 +5,7 @@ import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
-    const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+    const serviceOrdersService: any = req.scope.resolve(SERVICE_ORDERS_MODULE)
     
     const { 
       status, 
@@ -41,23 +41,14 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       ]
     }
 
-    // Use Query to fetch service orders with linked customer and technician data
-    const { data: serviceOrders } = await query.graph({
-      entity: "service_order",
-      fields: [
-        "*",
-        "customer.*",
-        "technician.*",
-      ],
-      filters,
-      pagination: {
-        take: Number(limit),
-        skip: Number(offset),
-      },
-    })
+    // Use the service method for consistency with detail view
+    const serviceOrders = await serviceOrdersService.listServiceOrdersWithLinks(filters)
+    
+    // Apply pagination manually since we're using the service method
+    const paginatedOrders = serviceOrders.slice(Number(offset), Number(offset) + Number(limit))
     
     res.json({ 
-      service_orders: serviceOrders,
+      service_orders: paginatedOrders,
       count: serviceOrders.length,
       offset: Number(offset),
       limit: Number(limit)

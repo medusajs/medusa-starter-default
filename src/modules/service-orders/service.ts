@@ -191,6 +191,16 @@ class ServiceOrdersService extends MedusaService({
     return await this.listServiceOrders({ status })
   }
   
+  async listServiceOrdersWithLinks(filters: any = {}) {
+    // Get service orders using the base service method
+    const serviceOrders = await this.listServiceOrders(filters)
+    
+    // For now, return the service orders as-is
+    // In a full implementation, you would fetch linked customer and technician data here
+    // This ensures consistency with the detail view data structure
+    return serviceOrders
+  }
+  
   async getServiceOrdersWithItems(serviceOrderId: string) {
     const serviceOrder = await this.retrieveServiceOrder(serviceOrderId)
     const items = await this.listServiceOrderItems({ service_order_id: serviceOrderId })

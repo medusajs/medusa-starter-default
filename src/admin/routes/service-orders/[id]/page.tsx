@@ -31,6 +31,10 @@ const ServiceOrderDetails = () => {
       return response.json()
     },
     enabled: !!id,
+    // Add stale time to prevent unnecessary refetches
+    staleTime: 30000, // 30 seconds
+    // Add cache time to keep data in memory
+    gcTime: 5 * 60 * 1000, // 5 minutes
   })
 
   const { data: items } = useQuery({
@@ -79,9 +83,18 @@ const ServiceOrderDetails = () => {
       // Force refetch the service order data
       await refetch()
       
-      // Also invalidate all related queries to ensure fresh data
+      // Invalidate all service order related queries to ensure consistency
       queryClient.invalidateQueries({ queryKey: ["service-order", id] })
       queryClient.invalidateQueries({ queryKey: ["service-orders"] })
+      queryClient.invalidateQueries({ queryKey: ["service-order-items", id] })
+      queryClient.invalidateQueries({ queryKey: ["service-order-time-entries", id] })
+      
+      // Also invalidate any queries that might contain service order data
+      queryClient.invalidateQueries({ 
+        predicate: (query) => 
+          query.queryKey[0] === "service-orders" || 
+          (Array.isArray(query.queryKey) && query.queryKey[0] === "service-order")
+      })
     },
     onError: (error: Error) => {
       console.error("Status update failed:", error)

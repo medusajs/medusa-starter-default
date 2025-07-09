@@ -108,6 +108,10 @@ const useServiceOrders = () => {
         count: data.count || 0
       }
     },
+    // Add stale time to prevent unnecessary refetches
+    staleTime: 30000, // 30 seconds
+    // Add cache time to keep data in memory
+    gcTime: 5 * 60 * 1000, // 5 minutes
   })
 }
 

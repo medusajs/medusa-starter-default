@@ -149,9 +149,20 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
       
       return response.json()
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       toast.success("Service order status updated successfully!")
       onRefetch()
+      
+      // Invalidate all service order related queries to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ["service-orders"] })
+      queryClient.invalidateQueries({ queryKey: ["service-order", variables.orderId] })
+      
+      // Also invalidate any queries that might contain service order data
+      queryClient.invalidateQueries({ 
+        predicate: (query) => 
+          query.queryKey[0] === "service-orders" || 
+          (Array.isArray(query.queryKey) && query.queryKey[0] === "service-order")
+      })
     },
     onError: (error: Error) => {
       toast.error(`Failed to update status: ${error.message}`)
