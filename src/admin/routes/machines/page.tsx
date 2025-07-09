@@ -189,6 +189,10 @@ const MachinesListTable = () => {
   // Filter state management
   const [search, setSearch] = React.useState("")
   const [filtering, setFiltering] = React.useState<DataTableFilteringState>({})
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  })
 
   if (error) {
     throw error
@@ -282,6 +286,10 @@ const MachinesListTable = () => {
     filtering: {
       state: filtering,
       onFilteringChange: setFiltering,
+    },
+    pagination: {
+      state: pagination,
+      onPaginationChange: setPagination,
     },
   })
 
