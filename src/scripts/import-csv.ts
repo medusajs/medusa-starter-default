@@ -58,18 +58,13 @@ export default async function importCsvProducts({ container }: ExecArgs) {
   }
 
   try {
-    // Read the CSV file - try product-import-template.csv first, then fallback to test import.csv
-    let csvPath = path.join(process.cwd(), "product-import-template.csv");
-    let separator = ';';
+    // Read the CSV file
+    const csvPath = path.join(process.cwd(), "Medusa_products_1.csv");
+    const separator = ',';
     
     if (!fs.existsSync(csvPath)) {
-      csvPath = path.join(process.cwd(), "test import.csv");
-      separator = ',';
-      
-      if (!fs.existsSync(csvPath)) {
-        logger.error(`CSV file not found at: ${csvPath}`);
-        return;
-      }
+      logger.error(`CSV file not found at: ${csvPath}`);
+      return;
     }
 
     const csvContent = fs.readFileSync(csvPath, 'utf-8');
