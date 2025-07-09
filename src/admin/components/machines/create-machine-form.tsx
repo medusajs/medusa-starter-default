@@ -14,9 +14,8 @@ import {
   Text,
   toast,
   Badge,
-  Prompt,
 } from "@medusajs/ui"
-import { Plus, AlertTriangle } from "@medusajs/icons"
+import { Plus } from "@medusajs/icons"
 
 // Validation schema
 const createMachineSchema = z.object({
@@ -40,16 +39,6 @@ const createMachineSchema = z.object({
 
 type CreateMachineFormData = z.infer<typeof createMachineSchema>
 
-// Fetch brands for dropdown
-const fetchBrands = async () => {
-  const response = await fetch('/admin/brands?is_active=true&limit=100')
-  if (!response.ok) {
-    throw new Error('Failed to fetch brands')
-  }
-  const data = await response.json()
-  return data.brands || []
-}
-
 // Fetch customers for dropdown
 const fetchCustomers = async () => {
   const response = await fetch('/admin/customers?limit=100')
@@ -68,12 +57,7 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
 
-  // Fetch brands and customers
-  const { data: brands = [], isLoading: brandsLoading } = useQuery({
-    queryKey: ['brands'],
-    queryFn: fetchBrands,
-  })
-
+  // Fetch customers
   const { data: customers = [], isLoading: customersLoading } = useQuery({
     queryKey: ['customers'],
     queryFn: fetchCustomers,
@@ -95,7 +79,7 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
       current_value: "",
       status: "active",
       location: "",
-      customer_id: "",
+      customer_id: undefined,
       description: "",
       notes: "",
     },
@@ -147,13 +131,6 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
     createMachineMutation.mutate(data)
   })
 
-  const statusColors = {
-    active: "green",
-    inactive: "red", 
-    maintenance: "orange",
-    sold: "grey",
-  } as const
-
   return (
     <FocusModal open={isOpen} onOpenChange={setIsOpen}>
       <FocusModal.Trigger asChild>
@@ -187,7 +164,7 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                 <div className="border border-ui-border-base rounded-lg p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <Heading level="h3">Basic Information</Heading>
-                    <Badge variant="blue" size="small">Required</Badge>
+                    <Badge size="2xsmall">Required</Badge>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -202,8 +179,12 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                           <Input
                             {...field}
                             placeholder="e.g., Caterpillar 320D Excavator"
-                            error={fieldState.error?.message}
                           />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-red-500">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
                           <Text size="xsmall" className="text-ui-fg-subtle">
                             A descriptive name for the machine
                           </Text>
@@ -222,8 +203,12 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                           <Input
                             {...field}
                             placeholder="e.g., 320D2"
-                            error={fieldState.error?.message}
                           />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-red-500">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
                         </div>
                       )}
                     />
@@ -239,8 +224,12 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                           <Input
                             {...field}
                             placeholder="e.g., CAT0320D2001"
-                            error={fieldState.error?.message}
                           />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-red-500">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
                           <Text size="xsmall" className="text-ui-fg-subtle">
                             Must be unique across all machines
                           </Text>
@@ -263,8 +252,12 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                             value={field.value || ""}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                             placeholder="e.g., 2020"
-                            error={fieldState.error?.message}
                           />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-red-500">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
                         </div>
                       )}
                     />
@@ -282,15 +275,10 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                               <Select.Value />
                             </Select.Trigger>
                             <Select.Content>
-                              {(["active", "inactive", "maintenance", "sold"] as const).map((status) => (
-                                <Select.Item key={status} value={status}>
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant={statusColors[status]} size="small">
-                                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                                    </Badge>
-                                  </div>
-                                </Select.Item>
-                              ))}
+                              <Select.Item value="active">Active</Select.Item>
+                              <Select.Item value="inactive">Inactive</Select.Item>
+                              <Select.Item value="maintenance">Maintenance</Select.Item>
+                              <Select.Item value="sold">Sold</Select.Item>
                             </Select.Content>
                           </Select>
                         </div>
@@ -342,8 +330,12 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                             value={field.value || ""}
                             onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                             placeholder="e.g., 1500"
-                            error={fieldState.error?.message}
                           />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-red-500">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
                         </div>
                       )}
                     />
@@ -362,8 +354,12 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                             value={field.value || ""}
                             onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                             placeholder="e.g., 300"
-                            error={fieldState.error?.message}
                           />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-red-500">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
                         </div>
                       )}
                     />
@@ -382,8 +378,12 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                             value={field.value || ""}
                             onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                             placeholder="e.g., 15000"
-                            error={fieldState.error?.message}
                           />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-red-500">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
                         </div>
                       )}
                     />
@@ -422,23 +422,30 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                             Assigned Customer
                           </Label>
                           <Select 
-                            value={field.value || ""} 
-                            onValueChange={field.onChange}
+                            value={field.value || undefined} 
+                            onValueChange={(value) => field.onChange(value || undefined)}
                             disabled={customersLoading}
                           >
                             <Select.Trigger>
                               <Select.Value placeholder="Select customer (optional)" />
                             </Select.Trigger>
                             <Select.Content>
-                              <Select.Item value="">No customer assigned</Select.Item>
                               {customers.map((customer: any) => (
                                 <Select.Item key={customer.id} value={customer.id}>
                                   {customer.first_name} {customer.last_name}
                                   {customer.email && ` (${customer.email})`}
                                 </Select.Item>
                               ))}
+                              {customers.length === 0 && !customersLoading && (
+                                <div className="px-2 py-1 text-sm text-ui-fg-subtle">
+                                  No customers available
+                                </div>
+                              )}
                             </Select.Content>
                           </Select>
+                          <Text size="xsmall" className="text-ui-fg-subtle">
+                            Leave empty if no customer is assigned
+                          </Text>
                         </div>
                       )}
                     />
@@ -560,7 +567,7 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                 type="submit" 
                 size="small"
                 disabled={createMachineMutation.isPending}
-                loading={createMachineMutation.isPending}
+                isLoading={createMachineMutation.isPending}
               >
                 Create Machine
               </Button>
