@@ -27,7 +27,7 @@ type InjectedDependencies = {
   machineService: ModulesSdkTypes.IMedusaInternalService<any>
 }
 
-export default class MachinesModuleService
+export class MachinesModuleService
   extends MedusaService<{
     Machine: { dto: MachineDTO }
   }>({
@@ -138,3 +138,6 @@ export default class MachinesModuleService
     return await this.listMachines(filters, config, sharedContext)
   }
 } 
+
+// Export as both default and named export
+export default MachinesModuleService 

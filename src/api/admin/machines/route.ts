@@ -1,6 +1,8 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MACHINES_MODULE, MachinesModuleService } from "../../../modules/machines"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { createMachineWorkflow } from "../../../modules/machines/workflows"
+import { CreateMachineDTO } from "../../../modules/machines/types"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
@@ -34,8 +36,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       ]
     }
 
-    // Use Query to get machines with basic data for now
-    // TODO: Add relationships once module links are properly configured
+    // Use Query to get machines
     const { data: machines } = await query.graph({
       entity: "machine",
       fields: ["*"],
@@ -70,33 +71,36 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
-    const machinesService = req.scope.resolve(MACHINES_MODULE) as MachinesModuleService
+    const machineData = req.body as CreateMachineDTO
     
-    const body = req.body as any
-    const { brand_id, customer_id, ...machineData } = body
-    
-    // Validate required fields
-    if (!machineData.name || !machineData.model_number || !machineData.serial_number) {
-      return res.status(400).json({
-        error: "Missing required fields",
-        details: "name, model_number, and serial_number are required"
-      })
-    }
-    
-    // Create the machine
-    const [machine] = await machinesService.createMachines([{
-      ...machineData,
-      customer_id, // Store for backward compatibility
-    }])
-    
-    // TODO: Add module link creation once links are properly configured
-    // For now, we'll store the relationships in the traditional way
+    // Run the create machine workflow
+    const { result } = await createMachineWorkflow(req.scope).run({
+      input: {
+        machines: [machineData]
+      }
+    })
     
     res.status(201).json({
-      machine,
+      machine: result.machines[0],
     })
   } catch (error) {
     console.error("Error creating machine:", error)
+    
+    // Handle specific error types
+    if (error.type === "duplicate_error") {
+      return res.status(409).json({ 
+        error: "Duplicate machine",
+        details: error.message
+      })
+    }
+    
+    if (error.type === "invalid_data") {
+      return res.status(400).json({ 
+        error: "Invalid data",
+        details: error.message
+      })
+    }
+    
     res.status(500).json({ 
       error: "Failed to create machine",
       details: error instanceof Error ? error.message : "Unknown error"

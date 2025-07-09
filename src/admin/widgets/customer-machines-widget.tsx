@@ -1,87 +1,59 @@
-import React, { useState, useEffect } from "react"
 import { defineWidgetConfig } from "@medusajs/admin-sdk"
-import { 
-  Container, 
-  Heading, 
-  Button, 
-  Badge, 
-  Text, 
+import { useQuery } from "@tanstack/react-query"
+import {
+  Container,
+  Heading,
+  Button,
+  Text,
+  Badge,
   Table,
-  IconButton,
-  DropdownMenu,
-  toast
 } from "@medusajs/ui"
-import { 
-  Plus, 
-  EllipsisHorizontal, 
-  Eye, 
-  PencilSquare, 
-  Tools 
-} from "@medusajs/icons"
+import { Plus, Tools, Eye } from "@medusajs/icons"
 import { Link } from "react-router-dom"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { DetailWidgetProps } from "@medusajs/framework/types"
-
-interface Machine {
-  id: string
-  name: string
-  model_number: string
-  serial_number: string
-  year?: number
-  status: "active" | "inactive" | "maintenance" | "sold"
-  location?: string
-  created_at: string
-  updated_at: string
-}
+import { CreateMachineForm } from "../components/machines/create-machine-form"
 
 interface Customer {
   id: string
-  email: string
+  email?: string
   first_name?: string
   last_name?: string
-  company_name?: string
 }
 
-const CustomerMachinesWidget = ({ data: customer }: DetailWidgetProps<Customer>) => {
-  const queryClient = useQueryClient()
+interface WidgetProps {
+  data: Customer
+}
 
-  // Fetch machines for this customer
-  const { 
-    data: machinesData, 
-    isLoading, 
-    error 
-  } = useQuery({
-    queryKey: ["customer-machines", customer.id],
-    queryFn: async () => {
-      const response = await fetch(`/admin/machines?customer_id=${customer.id}&limit=50`)
-      if (!response.ok) {
-        throw new Error("Failed to fetch machines")
-      }
-      return response.json()
-    },
+// Fetch machines for customer
+const fetchCustomerMachines = async (customerId: string) => {
+  const response = await fetch(`/admin/machines?customer_id=${customerId}`)
+  if (!response.ok) {
+    throw new Error('Failed to fetch customer machines')
+  }
+  const data = await response.json()
+  return data.machines || []
+}
+
+const CustomerMachinesWidget = ({ data: customer }: WidgetProps) => {
+  const { data: machines = [], isLoading, error } = useQuery({
+    queryKey: ['customer-machines', customer.id],
+    queryFn: () => fetchCustomerMachines(customer.id),
   })
 
-  const machines = machinesData?.machines || []
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      active: { color: "green", label: "Active" },
+      inactive: { color: "red", label: "Inactive" },
+      maintenance: { color: "orange", label: "Maintenance" },
+      sold: { color: "grey", label: "Sold" },
+    } as const
 
-  // Status color mapping
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "green"
-      case "maintenance":
-        return "orange"
-      case "inactive":
-        return "grey"
-      case "sold":
-        return "red"
-      default:
-        return "grey"
-    }
-  }
-
-  // Format status text
-  const formatStatus = (status: string) => {
-    return status.charAt(0).toUpperCase() + status.slice(1)
+    const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey", label: status }
+    
+    return (
+      <Badge size="2xsmall">
+        {config.label}
+      </Badge>
+    )
   }
 
   if (isLoading) {
@@ -90,7 +62,7 @@ const CustomerMachinesWidget = ({ data: customer }: DetailWidgetProps<Customer>)
         <div className="flex items-center justify-between px-6 py-4">
           <Heading level="h2">Machines</Heading>
         </div>
-        <div className="px-6 py-4">
+        <div className="px-6 py-8 text-center">
           <Text>Loading machines...</Text>
         </div>
       </Container>
@@ -103,8 +75,8 @@ const CustomerMachinesWidget = ({ data: customer }: DetailWidgetProps<Customer>)
         <div className="flex items-center justify-between px-6 py-4">
           <Heading level="h2">Machines</Heading>
         </div>
-        <div className="px-6 py-4">
-          <Text className="text-ui-fg-error">Error loading machines</Text>
+        <div className="px-6 py-8 text-center">
+          <Text className="text-ui-fg-error">Failed to load machines</Text>
         </div>
       </Container>
     )
@@ -119,16 +91,9 @@ const CustomerMachinesWidget = ({ data: customer }: DetailWidgetProps<Customer>)
             {machines.length} machine{machines.length !== 1 ? 's' : ''} linked to this customer
           </Text>
         </div>
-        <Button 
-          size="small" 
-          variant="secondary"
-          asChild
-        >
-          <Link to={`/machines/create?customer_id=${customer.id}`}>
-            <Plus className="h-4 w-4" />
-            Add Machine
-          </Link>
-        </Button>
+        <CreateMachineForm onSuccess={() => {
+          // The query will be invalidated automatically by the form
+        }} />
       </div>
       
       {machines.length === 0 ? (
@@ -140,81 +105,64 @@ const CustomerMachinesWidget = ({ data: customer }: DetailWidgetProps<Customer>)
           </Text>
         </div>
       ) : (
-        <div className="px-6 pb-4">
-          <div className="space-y-3">
-            {machines.slice(0, 5).map((machine: Machine) => (
-              <div 
-                key={machine.id} 
-                className="flex items-center justify-between p-3 bg-ui-bg-subtle rounded-lg"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Text weight="plus" size="small" className="truncate">
-                      {machine.name}
+        <div className="px-6">
+          <Table>
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell>Machine</Table.HeaderCell>
+                <Table.HeaderCell>Status</Table.HeaderCell>
+                <Table.HeaderCell>Hours</Table.HeaderCell>
+                <Table.HeaderCell>Location</Table.HeaderCell>
+                <Table.HeaderCell>Actions</Table.HeaderCell>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {machines.map((machine: any) => (
+                <Table.Row key={machine.id}>
+                  <Table.Cell>
+                    <div className="flex flex-col">
+                      <Text weight="plus" size="small">{machine.name}</Text>
+                      <Text size="xsmall" className="text-ui-fg-subtle">
+                        {machine.model_number} • {machine.serial_number}
+                      </Text>
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell>
+                    {getStatusBadge(machine.status)}
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text size="small">
+                      {machine.engine_hours ? `${machine.engine_hours}h` : "—"}
                     </Text>
-                    <Badge color={getStatusColor(machine.status)} size="small">
-                      {formatStatus(machine.status)}
-                    </Badge>
-                  </div>
-                  <Text size="small" className="text-ui-fg-subtle">
-                    {machine.model_number} • {machine.serial_number}
-                  </Text>
-                  {machine.location && (
-                    <Text size="small" className="text-ui-fg-muted">
-                      📍 {machine.location}
-                    </Text>
-                  )}
-                </div>
-                <DropdownMenu>
-                  <DropdownMenu.Trigger asChild>
-                    <IconButton variant="transparent" size="small">
-                      <EllipsisHorizontal />
-                    </IconButton>
-                  </DropdownMenu.Trigger>
-                  <DropdownMenu.Content>
-                    <DropdownMenu.Item asChild>
-                      <Link to={`/machines/${machine.id}`}>
-                        <Eye className="h-4 w-4" />
-                        View Details
-                      </Link>
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item asChild>
-                      <Link to={`/machines/${machine.id}/edit`}>
-                        <PencilSquare className="h-4 w-4" />
-                        Edit Machine
-                      </Link>
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Separator />
-                    <DropdownMenu.Item asChild>
-                      <Link to={`/service-orders/create?machine_id=${machine.id}`}>
-                        <Tools className="h-4 w-4" />
-                        Create Service Order
-                      </Link>
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu>
-              </div>
-            ))}
-          </div>
-          
-          {machines.length > 5 && (
-            <div className="mt-4 pt-3 border-t border-ui-border-base">
-              <Button variant="secondary" size="small" className="w-full" asChild>
-                <Link to={`/machines?customer_id=${customer.id}`}>
-                  View All {machines.length} Machines
-                </Link>
-              </Button>
-            </div>
-          )}
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text size="small">{machine.location || "—"}</Text>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <div className="flex items-center gap-1">
+                      <Button 
+                        size="small" 
+                        variant="transparent"
+                        asChild
+                      >
+                        <Link to={`/machines/${machine.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
         </div>
       )}
     </Container>
   )
 }
 
-// Widget configuration - inject into customer details sidebar
 export const config = defineWidgetConfig({
-  zone: "customer.details.side.after",
+  zone: "customer.details.after",
 })
 
 export default CustomerMachinesWidget 
