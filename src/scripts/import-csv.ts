@@ -105,15 +105,23 @@ export default async function importCsvProducts({ container }: ExecArgs) {
         }
 
         // Build product options and variant options
+        // According to https://github.com/medusajs/medusa/issues/9632, 
+        // Medusa v2 requires product options even for simple products
         const hasOptions = row['Variant Option 1 Name'] && row['Variant Option 1 Value'];
+        
         const productOptions = hasOptions ? [{
           title: row['Variant Option 1 Name'],
           values: [row['Variant Option 1 Value']]
-        }] : [];
+        }] : [{
+          title: "Default Option",
+          values: ["Default Option Value"]
+        }];
 
         const variantOptions = hasOptions ? [{
           value: row['Variant Option 1 Value']
-        }] : [];
+        }] : [{
+          value: "Default Option Value"
+        }];
 
         const productData = {
           title: row['Product Title'],
