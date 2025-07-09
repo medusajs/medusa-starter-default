@@ -105,21 +105,49 @@ export default async function importCsvProducts({ container }: ExecArgs) {
     }
 
     // Read CSV with proper encoding handling
-    let csvContent = fs.readFileSync(csvPath, 'utf-8');
+    let csvContent: string;
+    
+    try {
+      // Try reading as UTF-8 first
+      csvContent = fs.readFileSync(csvPath, 'utf-8');
+    } catch (error) {
+      try {
+        // If UTF-8 fails, try latin1 encoding
+        csvContent = fs.readFileSync(csvPath, 'latin1');
+        logger.warn("Using latin1 encoding for CSV file");
+      } catch (error2) {
+        // If both fail, try binary and convert
+        const buffer = fs.readFileSync(csvPath);
+        csvContent = buffer.toString('utf-8');
+        logger.warn("Using binary buffer conversion for CSV file");
+      }
+    }
     
     // Remove BOM if present
     if (csvContent.charCodeAt(0) === 0xFEFF) {
       csvContent = csvContent.slice(1);
     }
     
-    // Clean up problematic characters that might cause JavaScript parsing issues
-    // This is more selective - only removes characters that could cause ReferenceError
-    csvContent = csvContent.replace(/[^\u0000-\u007F\u00A0-\u00FF\u0100-\u017F\u0180-\u024F]/g, function(char) {
-      logger.warn(`Replacing problematic character: ${char} (code: ${char.charCodeAt(0)})`);
-      return ''; // Remove the character
+    // More aggressive character cleaning - replace any problematic characters
+    csvContent = csvContent.replace(/[^\x20-\x7E\n\r\t]/g, function(char) {
+      const code = char.charCodeAt(0);
+      // Keep common European characters but log others
+      if (code >= 0x80 && code <= 0xFF) {
+        return char; // Keep extended ASCII
+      }
+      logger.warn(`Replacing problematic character: ${char} (code: ${code})`);
+      return ' '; // Replace with space instead of removing
     });
     
-    const rows = parseCSV(csvContent, separator);
+    let rows: any[];
+    try {
+      rows = parseCSV(csvContent, separator);
+    } catch (parseError) {
+      logger.error("Error parsing CSV:", parseError);
+      // If parsing fails, try with more aggressive character cleaning
+      csvContent = csvContent.replace(/[^\x20-\x7E\n\r\t,]/g, ' ');
+      rows = parseCSV(csvContent, separator);
+    }
 
     logger.info(`Found ${rows.length} rows in CSV file`);
 
