@@ -11,8 +11,10 @@ import {
   DataTable,
   useDataTable,
   createDataTableColumnHelper,
+  createDataTableFilterHelper,
   toast
 } from "@medusajs/ui"
+import type { DataTableFilteringState } from "@medusajs/ui"
 import { useSearchParams, useNavigate, Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
@@ -45,6 +47,56 @@ interface Technician {
 }
 
 const PAGE_SIZE = 20
+
+// Create filter helper
+const filterHelper = createDataTableFilterHelper<Technician>()
+
+// Technician filters following native Medusa pattern
+const useTechnicianFilters = () => {
+  return [
+    filterHelper.accessor("status", {
+      label: "Status",
+      type: "select",
+      options: [
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+        { label: "On Leave", value: "on_leave" },
+      ],
+    }),
+    filterHelper.accessor("department", {
+      label: "Department",
+      type: "select",
+      options: [
+        { label: "Service", value: "service" },
+        { label: "Maintenance", value: "maintenance" },
+        { label: "Support", value: "support" },
+        { label: "Field Service", value: "field_service" },
+      ],
+    }),
+    filterHelper.accessor("certification_level", {
+      label: "Certification Level",
+      type: "select",
+      options: [
+        { label: "Entry Level", value: "entry" },
+        { label: "Intermediate", value: "intermediate" },
+        { label: "Advanced", value: "advanced" },
+        { label: "Expert", value: "expert" },
+      ],
+    }),
+    filterHelper.accessor("created_at", {
+      label: "Created At",
+      type: "date",
+      format: "date",
+      options: [],
+    }),
+    filterHelper.accessor("hire_date", {
+      label: "Hire Date",
+      type: "date",
+      format: "date",
+      options: [],
+    }),
+  ]
+}
 
 // Data fetching hook
 const useTechnicians = () => {
@@ -146,11 +198,11 @@ export const config = defineRouteConfig({
 const TechniciansListTable = () => {
   const navigate = useNavigate()
   const { data, isLoading, error } = useTechnicians()
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: PAGE_SIZE,
-  })
-  const [searchQuery, setSearchQuery] = React.useState("")
+  const filters = useTechnicianFilters()
+  
+  // Filter state management
+  const [search, setSearch] = React.useState("")
+  const [filtering, setFiltering] = React.useState<DataTableFilteringState>({})
 
   if (error) {
     throw error
@@ -158,20 +210,6 @@ const TechniciansListTable = () => {
 
   const technicians = data?.technicians || []
   const count = data?.count || 0
-
-  // Filter technicians based on search query
-  const filteredTechnicians = React.useMemo(() => {
-    if (!searchQuery) return technicians
-    
-    return technicians.filter((technician: Technician) =>
-      technician.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      technician.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      technician.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      technician.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      technician.specializations?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      technician.department?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [technicians, searchQuery])
 
   // Status badge helper
   const getStatusBadge = (status: string) => {
@@ -220,6 +258,12 @@ const TechniciansListTable = () => {
         <Text>{getValue() || "—"}</Text>
       ),
     }),
+    columnHelper.accessor("department", {
+      header: "Department",
+      cell: ({ getValue }) => (
+        <Text className="capitalize">{getValue() || "—"}</Text>
+      ),
+    }),
     columnHelper.accessor("specializations", {
       header: "Specializations",
       cell: ({ getValue }) => (
@@ -238,18 +282,18 @@ const TechniciansListTable = () => {
   ]
 
   const table = useDataTable({
-    data: filteredTechnicians,
+    data: technicians,
     columns,
+    filters,
+    rowCount: count,
     getRowId: (row) => row.id,
-    rowCount: filteredTechnicians.length,
-    isLoading,
-    pagination: {
-      state: pagination,
-      onPaginationChange: setPagination,
-    },
     search: {
-      state: searchQuery,
-      onSearchChange: setSearchQuery,
+      state: search,
+      onSearchChange: setSearch,
+    },
+    filtering: {
+      state: filtering,
+      onFilteringChange: setFiltering,
     },
   })
 
@@ -265,8 +309,11 @@ const TechniciansListTable = () => {
         <CreateTechnicianForm />
       </div>
       <DataTable instance={table}>
-        <DataTable.Toolbar className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
-          <div className="flex gap-2">
+        <DataTable.Toolbar className="flex items-center justify-between gap-4 px-6 py-4">
+          <div className="flex items-center gap-2">
+            <DataTable.FilterMenu tooltip="Filter technicians" />
+          </div>
+          <div className="flex items-center gap-2">
             <DataTable.Search placeholder="Search technicians..." />
           </div>
         </DataTable.Toolbar>

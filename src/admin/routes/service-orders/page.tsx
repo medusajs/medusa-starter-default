@@ -16,8 +16,10 @@ import {
   DataTable,
   useDataTable,
   createDataTableColumnHelper,
+  createDataTableFilterHelper,
   toast,
 } from "@medusajs/ui"
+import type { DataTableFilteringState } from "@medusajs/ui"
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
@@ -46,6 +48,50 @@ interface ServiceOrder {
 }
 
 const PAGE_SIZE = 20
+
+// Create filter helper
+const filterHelper = createDataTableFilterHelper<ServiceOrder>()
+
+// Service Order filters following native Medusa pattern
+const useServiceOrderFilters = () => {
+  return [
+    filterHelper.accessor("status", {
+      label: "Status",
+      type: "select",
+      options: [
+        { label: "Draft", value: "draft" },
+        { label: "Scheduled", value: "scheduled" },
+        { label: "In Progress", value: "in_progress" },
+        { label: "Waiting Parts", value: "waiting_parts" },
+        { label: "Customer Approval", value: "customer_approval" },
+        { label: "Completed", value: "completed" },
+        { label: "Cancelled", value: "cancelled" },
+      ],
+    }),
+    filterHelper.accessor("priority", {
+      label: "Priority",
+      type: "select",
+      options: [
+        { label: "Low", value: "low" },
+        { label: "Normal", value: "normal" },
+        { label: "High", value: "high" },
+        { label: "Urgent", value: "urgent" },
+      ],
+    }),
+    filterHelper.accessor("created_at", {
+      label: "Created At",
+      type: "date",
+      format: "date",
+      options: [],
+    }),
+    filterHelper.accessor("scheduled_start_date", {
+      label: "Scheduled Date",
+      type: "date",
+      format: "date",
+      options: [],
+    }),
+  ]
+}
 
 // Data fetching hook
 const useServiceOrders = () => {
@@ -105,11 +151,11 @@ export const config = defineRouteConfig({
 const ServiceOrdersListTable = () => {
   const navigate = useNavigate()
   const { data, isLoading, error } = useServiceOrders()
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: PAGE_SIZE,
-  })
-  const [searchQuery, setSearchQuery] = React.useState("")
+  const filters = useServiceOrderFilters()
+  
+  // Filter state management
+  const [search, setSearch] = React.useState("")
+  const [filtering, setFiltering] = React.useState<DataTableFilteringState>({})
 
   if (error) {
     throw error
@@ -117,18 +163,6 @@ const ServiceOrdersListTable = () => {
 
   const serviceOrders = data?.service_orders || []
   const count = data?.count || 0
-
-  // Filter service orders based on search query
-  const filteredServiceOrders = React.useMemo(() => {
-    if (!searchQuery) return serviceOrders
-    
-    return serviceOrders.filter((order: ServiceOrder) =>
-      order.service_order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      `${order.customer?.first_name} ${order.customer?.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      `${order.technician?.first_name} ${order.technician?.last_name}`.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [serviceOrders, searchQuery])
 
   // Status and priority variants
   const statusVariants = {
@@ -221,25 +255,28 @@ const ServiceOrdersListTable = () => {
   ]
 
   const table = useDataTable({
-    data: filteredServiceOrders,
+    data: serviceOrders,
     columns,
+    filters,
+    rowCount: count,
     getRowId: (row) => row.id,
-    rowCount: filteredServiceOrders.length,
-    isLoading,
-    pagination: {
-      state: pagination,
-      onPaginationChange: setPagination,
-    },
     search: {
-      state: searchQuery,
-      onSearchChange: setSearchQuery,
+      state: search,
+      onSearchChange: setSearch,
+    },
+    filtering: {
+      state: filtering,
+      onFilteringChange: setFiltering,
     },
   })
 
   return (
     <DataTable instance={table}>
-      <DataTable.Toolbar className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
-        <div className="flex gap-2">
+      <DataTable.Toolbar className="flex items-center justify-between gap-4 px-6 py-4">
+        <div className="flex items-center gap-2">
+          <DataTable.FilterMenu tooltip="Filter service orders" />
+        </div>
+        <div className="flex items-center gap-2">
           <DataTable.Search placeholder="Search service orders..." />
         </div>
       </DataTable.Toolbar>
@@ -293,21 +330,21 @@ const ServiceOrdersList = () => {
               Kanban Board
             </Tabs.Trigger>
           </Tabs.List>
+          
+          <div className="overflow-hidden">
+            <Tabs.Content value="list">
+              <ServiceOrdersListTable />
+            </Tabs.Content>
+
+            <Tabs.Content value="kanban">
+              <KanbanView 
+                serviceOrders={serviceOrders}
+                isLoading={isLoading}
+                onRefetch={() => {}}
+              />
+            </Tabs.Content>
+          </div>
         </Tabs>
-      </div>
-
-      <div className="overflow-hidden">
-        <Tabs.Content value="list">
-          <ServiceOrdersListTable />
-        </Tabs.Content>
-
-        <Tabs.Content value="kanban">
-          <KanbanView 
-            serviceOrders={serviceOrders}
-            isLoading={isLoading}
-            onRefetch={() => {}}
-          />
-        </Tabs.Content>
       </div>
     </Container>
   )

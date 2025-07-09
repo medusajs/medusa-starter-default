@@ -11,8 +11,10 @@ import {
   DataTable,
   useDataTable,
   createDataTableColumnHelper,
+  createDataTableFilterHelper,
   toast
 } from "@medusajs/ui"
+import type { DataTableFilteringState } from "@medusajs/ui"
 import { useSearchParams, useNavigate, Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { CreateMachineForm } from "../../components/machines/create-machine-form"
@@ -41,6 +43,46 @@ interface Machine {
 }
 
 const PAGE_SIZE = 20
+
+// Create filter helper
+const filterHelper = createDataTableFilterHelper<Machine>()
+
+// Machine filters following native Medusa pattern
+const useMachineFilters = () => {
+  return [
+    filterHelper.accessor("status", {
+      label: "Status",
+      type: "select",
+      options: [
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+        { label: "Maintenance", value: "maintenance" },
+      ],
+    }),
+    filterHelper.accessor("fuel_type", {
+      label: "Fuel Type",
+      type: "select",
+      options: [
+        { label: "Diesel", value: "diesel" },
+        { label: "Gasoline", value: "gasoline" },
+        { label: "Electric", value: "electric" },
+        { label: "Hybrid", value: "hybrid" },
+      ],
+    }),
+    filterHelper.accessor("created_at", {
+      label: "Created At",
+      type: "date",
+      format: "date",
+      options: [],
+    }),
+    filterHelper.accessor("purchase_date", {
+      label: "Purchase Date",
+      type: "date",
+      format: "date",
+      options: [],
+    }),
+  ]
+}
 
 // Data fetching hook
 const useMachines = () => {
@@ -142,11 +184,11 @@ export const config = defineRouteConfig({
 const MachinesListTable = () => {
   const navigate = useNavigate()
   const { data, isLoading, error } = useMachines()
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: PAGE_SIZE,
-  })
-  const [searchQuery, setSearchQuery] = React.useState("")
+  const filters = useMachineFilters()
+  
+  // Filter state management
+  const [search, setSearch] = React.useState("")
+  const [filtering, setFiltering] = React.useState<DataTableFilteringState>({})
 
   if (error) {
     throw error
@@ -154,19 +196,6 @@ const MachinesListTable = () => {
 
   const machines = data?.machines || []
   const count = data?.count || 0
-
-  // Filter machines based on search query
-  const filteredMachines = React.useMemo(() => {
-    if (!searchQuery) return machines
-    
-    return machines.filter((machine: Machine) =>
-      machine.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      machine.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      machine.serial_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      machine.fuel_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      machine.location?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [machines, searchQuery])
 
   // Status badge helper
   const getStatusBadge = (status: string) => {
@@ -241,18 +270,18 @@ const MachinesListTable = () => {
 
   // Table instance - following official pattern
   const table = useDataTable({
-    data: filteredMachines,
+    data: machines,
     columns,
+    filters,
+    rowCount: count,
     getRowId: (row) => row.id,
-    rowCount: filteredMachines.length,
-    isLoading,
-    pagination: {
-      state: pagination,
-      onPaginationChange: setPagination,
-    },
     search: {
-      state: searchQuery,
-      onSearchChange: setSearchQuery,
+      state: search,
+      onSearchChange: setSearch,
+    },
+    filtering: {
+      state: filtering,
+      onFilteringChange: setFiltering,
     },
   })
 
@@ -268,8 +297,11 @@ const MachinesListTable = () => {
         <CreateMachineForm />
       </div>
       <DataTable instance={table}>
-        <DataTable.Toolbar className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
-          <div className="flex gap-2">
+        <DataTable.Toolbar className="flex items-center justify-between gap-4 px-6 py-4">
+          <div className="flex items-center gap-2">
+            <DataTable.FilterMenu tooltip="Filter machines" />
+          </div>
+          <div className="flex items-center gap-2">
             <DataTable.Search placeholder="Search machines..." />
           </div>
         </DataTable.Toolbar>

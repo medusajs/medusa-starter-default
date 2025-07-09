@@ -11,8 +11,10 @@ import {
   DataTable,
   useDataTable,
   createDataTableColumnHelper,
+  createDataTableFilterHelper,
   toast
 } from "@medusajs/ui"
+import type { DataTableFilteringState } from "@medusajs/ui"
 import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -34,6 +36,43 @@ interface Brand {
 }
 
 const PAGE_SIZE = 20
+
+// Create filter helper
+const filterHelper = createDataTableFilterHelper<Brand>()
+
+// Brand filters following native Medusa pattern
+const useBrandFilters = () => {
+  return [
+    filterHelper.accessor("is_active", {
+      label: "Status",
+      type: "select",
+      options: [
+        { label: "Active", value: "true" },
+        { label: "Inactive", value: "false" },
+      ],
+    }),
+    filterHelper.accessor("is_oem", {
+      label: "Type",
+      type: "select",
+      options: [
+        { label: "OEM", value: "true" },
+        { label: "Aftermarket", value: "false" },
+      ],
+    }),
+    filterHelper.accessor("created_at", {
+      label: "Created At",
+      type: "date",
+      format: "date",
+      options: [],
+    }),
+    filterHelper.accessor("updated_at", {
+      label: "Updated At",
+      type: "date",
+      format: "date",
+      options: [],
+    }),
+  ]
+}
 
 // Data fetching hook
 const useBrands = () => {
@@ -137,11 +176,11 @@ export const config = defineRouteConfig({
 const BrandsListTable = () => {
   const navigate = useNavigate()
   const { data, isLoading, error } = useBrands()
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: PAGE_SIZE,
-  })
-  const [searchQuery, setSearchQuery] = React.useState("")
+  const filters = useBrandFilters()
+  
+  // Filter state management
+  const [search, setSearch] = React.useState("")
+  const [filtering, setFiltering] = React.useState<DataTableFilteringState>({})
 
   if (error) {
     throw error
@@ -149,18 +188,6 @@ const BrandsListTable = () => {
 
   const brands = data?.brands || []
   const count = data?.count || 0
-
-  // Filter brands based on search query
-  const filteredBrands = React.useMemo(() => {
-    if (!searchQuery) return brands
-    
-    return brands.filter((brand: Brand) =>
-      brand.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      brand.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      brand.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      brand.country_of_origin?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [brands, searchQuery])
 
   // Column helper - following official pattern
   const columnHelper = createDataTableColumnHelper<Brand>()
@@ -173,11 +200,37 @@ const BrandsListTable = () => {
         <Text className="font-medium">{getValue()}</Text>
       ),
     }),
+    columnHelper.accessor("code", {
+      header: "Code",
+      cell: ({ getValue }) => (
+        <Text className="font-mono text-xs">{getValue()}</Text>
+      ),
+    }),
     columnHelper.accessor("country_of_origin", {
       header: "Country",
       cell: ({ getValue }) => (
         <Text>{getValue() || "—"}</Text>
       ),
+    }),
+    columnHelper.accessor("is_active", {
+      header: "Status",
+      cell: ({ getValue }) => (
+        <Badge 
+          size="2xsmall"
+          color={getValue() ? "green" : "red"}
+        >
+          {getValue() ? "Active" : "Inactive"}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor("is_oem", {
+      header: "Type",
+      cell: ({ getValue, row }) => {
+        const brand = row.original
+        if (brand.is_oem) return <Badge size="2xsmall" color="blue">OEM</Badge>
+        if (brand.authorized_dealer) return <Badge size="2xsmall" color="purple">Authorized</Badge>
+        return <Badge size="2xsmall" color="grey">Aftermarket</Badge>
+      },
     }),
     columnHelper.accessor("description", {
       header: "Description",
@@ -193,18 +246,18 @@ const BrandsListTable = () => {
   ]
 
   const table = useDataTable({
-    data: filteredBrands,
+    data: brands,
     columns,
+    filters,
+    rowCount: count,
     getRowId: (row) => row.id,
-    rowCount: filteredBrands.length,
-    isLoading,
-    pagination: {
-      state: pagination,
-      onPaginationChange: setPagination,
-    },
     search: {
-      state: searchQuery,
-      onSearchChange: setSearchQuery,
+      state: search,
+      onSearchChange: setSearch,
+    },
+    filtering: {
+      state: filtering,
+      onFilteringChange: setFiltering,
     },
   })
 
@@ -214,7 +267,7 @@ const BrandsListTable = () => {
         <div>
           <Heading>Brands</Heading>
           <Text className="text-ui-fg-subtle" size="small">
-            Manage your spare parts brands and manufacturers
+            Manage your spare parts brands and manufacturers ({count} brands)
           </Text>
         </div>
         <Button size="small" variant="secondary" asChild>
@@ -222,8 +275,11 @@ const BrandsListTable = () => {
         </Button>
       </div>
       <DataTable instance={table}>
-        <DataTable.Toolbar className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
-          <div className="flex gap-2">
+        <DataTable.Toolbar className="flex items-center justify-between gap-4 px-6 py-4">
+          <div className="flex items-center gap-2">
+            <DataTable.FilterMenu tooltip="Filter brands" />
+          </div>
+          <div className="flex items-center gap-2">
             <DataTable.Search placeholder="Search brands..." />
           </div>
         </DataTable.Toolbar>
