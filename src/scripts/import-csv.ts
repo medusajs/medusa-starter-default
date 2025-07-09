@@ -25,7 +25,11 @@ function parseCSV(csvContent: string, separator: string = ','): any[] {
     const row: any = {};
     
     headers.forEach((header, index) => {
-      row[header.trim()] = values[index] ? values[index].trim() : '';
+      // Clean header by removing quotes and trimming
+      const cleanHeader = header.trim().replace(/^"(.*)"$/, '$1');
+      // Clean value by removing quotes and trimming
+      const cleanValue = values[index] ? values[index].trim().replace(/^"(.*)"$/, '$1') : '';
+      row[cleanHeader] = cleanValue;
     });
     
     rows.push(row);
