@@ -58,7 +58,7 @@ export default async function importCsvProducts({ container }: ExecArgs) {
 
     // Get default sales channel
     const salesChannels = await salesChannelModuleService.listSalesChannels();
-    const defaultSalesChannel = salesChannels.find(sc => sc.is_default) || salesChannels[0];
+    const defaultSalesChannel = salesChannels.find((sc: any) => sc.is_default) || salesChannels[0];
 
     if (!defaultSalesChannel) {
       logger.error("No sales channel found");
@@ -104,6 +104,17 @@ export default async function importCsvProducts({ container }: ExecArgs) {
           continue;
         }
 
+        // Build product options and variant options
+        const hasOptions = row['Variant Option 1 Name'] && row['Variant Option 1 Value'];
+        const productOptions = hasOptions ? [{
+          title: row['Variant Option 1 Name'],
+          values: [row['Variant Option 1 Value']]
+        }] : [];
+
+        const variantOptions = hasOptions ? [{
+          value: row['Variant Option 1 Value']
+        }] : [];
+
         const productData = {
           title: row['Product Title'],
           handle,
@@ -126,6 +137,7 @@ export default async function importCsvProducts({ container }: ExecArgs) {
             row['Product Image 2 Url']
           ].filter(Boolean).map(url => ({ url })),
           sales_channels: [{ id: defaultSalesChannel.id }],
+          options: productOptions,
           variants: [{
             title: row['Variant Title'] || 'Default',
             sku: row['Variant SKU'] || undefined,
@@ -150,9 +162,7 @@ export default async function importCsvProducts({ container }: ExecArgs) {
                 amount: Math.round(parseFloat(row['Variant Price USD']) * 100), // Convert to cents
               }
             ].filter(Boolean),
-            options: row['Variant Option 1 Name'] && row['Variant Option 1 Value'] ? {
-              [row['Variant Option 1 Name']]: row['Variant Option 1 Value']
-            } : undefined,
+            options: variantOptions,
           }]
         };
 
@@ -188,13 +198,13 @@ export default async function importCsvProducts({ container }: ExecArgs) {
                 await createInventoryLevelsWorkflow(container).run({
                   input: {
                     inventory_levels: [{
-                      inventory_item_id: variant.inventory_items?.[0]?.inventory_item_id,
-                      location_id: defaultFulfillmentSet?.location?.id,
+                      inventory_item_id: (variant as any).inventory_items?.[0]?.inventory_item_id,
+                      location_id: (defaultFulfillmentSet as any)?.location?.id,
                       stocked_quantity: 100, // Default stock quantity
                     }]
                   },
                 });
-              } catch (inventoryError) {
+              } catch (inventoryError: any) {
                 logger.warn(`Failed to create inventory for variant ${variant.id}: ${inventoryError.message}`);
               }
             }
