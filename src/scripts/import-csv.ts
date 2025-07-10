@@ -6,30 +6,24 @@ import {
 } from "@medusajs/framework/utils";
 import {
   createProductsWorkflow,
-  createInventoryLevelsWorkflow,
 } from "@medusajs/medusa/core-flows";
 import * as fs from "fs";
 import * as path from "path";
 
-// Proper CSV parser function that handles quoted values with commas
-function parseCSV(csvContent: string, separator: string = ','): any[] {
-  const lines = csvContent.split('\n');
-  const headers = parseCSVLine(lines[0], separator);
+// Simple CSV parser for comma-separated values with proper quote handling
+function parseCSV(csvContent: string): any[] {
+  const lines = csvContent.split('\n').filter(line => line.trim());
+  if (lines.length === 0) return [];
+  
+  const headers = parseCSVLine(lines[0]);
   const rows: any[] = [];
   
   for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    
-    const values = parseCSVLine(line, separator);
+    const values = parseCSVLine(lines[i]);
     const row: any = {};
     
     headers.forEach((header, index) => {
-      // Clean header by removing quotes and trimming
-      const cleanHeader = header.trim().replace(/^"(.*)"$/, '$1');
-      // Clean value by removing quotes and trimming
-      const cleanValue = values[index] ? values[index].trim().replace(/^"(.*)"$/, '$1') : '';
-      row[cleanHeader] = cleanValue;
+      row[header] = values[index] || '';
     });
     
     rows.push(row);
@@ -38,8 +32,8 @@ function parseCSV(csvContent: string, separator: string = ','): any[] {
   return rows;
 }
 
-// Helper function to parse a single CSV line properly handling quoted values
-function parseCSVLine(line: string, separator: string): string[] {
+// Parse a single CSV line handling quoted values
+function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
   let inQuotes = false;
@@ -49,45 +43,32 @@ function parseCSVLine(line: string, separator: string): string[] {
     
     if (char === '"') {
       if (inQuotes && line[i + 1] === '"') {
-        // Handle escaped quotes
         current += '"';
         i++; // Skip next quote
       } else {
-        // Toggle quote state
         inQuotes = !inQuotes;
       }
-    } else if (char === separator && !inQuotes) {
-      // End of field
-      result.push(current);
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
       current = '';
     } else {
       current += char;
     }
   }
   
-  // Add the last field
-  result.push(current);
-  
+  result.push(current.trim());
   return result;
 }
 
 export default async function importCsvProducts({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
-  const query = container.resolve(ContainerRegistrationKeys.QUERY);
   const salesChannelModuleService = container.resolve(Modules.SALES_CHANNEL);
-  const fulfillmentModuleService = container.resolve(Modules.FULFILLMENT);
 
   logger.info("Starting CSV import process...");
   
-  // Performance optimization: Pre-fetch required data once
-  logger.info("Pre-fetching required data...");
-  const [salesChannels, fulfillmentSets] = await Promise.all([
-    salesChannelModuleService.listSalesChannels(),
-    fulfillmentModuleService.listFulfillmentSets()
-  ]);
-  
+  // Get default sales channel
+  const salesChannels = await salesChannelModuleService.listSalesChannels();
   const defaultSalesChannel = salesChannels.find((sc: any) => sc.is_default) || salesChannels[0];
-  const defaultFulfillmentSet = fulfillmentSets[0];
 
   if (!defaultSalesChannel) {
     logger.error("No sales channel found");
@@ -97,153 +78,66 @@ export default async function importCsvProducts({ container }: ExecArgs) {
   try {
     // Read the CSV file
     const csvPath = path.join(process.cwd(), "Medusa_products_1.csv");
-    const separator = ',';
     
     if (!fs.existsSync(csvPath)) {
       logger.error(`CSV file not found at: ${csvPath}`);
       return;
     }
 
-    // Read CSV with proper encoding handling
-    let csvContent: string;
-    
-    try {
-      // Try reading as UTF-8 first
-      csvContent = fs.readFileSync(csvPath, 'utf-8');
-    } catch (error) {
-      try {
-        // If UTF-8 fails, try latin1 encoding
-        csvContent = fs.readFileSync(csvPath, 'latin1');
-        logger.warn("Using latin1 encoding for CSV file");
-      } catch (error2) {
-        // If both fail, try binary and convert
-        const buffer = fs.readFileSync(csvPath);
-        csvContent = buffer.toString('utf-8');
-        logger.warn("Using binary buffer conversion for CSV file");
-      }
-    }
-    
-    // Remove BOM if present
-    if (csvContent.charCodeAt(0) === 0xFEFF) {
-      csvContent = csvContent.slice(1);
-    }
-    
-    // More aggressive character cleaning - replace any problematic characters
-    csvContent = csvContent.replace(/[^\x20-\x7E\n\r\t]/g, function(char) {
-      const code = char.charCodeAt(0);
-      // Keep common European characters but log others
-      if (code >= 0x80 && code <= 0xFF) {
-        return char; // Keep extended ASCII
-      }
-      logger.warn(`Replacing problematic character: ${char} (code: ${code})`);
-      return ' '; // Replace with space instead of removing
-    });
-    
-    let rows: any[];
-    try {
-      rows = parseCSV(csvContent, separator);
-    } catch (parseError) {
-      logger.error("Error parsing CSV:", parseError);
-      // If parsing fails, try with more aggressive character cleaning
-      csvContent = csvContent.replace(/[^\x20-\x7E\n\r\t,]/g, ' ');
-      rows = parseCSV(csvContent, separator);
-    }
+    // Read and parse CSV
+    const csvContent = fs.readFileSync(csvPath, 'utf-8');
+    const records = parseCSV(csvContent);
 
-    logger.info(`Found ${rows.length} rows in CSV file`);
+    logger.info(`Found ${records.length} rows in CSV file`);
 
-    // Process products in batches - increased for better performance
-    const batchSize = 5000; // Increased from 10 to 100 for better throughput
+    // Process products in batches
+    const batchSize = 100;
     let processedCount = 0;
     let createdCount = 0;
 
-    for (let i = 0; i < rows.length; i += batchSize) {
-      const batch = rows.slice(i, i + batchSize);
+    for (let i = 0; i < records.length; i += batchSize) {
+      const batch = records.slice(i, i + batchSize);
       const productsToCreate: any[] = [];
 
       for (const row of batch) {
         // Skip rows without product title
         if (!row['Product Title']) {
-          logger.warn(`Skipping row without Product Title: ${JSON.stringify(row)}`);
           continue;
         }
 
-        // Generate handle from title if not provided
-        const handle = row['Product Handle'] || 
-          row['Product Title'].toLowerCase()
-            .replace(/[^a-z0-9]/g, '-')
-            .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '');
+        // Generate handle from title
+        const handle = row['Product Title'].toLowerCase()
+          .replace(/[^a-z0-9]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
 
-        // Skip duplicate check for performance - we'll let Medusa handle duplicates
-        // This saves a database query per product
-
-        // Build product options and variant options
-        // According to https://github.com/medusajs/medusa/issues/9632, 
-        // Medusa v2 requires product options even for simple products
-        const hasOptions = row['Variant Option 1 Name'] && row['Variant Option 1 Value'];
-        
-        const productOptions = hasOptions ? [{
-          title: row['Variant Option 1 Name'],
-          values: [row['Variant Option 1 Value']]
-        }] : [{
-          title: "Default Option",
-          values: ["Default Option Value"]
-        }];
-
-        const variantOptions = hasOptions ? {
-          [row['Variant Option 1 Name']]: row['Variant Option 1 Value']
-        } : {
-          "Default Option": "Default Option Value"
-        };
-
+        // Create product data following Medusa patterns
         const productData = {
           title: row['Product Title'],
           handle,
-          subtitle: row['Product Subtitle'] || undefined,
+          status: row['Product Status'] || ProductStatus.DRAFT,
           description: row['Product Description'] || undefined,
-          status: (row['Product Status'] as ProductStatus) || ProductStatus.DRAFT,
-          discountable: row['Product Discountable'] === 'TRUE',
-          weight: row['Product Weight'] ? parseFloat(row['Product Weight']) : undefined,
-          length: row['Product Length'] ? parseFloat(row['Product Length']) : undefined,
-          width: row['Product Width'] ? parseFloat(row['Product Width']) : undefined,
-          height: row['Product Height'] ? parseFloat(row['Product Height']) : undefined,
-          hs_code: row['Product HS Code'] || undefined,
-          origin_country: row['Product Origin Country'] || undefined,
-          mid_code: row['Product MID Code'] || undefined,
-          material: row['Product Material'] || undefined,
-          external_id: row['Product External Id'] || undefined,
-          thumbnail: row['Product Thumbnail'] || undefined,
-          images: [
-            row['Product Image 1 Url'],
-            row['Product Image 2 Url']
-          ].filter(Boolean).map(url => ({ url })),
           sales_channels: [{ id: defaultSalesChannel.id }],
-          options: productOptions,
+          options: [{
+            title: "Default Option",
+            values: ["Default Option Value"]
+          }],
           variants: [{
-            title: row['Variant Title'] || 'Default',
+            title: 'Default',
             sku: row['Variant SKU'] || undefined,
-            barcode: row['Variant Barcode'] || undefined,
-            allow_backorder: row['Variant Allow Backorder'] === 'TRUE',
-            manage_inventory: row['Variant Manage Inventory'] === 'TRUE',
-            weight: row['Variant Weight'] ? parseFloat(row['Variant Weight']) : undefined,
-            length: row['Variant Length'] ? parseFloat(row['Variant Length']) : undefined,
-            width: row['Variant Width'] ? parseFloat(row['Variant Width']) : undefined,
-            height: row['Variant Height'] ? parseFloat(row['Variant Height']) : undefined,
-            hs_code: row['Variant HS Code'] || undefined,
-            origin_country: row['Variant Origin Country'] || undefined,
-            mid_code: row['Variant MID Code'] || undefined,
-            material: row['Variant Material'] || undefined,
             prices: [
               row['Variant Price EUR'] && {
                 currency_code: 'eur',
-                amount: Math.round(parseFloat(row['Variant Price EUR']) * 100), // Convert to cents
+                amount: Math.round(parseFloat(row['Variant Price EUR']) * 100),
               },
               row['Variant Price USD'] && {
                 currency_code: 'usd',
-                amount: Math.round(parseFloat(row['Variant Price USD']) * 100), // Convert to cents
+                amount: Math.round(parseFloat(row['Variant Price USD']) * 100),
               }
             ].filter(Boolean),
-            options: variantOptions,
+            options: {
+              "Default Option": "Default Option Value"
+            },
           }]
         };
 
@@ -251,7 +145,6 @@ export default async function importCsvProducts({ container }: ExecArgs) {
       }
 
       if (productsToCreate.length === 0) {
-        logger.info(`No new products to create in batch ${Math.floor(i / batchSize) + 1}`);
         continue;
       }
 
@@ -265,20 +158,14 @@ export default async function importCsvProducts({ container }: ExecArgs) {
         createdCount += result.length;
         processedCount += batch.length;
 
-        logger.info(`Created ${result.length} products in batch ${Math.floor(i / batchSize) + 1}`);
-        logger.info(`Progress: ${Math.round((processedCount / rows.length) * 100)}% complete (${processedCount}/${rows.length} rows)`);
-
-        // Skip inventory creation for performance - can be done separately if needed
-        // This saves significant time per batch
+        logger.info(`Created ${result.length} products. Progress: ${Math.round((processedCount / records.length) * 100)}%`);
 
       } catch (error) {
-        logger.error(`Error creating products in batch ${Math.floor(i / batchSize) + 1}:`, error);
-        // Continue with next batch
+        logger.error(`Error creating batch ${Math.floor(i / batchSize) + 1}:`, error);
       }
     }
 
-    logger.info(`CSV import completed! Processed ${processedCount} rows, created ${createdCount} products`);
-    logger.info(`Success rate: ${((createdCount / processedCount) * 100).toFixed(2)}%`);
+    logger.info(`Import completed! Created ${createdCount} products from ${processedCount} rows`);
 
   } catch (error) {
     logger.error("Error during CSV import:", error);
