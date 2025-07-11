@@ -6,7 +6,7 @@ import {
   Badge,
   Button,
   Input,
-  useToast,
+  toast,
 } from "@medusajs/ui"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
@@ -27,7 +27,6 @@ type VariantWithSourcing = {
 }
 
 const ProductSourcingWidget = ({ product }: ProductDetailsWidgetProps) => {
-  const { toast } = useToast()
   const queryClient = useQueryClient()
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({})
 
@@ -61,19 +60,11 @@ const ProductSourcingWidget = ({ product }: ProductDetailsWidgetProps) => {
       })
     },
     onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Item added to purchase list.",
-        variant: "success",
-      })
+      toast.success("Success", "Item added to purchase list.")
       queryClient.invalidateQueries({ queryKey: ["draft_purchase_orders"] })
     },
     onError: () => {
-       toast({
-        title: "Error",
-        description: "Failed to add item to list.",
-        variant: "error",
-      })
+       toast.error("Error", "Failed to add item to list.")
     }
   })
 
@@ -85,11 +76,7 @@ const ProductSourcingWidget = ({ product }: ProductDetailsWidgetProps) => {
     const quantity = quantities[key]
 
     if (!quantity || quantity <= 0) {
-      toast({
-        title: "Invalid Quantity",
-        description: "Please enter a quantity greater than 0.",
-        variant: "warning",
-      })
+      toast.warning("Invalid Quantity", "Please enter a quantity greater than 0.")
       return
     }
 
@@ -178,7 +165,7 @@ const ProductSourcingWidget = ({ product }: ProductDetailsWidgetProps) => {
 }
 
 export const config: WidgetConfig = {
-  zone: "product.details.after",
+  zone: "product.details.variants.after",
 }
 
 export default ProductSourcingWidget 
