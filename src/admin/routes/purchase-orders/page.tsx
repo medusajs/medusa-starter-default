@@ -8,7 +8,10 @@ import {
   createDataTableColumnHelper,
   createDataTableFilterHelper,
   Text,
-  Button
+  Button,
+  DataTablePaginationState,
+  DataTableFilteringState,
+  Filter
 } from "@medusajs/ui"
 import { 
   Eye, 
@@ -19,8 +22,9 @@ import {
   XCircle
 } from "@medusajs/icons"
 import { useQuery } from "@tanstack/react-query"
-import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { CreatePurchaseOrderModal } from "../../components/create-purchase-order-modal"
+import { useMemo, useState } from "react"
 
 interface PurchaseOrder {
   id: string
@@ -36,11 +40,30 @@ interface PurchaseOrder {
 
 const PAGE_SIZE = 20
 
-const usePurchaseOrders = (searchParams: URLSearchParams) => {
+const usePurchaseOrders = (
+  pageIndex: number,
+  pageSize: number,
+  query?: string,
+  filters?: DataTableFilteringState
+) => {
+  const params = new URLSearchParams()
+  params.set("offset", (pageIndex * pageSize).toString())
+  params.set("limit", pageSize.toString())
+  if (query) {
+    params.set("q", query)
+  }
+  if (filters) {
+    for (const [key, value] of Object.entries(filters)) {
+      if ((value as Filter).open) {
+        params.set(key, (value as Filter).value.join(","))
+      }
+    }
+  }
+
   return useQuery({
-    queryKey: ["purchase-orders", searchParams.toString()],
+    queryKey: ["purchase-orders", params.toString()],
     queryFn: async () => {
-      const response = await fetch(`/admin/purchase-orders?${searchParams.toString()}&expand=supplier,items`)
+      const response = await fetch(`/admin/purchase-orders?${params.toString()}&expand=supplier,items`)
       if (!response.ok) throw new Error("Failed to fetch purchase orders")
       return response.json()
     },
@@ -100,8 +123,15 @@ const usePurchaseOrderFilters = () => [
 
 const PurchaseOrdersPage = () => {
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const { data, isLoading, error } = usePurchaseOrders(searchParams)
+
+  const [pagination, setPagination] = useState<DataTablePaginationState>({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  })
+  const [search, setSearch] = useState("")
+  const [filtering, setFiltering] = useState<DataTableFilteringState>({})
+
+  const { data, isLoading, error } = usePurchaseOrders(pagination.pageIndex, pagination.pageSize, search, filtering)
   
   const filters = usePurchaseOrderFilters()
   const purchaseOrders = data?.purchase_orders || []
@@ -139,12 +169,23 @@ const PurchaseOrdersPage = () => {
     }),
   ]
 
-  const { search, ...searchProps } = useDataTable.search(searchParams)
-  const { state: filterState, ...filteringProps } = useDataTable.filtering(searchParams, filters)
-  const { ...paginationProps } = useDataTable.pagination(searchParams, count, PAGE_SIZE)
-  
   const table = useDataTable({
-    data: purchaseOrders, columns, ...searchProps, ...filteringProps, ...paginationProps,
+    data: purchaseOrders,
+    columns: columns,
+    rowCount: count,
+    pagination: {
+      state: pagination,
+      onPaginationChange: setPagination,
+    },
+    search: {
+      state: search,
+      onSearchChange: setSearch,
+    },
+    filtering: {
+      state: filtering,
+      onFilteringChange: setFiltering,
+    },
+    filters: filters,
     isLoading: isLoading,
   })
 
@@ -156,17 +197,15 @@ const PurchaseOrdersPage = () => {
         <Heading>Purchase Orders</Heading>
         <CreatePurchaseOrderModal />
       </div>
-      <DataTable table={table} search={search} filters={filters} filterState={filterState}>
-        <DataTable.Toolbar>
+      <DataTable instance={table}>
+        <DataTable.Toolbar className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
           <DataTable.Search placeholder="Search POs" />
-          <DataTable.FilterMenu />
+          <DataTable.FilterMenu tooltip="Filter" />
         </DataTable.Toolbar>
-        <DataTable.Content>
-          <DataTable.Table>
-            <DataTable.Header />
-            <DataTable.Body />
-          </DataTable.Table>
-        </DataTable.Content>
+        <DataTable.Table>
+          <DataTable.Header />
+          <DataTable.Body />
+        </DataTable.Table>
         <DataTable.Pagination />
       </DataTable>
     </Container>
