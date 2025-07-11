@@ -1,8 +1,20 @@
-import { useState, useEffect } from "react"
-import { Container, Heading, Button, Table, Badge } from "@medusajs/ui"
-import { PencilSquare, Trash, Plus, Users } from "@medusajs/icons"
-import { useNavigate } from "react-router-dom"
+import { useState } from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
+import { 
+  Container, 
+  Heading, 
+  Button, 
+  Badge,
+  DataTable,
+  useDataTable,
+  createDataTableColumnHelper,
+  createDataTableFilterHelper,
+  Text
+} from "@medusajs/ui"
+import { Plus, Eye, PencilSquare, Users, DocumentText } from "@medusajs/icons"
+import { useQuery } from "@tanstack/react-query"
+import { Link, useNavigate } from "react-router-dom"
+import type { DataTableFilteringState } from "@medusajs/ui"
 
 interface Supplier {
   id: string
@@ -10,133 +22,206 @@ interface Supplier {
   code?: string
   email?: string
   phone?: string
+  contact_person?: string
   is_active: boolean
+  purchase_orders_count?: number
+  last_order_date?: Date
   created_at: Date
 }
 
-export default function SuppliersPage() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([])
-  const [loading, setLoading] = useState(true)
+const useSuppliers = () => {
+  return useQuery({
+    queryKey: ["suppliers"],
+    queryFn: async () => {
+      const response = await fetch("/admin/suppliers?include_stats=true")
+      if (!response.ok) throw new Error("Failed to fetch suppliers")
+      return response.json()
+    },
+  })
+}
+
+const SuppliersPage = () => {
   const navigate = useNavigate()
+  const { data, isLoading, error } = useSuppliers()
+  
+  const [search, setSearch] = useState("")
+  const [filtering, setFiltering] = useState<DataTableFilteringState>({})
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 20,
+  })
 
-  useEffect(() => {
-    fetchSuppliers()
-  }, [])
-
-  const fetchSuppliers = async () => {
-    try {
-      const response = await fetch('/admin/suppliers')
-      const data = await response.json()
-      setSuppliers(data.suppliers || [])
-    } catch (error) {
-      console.error('Failed to fetch suppliers:', error)
-    } finally {
-      setLoading(false)
-    }
+  if (error) {
+    throw error
   }
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this supplier?')) {
-      try {
-        await fetch(`/admin/suppliers/${id}`, { method: 'DELETE' })
-        fetchSuppliers() // Refresh the list
-      } catch (error) {
-        console.error('Failed to delete supplier:', error)
-      }
-    }
-  }
+  const suppliers = data?.suppliers || []
+  const count = data?.count || 0
 
-  if (loading) {
-    return (
-      <Container className="flex items-center justify-center min-h-96">
-        <div>Loading suppliers...</div>
-      </Container>
-    )
-  }
+  const columnHelper = createDataTableColumnHelper<Supplier>()
+  const filterHelper = createDataTableFilterHelper()
+
+  const filters = [
+    filterHelper.select({
+      key: "is_active",
+      label: "Status",
+      options: [
+        { label: "Active", value: "true" },
+        { label: "Inactive", value: "false" },
+      ],
+    }),
+  ]
+
+  const columns = [
+    columnHelper.accessor("name", {
+      header: "Supplier Name",
+      enableSorting: true,
+      cell: ({ getValue, row }) => (
+        <div>
+          <Link 
+            to={`/admin/suppliers/${row.original.id}`}
+            className="font-medium text-blue-600 hover:underline"
+          >
+            {getValue()}
+          </Link>
+          {row.original.code && (
+            <Text size="small" className="text-ui-fg-subtle">
+              {row.original.code}
+            </Text>
+          )}
+        </div>
+      ),
+    }),
+    columnHelper.accessor("contact_person", {
+      header: "Contact",
+      cell: ({ getValue, row }) => (
+        <div>
+          {getValue() && (
+            <Text className="font-medium">{getValue()}</Text>
+          )}
+          {row.original.email && (
+            <Text size="small" className="text-ui-fg-subtle">
+              {row.original.email}
+            </Text>
+          )}
+          {row.original.phone && (
+            <Text size="small" className="text-ui-fg-subtle">
+              {row.original.phone}
+            </Text>
+          )}
+        </div>
+      ),
+    }),
+    columnHelper.accessor("is_active", {
+      header: "Status",
+      cell: ({ getValue }) => (
+        <Badge size="2xsmall" color={getValue() ? "green" : "red"}>
+          {getValue() ? "Active" : "Inactive"}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor("purchase_orders_count", {
+      header: "Orders",
+      cell: ({ getValue, row }) => (
+        <div>
+          <Text>{getValue() || 0} orders</Text>
+          {row.original.last_order_date && (
+            <Text size="small" className="text-ui-fg-subtle">
+              Last: {new Date(row.original.last_order_date).toLocaleDateString()}
+            </Text>
+          )}
+        </div>
+      ),
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="transparent"
+            size="small"
+            onClick={() => navigate(`/admin/suppliers/${row.original.id}`)}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="transparent"
+            size="small"
+            onClick={() => navigate(`/admin/purchase-orders?supplier_id=${row.original.id}`)}
+            title="View Orders"
+          >
+            <DocumentText className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="transparent"
+            size="small"
+            onClick={() => navigate(`/admin/suppliers/${row.original.id}/edit`)}
+          >
+            <PencilSquare className="w-4 h-4" />
+          </Button>
+        </div>
+      ),
+    }),
+  ]
+
+  const table = useDataTable({
+    data: suppliers,
+    columns,
+    filters,
+    rowCount: count,
+    getRowId: (row) => row.id,
+    search: {
+      state: search,
+      onSearchChange: setSearch,
+    },
+    filtering: {
+      state: filtering,
+      onFilteringChange: setFiltering,
+    },
+    pagination: {
+      state: pagination,
+      onPaginationChange: setPagination,
+    },
+  })
 
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
-        <Heading level="h1">Suppliers</Heading>
-        <Button 
-          variant="primary"
-          onClick={() => navigate('/admin/suppliers/new')}
-        >
-          <Plus className="mr-2" />
-          Add Supplier
-        </Button>
+        <div>
+          <Heading>Suppliers</Heading>
+          <Text className="text-ui-fg-subtle" size="small">
+            Manage your supplier database and relationships ({count} suppliers)
+          </Text>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button size="small" variant="secondary" asChild>
+            <Link to="/admin/purchase-orders/create">
+              <Plus className="w-4 h-4 mr-2" />
+              New Purchase Order
+            </Link>
+          </Button>
+          <Button size="small" variant="secondary" asChild>
+            <Link to="/admin/suppliers/create">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Supplier
+            </Link>
+          </Button>
+        </div>
       </div>
       
-      <div className="px-6 py-4">
-        {suppliers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Heading level="h3" className="mb-2">No suppliers found</Heading>
-            <p className="text-gray-500 mb-4">Get started by adding your first supplier</p>
-            <Button 
-              variant="primary"
-              onClick={() => navigate('/admin/suppliers/new')}
-            >
-              <Plus className="mr-2" />
-              Add Supplier
-            </Button>
+      <DataTable instance={table}>
+        <DataTable.Toolbar className="flex items-center justify-between gap-4 px-6 py-4">
+          <div className="flex items-center gap-2">
+            <DataTable.FilterMenu tooltip="Filter suppliers" />
           </div>
-        ) : (
-          <Table>
-            <Table.Header>
-              <Table.Row>
-                <Table.HeaderCell>Name</Table.HeaderCell>
-                <Table.HeaderCell>Code</Table.HeaderCell>
-                <Table.HeaderCell>Contact</Table.HeaderCell>
-                <Table.HeaderCell>Status</Table.HeaderCell>
-                <Table.HeaderCell>Created</Table.HeaderCell>
-                <Table.HeaderCell>Actions</Table.HeaderCell>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {suppliers.map((supplier) => (
-                <Table.Row key={supplier.id}>
-                  <Table.Cell>
-                    <div className="font-medium">{supplier.name}</div>
-                  </Table.Cell>
-                  <Table.Cell>{supplier.code || '-'}</Table.Cell>
-                  <Table.Cell>
-                    <div className="space-y-1">
-                      {supplier.email && <div>{supplier.email}</div>}
-                      {supplier.phone && <div className="text-sm text-gray-500">{supplier.phone}</div>}
-                    </div>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Badge color={supplier.is_active ? "green" : "red"}>
-                      {supplier.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                  </Table.Cell>
-                  <Table.Cell>
-                    {new Date(supplier.created_at).toLocaleDateString()}
-                  </Table.Cell>
-                  <Table.Cell>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="transparent"
-                        size="small"
-                        onClick={() => navigate(`/admin/suppliers/${supplier.id}`)}
-                      >
-                        <PencilSquare />
-                      </Button>
-                      <Button
-                        variant="transparent"
-                        size="small"
-                        onClick={() => handleDelete(supplier.id)}
-                      >
-                        <Trash />
-                      </Button>
-                    </div>
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table>
-        )}
-      </div>
+          <div className="flex items-center gap-2">
+            <DataTable.Search placeholder="Search suppliers..." />
+          </div>
+        </DataTable.Toolbar>
+        <DataTable.Table />
+        <DataTable.Pagination />
+      </DataTable>
     </Container>
   )
 }
@@ -144,4 +229,6 @@ export default function SuppliersPage() {
 export const config = defineRouteConfig({
   label: "Suppliers",
   icon: Users,
-}) 
+})
+
+export default SuppliersPage 

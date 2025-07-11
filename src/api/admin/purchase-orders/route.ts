@@ -1,91 +1,90 @@
-import {
-  MedusaRequest,
-  MedusaResponse,
-} from "@medusajs/framework/http"
+import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
 import { PURCHASING_MODULE } from "../../../modules/purchasing"
-import { 
-  PurchaseOrderDTO,
-  PurchasingService 
-} from "../../../modules/purchasing"
-import { createPurchaseOrderWorkflow } from "../../../modules/purchasing/workflows/create-purchase-order"
+import PurchaseOrderService from "../../../modules/purchasing/services/purchase-order.service"
+import SupplierService from "../../../modules/purchasing/services/supplier.service"
 
-type GetAdminPurchaseOrdersQuery = {
-  limit?: number
-  offset?: number
-  supplier_id?: string
-  status?: string
-  po_number?: string
-}
+export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
+  const purchaseOrderService = req.scope.resolve(
+    `${PURCHASING_MODULE}.purchase-order`
+  ) as PurchaseOrderService
+  
+  const supplierService = req.scope.resolve(
+    `${PURCHASING_MODULE}.supplier`
+  ) as SupplierService
 
-type PostAdminCreatePurchaseOrderType = {
-  supplier_id: string
-  expected_delivery_date?: Date
-  payment_terms?: string
-  delivery_address?: any
-  notes?: string
-  items: {
-    product_variant_id: string
-    supplier_product_id?: string
-    supplier_sku?: string
-    product_title: string
-    product_variant_title?: string
-    quantity_ordered: number
-    unit_cost: number
-  }[]
-}
-
-// GET /admin/purchase-orders - List purchase orders
-export const GET = async (
-  req: MedusaRequest<GetAdminPurchaseOrdersQuery>,
-  res: MedusaResponse
-) => {
-  const purchasingService = req.scope.resolve(
-    PURCHASING_MODULE
-  ) as PurchasingService
-
-  const { limit = 20, offset = 0, supplier_id, status, po_number } = req.validatedQuery
+  const { 
+    limit = 20, 
+    offset = 0, 
+    status,
+    priority,
+    supplier_id,
+    expand = ""
+  } = req.query
 
   const filters: any = {}
-  
-  if (supplier_id) {
-    filters.supplier_id = supplier_id
-  }
-  
-  if (status) {
-    filters.status = status
+  if (status) filters.status = status
+  if (priority) filters.priority = priority
+  if (supplier_id) filters.supplier_id = supplier_id
+
+  const [purchaseOrders, count] = await Promise.all([
+    purchaseOrderService.listPurchaseOrders(filters, {
+      take: Number(limit),
+      skip: Number(offset),
+    }),
+    purchaseOrderService.listPurchaseOrders(filters).then(pos => pos.length)
+  ])
+
+  // Expand relations if requested
+  let enrichedOrders = purchaseOrders
+  if (expand.includes('supplier')) {
+    const supplierIds = [...new Set(purchaseOrders.map(po => po.supplier_id))]
+    const suppliers = await supplierService.listSuppliers({ id: supplierIds })
+    const supplierMap = suppliers.reduce((acc, supplier) => {
+      acc[supplier.id] = supplier
+      return acc
+    }, {} as Record<string, any>)
+
+    enrichedOrders = purchaseOrders.map(po => ({
+      ...po,
+      supplier: supplierMap[po.supplier_id]
+    }))
   }
 
-  if (po_number) {
-    filters.po_number = { $ilike: `%${po_number}%` }
-  }
+  if (expand.includes('items')) {
+    const orderIds = purchaseOrders.map(po => po.id)
+    const items = await purchaseOrderService.listPurchaseOrderItems({
+      purchase_order_id: orderIds
+    })
+    
+    const itemsMap = items.reduce((acc, item) => {
+      if (!acc[item.purchase_order_id]) acc[item.purchase_order_id] = []
+      acc[item.purchase_order_id].push(item)
+      return acc
+    }, {} as Record<string, any[]>)
 
-  const [purchase_orders, count] = await purchasingService.listAndCountPurchaseOrders(
-    filters,
-    {
-      take: limit,
-      skip: offset,
-      order: { created_at: "DESC" },
-      relations: ["items"]
-    }
-  )
+    enrichedOrders = enrichedOrders.map(po => ({
+      ...po,
+      items: itemsMap[po.id] || [],
+      items_count: itemsMap[po.id]?.length || 0
+    }))
+  }
 
   res.json({
-    purchase_orders,
+    purchase_orders: enrichedOrders,
     count,
-    limit,
-    offset,
+    limit: Number(limit),
+    offset: Number(offset)
   })
 }
 
-// POST /admin/purchase-orders - Create purchase order
-export const POST = async (
-  req: MedusaRequest<PostAdminCreatePurchaseOrderType>,
-  res: MedusaResponse
-) => {
-  const { result } = await createPurchaseOrderWorkflow(req.scope)
-    .run({
-      input: req.validatedBody,
-    })
+export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
+  const { createPurchaseOrderWorkflow } = await import(
+    "../../../modules/purchasing/workflows/create-purchase-order"
+  )
 
-  res.json({ purchase_order: result })
+  const { result } = await createPurchaseOrderWorkflow(req.scope).run({
+    input: req.body,
+  })
+
+  res.status(201).json({ purchase_order: result })
 } 

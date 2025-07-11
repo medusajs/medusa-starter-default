@@ -1,155 +1,293 @@
-import { useState, useEffect } from "react"
-import { Container, Heading, Button, Table, Badge } from "@medusajs/ui"
-import { PencilSquare, Plus, Eye, DocumentText } from "@medusajs/icons"
-import { useNavigate } from "react-router-dom"
+import { useState } from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
+import { 
+  Container, 
+  Heading, 
+  Button, 
+  Badge,
+  DataTable,
+  useDataTable,
+  createDataTableColumnHelper,
+  createDataTableFilterHelper,
+  Text
+} from "@medusajs/ui"
+import { 
+  Plus, 
+  Eye, 
+  PencilSquare, 
+  DocumentText,
+  Clock,
+  CheckCircle,
+  XCircle
+} from "@medusajs/icons"
+import { useQuery } from "@tanstack/react-query"
+import { Link, useNavigate } from "react-router-dom"
+import type { DataTableFilteringState } from "@medusajs/ui"
 
 interface PurchaseOrder {
   id: string
   po_number: string
   supplier_id: string
+  supplier?: { name: string }
   status: string
+  priority: string
   order_date: Date
+  expected_delivery_date?: Date
   total_amount: number
   currency_code: string
   created_at: Date
+  items_count?: number
 }
 
-export default function PurchaseOrdersPage() {
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
-  const [loading, setLoading] = useState(true)
+const usePurchaseOrders = () => {
+  return useQuery({
+    queryKey: ["purchase-orders"],
+    queryFn: async () => {
+      const response = await fetch("/admin/purchase-orders?expand=supplier,items")
+      if (!response.ok) throw new Error("Failed to fetch purchase orders")
+      return response.json()
+    },
+  })
+}
+
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case 'draft': return <Clock className="w-4 h-4" />
+    case 'sent': return <DocumentText className="w-4 h-4" />
+    case 'confirmed': return <CheckCircle className="w-4 h-4" />
+    case 'received': return <CheckCircle className="w-4 h-4" />
+    case 'cancelled': return <XCircle className="w-4 h-4" />
+    default: return <Clock className="w-4 h-4" />
+  }
+}
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'draft': return 'grey'
+    case 'sent': return 'blue'
+    case 'confirmed': return 'orange'
+    case 'partially_received': return 'purple'
+    case 'received': return 'green'
+    case 'cancelled': return 'red'
+    default: return 'grey'
+  }
+}
+
+const getPriorityColor = (priority: string) => {
+  switch (priority) {
+    case 'urgent': return 'red'
+    case 'high': return 'orange'
+    case 'normal': return 'blue'
+    case 'low': return 'grey'
+    default: return 'blue'
+  }
+}
+
+const formatCurrency = (amount: number, currency: string) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency || 'USD',
+  }).format(amount / 100)
+}
+
+const PurchaseOrdersPage = () => {
   const navigate = useNavigate()
+  const { data, isLoading, error } = usePurchaseOrders()
+  
+  const [search, setSearch] = useState("")
+  const [filtering, setFiltering] = useState<DataTableFilteringState>({})
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 20,
+  })
 
-  useEffect(() => {
-    fetchPurchaseOrders()
-  }, [])
-
-  const fetchPurchaseOrders = async () => {
-    try {
-      const response = await fetch('/admin/purchase-orders')
-      const data = await response.json()
-      setPurchaseOrders(data.purchase_orders || [])
-    } catch (error) {
-      console.error('Failed to fetch purchase orders:', error)
-    } finally {
-      setLoading(false)
-    }
+  if (error) {
+    throw error
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'draft': return 'grey'
-      case 'sent': return 'blue'
-      case 'confirmed': return 'orange'
-      case 'partially_received': return 'purple'
-      case 'received': return 'green'
-      case 'cancelled': return 'red'
-      default: return 'grey'
-    }
-  }
+  const purchaseOrders = data?.purchase_orders || []
+  const count = data?.count || 0
 
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD',
-    }).format(amount / 100) // Assuming amounts are in cents
-  }
+  const columnHelper = createDataTableColumnHelper<PurchaseOrder>()
+  const filterHelper = createDataTableFilterHelper()
 
-  if (loading) {
-    return (
-      <Container className="flex items-center justify-center min-h-96">
-        <div>Loading purchase orders...</div>
-      </Container>
-    )
-  }
+  const filters = [
+    filterHelper.select({
+      key: "status",
+      label: "Status",
+      options: [
+        { label: "Draft", value: "draft" },
+        { label: "Sent", value: "sent" },
+        { label: "Confirmed", value: "confirmed" },
+        { label: "Partially Received", value: "partially_received" },
+        { label: "Received", value: "received" },
+        { label: "Cancelled", value: "cancelled" },
+      ],
+    }),
+    filterHelper.select({
+      key: "priority",
+      label: "Priority",
+      options: [
+        { label: "Urgent", value: "urgent" },
+        { label: "High", value: "high" },
+        { label: "Normal", value: "normal" },
+        { label: "Low", value: "low" },
+      ],
+    }),
+  ]
+
+  const columns = [
+    columnHelper.accessor("po_number", {
+      header: "PO Number",
+      enableSorting: true,
+      cell: ({ getValue, row }) => (
+        <div className="flex items-center gap-2">
+          {getStatusIcon(row.original.status)}
+          <Link 
+            to={`/admin/purchase-orders/${row.original.id}`}
+            className="font-medium text-blue-600 hover:underline"
+          >
+            {getValue()}
+          </Link>
+        </div>
+      ),
+    }),
+    columnHelper.accessor("supplier", {
+      header: "Supplier",
+      cell: ({ getValue }) => (
+        <Text className="font-medium">
+          {getValue()?.name || "Unknown Supplier"}
+        </Text>
+      ),
+    }),
+    columnHelper.accessor("status", {
+      header: "Status",
+      cell: ({ getValue }) => (
+        <Badge size="2xsmall" color={getStatusColor(getValue())}>
+          {getValue().replace('_', ' ').toUpperCase()}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor("priority", {
+      header: "Priority",
+      cell: ({ getValue }) => (
+        <Badge size="2xsmall" color={getPriorityColor(getValue())}>
+          {getValue().toUpperCase()}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor("order_date", {
+      header: "Order Date",
+      enableSorting: true,
+      cell: ({ getValue }) => (
+        <Text>{new Date(getValue()).toLocaleDateString()}</Text>
+      ),
+    }),
+    columnHelper.accessor("expected_delivery_date", {
+      header: "Expected Delivery",
+      cell: ({ getValue }) => (
+        <Text>
+          {getValue() ? new Date(getValue()).toLocaleDateString() : "—"}
+        </Text>
+      ),
+    }),
+    columnHelper.accessor("total_amount", {
+      header: "Total",
+      enableSorting: true,
+      cell: ({ getValue, row }) => (
+        <Text className="font-medium">
+          {formatCurrency(getValue(), row.original.currency_code)}
+        </Text>
+      ),
+    }),
+    columnHelper.accessor("items_count", {
+      header: "Items",
+      cell: ({ getValue }) => (
+        <Text>{getValue() || 0} items</Text>
+      ),
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="transparent"
+            size="small"
+            onClick={() => navigate(`/admin/purchase-orders/${row.original.id}`)}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+          {row.original.status === 'draft' && (
+            <Button
+              variant="transparent"
+              size="small"
+              onClick={() => navigate(`/admin/purchase-orders/${row.original.id}/edit`)}
+            >
+              <PencilSquare className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      ),
+    }),
+  ]
+
+  const table = useDataTable({
+    data: purchaseOrders,
+    columns,
+    filters,
+    rowCount: count,
+    getRowId: (row) => row.id,
+    search: {
+      state: search,
+      onSearchChange: setSearch,
+    },
+    filtering: {
+      state: filtering,
+      onFilteringChange: setFiltering,
+    },
+    pagination: {
+      state: pagination,
+      onPaginationChange: setPagination,
+    },
+  })
 
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
-        <Heading level="h1">Purchase Orders</Heading>
-        <Button 
-          variant="primary"
-          onClick={() => navigate('/admin/purchase-orders/new')}
-        >
-          <Plus className="mr-2" />
-          Create Purchase Order
+        <div>
+          <Heading>Purchase Orders</Heading>
+          <Text className="text-ui-fg-subtle" size="small">
+            Manage your purchase orders and procurement process ({count} orders)
+          </Text>
+        </div>
+        <Button size="small" variant="secondary" asChild>
+          <Link to="/admin/purchase-orders/create">
+            <Plus className="w-4 h-4 mr-2" />
+            Create Purchase Order
+          </Link>
         </Button>
       </div>
       
-      <div className="px-6 py-4">
-        {purchaseOrders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Heading level="h3" className="mb-2">No purchase orders found</Heading>
-            <p className="text-gray-500 mb-4">Get started by creating your first purchase order</p>
-            <Button 
-              variant="primary"
-              onClick={() => navigate('/admin/purchase-orders/new')}
-            >
-              <Plus className="mr-2" />
-              Create Purchase Order
-            </Button>
+      <DataTable instance={table}>
+        <DataTable.Toolbar className="flex items-center justify-between gap-4 px-6 py-4">
+          <div className="flex items-center gap-2">
+            <DataTable.FilterMenu tooltip="Filter orders" />
           </div>
-        ) : (
-          <Table>
-            <Table.Header>
-              <Table.Row>
-                <Table.HeaderCell>PO Number</Table.HeaderCell>
-                <Table.HeaderCell>Status</Table.HeaderCell>
-                <Table.HeaderCell>Order Date</Table.HeaderCell>
-                <Table.HeaderCell>Total</Table.HeaderCell>
-                <Table.HeaderCell>Created</Table.HeaderCell>
-                <Table.HeaderCell>Actions</Table.HeaderCell>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {purchaseOrders.map((po) => (
-                <Table.Row key={po.id}>
-                  <Table.Cell>
-                    <div className="font-medium">{po.po_number}</div>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Badge color={getStatusColor(po.status)}>
-                      {po.status.replace('_', ' ').toUpperCase()}
-                    </Badge>
-                  </Table.Cell>
-                  <Table.Cell>
-                    {new Date(po.order_date).toLocaleDateString()}
-                  </Table.Cell>
-                  <Table.Cell>
-                    {formatCurrency(po.total_amount, po.currency_code)}
-                  </Table.Cell>
-                  <Table.Cell>
-                    {new Date(po.created_at).toLocaleDateString()}
-                  </Table.Cell>
-                  <Table.Cell>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="transparent"
-                        size="small"
-                        onClick={() => navigate(`/admin/purchase-orders/${po.id}`)}
-                      >
-                        <Eye />
-                      </Button>
-                      <Button
-                        variant="transparent"
-                        size="small"
-                        onClick={() => navigate(`/admin/purchase-orders/${po.id}/edit`)}
-                      >
-                        <PencilSquare />
-                      </Button>
-                    </div>
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table>
-        )}
-      </div>
+          <div className="flex items-center gap-2">
+            <DataTable.Search placeholder="Search purchase orders..." />
+          </div>
+        </DataTable.Toolbar>
+        <DataTable.Table />
+        <DataTable.Pagination />
+      </DataTable>
     </Container>
   )
 }
 
 export const config = defineRouteConfig({
-  label: "Purchase Orders", 
+  label: "Purchase Orders",
   icon: DocumentText,
-}) 
+})
+
+export default PurchaseOrdersPage 
