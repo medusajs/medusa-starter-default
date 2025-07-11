@@ -1,40 +1,88 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
+import {
+  MedusaRequest,
+  MedusaResponse,
+} from "@medusajs/framework/http"
 import { PURCHASING_MODULE } from "../../../modules/purchasing"
-import PurchasingService from "../../../modules/purchasing/services/purchasing.service"
+import { 
+  SupplierDTO,
+  PurchasingService 
+} from "../../../modules/purchasing"
+import { createSupplierWorkflow } from "../../../modules/purchasing/workflows/create-supplier"
 
-export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
-  const purchasingService = req.scope.resolve(PURCHASING_MODULE) as PurchasingService
+type GetAdminSuppliersQuery = {
+  limit?: number
+  offset?: number
+  q?: string
+  is_active?: boolean
+}
+
+type PostAdminCreateSupplierType = {
+  name: string
+  code?: string
+  email?: string
+  phone?: string
+  website?: string
+  contact_person?: string
+  address_line_1?: string
+  address_line_2?: string
+  city?: string
+  state?: string
+  postal_code?: string
+  country?: string
+  tax_id?: string
+  payment_terms?: string
+  currency_code?: string
+  notes?: string
+  metadata?: Record<string, any>
+}
+
+// GET /admin/suppliers - List suppliers
+export const GET = async (
+  req: MedusaRequest<GetAdminSuppliersQuery>,
+  res: MedusaResponse
+) => {
+  const purchasingService = req.scope.resolve(
+    PURCHASING_MODULE
+  ) as PurchasingService
+
+  const { limit = 20, offset = 0, q, is_active } = req.validatedQuery
+
+  const filters: any = {}
+  
+  if (q) {
+    filters.name = { $ilike: `%${q}%` }
+  }
+  
+  if (is_active !== undefined) {
+    filters.is_active = is_active
+  }
 
   const [suppliers, count] = await purchasingService.listAndCountSuppliers(
-    req.filterableFields,
-    req.listConfig
+    filters,
+    {
+      take: limit,
+      skip: offset,
+      order: { created_at: "DESC" }
+    }
   )
 
-  res.status(200).json({
+  res.json({
     suppliers,
     count,
-    offset: req.listConfig.skip,
-    limit: req.listConfig.take,
+    limit,
+    offset,
   })
 }
 
-type AdminCreateSupplierPayload = {
-  name: string
-  email?: string
-}
+// POST /admin/suppliers - Create supplier
+export const POST = async (
+  req: MedusaRequest<PostAdminCreateSupplierType>,
+  res: MedusaResponse
+) => {
+  const { result } = await createSupplierWorkflow(req.scope)
+    .run({
+      input: req.validatedBody,
+    })
 
-export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
-  const purchasingService = req.scope.resolve(PURCHASING_MODULE) as PurchasingService
-
-  const { name, email } = req.body as AdminCreateSupplierPayload
-
-  if (!name) {
-    return res.status(400).json({ message: "Name is required" })
-  }
-
-  const [supplier] = await purchasingService.createSuppliers([
-    { name, email },
-  ])
-
-  res.status(201).json({ supplier })
+  res.json({ supplier: result })
 } 
