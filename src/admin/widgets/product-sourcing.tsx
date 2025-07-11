@@ -1,4 +1,5 @@
-import { WidgetConfig, ProductDetailsWidgetProps } from "@medusajs/admin"
+import { ProductDetailsWidgetProps } from "@medusajs/admin"
+import { defineWidgetConfig } from "@medusajs/admin-sdk"
 import {
   Container,
   Heading,
@@ -60,11 +61,11 @@ const ProductSourcingWidget = ({ product }: ProductDetailsWidgetProps) => {
       })
     },
     onSuccess: () => {
-      toast.success("Success", "Item added to purchase list.")
+      toast.success("Item added to purchase list.")
       queryClient.invalidateQueries({ queryKey: ["draft_purchase_orders"] })
     },
-    onError: () => {
-       toast.error("Error", "Failed to add item to list.")
+    onError: (error) => {
+       toast.error(`Failed to add item: ${error.message}`)
     }
   })
 
@@ -76,7 +77,7 @@ const ProductSourcingWidget = ({ product }: ProductDetailsWidgetProps) => {
     const quantity = quantities[key]
 
     if (!quantity || quantity <= 0) {
-      toast.warning("Invalid Quantity", "Please enter a quantity greater than 0.")
+      toast.warning("Please enter a quantity greater than 0.")
       return
     }
 
@@ -164,8 +165,8 @@ const ProductSourcingWidget = ({ product }: ProductDetailsWidgetProps) => {
   )
 }
 
-export const config: WidgetConfig = {
-  zone: "product.details.variants.after",
-}
+export const config = defineWidgetConfig({
+  zone: "product.details.after",
+})
 
 export default ProductSourcingWidget 
