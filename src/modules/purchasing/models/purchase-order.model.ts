@@ -35,7 +35,7 @@ export const PurchaseOrder = model.define("purchase_order", {
   delivery_address: model.json().nullable(),
   billing_address: model.json().nullable(),
   notes: model.text().nullable(),
-  internal_notes: model.text().nullable(), // Private notes not visible to supplier
+  internal_notes: model.text().nullable(),
   created_by: model.text().nullable(),
   confirmed_by: model.text().nullable(),
   approved_by: model.text().nullable(),
@@ -50,7 +50,7 @@ export const PurchaseOrderItem = model.define("purchase_order_item", {
   supplier_sku: model.text().nullable(),
   product_title: model.text(),
   product_variant_title: model.text().nullable(),
-  product_sku: model.text().nullable(), // Cache product SKU
+  product_sku: model.text().nullable(),
   quantity_ordered: model.number(),
   quantity_received: model.number().default(0),
   unit_cost: model.bigNumber(),
