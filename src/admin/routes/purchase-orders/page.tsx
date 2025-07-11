@@ -199,8 +199,10 @@ const PurchaseOrdersPage = () => {
       </div>
       <DataTable instance={table}>
         <DataTable.Toolbar className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
-          <DataTable.Search placeholder="Search POs" />
-          <DataTable.FilterMenu tooltip="Filter" />
+          <div className="flex gap-2">
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search POs" className="p-2 border rounded-md" />
+            <DataTable.FilterMenu tooltip="Filter" />
+          </div>
         </DataTable.Toolbar>
         <DataTable.Table>
           <DataTable.Header />
