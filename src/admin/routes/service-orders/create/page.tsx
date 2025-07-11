@@ -389,8 +389,6 @@ const CreateServiceOrder = () => {
   )
 }
 
-export const config = defineRouteConfig({
-  label: "Create Service Order",
-})
+export const config = defineRouteConfig({})
 
 export default CreateServiceOrder 

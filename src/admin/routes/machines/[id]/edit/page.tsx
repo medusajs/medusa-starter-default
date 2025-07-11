@@ -439,8 +439,6 @@ const EditMachinePage = () => {
   )
 }
 
-export const config = defineRouteConfig({
-  label: "Edit Machine",
-})
+export const config = defineRouteConfig({})
 
 export default EditMachinePage 

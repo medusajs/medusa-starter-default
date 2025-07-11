@@ -20,7 +20,7 @@ interface Product {
 }
 
 interface WidgetProps {
-  product: Product
+  data: Product
 }
 
 type VariantWithSourcing = {
@@ -38,14 +38,14 @@ type VariantWithSourcing = {
   }[]
 }
 
-const ProductSourcingWidget = ({ product }: WidgetProps) => {
+const ProductSourcingWidget = ({ data: product }: WidgetProps) => {
   const queryClient = useQueryClient()
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({})
 
   const { data, isLoading, error } = useQuery<{
     variants: VariantWithSourcing[]
   }>({
-    queryKey: ["product_sourcing", product.id],
+    queryKey: ["product_sourcing", product?.id],
     queryFn: async () => {
       const response = await fetch(
         `/admin/products/${product.id}/suppliers`

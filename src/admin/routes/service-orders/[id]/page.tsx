@@ -772,8 +772,6 @@ const StatusUpdateForm = ({ currentStatus, onStatusUpdate }: { currentStatus: st
   )
 }
 
-export const config = defineRouteConfig({
-  label: "Service Order Details",
-})
+export const config = defineRouteConfig({})
 
 export default ServiceOrderDetails 
