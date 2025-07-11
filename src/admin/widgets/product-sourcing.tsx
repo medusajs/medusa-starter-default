@@ -41,6 +41,7 @@ const ProductSourcingWidget = ({ product }: ProductDetailsWidgetProps) => {
       )
       return response.json()
     },
+    enabled: !!product, // Prevent query from running until product is available
   })
 
   const addItemMutation = useMutation({
@@ -96,6 +97,11 @@ const ProductSourcingWidget = ({ product }: ProductDetailsWidgetProps) => {
       return null
     }
     return Math.min(...sourcingOptions.map(s => s.price))
+  }
+
+  if (!product) {
+    // Render nothing or a placeholder if product is not yet available
+    return null
   }
 
   return (

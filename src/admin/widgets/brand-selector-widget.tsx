@@ -108,10 +108,10 @@ const BrandSelectorWidget = ({ product }: { product: any }) => {
                 </div>
                 <div className="flex flex-col gap-1">
                   {brand.is_oem && (
-                    <Badge variant="green" size="small">OEM</Badge>
+                    <Badge color="green" size="small">OEM</Badge>
                   )}
                   {brand.authorized_dealer && (
-                    <Badge variant="blue" size="small">Authorized</Badge>
+                    <Badge color="blue" size="small">Authorized</Badge>
                   )}
                 </div>
               </div>
@@ -128,7 +128,7 @@ const BrandSelectorWidget = ({ product }: { product: any }) => {
               {brands
                 .filter(brand => selectedBrandIds.includes(brand.id))
                 .map(brand => (
-                  <Badge key={brand.id} variant="default">
+                  <Badge key={brand.id} color="grey">
                     {brand.code}
                   </Badge>
                 ))
