@@ -20,7 +20,7 @@ export const PurchaseOrder = model.define("purchase_order", {
   id: model.id().primaryKey(),
   po_number: model.text().unique().searchable(),
   supplier_id: model.text().searchable(),
-  status: model.enum(PurchaseOrderStatus).default(PurchaseOrderStatus.DRAFT).searchable(),
+  status: model.enum(PurchaseOrderStatus).default(PurchaseOrderStatus.DRAFT),
   priority: model.enum(PurchaseOrderPriority).default(PurchaseOrderPriority.NORMAL),
   order_date: model.dateTime(),
   expected_delivery_date: model.dateTime().nullable(),
