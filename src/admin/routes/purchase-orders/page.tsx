@@ -109,12 +109,12 @@ const PurchaseOrdersPage = () => {
   const count = data?.count || 0
 
   const columnHelper = createDataTableColumnHelper<PurchaseOrder>()
-  const filterHelper = createDataTableFilterHelper()
+  const filterHelper = createDataTableFilterHelper<PurchaseOrder>()
 
   const filters = [
-    filterHelper.select({
-      key: "status",
+    filterHelper.accessor("status", {
       label: "Status",
+      type: "select",
       options: [
         { label: "Draft", value: "draft" },
         { label: "Sent", value: "sent" },
@@ -124,9 +124,9 @@ const PurchaseOrdersPage = () => {
         { label: "Cancelled", value: "cancelled" },
       ],
     }),
-    filterHelper.select({
-      key: "priority",
+    filterHelper.accessor("priority", {
       label: "Priority",
+      type: "select",
       options: [
         { label: "Urgent", value: "urgent" },
         { label: "High", value: "high" },
@@ -185,11 +185,14 @@ const PurchaseOrdersPage = () => {
     }),
     columnHelper.accessor("expected_delivery_date", {
       header: "Expected Delivery",
-      cell: ({ getValue }) => (
-        <Text>
-          {getValue() ? new Date(getValue()).toLocaleDateString() : "—"}
-        </Text>
-      ),
+      cell: ({ getValue }) => {
+        const date = getValue()
+        return (
+          <Text>
+            {date ? new Date(date).toLocaleDateString() : "—"}
+          </Text>
+        )
+      },
     }),
     columnHelper.accessor("total_amount", {
       header: "Total",

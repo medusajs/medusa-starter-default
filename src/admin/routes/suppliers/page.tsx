@@ -59,12 +59,12 @@ const SuppliersPage = () => {
   const count = data?.count || 0
 
   const columnHelper = createDataTableColumnHelper<Supplier>()
-  const filterHelper = createDataTableFilterHelper()
+  const filterHelper = createDataTableFilterHelper<Supplier>()
 
   const filters = [
-    filterHelper.select({
-      key: "is_active",
+    filterHelper.accessor("is_active", {
       label: "Status",
+      type: "select",
       options: [
         { label: "Active", value: "true" },
         { label: "Inactive", value: "false" },
