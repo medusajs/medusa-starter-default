@@ -15,6 +15,9 @@ module.exports = defineConfig({
   },
   modules: [
     {
+      resolve: "./src/modules/purchasing",
+    },
+    {
       resolve: "./src/modules/user-preferences",
     },
     {
