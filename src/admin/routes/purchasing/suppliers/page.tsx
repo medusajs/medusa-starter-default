@@ -2,6 +2,8 @@ import { Container, Table } from "@medusajs/ui"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router-dom"
+import { CreateSupplierModal } from "../../../components/create-supplier-modal"
+import { SupplierActions } from "../../../components/supplier-actions"
 
 // Data fetching hook
 const useSuppliers = () => {
@@ -18,10 +20,11 @@ const useSuppliers = () => {
   })
 }
 
-type Supplier = {
+export type Supplier = {
   id: string;
   name: string;
   email: string | null;
+  phone?: string | null;
 }
 
 const SuppliersPage = () => {
@@ -29,14 +32,16 @@ const SuppliersPage = () => {
 
   return (
     <Container>
-      <div className="flex justify-between mb-4">
+      <div className="flex justify-between mb-4 items-center">
         <h1 className="text-2xl font-semibold">Suppliers</h1>
+        <CreateSupplierModal />
       </div>
       <Table>
         <Table.Header>
           <Table.Row>
             <Table.HeaderCell>Name</Table.HeaderCell>
             <Table.HeaderCell>Email</Table.HeaderCell>
+            <Table.HeaderCell></Table.HeaderCell>
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -49,6 +54,9 @@ const SuppliersPage = () => {
                 </Link>
               </Table.Cell>
               <Table.Cell>{supplier.email}</Table.Cell>
+              <Table.Cell>
+                <SupplierActions supplier={supplier} />
+              </Table.Cell>
             </Table.Row>
           ))}
         </Table.Body>
@@ -58,10 +66,7 @@ const SuppliersPage = () => {
 }
 
 export const config = defineRouteConfig({
-  link: {
-    label: "Suppliers",
-    path: "/purchasing/suppliers",
-  },
+  label: "Suppliers",
 })
 
 export default SuppliersPage 
