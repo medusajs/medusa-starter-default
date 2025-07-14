@@ -175,6 +175,11 @@ const SupplierDetailPage = () => {
         <Button variant="secondary" asChild>
           <Link to="/admin/suppliers">Back to Suppliers</Link>
         </Button>
+        <Button variant="primary" asChild>
+          <Link to={`/suppliers/${supplier.id}/edit`}>
+            Edit Supplier
+          </Link>
+        </Button>
         <Button asChild>
           <Link to={`/admin/purchase-orders?supplier_id=${supplier.id}`}>
             View Purchase Orders

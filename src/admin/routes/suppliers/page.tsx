@@ -149,6 +149,14 @@ const SuppliersPage = () => {
           <Button
             variant="transparent"
             size="small"
+            onClick={() => navigate(`/suppliers/${row.original.id}/edit`)}
+            title="Edit Supplier"
+          >
+            <PencilSquare className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="transparent"
+            size="small"
             onClick={() => navigate(`/admin/purchase-orders?supplier_id=${row.original.id}`)}
             title="View Orders"
           >
