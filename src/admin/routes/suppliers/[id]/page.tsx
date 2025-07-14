@@ -187,6 +187,4 @@ const SupplierDetailPage = () => {
 
 export default SupplierDetailPage
 
-export const config = defineRouteConfig({
-  label: "Supplier Details",
-}) 
+export const config = defineRouteConfig({}) 
