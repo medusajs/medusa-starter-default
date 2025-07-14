@@ -1,16 +1,11 @@
-import { Container, Heading } from "@medusajs/ui"
+import { Navigate } from "react-router-dom"
 import { useParams } from "react-router-dom"
 
 const SupplierDetailPage = () => {
   const { id } = useParams()
-
-  return (
-    <Container>
-      <Heading level="h1">Supplier Details</Heading>
-      <p>Details for supplier ID: {id}</p>
-      {/* TODO: Add Draft Purchase Order and Price List tables */}
-    </Container>
-  )
+  
+  // Redirect to the main supplier detail page
+  return <Navigate to={`/admin/suppliers/${id}`} replace />
 }
 
 export default SupplierDetailPage 

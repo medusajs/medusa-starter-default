@@ -23,8 +23,25 @@ const useSuppliers = () => {
 export type Supplier = {
   id: string;
   name: string;
-  email: string | null;
+  code?: string | null;
+  email?: string | null;
   phone?: string | null;
+  website?: string | null;
+  contact_person?: string | null;
+  address_line_1?: string | null;
+  address_line_2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+  tax_id?: string | null;
+  payment_terms?: string | null;
+  currency_code?: string;
+  is_active?: boolean;
+  notes?: string | null;
+  metadata?: Record<string, any> | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const SuppliersPage = () => {
@@ -49,7 +66,7 @@ const SuppliersPage = () => {
           {data?.suppliers?.map((supplier: Supplier) => (
             <Table.Row key={supplier.id}>
               <Table.Cell>
-                <Link to={`/a/purchasing/suppliers/${supplier.id}`} className="text-blue-600 hover:underline">
+                <Link to={`/admin/suppliers/${supplier.id}`} className="text-blue-600 hover:underline">
                   {supplier.name}
                 </Link>
               </Table.Cell>
