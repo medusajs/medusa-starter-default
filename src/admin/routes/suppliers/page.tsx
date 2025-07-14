@@ -9,12 +9,13 @@ import {
   useDataTable,
   createDataTableColumnHelper,
   createDataTableFilterHelper,
-  Text
+  Text,
+  DataTableFilteringState
 } from "@medusajs/ui"
 import { Plus, Eye, PencilSquare, Users, DocumentText } from "@medusajs/icons"
 import { useQuery } from "@tanstack/react-query"
 import { Link, useNavigate } from "react-router-dom"
-import type { DataTableFilteringState } from "@medusajs/ui"
+import { CreateSupplierModal } from "../../components/create-supplier-modal"
 
 interface Supplier {
   id: string
@@ -201,12 +202,7 @@ const SuppliersPage = () => {
               New Purchase Order
             </Link>
           </Button>
-          <Button size="small" variant="secondary" asChild>
-            <Link to="/admin/suppliers/create">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Supplier
-            </Link>
-          </Button>
+          <CreateSupplierModal />
         </div>
       </div>
       
