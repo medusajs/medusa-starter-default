@@ -154,13 +154,6 @@ const SuppliersPage = () => {
           >
             <DocumentText className="w-4 h-4" />
           </Button>
-          <Button
-            variant="transparent"
-            size="small"
-            onClick={() => navigate(`/admin/suppliers/${row.original.id}/edit`)}
-          >
-            <PencilSquare className="w-4 h-4" />
-          </Button>
         </div>
       ),
     }),
