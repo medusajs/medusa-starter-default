@@ -80,7 +80,7 @@ const SuppliersPage = () => {
       cell: ({ getValue, row }) => (
         <div>
           <Link 
-            to={`/app/suppliers/${row.original.id}`}
+            to={`/suppliers/${row.original.id}`}
             className="font-medium text-blue-600 hover:underline"
           >
             {getValue()}
@@ -142,14 +142,14 @@ const SuppliersPage = () => {
           <Button
             variant="transparent"
             size="small"
-            onClick={() => navigate(`/app/suppliers/${row.original.id}`)}
+            onClick={() => navigate(`/suppliers/${row.original.id}`)}
           >
             <Eye className="w-4 h-4" />
           </Button>
           <Button
             variant="transparent"
             size="small"
-            onClick={() => navigate(`/app/suppliers/${row.original.id}/edit`)}
+            onClick={() => navigate(`/suppliers/${row.original.id}/edit`)}
             title="Edit Supplier"
           >
             <PencilSquare className="w-4 h-4" />
@@ -157,7 +157,7 @@ const SuppliersPage = () => {
           <Button
             variant="transparent"
             size="small"
-            onClick={() => navigate(`/app/purchase-orders?supplier_id=${row.original.id}`)}
+            onClick={() => navigate(`/purchase-orders?supplier_id=${row.original.id}`)}
             title="View Orders"
           >
             <DocumentText className="w-4 h-4" />
@@ -198,7 +198,7 @@ const SuppliersPage = () => {
         </div>
         <div className="flex items-center gap-2">
           <Button size="small" variant="secondary" asChild>
-            <Link to="/app/purchase-orders/create">
+            <Link to="/purchase-orders/create">
               <Plus className="w-4 h-4 mr-2" />
               New Purchase Order
             </Link>

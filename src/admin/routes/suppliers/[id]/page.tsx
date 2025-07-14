@@ -173,15 +173,15 @@ const SupplierDetailPage = () => {
 
       <div className="mt-6 flex gap-2">
         <Button variant="secondary" asChild>
-          <Link to="/app/suppliers">Back to Suppliers</Link>
+          <Link to="/suppliers">Back to Suppliers</Link>
         </Button>
         <Button variant="primary" asChild>
-          <Link to={`/app/suppliers/${supplier.id}/edit`}>
+          <Link to={`/suppliers/${supplier.id}/edit`}>
             Edit Supplier
           </Link>
         </Button>
         <Button asChild>
-          <Link to={`/app/purchase-orders?supplier_id=${supplier.id}`}>
+          <Link to={`/purchase-orders?supplier_id=${supplier.id}`}>
             View Purchase Orders
           </Link>
         </Button>

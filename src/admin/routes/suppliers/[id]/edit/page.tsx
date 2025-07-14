@@ -221,7 +221,7 @@ const EditSupplierPage = () => {
           <div className="flex items-center justify-between px-6 py-4 border-b border-ui-border-base">
             <div className="flex items-center gap-4">
               <Button variant="secondary" size="small" asChild>
-                <Link to={`/app/suppliers/${id}`}>
+                <Link to={`/suppliers/${id}`}>
                   <ArrowLeft className="w-4 h-4" />
                 </Link>
               </Button>
@@ -510,7 +510,7 @@ const EditSupplierPage = () => {
               {/* Form Actions */}
               <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-ui-border-base">
                 <Button variant="secondary" type="button" asChild>
-                  <Link to={`/app/suppliers/${id}`}>
+                  <Link to={`/suppliers/${id}`}>
                     Cancel
                   </Link>
                 </Button>
