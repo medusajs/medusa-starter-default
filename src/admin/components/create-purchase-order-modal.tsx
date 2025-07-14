@@ -20,6 +20,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 // Schema for a single line item
 const itemSchema = zod.object({
   product_variant_id: zod.string().min(1, "Product variant is required"),
+  product_title: zod.string().min(1, "Product title is required"),
   quantity_ordered: zod.number().min(1, "Quantity must be at least 1"),
   unit_cost: zod.number().min(0, "Unit cost cannot be negative"),
 });
@@ -60,7 +61,7 @@ export const CreatePurchaseOrderModal = ({ onSuccess }: CreatePurchaseOrderModal
       supplier_id: "",
       priority: "normal",
       notes: "",
-      items: [{ product_variant_id: "", quantity_ordered: 1, unit_cost: 0 }],
+      items: [{ product_variant_id: "", product_title: "", quantity_ordered: 1, unit_cost: 0 }],
     },
   })
 
@@ -253,7 +254,7 @@ export const CreatePurchaseOrderModal = ({ onSuccess }: CreatePurchaseOrderModal
                     type="button"
                     variant="secondary"
                     size="small"
-                    onClick={() => append({ product_variant_id: "", quantity_ordered: 1, unit_cost: 0 })}
+                    onClick={() => append({ product_variant_id: "", product_title: "", quantity_ordered: 1, unit_cost: 0 })}
                   >
                     <Plus className="w-4 h-4" />
                     Add Item
@@ -279,7 +280,7 @@ export const CreatePurchaseOrderModal = ({ onSuccess }: CreatePurchaseOrderModal
                         )}
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <Controller
                           control={form.control}
                           name={`items.${index}.product_variant_id`}
@@ -299,6 +300,30 @@ export const CreatePurchaseOrderModal = ({ onSuccess }: CreatePurchaseOrderModal
                               )}
                               <Text size="xsmall" className="text-ui-fg-subtle">
                                 Enter the product variant ID
+                              </Text>
+                            </div>
+                          )}
+                        />
+                        
+                        <Controller
+                          control={form.control}
+                          name={`items.${index}.product_title`}
+                          render={({ field, fieldState }) => (
+                            <div className="space-y-2">
+                              <Label size="small" weight="plus">
+                                Product Title *
+                              </Label>
+                              <Input
+                                {...field}
+                                placeholder="Product name"
+                              />
+                              {fieldState.error && (
+                                <Text size="xsmall" className="text-red-500">
+                                  {fieldState.error.message}
+                                </Text>
+                              )}
+                              <Text size="xsmall" className="text-ui-fg-subtle">
+                                Enter the product title
                               </Text>
                             </div>
                           )}
