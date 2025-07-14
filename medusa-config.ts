@@ -36,6 +36,9 @@ module.exports = defineConfig({
       resolve: "./src/modules/service-orders",
     },
     {
+      resolve: "./src/modules/invoicing",
+    },
+    {
       resolve: "@medusajs/index",
     },
   ],
