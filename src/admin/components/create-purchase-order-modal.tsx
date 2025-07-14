@@ -1,5 +1,6 @@
 import * as zod from "zod"
-import { useForm, useFieldArray } from "react-hook-form"
+import { useState } from "react"
+import { useForm, useFieldArray, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   FocusModal,
@@ -10,10 +11,11 @@ import {
   Select,
   Textarea,
   Text,
+  Badge,
+  toast,
 } from "@medusajs/ui"
-import { FormProvider } from "react-hook-form"
+import { Plus, Trash } from "@medusajs/icons"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { toast } from "@medusajs/ui"
 
 // Schema for a single line item
 const itemSchema = zod.object({
@@ -24,7 +26,7 @@ const itemSchema = zod.object({
 
 const schema = zod.object({
   supplier_id: zod.string().min(1, "Supplier is required"),
-  priority: zod.enum(["low", "normal", "high", "urgent"]).optional(),
+  priority: zod.enum(["low", "normal", "high", "urgent"]).default("normal"),
   notes: zod.string().optional(),
   items: zod.array(itemSchema).min(1, "At least one item is required"),
 })
@@ -36,14 +38,19 @@ const useSuppliers = () => {
   return useQuery({
     queryKey: ["suppliers"],
     queryFn: async () => {
-      const response = await fetch(`/admin/suppliers?limit=100`) // Fetch up to 100 suppliers
+      const response = await fetch(`/admin/suppliers?limit=100&is_active=true`)
       if (!response.ok) throw new Error("Failed to fetch suppliers")
       return response.json()
     },
   })
 }
 
-export const CreatePurchaseOrderModal = () => {
+interface CreatePurchaseOrderModalProps {
+  onSuccess?: () => void
+}
+
+export const CreatePurchaseOrderModal = ({ onSuccess }: CreatePurchaseOrderModalProps) => {
+  const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { data: suppliersData, isLoading: suppliersLoading } = useSuppliers()
   
@@ -69,17 +76,21 @@ export const CreatePurchaseOrderModal = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       })
-      if (!response.ok) throw new Error("Failed to create purchase order")
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || "Failed to create purchase order")
+      }
       return response.json()
     },
     onSuccess: () => {
       toast.success("Purchase Order created successfully!")
       queryClient.invalidateQueries({ queryKey: ["purchase-orders"] })
       form.reset()
+      setIsOpen(false)
+      onSuccess?.()
     },
-    onError: (error) => {
-      toast.error("Failed to create purchase order.")
-      console.error(error)
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to create purchase order")
     },
   })
 
@@ -88,107 +99,278 @@ export const CreatePurchaseOrderModal = () => {
   })
 
   return (
-    <FocusModal>
+    <FocusModal open={isOpen} onOpenChange={setIsOpen}>
       <FocusModal.Trigger asChild>
-        <Button>Create Purchase Order</Button>
+        <Button size="small">
+          <Plus className="h-4 w-4" />
+          Create Purchase Order
+        </Button>
       </FocusModal.Trigger>
       <FocusModal.Content>
-        <FormProvider {...form}>
-          <form
-            onSubmit={handleSubmit}
-            className="flex h-full flex-col overflow-hidden"
-          >
-            <FocusModal.Header>
-              <div className="flex items-center justify-end gap-x-2">
-                <FocusModal.Close asChild>
-                  <Button size="small" variant="secondary">Cancel</Button>
-                </FocusModal.Close>
-                <Button type="submit" size="small" disabled={createPoMutation.isPending}>
-                  {createPoMutation.isPending ? "Creating..." : "Create"}
+        <form
+          onSubmit={handleSubmit}
+          className="flex h-full flex-col overflow-hidden"
+        >
+          <FocusModal.Header>
+            <div className="flex items-center justify-end gap-x-2">
+              <FocusModal.Close asChild>
+                <Button size="small" variant="secondary">
+                  Cancel
                 </Button>
+              </FocusModal.Close>
+              <Button 
+                type="submit" 
+                size="small" 
+                disabled={createPoMutation.isPending}
+                isLoading={createPoMutation.isPending}
+              >
+                Create Purchase Order
+              </Button>
+            </div>
+          </FocusModal.Header>
+          <FocusModal.Body className="overflow-y-auto">
+            <div className="mx-auto flex w-full max-w-4xl flex-col gap-y-8 px-2 py-16">
+              <div>
+                <Heading>Create Purchase Order</Heading>
+                <Text className="text-ui-fg-subtle" size="small">
+                  Create a new purchase order for supplier deliveries
+                </Text>
               </div>
-            </FocusModal.Header>
-            <FocusModal.Body className="overflow-y-auto">
-                <div className="mx-auto flex w-full max-w-4xl flex-col gap-y-8 px-2 py-16">
-                  <Heading>Create Purchase Order</Heading>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="supplier_id">Supplier *</Label>
-                      <Select {...form.register("supplier_id")}>
-                        <Select.Trigger>
-                          <Select.Value placeholder="Select a supplier" />
-                        </Select.Trigger>
-                        <Select.Content>
-                          {suppliersLoading ? <Select.Item value="">Loading...</Select.Item> :
-                            suppliersData?.suppliers?.map((s) => (
-                              <Select.Item key={s.id} value={s.id}>{s.name}</Select.Item>
-                            ))
-                          }
-                        </Select.Content>
-                      </Select>
-                      {form.formState.errors.supplier_id && <Text className="text-red-500">{form.formState.errors.supplier_id.message}</Text>}
-                    </div>
-                    <div>
-                      <Label htmlFor="priority">Priority</Label>
-                      <Select {...form.register("priority")}>
-                        <Select.Trigger>
-                          <Select.Value placeholder="Select priority" />
-                        </Select.Trigger>
-                        <Select.Content>
-                          <Select.Item value="low">Low</Select.Item>
-                          <Select.Item value="normal">Normal</Select.Item>
-                          <Select.Item value="high">High</Select.Item>
-                          <Select.Item value="urgent">Urgent</Select.Item>
-                        </Select.Content>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="notes">Notes</Label>
-                    <Textarea id="notes" {...form.register("notes")} />
-                  </div>
-
-                  <div className="mt-4">
-                    <Heading level="h2" className="mb-2">Items</Heading>
-                    {fields.map((field, index) => (
-                      <div key={field.id} className="grid grid-cols-4 gap-4 mb-4 p-4 border rounded-md">
-                        <div className="col-span-2">
-                          <Label>Product Variant ID *</Label>
-                           <Input {...form.register(`items.${index}.product_variant_id`)} placeholder="pv_..."/>
-                           {form.formState.errors.items?.[index]?.product_variant_id && <Text className="text-red-500 text-sm">{form.formState.errors.items[index].product_variant_id.message}</Text>}
-                        </div>
-                        <div>
-                           <Label>Quantity *</Label>
-                           <Input type="number" {...form.register(`items.${index}.quantity_ordered`, { valueAsNumber: true })} />
-                           {form.formState.errors.items?.[index]?.quantity_ordered && <Text className="text-red-500 text-sm">{form.formState.errors.items[index].quantity_ordered.message}</Text>}
-                        </div>
-                        <div>
-                           <Label>Unit Cost *</Label>
-                           <Input type="number" {...form.register(`items.${index}.unit_cost`, { valueAsNumber: true })} />
-                           {form.formState.errors.items?.[index]?.unit_cost && <Text className="text-red-500 text-sm">{form.formState.errors.items[index].unit_cost.message}</Text>}
-                        </div>
-                        <div className="col-span-4 flex justify-end">
-                          <Button variant="danger" size="small" onClick={() => remove(index)}>Remove</Button>
-                        </div>
-                      </div>
-                    ))}
-                    <Button 
-                      type="button" 
-                      variant="secondary"
-                      onClick={() => append({ product_variant_id: "", quantity_ordered: 1, unit_cost: 0 })}
-                    >
-                      Add Item
-                    </Button>
-                    {form.formState.errors.items && <Text className="text-red-500 mt-2">{form.formState.errors.items.message}</Text>}
-                  </div>
-
+              
+              {/* Basic Information */}
+              <div className="border border-ui-border-base rounded-lg p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Heading level="h3">Basic Information</Heading>
+                  <Badge size="2xsmall">Required</Badge>
                 </div>
-            </FocusModal.Body>
-          </form>
-        </FormProvider>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Controller
+                    control={form.control}
+                    name="supplier_id"
+                    render={({ field, fieldState }) => (
+                      <div className="space-y-2">
+                        <Label size="small" weight="plus">
+                          Supplier *
+                        </Label>
+                        <Select 
+                          value={field.value} 
+                          onValueChange={field.onChange}
+                        >
+                          <Select.Trigger>
+                            <Select.Value placeholder="Select a supplier" />
+                          </Select.Trigger>
+                          <Select.Content>
+                            {suppliersLoading ? (
+                              <Select.Item value="" disabled>
+                                Loading suppliers...
+                              </Select.Item>
+                            ) : suppliersData?.suppliers?.length > 0 ? (
+                              suppliersData.suppliers.map((supplier: any) => (
+                                <Select.Item key={supplier.id} value={supplier.id}>
+                                  {supplier.name}
+                                </Select.Item>
+                              ))
+                            ) : (
+                              <Select.Item value="" disabled>
+                                No active suppliers found
+                              </Select.Item>
+                            )}
+                          </Select.Content>
+                        </Select>
+                        {fieldState.error && (
+                          <Text size="xsmall" className="text-red-500">
+                            {fieldState.error.message}
+                          </Text>
+                        )}
+                        <Text size="xsmall" className="text-ui-fg-subtle">
+                          Select the supplier for this purchase order
+                        </Text>
+                      </div>
+                    )}
+                  />
+                  
+                  <Controller
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <div className="space-y-2">
+                        <Label size="small" weight="plus">
+                          Priority
+                        </Label>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <Select.Trigger>
+                            <Select.Value />
+                          </Select.Trigger>
+                          <Select.Content>
+                            <Select.Item value="low">Low</Select.Item>
+                            <Select.Item value="normal">Normal</Select.Item>
+                            <Select.Item value="high">High</Select.Item>
+                            <Select.Item value="urgent">Urgent</Select.Item>
+                          </Select.Content>
+                        </Select>
+                        <Text size="xsmall" className="text-ui-fg-subtle">
+                          Set the priority level for this order
+                        </Text>
+                      </div>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="border border-ui-border-base rounded-lg p-6">
+                <Heading level="h3" className="mb-4">Notes</Heading>
+                <Controller
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <div className="space-y-2">
+                      <Label size="small" weight="plus">
+                        Additional Notes
+                      </Label>
+                      <Textarea
+                        {...field}
+                        placeholder="Any special instructions or notes for this purchase order..."
+                        rows={3}
+                      />
+                      <Text size="xsmall" className="text-ui-fg-subtle">
+                        Optional notes or special instructions
+                      </Text>
+                    </div>
+                  )}
+                />
+              </div>
+
+              {/* Items */}
+              <div className="border border-ui-border-base rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Heading level="h3">Items</Heading>
+                    <Badge size="2xsmall">Required</Badge>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="small"
+                    onClick={() => append({ product_variant_id: "", quantity_ordered: 1, unit_cost: 0 })}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Item
+                  </Button>
+                </div>
+                
+                <div className="space-y-4">
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="border border-ui-border-base rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <Text size="small" weight="plus">
+                          Item {index + 1}
+                        </Text>
+                        {fields.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="transparent"
+                            size="small"
+                            onClick={() => remove(index)}
+                          >
+                            <Trash className="w-4 h-4 text-red-500" />
+                          </Button>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Controller
+                          control={form.control}
+                          name={`items.${index}.product_variant_id`}
+                          render={({ field, fieldState }) => (
+                            <div className="space-y-2">
+                              <Label size="small" weight="plus">
+                                Product Variant ID *
+                              </Label>
+                              <Input
+                                {...field}
+                                placeholder="pv_..."
+                              />
+                              {fieldState.error && (
+                                <Text size="xsmall" className="text-red-500">
+                                  {fieldState.error.message}
+                                </Text>
+                              )}
+                              <Text size="xsmall" className="text-ui-fg-subtle">
+                                Enter the product variant ID
+                              </Text>
+                            </div>
+                          )}
+                        />
+                        
+                        <Controller
+                          control={form.control}
+                          name={`items.${index}.quantity_ordered`}
+                          render={({ field, fieldState }) => (
+                            <div className="space-y-2">
+                              <Label size="small" weight="plus">
+                                Quantity *
+                              </Label>
+                              <Input
+                                {...field}
+                                type="number"
+                                min="1"
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                              {fieldState.error && (
+                                <Text size="xsmall" className="text-red-500">
+                                  {fieldState.error.message}
+                                </Text>
+                              )}
+                              <Text size="xsmall" className="text-ui-fg-subtle">
+                                Quantity to order
+                              </Text>
+                            </div>
+                          )}
+                        />
+                        
+                        <Controller
+                          control={form.control}
+                          name={`items.${index}.unit_cost`}
+                          render={({ field, fieldState }) => (
+                            <div className="space-y-2">
+                              <Label size="small" weight="plus">
+                                Unit Cost *
+                              </Label>
+                              <Input
+                                {...field}
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                              {fieldState.error && (
+                                <Text size="xsmall" className="text-red-500">
+                                  {fieldState.error.message}
+                                </Text>
+                              )}
+                              <Text size="xsmall" className="text-ui-fg-subtle">
+                                Cost per unit
+                              </Text>
+                            </div>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {form.formState.errors.items && (
+                  <Text size="xsmall" className="text-red-500 mt-2">
+                    {form.formState.errors.items.message}
+                  </Text>
+                )}
+              </div>
+            </div>
+          </FocusModal.Body>
+        </form>
       </FocusModal.Content>
     </FocusModal>
   )
-} 
+}
