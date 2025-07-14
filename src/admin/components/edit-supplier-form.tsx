@@ -15,7 +15,7 @@ import {
 import { FormProvider } from "react-hook-form"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "@medusajs/ui"
-import { Supplier } from "../routes/purchasing/suppliers/page"
+import { Supplier } from "../routes/suppliers/page"
 
 const schema = zod.object({
   name: zod.string().min(1, "Name is required").max(255, "Name is too long"),

@@ -1,7 +1,7 @@
 import { DropdownMenu, IconButton, toast } from "@medusajs/ui"
 import { EllipsisHorizontal } from "@medusajs/icons"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Supplier } from "../routes/purchasing/suppliers/page"
+import { Supplier } from "../routes/suppliers/page"
 import { EditSupplierForm } from "./edit-supplier-form"
 
 type SupplierActionsProps = {

@@ -17,17 +17,30 @@ import { useQuery } from "@tanstack/react-query"
 import { Link, useNavigate } from "react-router-dom"
 import { CreateSupplierModal } from "../../components/create-supplier-modal"
 
-interface Supplier {
+export interface Supplier {
   id: string
   name: string
-  code?: string
-  email?: string
-  phone?: string
-  contact_person?: string
+  code?: string | null
+  email?: string | null
+  phone?: string | null
+  website?: string | null
+  contact_person?: string | null
+  address_line_1?: string | null
+  address_line_2?: string | null
+  city?: string | null
+  state?: string | null
+  postal_code?: string | null
+  country?: string | null
+  tax_id?: string | null
+  payment_terms?: string | null
+  currency_code?: string
   is_active: boolean
+  notes?: string | null
+  metadata?: Record<string, any> | null
   purchase_orders_count?: number
   last_order_date?: Date
   created_at: Date
+  updated_at?: string
 }
 
 const useSuppliers = () => {
