@@ -15,6 +15,15 @@
           "nullable": false,
           "mappedType": "text"
         },
+        "po_number": {
+          "name": "po_number",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "text"
+        },
         "supplier_id": {
           "name": "supplier_id",
           "type": "text",
@@ -32,7 +41,247 @@
           "primary": false,
           "nullable": false,
           "default": "'draft'",
+          "enumItems": [
+            "draft",
+            "sent",
+            "confirmed",
+            "partially_received",
+            "received",
+            "cancelled"
+          ],
+          "mappedType": "enum"
+        },
+        "priority": {
+          "name": "priority",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "'normal'",
+          "enumItems": [
+            "low",
+            "normal",
+            "high",
+            "urgent"
+          ],
+          "mappedType": "enum"
+        },
+        "order_date": {
+          "name": "order_date",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "expected_delivery_date": {
+          "name": "expected_delivery_date",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "actual_delivery_date": {
+          "name": "actual_delivery_date",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "currency_code": {
+          "name": "currency_code",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "'USD'",
           "mappedType": "text"
+        },
+        "subtotal": {
+          "name": "subtotal",
+          "type": "numeric",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "0",
+          "mappedType": "decimal"
+        },
+        "tax_amount": {
+          "name": "tax_amount",
+          "type": "numeric",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "0",
+          "mappedType": "decimal"
+        },
+        "shipping_amount": {
+          "name": "shipping_amount",
+          "type": "numeric",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "0",
+          "mappedType": "decimal"
+        },
+        "discount_amount": {
+          "name": "discount_amount",
+          "type": "numeric",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "0",
+          "mappedType": "decimal"
+        },
+        "total_amount": {
+          "name": "total_amount",
+          "type": "numeric",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "0",
+          "mappedType": "decimal"
+        },
+        "payment_terms": {
+          "name": "payment_terms",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "delivery_address": {
+          "name": "delivery_address",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
+        },
+        "billing_address": {
+          "name": "billing_address",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "internal_notes": {
+          "name": "internal_notes",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "confirmed_by": {
+          "name": "confirmed_by",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "approved_by": {
+          "name": "approved_by",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
+        },
+        "raw_subtotal": {
+          "name": "raw_subtotal",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "json"
+        },
+        "raw_tax_amount": {
+          "name": "raw_tax_amount",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "json"
+        },
+        "raw_shipping_amount": {
+          "name": "raw_shipping_amount",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "json"
+        },
+        "raw_discount_amount": {
+          "name": "raw_discount_amount",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "json"
+        },
+        "raw_total_amount": {
+          "name": "raw_total_amount",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "json"
         },
         "created_at": {
           "name": "created_at",
@@ -70,6 +319,15 @@
       "name": "purchase_order",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "IDX_purchase_order_po_number_unique",
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE UNIQUE INDEX IF NOT EXISTS \"IDX_purchase_order_po_number_unique\" ON \"purchase_order\" (po_number) WHERE deleted_at IS NULL"
+        },
         {
           "keyName": "IDX_purchase_order_deleted_at",
           "columnNames": [],
@@ -123,8 +381,53 @@
           "nullable": false,
           "mappedType": "text"
         },
-        "quantity": {
-          "name": "quantity",
+        "supplier_product_id": {
+          "name": "supplier_product_id",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "supplier_sku": {
+          "name": "supplier_sku",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "product_title": {
+          "name": "product_title",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "text"
+        },
+        "product_variant_title": {
+          "name": "product_variant_title",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "product_sku": {
+          "name": "product_sku",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "quantity_ordered": {
+          "name": "quantity_ordered",
           "type": "integer",
           "unsigned": false,
           "autoincrement": false,
@@ -132,8 +435,18 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "unit_price": {
-          "name": "unit_price",
+        "quantity_received": {
+          "name": "quantity_received",
+          "type": "integer",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "0",
+          "mappedType": "integer"
+        },
+        "unit_cost": {
+          "name": "unit_cost",
           "type": "numeric",
           "unsigned": false,
           "autoincrement": false,
@@ -141,8 +454,64 @@
           "nullable": false,
           "mappedType": "decimal"
         },
-        "raw_unit_price": {
-          "name": "raw_unit_price",
+        "line_total": {
+          "name": "line_total",
+          "type": "numeric",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "decimal"
+        },
+        "received_date": {
+          "name": "received_date",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "expected_receipt_date": {
+          "name": "expected_receipt_date",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
+        },
+        "raw_unit_cost": {
+          "name": "raw_unit_cost",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "json"
+        },
+        "raw_line_total": {
+          "name": "raw_line_total",
           "type": "jsonb",
           "unsigned": false,
           "autoincrement": false,
@@ -230,6 +599,15 @@
           "nullable": false,
           "mappedType": "text"
         },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
         "email": {
           "name": "email",
           "type": "text",
@@ -238,6 +616,143 @@
           "primary": false,
           "nullable": true,
           "mappedType": "text"
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "website": {
+          "name": "website",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "contact_person": {
+          "name": "contact_person",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "address_line_1": {
+          "name": "address_line_1",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "address_line_2": {
+          "name": "address_line_2",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "city": {
+          "name": "city",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "postal_code": {
+          "name": "postal_code",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "country": {
+          "name": "country",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "tax_id": {
+          "name": "tax_id",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "payment_terms": {
+          "name": "payment_terms",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "currency_code": {
+          "name": "currency_code",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "'USD'",
+          "mappedType": "text"
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "true",
+          "mappedType": "boolean"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
         },
         "created_at": {
           "name": "created_at",
@@ -275,6 +790,15 @@
       "name": "supplier",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "IDX_supplier_code_unique",
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE UNIQUE INDEX IF NOT EXISTS \"IDX_supplier_code_unique\" ON \"supplier\" (code) WHERE deleted_at IS NULL"
+        },
         {
           "keyName": "IDX_supplier_deleted_at",
           "columnNames": [],
@@ -337,8 +861,26 @@
           "nullable": true,
           "mappedType": "text"
         },
-        "price": {
-          "name": "price",
+        "supplier_product_name": {
+          "name": "supplier_product_name",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "supplier_product_description": {
+          "name": "supplier_product_description",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "cost_price": {
+          "name": "cost_price",
           "type": "numeric",
           "unsigned": false,
           "autoincrement": false,
@@ -346,8 +888,85 @@
           "nullable": false,
           "mappedType": "decimal"
         },
-        "raw_price": {
-          "name": "raw_price",
+        "currency_code": {
+          "name": "currency_code",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "'USD'",
+          "mappedType": "text"
+        },
+        "minimum_order_quantity": {
+          "name": "minimum_order_quantity",
+          "type": "integer",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "1",
+          "mappedType": "integer"
+        },
+        "lead_time_days": {
+          "name": "lead_time_days",
+          "type": "integer",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        },
+        "is_preferred_supplier": {
+          "name": "is_preferred_supplier",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "true",
+          "mappedType": "boolean"
+        },
+        "last_cost_update": {
+          "name": "last_cost_update",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
+        },
+        "raw_cost_price": {
+          "name": "raw_cost_price",
           "type": "jsonb",
           "unsigned": false,
           "autoincrement": false,

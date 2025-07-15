@@ -35,6 +35,7 @@ type VariantWithSourcing = {
     }
     price: number
     supplier_sku: string | null
+    price_list_name?: string | null
   }[]
 }
 
@@ -212,6 +213,16 @@ const ProductSourcingWidget = ({ data: product }: WidgetProps) => {
                             <Text size="small" className="text-ui-fg-subtle">
                               Supplier SKU: {sourcingOption.supplier_sku}
                             </Text>
+                          )}
+                          {sourcingOption.price_list_name && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <Badge color="blue" size="2xsmall">
+                                Price List
+                              </Badge>
+                              <Text size="small" className="text-ui-fg-subtle">
+                                {sourcingOption.price_list_name}
+                              </Text>
+                            </div>
                           )}
                         </div>
                       </Table.Cell>

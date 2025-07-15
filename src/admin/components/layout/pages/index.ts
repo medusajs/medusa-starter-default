@@ -1,0 +1,1 @@
+export { TwoColumnPage } from "./two-column-page"
