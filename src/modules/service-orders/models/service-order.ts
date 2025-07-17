@@ -25,6 +25,11 @@ export const ServiceOrderPriority = {
   URGENT: "urgent",
 } as const
 
+export const ServiceOrderLocation = {
+  WORKSHOP: "workshop",
+  CUSTOMER_LOCATION: "customer_location",
+} as const
+
 const ServiceOrder = model.define("service_order", {
   id: model.id().primaryKey(),
   service_order_number: model.text().unique(), // Auto-generated: SO-2024-001
@@ -38,6 +43,7 @@ const ServiceOrder = model.define("service_order", {
   service_type: model.enum(ServiceOrderType).default(ServiceOrderType.NORMAL),
   status: model.enum(ServiceOrderStatus).default(ServiceOrderStatus.DRAFT),
   priority: model.enum(ServiceOrderPriority).default(ServiceOrderPriority.NORMAL),
+  service_location: model.enum(ServiceOrderLocation).default(ServiceOrderLocation.WORKSHOP),
   
   // Descriptions
   description: model.text(), // What needs to be done
@@ -62,6 +68,13 @@ const ServiceOrder = model.define("service_order", {
   // Warranty
   warranty_claim_number: model.text().nullable(),
   warranty_approved: model.boolean().default(false),
+  
+  // Service Location Details (for customer_location services)
+  service_address_line_1: model.text().nullable(),
+  service_address_line_2: model.text().nullable(),
+  service_city: model.text().nullable(),
+  service_postal_code: model.text().nullable(),
+  service_country: model.text().nullable(),
   
   // Additional Info
   requires_parts_approval: model.boolean().default(false),

@@ -6,16 +6,16 @@ export class Migration20250708170210 extends Migration {
     this.addSql(`alter table if exists "machine" drop column if exists "brand";`);
 
     this.addSql(`alter table if exists "machine" add column if not exists "raw_purchase_price" jsonb null, add column if not exists "raw_current_value" jsonb null;`);
-    this.addSql(`alter table if exists "machine" alter column "year" type integer using ("year"::integer);`);
+    this.addSql(`alter table if exists "machine" alter column "year" type integer using (CASE WHEN "year" = '' OR "year" IS NULL THEN NULL ELSE "year"::integer END);`);
     this.addSql(`alter table if exists "machine" alter column "year" drop not null;`);
-    this.addSql(`alter table if exists "machine" alter column "engine_hours" type integer using ("engine_hours"::integer);`);
+    this.addSql(`alter table if exists "machine" alter column "engine_hours" type integer using (CASE WHEN "engine_hours" = '' OR "engine_hours" IS NULL THEN NULL ELSE "engine_hours"::integer END);`);
     this.addSql(`alter table if exists "machine" alter column "fuel_type" type text using ("fuel_type"::text);`);
     this.addSql(`alter table if exists "machine" alter column "fuel_type" drop not null;`);
-    this.addSql(`alter table if exists "machine" alter column "horsepower" type integer using ("horsepower"::integer);`);
-    this.addSql(`alter table if exists "machine" alter column "weight" type integer using ("weight"::integer);`);
+    this.addSql(`alter table if exists "machine" alter column "horsepower" type integer using (CASE WHEN "horsepower" = '' OR "horsepower" IS NULL THEN NULL ELSE "horsepower"::integer END);`);
+    this.addSql(`alter table if exists "machine" alter column "weight" type integer using (CASE WHEN "weight" = '' OR "weight" IS NULL THEN NULL ELSE "weight"::integer END);`);
     this.addSql(`alter table if exists "machine" alter column "purchase_date" type timestamptz using ("purchase_date"::timestamptz);`);
-    this.addSql(`alter table if exists "machine" alter column "purchase_price" type numeric using ("purchase_price"::numeric);`);
-    this.addSql(`alter table if exists "machine" alter column "current_value" type numeric using ("current_value"::numeric);`);
+    this.addSql(`alter table if exists "machine" alter column "purchase_price" type numeric using (CASE WHEN "purchase_price" = '' OR "purchase_price" IS NULL THEN NULL ELSE "purchase_price"::numeric END);`);
+    this.addSql(`alter table if exists "machine" alter column "current_value" type numeric using (CASE WHEN "current_value" = '' OR "current_value" IS NULL THEN NULL ELSE "current_value"::numeric END);`);
     this.addSql(`alter table if exists "machine" add constraint "machine_status_check" check("status" in ('active', 'inactive', 'maintenance', 'sold'));`);
     this.addSql(`CREATE INDEX IF NOT EXISTS "IDX_machine_customer_id" ON "machine" (customer_id) WHERE deleted_at IS NULL;`);
     this.addSql(`CREATE INDEX IF NOT EXISTS "IDX_machine_status" ON "machine" (status) WHERE deleted_at IS NULL;`);

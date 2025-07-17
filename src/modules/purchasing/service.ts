@@ -155,6 +155,18 @@ class PurchasingService extends MedusaService({
   }) {
     const supplier = await this.retrieveSupplier(data.supplier_id)
     
+    // Get current active price list for version incrementing
+    const currentActive = await this.getActivePriceListForSupplier(data.supplier_id)
+    const nextVersion = currentActive ? currentActive.version + 1 : 1
+    
+    // Deactivate existing active price lists for this supplier
+    if (currentActive) {
+      await this.updateSupplierPriceLists(
+        { id: currentActive.id },
+        { is_active: false }
+      )
+    }
+    
     const priceList = await this.createSupplierPriceLists([{
       supplier_id: data.supplier_id,
       name: data.name,
@@ -164,7 +176,8 @@ class PurchasingService extends MedusaService({
       currency_code: data.currency_code || supplier.currency_code || "USD",
       upload_filename: data.upload_filename,
       upload_metadata: data.upload_metadata,
-      is_active: true
+      is_active: true,
+      version: nextVersion
     }])
     
     return priceList[0]
@@ -179,8 +192,21 @@ class PurchasingService extends MedusaService({
     quantity?: number
     lead_time_days?: number
     notes?: string
-  }>) {
+  }>, overwriteExisting: boolean = false) {
     const priceList = await this.retrieveSupplierPriceList(priceListId)
+    
+    if (overwriteExisting) {
+      // Remove existing items for products that are being updated
+      const productVariantIds = items.map(item => item.product_variant_id)
+      const existingItems = await this.listSupplierPriceListItems({
+        price_list_id: priceListId,
+        product_variant_id: { $in: productVariantIds }
+      })
+      
+      if (existingItems.length > 0) {
+        await this.deleteSupplierPriceListItems(existingItems.map(item => item.id))
+      }
+    }
     
     const processedItems = items.map(item => ({
       price_list_id: priceListId,
@@ -240,9 +266,9 @@ class PurchasingService extends MedusaService({
     })
   }
 
-  async getActivePriceListsForSupplier(supplierId: string) {
+  async getActivePriceListForSupplier(supplierId: string) {
     const now = new Date()
-    return await this.listSupplierPriceLists({
+    const [activeList] = await this.listSupplierPriceLists({
       supplier_id: supplierId,
       is_active: true,
       $and: [
@@ -250,6 +276,7 @@ class PurchasingService extends MedusaService({
         { $or: [{ expiry_date: null }, { expiry_date: { $gte: now } }] }
       ]
     })
+    return activeList
   }
 
   async getPriceListItems(priceListId: string) {
@@ -282,6 +309,64 @@ class PurchasingService extends MedusaService({
     return await this.updateSupplierPriceLists(
       { id: priceListId },
       { is_active: false }
+    )
+  }
+
+  async upsertPriceListItem(supplierId: string, itemData: {
+    product_variant_id: string
+    product_id: string
+    supplier_sku?: string
+    variant_sku?: string
+    cost_price: number
+    quantity?: number
+    lead_time_days?: number
+    notes?: string
+  }) {
+    const activeList = await this.getActivePriceListForSupplier(supplierId)
+    
+    if (!activeList) {
+      throw new Error(`No active price list found for supplier ${supplierId}`)
+    }
+    
+    // Check if item already exists in the price list
+    const [existingItem] = await this.listSupplierPriceListItems({
+      price_list_id: activeList.id,
+      product_variant_id: itemData.product_variant_id
+    })
+    
+    if (existingItem) {
+      // Update existing item
+      return await this.updateSupplierPriceListItems(
+        { id: existingItem.id },
+        {
+          supplier_sku: itemData.supplier_sku,
+          variant_sku: itemData.variant_sku,
+          cost_price: itemData.cost_price,
+          quantity: itemData.quantity || 1,
+          lead_time_days: itemData.lead_time_days,
+          notes: itemData.notes
+        }
+      )
+    } else {
+      // Create new item
+      return await this.createSupplierPriceListItems([{
+        price_list_id: activeList.id,
+        product_variant_id: itemData.product_variant_id,
+        product_id: itemData.product_id,
+        supplier_sku: itemData.supplier_sku,
+        variant_sku: itemData.variant_sku,
+        cost_price: itemData.cost_price,
+        quantity: itemData.quantity || 1,
+        lead_time_days: itemData.lead_time_days,
+        notes: itemData.notes
+      }])
+    }
+  }
+
+  async getPriceListHistory(supplierId: string) {
+    return await this.listSupplierPriceLists(
+      { supplier_id: supplierId },
+      { order: { version: 'DESC' } }
     )
   }
 

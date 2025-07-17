@@ -14,47 +14,58 @@ import {
   FormProvider,
   Controller,
 } from "react-hook-form"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
 import { toast } from "@medusajs/ui"
 import { useEffect } from "react"
 
 const schema = zod.object({
-  brand: zod.string().min(1, "Brand is required"),
-  model: zod.string().min(1, "Model is required"),
+  brand_name: zod.string().nullable().optional(),
+  model_number: zod.string().min(1, "Model number is required"),
   serial_number: zod.string().min(1, "Serial number is required"),
-  year: zod.string().min(1, "Year is required"),
-  engine_hours: zod.string().optional(),
-  fuel_type: zod.string().min(1, "Fuel type is required"),
-  horsepower: zod.string().optional(),
-  weight: zod.string().optional(),
-  purchase_date: zod.string().optional(),
-  purchase_price: zod.string().optional(),
-  current_value: zod.string().optional(),
-  status: zod.enum(["active", "inactive", "maintenance"]),
-  location: zod.string().optional(),
-  notes: zod.string().optional(),
-  customer_id: zod.string().optional(),
+  license_plate: zod.string().nullable().optional(),
+  year: zod.number().min(1800, "Year must be valid").max(new Date().getFullYear() + 1, "Year cannot be in the future").nullable().optional(),
+  engine_hours: zod.number().min(0, "Engine hours must be positive").nullable().optional(),
+  fuel_type: zod.string().nullable().optional(),
+  horsepower: zod.number().min(0, "Horsepower must be positive").nullable().optional(),
+  weight: zod.number().min(0, "Weight must be positive").nullable().optional(),
+  purchase_date: zod.string().nullable().optional(),
+  purchase_price: zod.number().min(0, "Purchase price must be positive").nullable().optional(),
+  current_value: zod.number().min(0, "Current value must be positive").nullable().optional(),
+  status: zod.enum(["active", "inactive", "maintenance", "sold"]),
+  location: zod.string().nullable().optional(),
+  description: zod.string().nullable().optional(),
+  notes: zod.string().nullable().optional(),
+  customer_id: zod.string().nullable().optional(),
 })
 
 type FormData = zod.infer<typeof schema>
 
+interface Brand {
+  id: string
+  name: string
+  code: string
+  is_active: boolean
+}
+
 interface Machine {
   id: string
-  brand: string
-  model: string
+  brand_name?: string | null
+  model_number: string
   serial_number: string
-  year: string
-  engine_hours?: string
-  fuel_type: string
-  horsepower?: string
-  weight?: string
-  purchase_date?: string
-  purchase_price?: string
-  current_value?: string
-  status: "active" | "inactive" | "maintenance"
-  location?: string
-  notes?: string
-  customer_id?: string
+  license_plate?: string | null
+  year?: number | null
+  engine_hours?: number | null
+  fuel_type?: string | null
+  horsepower?: number | null
+  weight?: number | null
+  purchase_date?: string | null
+  purchase_price?: number | null
+  current_value?: number | null
+  status: "active" | "inactive" | "maintenance" | "sold"
+  location?: string | null
+  description?: string | null
+  notes?: string | null
+  customer_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -67,22 +78,50 @@ interface EditMachineFormProps {
 export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
   const queryClient = useQueryClient()
   
+  // Fetch brands for the dropdown
+  const { data: brands = [], isLoading: brandsLoading } = useQuery({
+    queryKey: ["brands"],
+    queryFn: async () => {
+      const response = await fetch("/admin/brands?limit=100")
+      if (!response.ok) {
+        throw new Error("Failed to fetch brands")
+      }
+      const data = await response.json()
+      return data.brands || []
+    },
+  })
+  
+  // Fetch customers for the dropdown
+  const { data: customers = [], isLoading: customersLoading } = useQuery({
+    queryKey: ["customers"],
+    queryFn: async () => {
+      const response = await fetch("/admin/customers?limit=100")
+      if (!response.ok) {
+        throw new Error("Failed to fetch customers")
+      }
+      const data = await response.json()
+      return data.customers || []
+    },
+  })
+  
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      brand: "",
-      model: "",
+      brand_name: "",
+      model_number: "",
       serial_number: "",
-      year: "",
-      engine_hours: "",
-      fuel_type: "diesel",
-      horsepower: "",
-      weight: "",
+      license_plate: "",
+      year: undefined,
+      engine_hours: undefined,
+      fuel_type: "",
+      horsepower: undefined,
+      weight: undefined,
       purchase_date: "",
-      purchase_price: "",
-      current_value: "",
+      purchase_price: undefined,
+      current_value: undefined,
       status: "active",
       location: "",
+      description: "",
       notes: "",
       customer_id: "",
     },
@@ -92,19 +131,21 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
   useEffect(() => {
     if (machine) {
       form.reset({
-        brand: machine.brand || "",
-        model: machine.model || "",
+        brand_name: machine.brand_name || "",
+        model_number: machine.model_number || "",
         serial_number: machine.serial_number || "",
-        year: machine.year || "",
-        engine_hours: machine.engine_hours || "",
-        fuel_type: machine.fuel_type || "diesel",
-        horsepower: machine.horsepower || "",
-        weight: machine.weight || "",
+        license_plate: machine.license_plate || "",
+        year: machine.year || undefined,
+        engine_hours: machine.engine_hours || undefined,
+        fuel_type: machine.fuel_type || "",
+        horsepower: machine.horsepower || undefined,
+        weight: machine.weight || undefined,
         purchase_date: machine.purchase_date || "",
-        purchase_price: machine.purchase_price || "",
-        current_value: machine.current_value || "",
+        purchase_price: machine.purchase_price || undefined,
+        current_value: machine.current_value || undefined,
         status: machine.status || "active",
         location: machine.location || "",
+        description: machine.description || "",
         notes: machine.notes || "",
         customer_id: machine.customer_id || "",
       })
@@ -164,13 +205,29 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
               <div className="grid grid-cols-2 gap-4">
                 <Controller
                   control={form.control}
-                  name="brand"
+                  name="brand_name"
                   render={({ field, fieldState }) => (
                     <div className="flex flex-col space-y-2">
                       <Label size="small" weight="plus">
                         Brand *
                       </Label>
-                      <Input {...field} />
+                      <Select value={field.value || undefined} onValueChange={field.onChange} disabled={brandsLoading}>
+                        <Select.Trigger>
+                          <Select.Value placeholder="Select brand" />
+                        </Select.Trigger>
+                        <Select.Content>
+                          {brands.map((brand: any) => (
+                            <Select.Item key={brand.id} value={brand.id}>
+                              {brand.name}
+                            </Select.Item>
+                          ))}
+                          {brands.length === 0 && !brandsLoading && (
+                            <div className="px-2 py-1 text-sm text-ui-fg-subtle">
+                              No brands available
+                            </div>
+                          )}
+                        </Select.Content>
+                      </Select>
                       {fieldState.error && (
                         <span className="text-red-500 text-sm">
                           {fieldState.error.message}
@@ -182,11 +239,11 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                 
                 <Controller
                   control={form.control}
-                  name="model"
+                  name="model_number"
                   render={({ field, fieldState }) => (
                     <div className="flex flex-col space-y-2">
                       <Label size="small" weight="plus">
-                        Model *
+                        Model Number *
                       </Label>
                       <Input {...field} />
                       {fieldState.error && (
@@ -218,13 +275,31 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                 
                 <Controller
                   control={form.control}
+                  name="license_plate"
+                  render={({ field }) => (
+                    <div className="flex flex-col space-y-2">
+                      <Label size="small" weight="plus">
+                        License Plate
+                      </Label>
+                      <Input {...field} />
+                    </div>
+                  )}
+                />
+                
+                <Controller
+                  control={form.control}
                   name="year"
                   render={({ field, fieldState }) => (
                     <div className="flex flex-col space-y-2">
                       <Label size="small" weight="plus">
-                        Year *
+                        Year
                       </Label>
-                      <Input {...field} />
+                      <Input 
+                        {...field} 
+                        type="number" 
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                      />
                       {fieldState.error && (
                         <span className="text-red-500 text-sm">
                           {fieldState.error.message}
@@ -240,9 +315,9 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                   render={({ field, fieldState }) => (
                     <div className="flex flex-col space-y-2">
                       <Label size="small" weight="plus">
-                        Fuel Type *
+                        Fuel Type
                       </Label>
-                      <Select {...field}>
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <Select.Trigger>
                           <Select.Value placeholder="Select fuel type" />
                         </Select.Trigger>
@@ -270,7 +345,7 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                       <Label size="small" weight="plus">
                         Status *
                       </Label>
-                      <Select {...field}>
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <Select.Trigger>
                           <Select.Value placeholder="Select status" />
                         </Select.Trigger>
@@ -278,6 +353,7 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                           <Select.Item value="active">Active</Select.Item>
                           <Select.Item value="inactive">Inactive</Select.Item>
                           <Select.Item value="maintenance">Maintenance</Select.Item>
+                          <Select.Item value="sold">Sold</Select.Item>
                         </Select.Content>
                       </Select>
                       {fieldState.error && (
@@ -295,12 +371,22 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                 <Controller
                   control={form.control}
                   name="engine_hours"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <div className="flex flex-col space-y-2">
                       <Label size="small" weight="plus">
                         Engine Hours
                       </Label>
-                      <Input {...field} />
+                      <Input 
+                        {...field} 
+                        type="number" 
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                      />
+                      {fieldState.error && (
+                        <span className="text-red-500 text-sm">
+                          {fieldState.error.message}
+                        </span>
+                      )}
                     </div>
                   )}
                 />
@@ -308,12 +394,22 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                 <Controller
                   control={form.control}
                   name="horsepower"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <div className="flex flex-col space-y-2">
                       <Label size="small" weight="plus">
                         Horsepower
                       </Label>
-                      <Input {...field} />
+                      <Input 
+                        {...field} 
+                        type="number" 
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                      />
+                      {fieldState.error && (
+                        <span className="text-red-500 text-sm">
+                          {fieldState.error.message}
+                        </span>
+                      )}
                     </div>
                   )}
                 />
@@ -321,12 +417,22 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                 <Controller
                   control={form.control}
                   name="weight"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <div className="flex flex-col space-y-2">
                       <Label size="small" weight="plus">
-                        Weight
+                        Weight (kg)
                       </Label>
-                      <Input {...field} />
+                      <Input 
+                        {...field} 
+                        type="number" 
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                      />
+                      {fieldState.error && (
+                        <span className="text-red-500 text-sm">
+                          {fieldState.error.message}
+                        </span>
+                      )}
                     </div>
                   )}
                 />
@@ -363,12 +469,23 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                 <Controller
                   control={form.control}
                   name="purchase_price"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <div className="flex flex-col space-y-2">
                       <Label size="small" weight="plus">
                         Purchase Price
                       </Label>
-                      <Input {...field} />
+                      <Input 
+                        {...field} 
+                        type="number" 
+                        step="0.01"
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                      />
+                      {fieldState.error && (
+                        <span className="text-red-500 text-sm">
+                          {fieldState.error.message}
+                        </span>
+                      )}
                     </div>
                   )}
                 />
@@ -376,12 +493,23 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                 <Controller
                   control={form.control}
                   name="current_value"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <div className="flex flex-col space-y-2">
                       <Label size="small" weight="plus">
                         Current Value
                       </Label>
-                      <Input {...field} />
+                      <Input 
+                        {...field} 
+                        type="number" 
+                        step="0.01"
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                      />
+                      {fieldState.error && (
+                        <span className="text-red-500 text-sm">
+                          {fieldState.error.message}
+                        </span>
+                      )}
                     </div>
                   )}
                 />
@@ -392,16 +520,47 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                   render={({ field }) => (
                     <div className="flex flex-col space-y-2">
                       <Label size="small" weight="plus">
-                        Customer ID
+                        Customer
                       </Label>
-                      <Input {...field} />
+                      <Select value={field.value || "none"} onValueChange={(value) => field.onChange(value === "none" ? "" : value)} disabled={customersLoading}>
+                        <Select.Trigger>
+                          <Select.Value placeholder="Select customer (optional)" />
+                        </Select.Trigger>
+                        <Select.Content>
+                          <Select.Item value="none">No customer assigned</Select.Item>
+                          {customers.map((customer: any) => (
+                            <Select.Item key={customer.id} value={customer.id}>
+                              {customer.first_name} {customer.last_name}
+                              {customer.email && ` (${customer.email})`}
+                            </Select.Item>
+                          ))}
+                          {customers.length === 0 && !customersLoading && (
+                            <div className="px-2 py-1 text-sm text-ui-fg-subtle">
+                              No customers available
+                            </div>
+                          )}
+                        </Select.Content>
+                      </Select>
                     </div>
                   )}
                 />
               </div>
               
-              {/* Notes */}
+              {/* Description and Notes */}
               <div className="grid grid-cols-1 gap-4">
+                <Controller
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <div className="flex flex-col space-y-2">
+                      <Label size="small" weight="plus">
+                        Description
+                      </Label>
+                      <Textarea {...field} />
+                    </div>
+                  )}
+                />
+                
                 <Controller
                   control={form.control}
                   name="notes"

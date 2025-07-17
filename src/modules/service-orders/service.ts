@@ -207,6 +207,8 @@ class ServiceOrdersService extends MedusaService({
     const timeEntries = await this.listServiceOrderTimeEntries({ service_order_id: serviceOrderId })
     const statusHistory = await this.listServiceOrderStatusHistories({ service_order_id: serviceOrderId })
     
+    // TODO: Use MedusaJS Query API to fetch linked customer and machine data
+    // For now, we'll include the IDs and let the frontend handle fetching details
     return {
       ...serviceOrder,
       items,

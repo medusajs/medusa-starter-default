@@ -21,7 +21,9 @@ const CreateServiceOrder = () => {
     description: '',
     service_type: 'normal',
     priority: 'normal',
+    service_location: 'workshop',
     customer_id: '',
+    machine_id: '',
     technician_id: '',
     customer_complaint: '',
     scheduled_start_date: '',
@@ -30,6 +32,11 @@ const CreateServiceOrder = () => {
     labor_rate: 85,
     diagnosis: '',
     notes: '',
+    service_address_line_1: '',
+    service_address_line_2: '',
+    service_city: '',
+    service_postal_code: '',
+    service_country: '',
   })
 
   // Fetch customers
@@ -43,6 +50,19 @@ const CreateServiceOrder = () => {
     },
   })
 
+  // Fetch machines
+  const { data: machinesData = [] } = useQuery({
+    queryKey: ['machines'],
+    queryFn: async () => {
+      const response = await fetch('/admin/machines?limit=100&status=active')
+      if (!response.ok) throw new Error('Failed to fetch machines')
+      const data = await response.json()
+      return data.machines || []
+    },
+  })
+  
+  const machines = Array.isArray(machinesData) ? machinesData : []
+
   // Fetch technicians
   const { data: technicians = [] } = useQuery({
     queryKey: ['technicians'],
@@ -53,6 +73,11 @@ const CreateServiceOrder = () => {
       return data.technicians || []
     },
   })
+
+  // Filter machines by selected customer
+  const customerMachines = machines.filter((machine: any) => 
+    !formData.customer_id || machine.customer_id === formData.customer_id
+  )
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -94,11 +119,60 @@ const CreateServiceOrder = () => {
       toast.error('Customer is required')
       return
     }
+    if (!formData.machine_id) {
+      toast.error('Machine is required')
+      return
+    }
     createMutation.mutate(formData)
   }
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value }
+      // Clear machine selection when customer changes
+      if (field === 'customer_id') {
+        newData.machine_id = ''
+        // If service location is customer_location, update address
+        if (prev.service_location === 'customer_location') {
+          updateAddressFromCustomer(value)
+        }
+      }
+      return newData
+    })
+  }
+  
+  const updateAddressFromCustomer = async (customerId: string) => {
+    if (!customerId) {
+      setFormData(prev => ({
+        ...prev,
+        service_address_line_1: '',
+        service_address_line_2: '',
+        service_city: '',
+        service_postal_code: '',
+        service_country: '',
+      }))
+      return
+    }
+    
+    try {
+      const response = await fetch(`/admin/customers/${customerId}`)
+      if (response.ok) {
+        const { customer } = await response.json()
+        const address = customer.addresses?.[0] // Get first address
+        if (address) {
+          setFormData(prev => ({
+            ...prev,
+            service_address_line_1: address.address_1 || '',
+            service_address_line_2: address.address_2 || '',
+            service_city: address.city || '',
+            service_postal_code: address.postal_code || '',
+            service_country: address.country_code || '',
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch customer address:', error)
+    }
   }
 
   return (
@@ -155,6 +229,36 @@ const CreateServiceOrder = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
+                      Machine/Equipment *
+                    </label>
+                    <Select
+                      value={formData.machine_id}
+                      onValueChange={(value) => handleInputChange('machine_id', value)}
+                      disabled={!formData.customer_id}
+                    >
+                      <Select.Trigger>
+                        <Select.Value placeholder={formData.customer_id ? "Select a machine" : "Select customer first"} />
+                      </Select.Trigger>
+                      <Select.Content>
+                        {customerMachines.map((machine: any) => (
+                          <Select.Item key={machine.id} value={machine.id}>
+                            {machine.brand_name || 'Unknown Brand'} - {machine.model_number}
+                            {machine.serial_number && ` (${machine.serial_number})`}
+                          </Select.Item>
+                        ))}
+                        {customerMachines.length === 0 && formData.customer_id && (
+                          <Select.Item value="no-machines" disabled>
+                            No machines found for this customer
+                          </Select.Item>
+                        )}
+                      </Select.Content>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
                       Assigned Technician
                     </label>
                     <Select
@@ -174,6 +278,11 @@ const CreateServiceOrder = () => {
                         ))}
                       </Select.Content>
                     </Select>
+                  </div>
+                  <div className="flex items-end">
+                    <Text size="small" className="text-ui-fg-subtle">
+                      Machine must belong to the selected customer
+                    </Text>
                   </div>
                 </div>
 
@@ -287,6 +396,77 @@ const CreateServiceOrder = () => {
                 </div>
               </div>
             </div>
+            
+            {/* Service Address - only show if service location is customer_location */}
+            {formData.service_location === 'customer_location' && (
+              <div className="bg-ui-surface-base rounded-lg p-6">
+                <Heading level="h3">Service Address</Heading>
+                <Text size="small" className="text-ui-fg-subtle">
+                  Address where the service will be performed. Defaults to customer's address but can be modified.
+                </Text>
+                
+                <div className="mt-6 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Address Line 1
+                      </label>
+                      <Input
+                        value={formData.service_address_line_1}
+                        onChange={(e) => handleInputChange('service_address_line_1', e.target.value)}
+                        placeholder="Street address"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Address Line 2
+                      </label>
+                      <Input
+                        value={formData.service_address_line_2}
+                        onChange={(e) => handleInputChange('service_address_line_2', e.target.value)}
+                        placeholder="Apartment, suite, etc."
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        City
+                      </label>
+                      <Input
+                        value={formData.service_city}
+                        onChange={(e) => handleInputChange('service_city', e.target.value)}
+                        placeholder="City"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Postal Code
+                      </label>
+                      <Input
+                        value={formData.service_postal_code}
+                        onChange={(e) => handleInputChange('service_postal_code', e.target.value)}
+                        placeholder="Postal code"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Country
+                      </label>
+                      <Input
+                        value={formData.service_country}
+                        onChange={(e) => handleInputChange('service_country', e.target.value)}
+                        placeholder="Country"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -334,6 +514,30 @@ const CreateServiceOrder = () => {
                       <Select.Item value="normal">Normal Priority</Select.Item>
                       <Select.Item value="high">High Priority</Select.Item>
                       <Select.Item value="urgent">Urgent</Select.Item>
+                    </Select.Content>
+                  </Select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Service Location
+                  </label>
+                  <Select
+                    value={formData.service_location}
+                    onValueChange={(value) => {
+                      handleInputChange('service_location', value)
+                      // When switching to customer location, populate address
+                      if (value === 'customer_location' && formData.customer_id) {
+                        updateAddressFromCustomer(formData.customer_id)
+                      }
+                    }}
+                  >
+                    <Select.Trigger>
+                      <Select.Value />
+                    </Select.Trigger>
+                    <Select.Content>
+                      <Select.Item value="workshop">Workshop</Select.Item>
+                      <Select.Item value="customer_location">Customer Location</Select.Item>
                     </Select.Content>
                   </Select>
                 </div>

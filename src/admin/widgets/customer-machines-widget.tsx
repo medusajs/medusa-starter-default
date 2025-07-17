@@ -121,7 +121,7 @@ const CustomerMachinesWidget = ({ data: customer }: WidgetProps) => {
                 <Table.Row key={machine.id}>
                   <Table.Cell>
                     <div className="flex flex-col">
-                      <Text weight="plus" size="small">{machine.name}</Text>
+                      <Text weight="plus" size="small">{machine.brand_name || 'Unknown Brand'}</Text>
                       <Text size="xsmall" className="text-ui-fg-subtle">
                         {machine.model_number} • {machine.serial_number}
                       </Text>

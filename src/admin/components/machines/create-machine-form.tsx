@@ -19,12 +19,13 @@ import { Plus } from "@medusajs/icons"
 
 // Validation schema
 const createMachineSchema = z.object({
-  name: z.string().min(1, "Name is required").max(255, "Name is too long"),
+  brand_name: z.string().nullable().optional(),
   model_number: z.string().min(1, "Model number is required").max(100, "Model number is too long"),
   serial_number: z.string().min(1, "Serial number is required").max(100, "Serial number is too long"),
+  license_plate: z.string().max(50).nullable().optional(),
   year: z.number().int().min(1900).max(new Date().getFullYear() + 1).nullable().optional(),
   engine_hours: z.number().min(0).nullable().optional(),
-  fuel_type: z.enum(["diesel", "gasoline", "electric", "hybrid", "lpg"]).optional(),
+  fuel_type: z.string().nullable().optional(),
   horsepower: z.number().min(0).nullable().optional(),
   weight: z.number().min(0).nullable().optional(),
   purchase_date: z.string().nullable().optional(),
@@ -49,6 +50,16 @@ const fetchCustomers = async () => {
   return data.customers || []
 }
 
+// Fetch brands for dropdown
+const fetchBrands = async () => {
+  const response = await fetch('/admin/brands?limit=100')
+  if (!response.ok) {
+    throw new Error('Failed to fetch brands')
+  }
+  const data = await response.json()
+  return data.brands || []
+}
+
 interface CreateMachineFormProps {
   onSuccess?: () => void
 }
@@ -63,15 +74,22 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
     queryFn: fetchCustomers,
   })
 
+  // Fetch brands
+  const { data: brands = [], isLoading: brandsLoading } = useQuery({
+    queryKey: ['brands'],
+    queryFn: fetchBrands,
+  })
+
   const form = useForm<CreateMachineFormData>({
     resolver: zodResolver(createMachineSchema),
     defaultValues: {
-      name: "",
+      brand_name: undefined,
       model_number: "",
       serial_number: "",
+      license_plate: "",
       year: undefined,
       engine_hours: undefined,
-      fuel_type: "diesel",
+      fuel_type: "",
       horsepower: undefined,
       weight: undefined,
       purchase_date: "",
@@ -170,24 +188,38 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Controller
                       control={form.control}
-                      name="name"
+                      name="brand_name"
                       render={({ field, fieldState }) => (
                         <div className="space-y-2">
                           <Label size="small" weight="plus">
-                            Machine Name *
+                            Brand
                           </Label>
-                          <Input
-                            {...field}
-                            placeholder="e.g., Caterpillar 320D Excavator"
-                          />
+                          <Select 
+                            value={field.value || undefined} 
+                            onValueChange={(value) => field.onChange(value || undefined)}
+                            disabled={brandsLoading}
+                          >
+                            <Select.Trigger>
+                              <Select.Value placeholder="Select brand (optional)" />
+                            </Select.Trigger>
+                            <Select.Content>
+                              {brands.map((brand: any) => (
+                                <Select.Item key={brand.id} value={brand.id}>
+                                  {brand.name}
+                                </Select.Item>
+                              ))}
+                              {brands.length === 0 && !brandsLoading && (
+                                <div className="px-2 py-1 text-sm text-ui-fg-subtle">
+                                  No brands available
+                                </div>
+                              )}
+                            </Select.Content>
+                          </Select>
                           {fieldState.error && (
                             <Text size="xsmall" className="text-red-500">
                               {fieldState.error.message}
                             </Text>
                           )}
-                          <Text size="xsmall" className="text-ui-fg-subtle">
-                            A descriptive name for the machine
-                          </Text>
                         </div>
                       )}
                     />
@@ -233,6 +265,28 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                           <Text size="xsmall" className="text-ui-fg-subtle">
                             Must be unique across all machines
                           </Text>
+                        </div>
+                      )}
+                    />
+                    
+                    <Controller
+                      control={form.control}
+                      name="license_plate"
+                      render={({ field, fieldState }) => (
+                        <div className="space-y-2">
+                          <Label size="small" weight="plus">
+                            License Plate
+                          </Label>
+                          <Input
+                            {...field}
+                            value={field.value || ""}
+                            placeholder="e.g., ABC-123"
+                          />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-red-500">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
                         </div>
                       )}
                     />

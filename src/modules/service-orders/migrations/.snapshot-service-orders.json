@@ -33,6 +33,15 @@
           "nullable": true,
           "mappedType": "text"
         },
+        "machine_id": {
+          "name": "machine_id",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
         "technician_id": {
           "name": "technician_id",
           "type": "text",
@@ -91,6 +100,20 @@
             "normal",
             "high",
             "urgent"
+          ],
+          "mappedType": "enum"
+        },
+        "service_location": {
+          "name": "service_location",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "'workshop'",
+          "enumItems": [
+            "workshop",
+            "customer_location"
           ],
           "mappedType": "enum"
         },
@@ -246,6 +269,51 @@
           "nullable": false,
           "default": "false",
           "mappedType": "boolean"
+        },
+        "service_address_line_1": {
+          "name": "service_address_line_1",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "service_address_line_2": {
+          "name": "service_address_line_2",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "service_city": {
+          "name": "service_city",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "service_postal_code": {
+          "name": "service_postal_code",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "service_country": {
+          "name": "service_country",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
         },
         "requires_parts_approval": {
           "name": "requires_parts_approval",

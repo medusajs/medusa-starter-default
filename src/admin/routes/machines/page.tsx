@@ -23,23 +23,23 @@ import { EditMachineForm } from "../../components/edit-machine-form"
 // Types for our machine data - matching what EditMachineForm expects
 interface Machine {
   id: string
-  brand: string
-  model: string
+  brand_name?: string | null
+  model_number: string
   serial_number: string
-  year: string
-  engine_hours?: string
-  fuel_type: string
-  horsepower?: string
-  weight?: string
-  purchase_date?: string
-  purchase_price?: string
-  current_value?: string
-  status: "active" | "inactive" | "maintenance"
-  location?: string
-  notes?: string
-  customer_id?: string
-  created_at: string
-  updated_at: string
+  year?: number | null
+  engine_hours?: number | null
+  fuel_type?: string | null
+  horsepower?: number | null
+  weight?: number | null
+  purchase_date?: Date | null
+  purchase_price?: string | null
+  current_value?: string | null
+  status: "active" | "inactive" | "maintenance" | "sold"
+  location?: string | null
+  notes?: string | null
+  customer_id?: string | null
+  created_at: Date
+  updated_at: Date
 }
 
 const PAGE_SIZE = 20
@@ -137,7 +137,7 @@ const MachineActions = ({ machine }: { machine: Machine }) => {
     e.preventDefault()
     e.stopPropagation()
     
-    if (window.confirm(`Are you sure you want to delete machine "${machine.brand} ${machine.model}"?`)) {
+    if (window.confirm(`Are you sure you want to delete machine "${machine.brand_name || 'Unknown'} ${machine.model_number}"?`)) {
       deleteMachineMutation.mutate(machine.id)
     }
   }
@@ -222,14 +222,14 @@ const MachinesListTable = () => {
   const columnHelper = createDataTableColumnHelper<Machine>()
 
   const columns = [
-    columnHelper.accessor("brand", {
+    columnHelper.accessor("brand_name", {
       header: "Brand",
       enableSorting: true,
       cell: ({ getValue }) => (
-        <Text className="font-medium">{getValue()}</Text>
+        <Text className="font-medium">{getValue() || 'Unknown'}</Text>
       ),
     }),
-    columnHelper.accessor("model", {
+    columnHelper.accessor("model_number", {
       header: "Model",
       enableSorting: true,
       cell: ({ getValue }) => (

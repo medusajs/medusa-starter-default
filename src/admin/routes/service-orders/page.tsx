@@ -1,6 +1,6 @@
 import React from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { PencilSquare, Plus, Tools, EllipsisHorizontal, SquareTwoStack } from "@medusajs/icons"
+import { PencilSquare, Plus, Tools, EllipsisHorizontal, SquareTwoStack, ChevronUpMini, ChevronDownMini, ChevronRightMini, ExclamationCircle } from "@medusajs/icons"
 import {
   Button,
   Container,
@@ -25,6 +25,7 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 
 import { KanbanView } from "./components/kanban-view"
+import { EditServiceOrderForm } from "../../components/edit-service-order-form"
 
 // Types for service order data
 interface ServiceOrder {
@@ -32,15 +33,12 @@ interface ServiceOrder {
   service_order_number: string
   status: string
   priority: string
+  service_type: string
+  service_location: string
   description: string
-  customer?: {
-    first_name: string
-    last_name: string
-  }
-  technician?: {
-    first_name: string
-    last_name: string
-  }
+  customer_id?: string
+  technician_id?: string
+  machine_id?: string
   scheduled_start_date?: string
   total_cost: number
   created_at: string
@@ -93,7 +91,7 @@ const useServiceOrderFilters = () => {
   ]
 }
 
-// Data fetching hook
+// Data fetching hooks
 const useServiceOrders = () => {
   return useQuery({
     queryKey: ["service-orders"],
@@ -108,10 +106,36 @@ const useServiceOrders = () => {
         count: data.count || 0
       }
     },
-    // Add stale time to prevent unnecessary refetches
-    staleTime: 30000, // 30 seconds
-    // Add cache time to keep data in memory
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
+  })
+}
+
+// Hook to fetch customers for display
+const useCustomers = () => {
+  return useQuery({
+    queryKey: ["customers"],
+    queryFn: async () => {
+      const response = await fetch(`/admin/customers?limit=1000`)
+      if (!response.ok) throw new Error("Failed to fetch customers")
+      const data = await response.json()
+      return data.customers || []
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// Hook to fetch technicians for display
+const useTechnicians = () => {
+  return useQuery({
+    queryKey: ["technicians"],
+    queryFn: async () => {
+      const response = await fetch(`/admin/technicians?limit=1000`)
+      if (!response.ok) throw new Error("Failed to fetch technicians")
+      const data = await response.json()
+      return data.technicians || []
+    },
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -131,16 +155,20 @@ const ServiceOrderActions = ({ serviceOrder }: { serviceOrder: ServiceOrder }) =
       >
         <Tools className="h-4 w-4" />
       </IconButton>
-      <IconButton
-        size="small"
-        variant="transparent"
-        onClick={(e) => {
-          e.stopPropagation()
-          navigate(`/service-orders/${serviceOrder.id}/edit`)
-        }}
-      >
-        <PencilSquare className="h-4 w-4" />
-      </IconButton>
+      <EditServiceOrderForm 
+        serviceOrder={serviceOrder} 
+        trigger={
+          <IconButton
+            size="small"
+            variant="transparent"
+            onClick={(e) => {
+              e.stopPropagation()
+            }}
+          >
+            <PencilSquare className="h-4 w-4" />
+          </IconButton>
+        }
+      />
     </div>
   )
 }
@@ -155,6 +183,8 @@ export const config = defineRouteConfig({
 const ServiceOrdersListTable = () => {
   const navigate = useNavigate()
   const { data, isLoading, error } = useServiceOrders()
+  const { data: customers = [] } = useCustomers()
+  const { data: technicians = [] } = useTechnicians()
   const filters = useServiceOrderFilters()
   
   // Filter state management
@@ -171,6 +201,23 @@ const ServiceOrdersListTable = () => {
 
   const serviceOrders = data?.service_orders || []
   const count = data?.count || 0
+  
+  // Create lookup maps for efficient customer/technician display
+  const customerLookup = React.useMemo(() => {
+    const map = new Map()
+    customers.forEach((customer: any) => {
+      map.set(customer.id, customer)
+    })
+    return map
+  }, [customers])
+  
+  const technicianLookup = React.useMemo(() => {
+    const map = new Map()
+    technicians.forEach((technician: any) => {
+      map.set(technician.id, technician)
+    })
+    return map
+  }, [technicians])
 
   // Status and priority variants
   const statusVariants = {
@@ -190,6 +237,19 @@ const ServiceOrdersListTable = () => {
     urgent: "red",
   } as const
 
+  const serviceTypeVariants = {
+    normal: "blue",
+    warranty: "green",
+    setup: "purple",
+    emergency: "red",
+    preventive: "orange",
+  } as const
+  
+  const serviceLocationVariants = {
+    workshop: "blue",
+    customer_location: "green",
+  } as const
+
   // Column helper - following official pattern
   const columnHelper = createDataTableColumnHelper<ServiceOrder>()
 
@@ -201,21 +261,46 @@ const ServiceOrdersListTable = () => {
         <Text className="font-medium">{getValue()}</Text>
       ),
     }),
-    columnHelper.accessor("customer", {
+    columnHelper.accessor("service_type", {
+      header: "Service Type",
+      cell: ({ getValue }) => (
+        <Badge 
+          size="2xsmall"
+          color={serviceTypeVariants[getValue() as keyof typeof serviceTypeVariants] || "grey"}
+        >
+          {getValue().charAt(0).toUpperCase() + getValue().slice(1)}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor("customer_id", {
       header: "Customer",
       cell: ({ getValue }) => {
-        const customer = getValue()
+        const customerId = getValue()
+        if (!customerId) return <Text className="text-ui-fg-muted">—</Text>
+        const customer = customerLookup.get(customerId)
+        if (!customer) return <Text className="text-ui-fg-muted">Unknown</Text>
         return (
-          <Text>{customer ? `${customer.first_name} ${customer.last_name}` : "—"}</Text>
+          <Text>
+            {customer.first_name && customer.last_name 
+              ? `${customer.first_name} ${customer.last_name}`
+              : customer.email || "Unknown"}
+          </Text>
         )
       },
     }),
-    columnHelper.accessor("technician", {
+    columnHelper.accessor("technician_id", {
       header: "Technician", 
       cell: ({ getValue }) => {
-        const technician = getValue()
+        const technicianId = getValue()
+        if (!technicianId) return <Text className="text-ui-fg-muted">Unassigned</Text>
+        const technician = technicianLookup.get(technicianId)
+        if (!technician) return <Text className="text-ui-fg-muted">Unknown</Text>
         return (
-          <Text>{technician ? `${technician.first_name} ${technician.last_name}` : "—"}</Text>
+          <Text>
+            {technician.first_name && technician.last_name 
+              ? `${technician.first_name} ${technician.last_name}`
+              : technician.email || "Unknown"}
+          </Text>
         )
       },
     }),
@@ -232,20 +317,56 @@ const ServiceOrdersListTable = () => {
     }),
     columnHelper.accessor("priority", {
       header: "Priority",
+      cell: ({ getValue }) => {
+        const priority = getValue() as keyof typeof priorityVariants
+        const getIcon = () => {
+          switch (priority) {
+            case "urgent":
+              return <ExclamationCircle className="h-4 w-4" />
+            case "high":
+              return <ChevronUpMini className="h-4 w-4" />
+            case "normal":
+              return <ChevronRightMini className="h-4 w-4" />
+            case "low":
+              return <ChevronDownMini className="h-4 w-4" />
+            default:
+              return <ChevronRightMini className="h-4 w-4" />
+          }
+        }
+        
+        return (
+          <div className="flex items-center gap-2">
+            <div className={`text-ui-tag-${priorityVariants[priority] || "grey"}-text`}>
+              {getIcon()}
+            </div>
+            <Text size="small" className="capitalize">
+              {priority}
+            </Text>
+          </div>
+        )
+      },
+    }),
+    columnHelper.accessor("service_location", {
+      header: "Location",
       cell: ({ getValue }) => (
         <Badge 
           size="2xsmall"
-          color={priorityVariants[getValue() as keyof typeof priorityVariants] || "grey"}
+          color={serviceLocationVariants[getValue() as keyof typeof serviceLocationVariants] || "grey"}
         >
-          {getValue().charAt(0).toUpperCase() + getValue().slice(1)}
+          {getValue() === 'workshop' ? 'Workshop' : 'Customer Location'}
         </Badge>
       ),
     }),
     columnHelper.accessor("total_cost", {
       header: "Total Cost",
-      cell: ({ getValue }) => (
-        <Text size="small">€{getValue()?.toFixed(2) || "0.00"}</Text>
-      ),
+      cell: ({ getValue }) => {
+        const cost = getValue() || 0
+        return (
+          <Text size="small" className="font-mono">
+            €{(cost / 100).toFixed(2)}
+          </Text>
+        )
+      },
     }),
     columnHelper.accessor("created_at", {
       header: "Created",
@@ -283,18 +404,20 @@ const ServiceOrdersListTable = () => {
   })
 
   return (
-    <DataTable instance={table}>
-      <DataTable.Toolbar className="flex items-center justify-between gap-4 px-6 py-4">
-        <div className="flex items-center gap-2">
-          <DataTable.FilterMenu tooltip="Filter service orders" />
-        </div>
-        <div className="flex items-center gap-2">
-          <DataTable.Search placeholder="Search service orders..." />
-        </div>
-      </DataTable.Toolbar>
-      <DataTable.Table />
-      <DataTable.Pagination />
-    </DataTable>
+    <div className="overflow-hidden">
+      <DataTable instance={table}>
+        <DataTable.Toolbar className="flex items-center justify-between gap-4 px-6 py-4 bg-ui-bg-subtle/30">
+          <div className="flex items-center gap-2">
+            <DataTable.FilterMenu tooltip="Filter service orders" />
+          </div>
+          <div className="flex items-center gap-2">
+            <DataTable.Search placeholder="Search service orders..." className="w-80" />
+          </div>
+        </DataTable.Toolbar>
+        <DataTable.Table />
+        <DataTable.Pagination />
+      </DataTable>
+    </div>
   )
 }
 
@@ -330,36 +453,38 @@ const ServiceOrdersList = () => {
       </div>
       
       {/* Tab Navigation */}
-      <div className="px-6 py-4 border-b">
+      <div>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <Tabs.List>
-            <Tabs.Trigger value="list">
-              <Tools className="w-4 h-4 mr-2" />
-              List View
-            </Tabs.Trigger>
-            <Tabs.Trigger value="kanban">
-              <SquareTwoStack className="w-4 h-4 mr-2" />
-              Kanban Board
-            </Tabs.Trigger>
-          </Tabs.List>
+          <div className="px-6 py-3 border-b border-ui-border-base">
+            <Tabs.List className="bg-ui-bg-subtle">
+              <Tabs.Trigger value="list" className="flex items-center gap-2">
+                <Tools className="w-4 h-4" />
+                List View
+              </Tabs.Trigger>
+              <Tabs.Trigger value="kanban" className="flex items-center gap-2">
+                <SquareTwoStack className="w-4 h-4" />
+                Kanban Board
+              </Tabs.Trigger>
+            </Tabs.List>
+          </div>
           
-          <div className="overflow-hidden">
-            <Tabs.Content value="list">
-              <ServiceOrdersListTable />
-            </Tabs.Content>
+          <Tabs.Content value="list" className="mt-0">
+            <ServiceOrdersListTable />
+          </Tabs.Content>
 
-            <Tabs.Content value="kanban">
+          <Tabs.Content value="kanban" className="mt-0">
+            <div className="p-6">
               <KanbanView 
                 serviceOrders={serviceOrders}
                 isLoading={isLoading}
                 onRefetch={() => {}}
               />
-            </Tabs.Content>
-          </div>
+            </div>
+          </Tabs.Content>
         </Tabs>
       </div>
     </Container>
   )
 }
 
-export default ServiceOrdersList 
+export default ServiceOrdersList

@@ -1,16 +1,22 @@
 import React from "react"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Badge, StatusBadge, Text, Container } from "@medusajs/ui"
+import { Badge, StatusBadge, Text, Container, IconButton } from "@medusajs/ui"
 import { Link } from "react-router-dom"
-import { Clock, User, Tools } from "@medusajs/icons"
+import { Clock, User, Tools, ChevronUpMini, ChevronDownMini, ChevronRightMini, ExclamationCircle, PencilSquare } from "@medusajs/icons"
+import { EditServiceOrderForm } from "../../../components/edit-service-order-form"
 
 type ServiceOrder = {
   id: string
   service_order_number: string
   status: string
   priority: string
+  service_type: string
+  service_location: string
   description: string
+  customer_id?: string | null
+  technician_id?: string | null
+  machine_id?: string | null
   customer?: {
     first_name: string
     last_name: string
@@ -22,6 +28,7 @@ type ServiceOrder = {
   scheduled_start_date?: string
   total_cost: number
   created_at: string
+  updated_at: string
 }
 
 type KanbanCardProps = {
@@ -35,6 +42,19 @@ const priorityVariants = {
   normal: "blue",
   high: "orange",
   urgent: "red",
+} as const
+
+const serviceTypeVariants = {
+  normal: "blue",
+  warranty: "green",
+  setup: "purple",
+  emergency: "red",
+  preventive: "orange",
+} as const
+
+const serviceLocationVariants = {
+  workshop: "blue",
+  customer_location: "green",
 } as const
 
 export const KanbanCard: React.FC<KanbanCardProps> = ({
@@ -99,16 +119,62 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
             {order.service_order_number}
           </Text>
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <div className={`text-ui-tag-${priorityVariants[order.priority as keyof typeof priorityVariants]}-text`}>
+                {(() => {
+                  switch (order.priority) {
+                    case "urgent":
+                      return <ExclamationCircle className="h-3 w-3" />
+                    case "high":
+                      return <ChevronUpMini className="h-3 w-3" />
+                    case "normal":
+                      return <ChevronRightMini className="h-3 w-3" />
+                    case "low":
+                      return <ChevronDownMini className="h-3 w-3" />
+                    default:
+                      return <ChevronRightMini className="h-3 w-3" />
+                  }
+                })()}
+              </div>
+              <Text size="xsmall" className="text-ui-fg-subtle capitalize">
+                {order.priority}
+              </Text>
+            </div>
             <Badge 
               size="2xsmall" 
-              color={priorityVariants[order.priority as keyof typeof priorityVariants]}
+              color={serviceTypeVariants[order.service_type as keyof typeof serviceTypeVariants] || "grey"}
             >
-              {order.priority}
+              {order.service_type}
+            </Badge>
+            <Badge 
+              size="2xsmall" 
+              color={serviceLocationVariants[order.service_location as keyof typeof serviceLocationVariants] || "grey"}
+            >
+              {order.service_location === 'workshop' ? 'Workshop' : 'Customer'}
             </Badge>
             <Text size="xsmall" className="text-ui-fg-subtle">
               {formatCurrency(order.total_cost)}
             </Text>
           </div>
+        </div>
+        
+        {/* Edit Button */}
+        <div className="flex items-center gap-1">
+          <EditServiceOrderForm 
+            serviceOrder={order} 
+            trigger={
+              <IconButton
+                size="small"
+                variant="transparent"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }}
+              >
+                <PencilSquare className="h-3 w-3" />
+              </IconButton>
+            }
+          />
         </div>
       </div>
 

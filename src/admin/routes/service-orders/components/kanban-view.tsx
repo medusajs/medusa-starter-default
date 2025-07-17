@@ -38,6 +38,7 @@ type ServiceOrder = {
   service_order_number: string
   status: string
   priority: string
+  service_type: string
   description: string
   customer?: {
     first_name: string

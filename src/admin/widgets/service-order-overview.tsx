@@ -1,4 +1,5 @@
-import { Container, Heading, Text, Badge } from "@medusajs/ui"
+import { Container, Heading, Text, Badge, Skeleton } from "@medusajs/ui"
+import { useQuery } from "@tanstack/react-query"
 
 interface ServiceOrder {
   id: string
@@ -8,6 +9,8 @@ interface ServiceOrder {
   service_type: string
   priority: string
   status: string
+  customer_id?: string
+  machine_id?: string
   total_labor_cost?: number
   total_parts_cost?: number
   total_cost?: number
@@ -22,6 +25,32 @@ interface ServiceOrderOverviewWidgetProps {
 }
 
 const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverviewWidgetProps) => {
+  // Fetch customer data
+  const { data: customer, isLoading: customerLoading } = useQuery({
+    queryKey: ['customer', serviceOrder?.customer_id],
+    queryFn: async () => {
+      if (!serviceOrder?.customer_id) return null
+      const response = await fetch(`/admin/customers/${serviceOrder.customer_id}`)
+      if (!response.ok) throw new Error('Failed to fetch customer')
+      const data = await response.json()
+      return data.customer
+    },
+    enabled: !!serviceOrder?.customer_id,
+  })
+
+  // Fetch machine data
+  const { data: machine, isLoading: machineLoading } = useQuery({
+    queryKey: ['machine', serviceOrder?.machine_id],
+    queryFn: async () => {
+      if (!serviceOrder?.machine_id) return null
+      const response = await fetch(`/admin/machines/${serviceOrder.machine_id}`)
+      if (!response.ok) throw new Error('Failed to fetch machine')
+      const data = await response.json()
+      return data.machine
+    },
+    enabled: !!serviceOrder?.machine_id,
+  })
+
   if (!serviceOrder) {
     return null
   }
@@ -35,6 +64,57 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
       <div className="px-6 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-4">
+            {/* Customer Information */}
+            <div>
+              <Text size="small" weight="plus" className="text-ui-fg-subtle mb-1">
+                Customer
+              </Text>
+              {customerLoading ? (
+                <Skeleton className="h-5 w-48" />
+              ) : customer ? (
+                <div>
+                  <Text>
+                    {customer.first_name && customer.last_name 
+                      ? `${customer.first_name} ${customer.last_name}` 
+                      : customer.email}
+                  </Text>
+                  {customer.company_name && (
+                    <Text size="small" className="text-ui-fg-subtle">
+                      {customer.company_name}
+                    </Text>
+                  )}
+                </div>
+              ) : (
+                <Text className="text-ui-fg-subtle">No customer assigned</Text>
+              )}
+            </div>
+
+            {/* Machine Information */}
+            <div>
+              <Text size="small" weight="plus" className="text-ui-fg-subtle mb-1">
+                Machine/Equipment
+              </Text>
+              {machineLoading ? (
+                <Skeleton className="h-5 w-48" />
+              ) : machine ? (
+                <div>
+                  <Text>{machine.brand_name || 'Unknown Brand'} - {machine.model_number}</Text>
+                  {machine.serial_number && (
+                    <Text size="small" className="text-ui-fg-subtle">
+                      S/N: {machine.serial_number}
+                    </Text>
+                  )}
+                  {machine.year && (
+                    <Text size="small" className="text-ui-fg-subtle">
+                      Year: {machine.year}
+                    </Text>
+                  )}
+                </div>
+              ) : (
+                <Text className="text-ui-fg-subtle">No machine assigned</Text>
+              )}
+            </div>
+
             <div>
               <Text size="small" weight="plus" className="text-ui-fg-subtle mb-1">
                 Description
@@ -56,13 +136,13 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
                 <Text size="small" weight="plus" className="text-ui-fg-subtle mb-1">
                   Service Type
                 </Text>
-                <Badge variant="secondary">{serviceOrder.service_type}</Badge>
+                <Badge>{serviceOrder.service_type}</Badge>
               </div>
               <div>
                 <Text size="small" weight="plus" className="text-ui-fg-subtle mb-1">
                   Priority
                 </Text>
-                <Badge variant="secondary">{serviceOrder.priority}</Badge>
+                <Badge>{serviceOrder.priority}</Badge>
               </div>
             </div>
           </div>

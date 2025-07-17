@@ -3,15 +3,14 @@ import { useQuery } from "@tanstack/react-query"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { SupplierGeneralSection } from "./components/supplier-general-section"
 import { SupplierContactSection } from "./components/supplier-contact-section"
-import { SupplierFinancialSection } from "./components/supplier-financial-section"
 import { SupplierAddressSection } from "./components/supplier-address-section"
-import SupplierPriceListsWidget from "../../../components/supplier-price-lists"
-import { TwoColumnPage } from "../../../components/layout/pages"
+import { SupplierFinancialSection } from "./components/supplier-financial-section"
 import { SingleColumnPageSkeleton } from "../../../components/common/skeleton"
+import { SupplierPriceLists } from "../../../components/supplier-price-lists"
 
 const SupplierDetailPage = () => {
   const { id } = useParams()
-
+  
   const { data: supplier, isLoading, error } = useQuery({
     queryKey: ["supplier", id],
     queryFn: async () => {
@@ -33,28 +32,13 @@ const SupplierDetailPage = () => {
   }
 
   return (
-    <TwoColumnPage
-      widgets={{
-        before: [],
-        after: [],
-        sideAfter: [],
-        sideBefore: [],
-      }}
-      data={supplier}
-      hasOutlet
-      showJSON
-      showMetadata
-    >
-      <TwoColumnPage.Main>
-        <SupplierGeneralSection supplier={supplier} />
-        <SupplierContactSection supplier={supplier} />
-        <SupplierFinancialSection supplier={supplier} />
-        <SupplierPriceListsWidget data={supplier} />
-      </TwoColumnPage.Main>
-      <TwoColumnPage.Sidebar>
-        <SupplierAddressSection supplier={supplier} />
-      </TwoColumnPage.Sidebar>
-    </TwoColumnPage>
+    <div className="flex flex-col gap-y-2">
+      <SupplierGeneralSection supplier={supplier} />
+      <SupplierContactSection supplier={supplier} />
+      <SupplierAddressSection supplier={supplier} />
+      <SupplierFinancialSection supplier={supplier} />
+      <SupplierPriceLists data={supplier} />
+    </div>
   )
 }
 

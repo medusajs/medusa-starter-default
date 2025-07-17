@@ -5,9 +5,10 @@ const Machine = model
     id: model.id({ prefix: "machine" }).primaryKey(),
     
     // Basic Information
-    name: model.text().searchable(), // Changed from model to name for consistency
+    brand_name: model.text().nullable(), // Reference to brands module
     model_number: model.text().searchable(), // More descriptive than just "model"
     serial_number: model.text().searchable(),
+    license_plate: model.text().searchable().nullable(),
     year: model.number().nullable(),
     
     // Technical Specifications  
@@ -44,6 +45,12 @@ const Machine = model
     {
       name: "IDX_machine_customer_id",
       on: ["customer_id"],
+      unique: false,
+      where: "deleted_at IS NULL",
+    },
+    {
+      name: "IDX_machine_brand_name",
+      on: ["brand_name"],
       unique: false,
       where: "deleted_at IS NULL",
     },

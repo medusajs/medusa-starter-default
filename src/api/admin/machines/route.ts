@@ -28,7 +28,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     // Add search functionality
     if (q) {
       queryFilters.$or = [
-        { name: { $ilike: `%${q}%` } },
+        { brand_name: { $ilike: `%${q}%` } },
         { model_number: { $ilike: `%${q}%` } },
         { serial_number: { $ilike: `%${q}%` } },
         { description: { $ilike: `%${q}%` } },

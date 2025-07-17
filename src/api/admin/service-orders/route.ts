@@ -65,7 +65,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     // Validate required fields
-    const { description, customer_id, technician_id, ...rest } = req.body as any
+    const { description, customer_id, machine_id, technician_id, ...rest } = req.body as any
     if (!description) {
       return res.status(400).json({ 
         error: "Validation failed", 
@@ -80,11 +80,19 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       })
     }
 
+    if (!machine_id) {
+      return res.status(400).json({ 
+        error: "Validation failed", 
+        details: "Machine is required" 
+      })
+    }
+
     // Convert "unassigned" to null for technician_id
     const processedData = {
       ...rest,
       description,
       customer_id,
+      machine_id,
       technician_id: technician_id === "unassigned" ? null : technician_id,
     }
 

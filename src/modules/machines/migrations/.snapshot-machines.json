@@ -15,8 +15,17 @@
           "nullable": false,
           "mappedType": "text"
         },
-        "model": {
-          "name": "model",
+        "brand_id": {
+          "name": "brand_id",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "model_number": {
+          "name": "model_number",
           "type": "text",
           "unsigned": false,
           "autoincrement": false,
@@ -31,6 +40,15 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "mappedType": "text"
+        },
+        "license_plate": {
+          "name": "license_plate",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
           "mappedType": "text"
         },
         "year": {
@@ -140,6 +158,15 @@
           "nullable": true,
           "mappedType": "text"
         },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
         "notes": {
           "name": "notes",
           "type": "text",
@@ -240,6 +267,15 @@
           "expression": "CREATE INDEX IF NOT EXISTS \"IDX_machine_customer_id\" ON \"machine\" (customer_id) WHERE deleted_at IS NULL"
         },
         {
+          "keyName": "IDX_machine_brand_id",
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_machine_brand_id\" ON \"machine\" (brand_id) WHERE deleted_at IS NULL"
+        },
+        {
           "keyName": "IDX_machine_status",
           "columnNames": [],
           "composite": false,
@@ -249,13 +285,22 @@
           "expression": "CREATE INDEX IF NOT EXISTS \"IDX_machine_status\" ON \"machine\" (status) WHERE deleted_at IS NULL"
         },
         {
-          "keyName": "IDX_machine_model",
+          "keyName": "IDX_machine_model_number",
           "columnNames": [],
           "composite": false,
           "constraint": false,
           "primary": false,
           "unique": false,
-          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_machine_model\" ON \"machine\" (model) WHERE deleted_at IS NULL"
+          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_machine_model_number\" ON \"machine\" (model_number) WHERE deleted_at IS NULL"
+        },
+        {
+          "keyName": "IDX_machine_year",
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_machine_year\" ON \"machine\" (year) WHERE deleted_at IS NULL"
         },
         {
           "keyName": "machine_pkey",

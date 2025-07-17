@@ -18,13 +18,7 @@ export const validateMachineInputStep = createStep(
     const { machines } = data
 
     for (const machine of machines) {
-      // Required fields validation
-      if (!machine.name?.trim()) {
-        throw new MedusaError(
-          MedusaError.Types.INVALID_DATA,
-          "Machine name is required"
-        )
-      }
+      // Required fields validation removed for name field since it doesn't exist in the model
 
       if (!machine.model_number?.trim()) {
         throw new MedusaError(

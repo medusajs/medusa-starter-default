@@ -39,7 +39,7 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     const machinesService = req.scope.resolve(MACHINES_MODULE) as MachinesModuleService
     
     const body = req.body as any
-    const { brand_id, customer_id, ...machineData } = body
+    const { customer_id, ...machineData } = body
     
     // Update the machine
     const machines = await machinesService.updateMachines({ id }, machineData)

@@ -33,13 +33,22 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     const serviceOrdersService: any = req.scope.resolve(SERVICE_ORDERS_MODULE)
     const { id } = req.params
     
-    const updatedServiceOrder = await serviceOrdersService.updateServiceOrders(
-      { id },
-      req.body as any
-    )
+    console.log("Updating service order:", id)
+    console.log("Update data:", req.body)
+    
+    const updatedServiceOrders = await serviceOrdersService.updateServiceOrders({
+      id,
+      ...(req.body as any),
+    })
+    
+    console.log("Updated service order result:", updatedServiceOrders)
+    
+    // Extract the first item from the array since updateServiceOrders returns an array
+    const updatedServiceOrder = Array.isArray(updatedServiceOrders) ? updatedServiceOrders[0] : updatedServiceOrders
     
     res.json({ service_order: updatedServiceOrder })
   } catch (error) {
+    console.error("Error updating service order:", error)
     res.status(500).json({ 
       error: "Failed to update service order",
       details: error instanceof Error ? error.message : "Unknown error"
