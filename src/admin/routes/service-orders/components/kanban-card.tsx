@@ -1,10 +1,11 @@
-import React from "react"
+"use client"
+
+import type React from "react"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Badge, StatusBadge, Text, Container, IconButton } from "@medusajs/ui"
+import { Badge, Text, Container } from "@medusajs/ui"
 import { Link } from "react-router-dom"
-import { Clock, User, Tools, ChevronUpMini, ChevronDownMini, ChevronRightMini, ExclamationCircle, PencilSquare } from "@medusajs/icons"
-import { EditServiceOrderForm } from "../../../components/edit-service-order-form"
+import { Clock, User, Tools, ChevronUpMini, ChevronDownMini, ChevronRightMini, ExclamationCircle, ArrowUpMini, ArrowDownMini } from "@medusajs/icons"
 
 type ServiceOrder = {
   id: string
@@ -102,132 +103,88 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
     }).format(amount)
   }
 
+  const getInitials = (firstName?: string, lastName?: string) => {
+    if (!firstName && !lastName) return "?"
+    return `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase()
+  }
+
   const cardContent = (
     <Container
-      className={`cursor-grab touch-none select-none rounded-lg border bg-ui-bg-base p-4 shadow-sm transition-all duration-200 ease-out hover:shadow-md ${
-        isOverlay ? "rotate-2 shadow-lg scale-105" : ""
+      className={`cursor-grab touch-none select-none rounded-lg border bg-ui-bg-base shadow-sm transition-all duration-200 ease-out hover:shadow-md ${
+        isOverlay ? "rotate-2 shadow-xl scale-105" : ""
       } ${isDragging || isSortableDragging ? "pointer-events-none" : ""}`}
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
     >
-      {/* Header */}
-      <div className="mb-3 flex items-start justify-between">
-        <div className="flex flex-col gap-1">
-          <Text size="small" weight="plus" className="font-mono">
-            {order.service_order_number}
-          </Text>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <div className={`text-ui-tag-${priorityVariants[order.priority as keyof typeof priorityVariants]}-text`}>
-                {(() => {
-                  switch (order.priority) {
-                    case "urgent":
-                      return <ExclamationCircle className="h-3 w-3" />
-                    case "high":
-                      return <ChevronUpMini className="h-3 w-3" />
-                    case "normal":
-                      return <ChevronRightMini className="h-3 w-3" />
-                    case "low":
-                      return <ChevronDownMini className="h-3 w-3" />
-                    default:
-                      return <ChevronRightMini className="h-3 w-3" />
-                  }
-                })()}
-              </div>
-              <Text size="xsmall" className="text-ui-fg-subtle capitalize">
-                {order.priority}
-              </Text>
-            </div>
+      <div className="p-4 space-y-3">
+        {/* Title - Work description with service type label */}
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <Text size="base" weight="plus" className="leading-tight line-clamp-3 text-ui-fg-base">
+              {order.description}
+            </Text>
+          </div>
+          <div className="flex-shrink-0">
             <Badge 
               size="2xsmall" 
               color={serviceTypeVariants[order.service_type as keyof typeof serviceTypeVariants] || "grey"}
             >
-              {order.service_type}
+              {order.service_type.charAt(0).toUpperCase() + order.service_type.slice(1)}
             </Badge>
-            <Badge 
-              size="2xsmall" 
-              color={serviceLocationVariants[order.service_location as keyof typeof serviceLocationVariants] || "grey"}
-            >
-              {order.service_location === 'workshop' ? 'Workshop' : 'Customer'}
-            </Badge>
-            <Text size="xsmall" className="text-ui-fg-subtle">
-              {formatCurrency(order.total_cost)}
-            </Text>
           </div>
         </div>
-        
-        {/* Edit Button */}
-        <div className="flex items-center gap-1">
-          <EditServiceOrderForm 
-            serviceOrder={order} 
-            trigger={
-              <IconButton
-                size="small"
-                variant="transparent"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                }}
-              >
-                <PencilSquare className="h-3 w-3" />
-              </IconButton>
-            }
-          />
-        </div>
-      </div>
 
-      {/* Description */}
-      <div className="mb-3">
-        <Text size="small" className="line-clamp-2 text-ui-fg-base">
-          {order.description}
-        </Text>
-      </div>
-
-      {/* Customer & Technician */}
-      <div className="mb-3 space-y-2">
-        {order.customer && (
-          <div className="flex items-center gap-2">
-            <User className="h-3 w-3 text-ui-fg-muted" />
-            <Text size="xsmall" className="text-ui-fg-subtle">
+        {/* Customer - More prominent display */}
+        <div className="flex items-center gap-2">
+          <User className="h-4 w-4 text-ui-fg-muted" />
+          {order.customer ? (
+            <Text size="small" weight="plus" className="text-ui-fg-subtle">
               {order.customer.first_name} {order.customer.last_name}
             </Text>
-          </div>
-        )}
-        
-        {order.technician ? (
-          <div className="flex items-center gap-2">
-            <Tools className="h-3 w-3 text-ui-fg-muted" />
-            <Text size="xsmall" className="text-ui-fg-subtle">
-              {order.technician.first_name} {order.technician.last_name}
+          ) : (
+            <Text size="small" className="text-ui-fg-muted italic">
+              No customer assigned
             </Text>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <Tools className="h-3 w-3 text-ui-fg-muted" />
-            <Text size="xsmall" className="text-ui-fg-muted">
-              Unassigned
-            </Text>
-          </div>
-        )}
-      </div>
-
-      {/* Scheduled Date */}
-      {order.scheduled_start_date && (
-        <div className="mb-3 flex items-center gap-2">
-          <Clock className="h-3 w-3 text-ui-fg-muted" />
-          <Text size="xsmall" className="text-ui-fg-subtle">
-            {formatDate(order.scheduled_start_date)}
-          </Text>
+          )}
         </div>
-      )}
 
-      {/* Footer - Created Date */}
-      <div className="border-t border-ui-border-base pt-2">
-        <Text size="xsmall" className="text-ui-fg-muted">
-          Created {formatDate(order.created_at)}
-        </Text>
+        {/* Bottom Row: Code, Service Type, Priority, Avatar */}
+        <div className="flex items-center justify-between pt-2 border-t border-ui-border-base">
+          {/* Left side: Service Order Code */}
+          <div className="flex items-center gap-2">
+            <Text size="xsmall" className="text-ui-fg-subtle font-mono" weight="plus">
+              {order.service_order_number}
+            </Text>
+          </div>
+
+          {/* Right side: Priority, Avatar */}
+          <div className="flex items-center gap-3">
+            {/* Priority Arrow */}
+            <div className={`text-ui-tag-${priorityVariants[order.priority as keyof typeof priorityVariants]}-text`}>
+              {(() => {
+                switch (order.priority) {
+                  case "urgent":
+                    return <ExclamationCircle className="h-5 w-5" />
+                  case "high":
+                    return <ChevronUpMini className="h-5 w-5" />
+                  case "normal":
+                    return <ChevronRightMini className="h-5 w-5" />
+                  case "low":
+                    return <ChevronDownMini className="h-5 w-5" />
+                  default:
+                    return <ChevronRightMini className="h-5 w-5" />
+                }
+              })()}
+            </div>
+
+            {/* Technician Avatar */}
+            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-ui-bg-subtle text-ui-fg-subtle text-sm font-medium">
+              {order.technician ? getInitials(order.technician.first_name, order.technician.last_name) : "?"}
+            </div>
+          </div>
+        </div>
       </div>
     </Container>
   )

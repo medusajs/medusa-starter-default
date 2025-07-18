@@ -1,3 +1,4 @@
+import React from "react"
 import { EllipsisHorizontal } from "@medusajs/icons"
 import { DropdownMenu, IconButton } from "@medusajs/ui"
 import { Link } from "react-router-dom"
@@ -7,6 +8,7 @@ type ActionMenuAction = {
   icon?: React.ReactNode
   to?: string
   onClick?: () => void
+  render?: () => React.ReactNode
 }
 
 type ActionMenuGroup = {
@@ -29,22 +31,28 @@ export const ActionMenu = ({ groups }: ActionMenuProps) => {
         {groups.map((group, groupIndex) => (
           <div key={groupIndex}>
             {group.actions.map((action, actionIndex) => (
-              <DropdownMenu.Item key={actionIndex} asChild={!!action.to}>
-                {action.to ? (
-                  <Link to={action.to} className="flex items-center gap-2">
-                    {action.icon}
-                    {action.label}
-                  </Link>
+              <React.Fragment key={actionIndex}>
+                {action.render ? (
+                  action.render()
                 ) : (
-                  <button
-                    onClick={action.onClick}
-                    className="flex w-full items-center gap-2"
-                  >
-                    {action.icon}
-                    {action.label}
-                  </button>
+                  <DropdownMenu.Item asChild={!!action.to}>
+                    {action.to ? (
+                      <Link to={action.to} className="flex items-center gap-2">
+                        {action.icon}
+                        {action.label}
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={action.onClick}
+                        className="flex w-full items-center gap-2"
+                      >
+                        {action.icon}
+                        {action.label}
+                      </button>
+                    )}
+                  </DropdownMenu.Item>
                 )}
-              </DropdownMenu.Item>
+              </React.Fragment>
             ))}
             {groupIndex < groups.length - 1 && <DropdownMenu.Separator />}
           </div>

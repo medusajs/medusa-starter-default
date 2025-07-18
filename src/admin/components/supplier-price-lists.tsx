@@ -5,7 +5,6 @@ import {
   Heading, 
   Button, 
   Badge,
-  Table,
   Text,
   toast,
   FocusModal,
@@ -13,8 +12,14 @@ import {
   Textarea,
   Label,
   Select,
+  Drawer,
+  DropdownMenu,
+  IconButton,
+  DataTable,
+  useDataTable,
+  createDataTableColumnHelper,
 } from "@medusajs/ui"
-import { Plus, DocumentText, ArrowUpTray, PencilSquare, Trash, ArrowDownTray, MagnifyingGlass } from "@medusajs/icons"
+import { Plus, DocumentText, ArrowUpTray, PencilSquare, Trash, ArrowDownTray, MagnifyingGlass, EllipsisHorizontal } from "@medusajs/icons"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as zod from "zod"
@@ -41,7 +46,10 @@ interface PriceListItem {
   product_variant_id: string
   supplier_sku?: string
   variant_sku?: string
-  cost_price: number
+  gross_price?: number
+  discount_amount?: number
+  discount_percentage?: number
+  net_price: number
   quantity?: number
   lead_time_days?: number
   notes?: string
@@ -77,7 +85,10 @@ const addItemSchema = zod.object({
   product_id: zod.string().min(1, "Product ID is required"),
   supplier_sku: zod.string().optional(),
   variant_sku: zod.string().optional(),
-  cost_price: zod.number().min(0, "Cost price must be 0 or greater"),
+  gross_price: zod.number().min(0, "Gross price must be 0 or greater").optional(),
+  discount_amount: zod.number().min(0, "Discount amount must be 0 or greater").optional(),
+  discount_percentage: zod.number().min(0, "Discount percentage must be 0 or greater").max(100, "Discount percentage cannot exceed 100").optional(),
+  net_price: zod.number().min(0, "Net price must be 0 or greater").refine(val => val > 0, "Net price is required"),
   quantity: zod.number().min(1, "Quantity must be at least 1").default(1),
   lead_time_days: zod.number().min(0).optional(),
   notes: zod.string().optional()
@@ -86,6 +97,14 @@ const addItemSchema = zod.object({
 }, {
   message: "Valid product variant must be selected",
   path: ["product_variant_id"]
+}).refine((data) => {
+  // Ensure only one discount type is used
+  const hasDiscountAmount = data.discount_amount !== undefined && data.discount_amount > 0
+  const hasDiscountPercentage = data.discount_percentage !== undefined && data.discount_percentage > 0
+  return !hasDiscountAmount || !hasDiscountPercentage
+}, {
+  message: "Please use either discount amount or discount percentage, not both",
+  path: ["discount_amount"]
 })
 
 type AddItemFormData = zod.infer<typeof addItemSchema>
@@ -98,9 +117,16 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
   const queryClient = useQueryClient()
   const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [showUploadModal, setShowUploadModal] = useState(false)
+  const [showEditDrawer, setShowEditDrawer] = useState(false)
+  const [editingItem, setEditingItem] = useState<PriceListItem | null>(null)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [productSearch, setProductSearch] = useState("")
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
+  const [tableSearch, setTableSearch] = useState("")
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  })
 
   const { data: priceListData, isLoading, error } = useQuery({
     queryKey: ["supplier-price-list", supplier?.id],
@@ -135,7 +161,27 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
       product_id: "",
       supplier_sku: "",
       variant_sku: "",
-      cost_price: 0,
+      gross_price: 0,
+      discount_amount: 0,
+      discount_percentage: 0,
+      net_price: 0,
+      quantity: 1,
+      lead_time_days: 0,
+      notes: ""
+    }
+  })
+
+  const editItemForm = useForm<AddItemFormData>({
+    resolver: zodResolver(addItemSchema),
+    defaultValues: {
+      product_variant_id: "",
+      product_id: "",
+      supplier_sku: "",
+      variant_sku: "",
+      gross_price: 0,
+      discount_amount: 0,
+      discount_percentage: 0,
+      net_price: 0,
       quantity: 1,
       lead_time_days: 0,
       notes: ""
@@ -200,13 +246,46 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     }
   })
 
+  const editItemMutation = useMutation({
+    mutationFn: async (data: AddItemFormData & { itemId: string }) => {
+      const { itemId, ...updateData } = data
+      const priceList = priceListData?.price_list
+      if (!priceList) {
+        throw new Error("No active price list found")
+      }
+      const response = await fetch(`/admin/suppliers/${supplier.id}/price-lists/${priceList.id}/items/${itemId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updateData),
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `Request failed: ${response.statusText}`)
+      }
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["supplier-price-list", supplier.id] })
+      handleEditDrawerClose()
+      toast.success("Item updated successfully")
+    },
+    onError: (error) => {
+      toast.error(`Failed to update item: ${error.message}`)
+    }
+  })
+
   const deleteItemMutation = useMutation({
     mutationFn: async (itemId: string) => {
-      const response = await fetch(`/admin/suppliers/${supplier.id}/price-lists/items/${itemId}`, {
+      const priceList = priceListData?.price_list
+      if (!priceList) {
+        throw new Error("No active price list found")
+      }
+      const response = await fetch(`/admin/suppliers/${supplier.id}/price-lists/${priceList.id}/items/${itemId}`, {
         method: "DELETE",
       })
       if (!response.ok) {
-        throw new Error("Failed to delete item")
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `Request failed: ${response.statusText}`)
       }
       return response.json()
     },
@@ -237,7 +316,15 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
       return
     }
     
-    addItemMutation.mutate(data)
+    // Convert prices to cents for storage
+    const processedData = {
+      ...data,
+      gross_price: data.gross_price ? Math.round(data.gross_price * 100) : undefined,
+      discount_amount: data.discount_amount ? Math.round(data.discount_amount * 100) : undefined,
+      net_price: Math.round(data.net_price * 100)
+    }
+    
+    addItemMutation.mutate(processedData)
   })
 
   const handleModalClose = () => {
@@ -245,6 +332,51 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     setSelectedVariant(null)
     setProductSearch("")
     addItemForm.reset()
+  }
+
+  const handleEditDrawerClose = () => {
+    setShowEditDrawer(false)
+    setEditingItem(null)
+    editItemForm.reset()
+  }
+
+  const handleEditItem = (item: PriceListItem) => {
+    setEditingItem(item)
+    editItemForm.reset({
+      product_variant_id: item.product_variant_id,
+      product_id: item.product_id,
+      supplier_sku: item.supplier_sku || "",
+      variant_sku: item.variant_sku || "",
+      gross_price: item.gross_price ? item.gross_price / 100 : 0,
+      discount_amount: item.discount_amount ? item.discount_amount / 100 : 0,
+      discount_percentage: item.discount_percentage || 0,
+      net_price: item.net_price / 100,
+      quantity: item.quantity || 1,
+      lead_time_days: item.lead_time_days || 0,
+      notes: item.notes || ""
+    })
+    setShowEditDrawer(true)
+  }
+
+  const handleUpdateItem = editItemForm.handleSubmit(async (data) => {
+    if (!editingItem) return
+
+    // Convert prices to cents for storage
+    const processedData = {
+      ...data,
+      itemId: editingItem.id,
+      gross_price: data.gross_price ? Math.round(data.gross_price * 100) : undefined,
+      discount_amount: data.discount_amount ? Math.round(data.discount_amount * 100) : undefined,
+      net_price: Math.round(data.net_price * 100)
+    }
+
+    editItemMutation.mutate(processedData)
+  })
+
+  const handleDeleteItem = async (itemId: string) => {
+    if (window.confirm("Are you sure you want to delete this item?")) {
+      deleteItemMutation.mutate(itemId)
+    }
   }
 
   const handleUploadCSV = async () => {
@@ -274,6 +406,121 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     return new Date(date).toLocaleDateString()
   }
 
+  // DataTable configuration
+  const items = priceListData?.items || []
+  const priceList = priceListData?.price_list || null
+
+  // Filter items based on search
+  const filteredItems = items.filter(item => {
+    if (!tableSearch) return true
+    const search = tableSearch.toLowerCase()
+    return (
+      item.variant_sku?.toLowerCase().includes(search) ||
+      item.supplier_sku?.toLowerCase().includes(search) ||
+      item.notes?.toLowerCase().includes(search)
+    )
+  })
+
+  const columnHelper = createDataTableColumnHelper<PriceListItem>()
+
+  const columns = [
+    columnHelper.accessor("variant_sku", {
+      header: "Product SKU",
+      cell: ({ getValue }) => (
+        <Text className="font-mono text-sm">{getValue() || "—"}</Text>
+      ),
+    }),
+    columnHelper.accessor("supplier_sku", {
+      header: "Supplier SKU", 
+      cell: ({ getValue }) => (
+        <Text className="font-mono text-sm">{getValue() || "—"}</Text>
+      ),
+    }),
+    columnHelper.accessor("gross_price", {
+      header: "Gross Price",
+      cell: ({ getValue }) => (
+        <Text className="font-medium">
+          {getValue() ? `${priceList?.currency_code || "USD"} ${(getValue() / 100).toFixed(2)}` : "—"}
+        </Text>
+      ),
+    }),
+    columnHelper.display({
+      id: "discount",
+      header: "Discount",
+      cell: ({ row }) => {
+        const { discount_amount, discount_percentage } = row.original
+        if (discount_amount) {
+          return <Text>{`${priceList?.currency_code || "USD"} ${(discount_amount / 100).toFixed(2)}`}</Text>
+        }
+        if (discount_percentage) {
+          return <Text>{discount_percentage}%</Text>
+        }
+        return <Text>—</Text>
+      },
+    }),
+    columnHelper.accessor("net_price", {
+      header: "Net Price",
+      cell: ({ getValue }) => (
+        <Text className="font-medium">
+          {priceList?.currency_code || "USD"} {(getValue() / 100).toFixed(2)}
+        </Text>
+      ),
+    }),
+    columnHelper.accessor("quantity", {
+      header: "Quantity",
+      cell: ({ getValue }) => <Text>{getValue() || 1}</Text>,
+    }),
+    columnHelper.accessor("lead_time_days", {
+      header: "Lead Time",
+      cell: ({ getValue }) => (
+        <Text>{getValue() ? `${getValue()} days` : "—"}</Text>
+      ),
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenu.Trigger asChild>
+            <IconButton variant="transparent">
+              <EllipsisHorizontal />
+            </IconButton>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.Item onClick={() => handleEditItem(row.original)}>
+              <PencilSquare className="w-4 h-4 mr-2" />
+              Edit
+            </DropdownMenu.Item>
+            <DropdownMenu.Separator />
+            <DropdownMenu.Item 
+              onClick={() => handleDeleteItem(row.original.id)}
+              className="text-ui-fg-error"
+            >
+              <Trash className="w-4 h-4 mr-2" />
+              Delete
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu>
+      ),
+    }),
+  ]
+
+  const table = useDataTable({
+    data: filteredItems,
+    columns,
+    rowCount: filteredItems.length,
+    getRowId: (row) => row.id,
+    isLoading,
+    search: {
+      state: tableSearch,
+      onSearchChange: setTableSearch,
+    },
+    pagination: {
+      state: pagination,
+      onPaginationChange: setPagination,
+    },
+  })
+
   if (!supplier?.id) {
     return null
   }
@@ -294,122 +541,69 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     )
   }
 
-  const priceList = priceListData?.price_list || null
-  const items = priceListData?.items || []
-
   return (
     <Container className="divide-y p-0">
-      <div className="px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <Heading level="h2">Price List</Heading>
-            {priceList && (
-              <div className="flex items-center gap-2 mt-1">
-                <Badge variant={priceList.is_active ? "green" : "red"}>
-                  {priceList.is_active ? "Active" : "Inactive"}
-                </Badge>
-                <Text size="small" className="text-ui-fg-subtle">
-                  Version {priceList.version || 1} • {items.length} items
-                </Text>
-              </div>
-            )}
+      <DataTable instance={table}>
+        <DataTable.Toolbar>
+          <div className="flex items-center justify-between w-full">
+            <div>
+              <Heading level="h2">Price List</Heading>
+              {priceList && (
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant={priceList.is_active ? "green" : "red"}>
+                    {priceList.is_active ? "Active" : "Inactive"}
+                  </Badge>
+                  <Text size="small" className="text-ui-fg-subtle">
+                    Version {priceList.version || 1} • {filteredItems.length} items
+                  </Text>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <DataTable.Search placeholder="Search price list items..." />
+              <Button variant="secondary" size="small" onClick={handleDownloadTemplate}>
+                <ArrowDownTray />
+                Template
+              </Button>
+              <Button variant="secondary" size="small" onClick={() => setShowUploadModal(true)}>
+                <ArrowUpTray />
+                Upload CSV
+              </Button>
+              <Button variant="primary" size="small" onClick={() => setShowAddItemModal(true)}>
+                <Plus />
+                Add Item
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="secondary" size="small" onClick={handleDownloadTemplate}>
-              <ArrowDownTray />
-              Template
-            </Button>
-            <Button variant="secondary" size="small" onClick={() => setShowUploadModal(true)}>
-              <ArrowUpTray />
-              Upload CSV
-            </Button>
-            <Button variant="primary" size="small" onClick={() => setShowAddItemModal(true)}>
-              <Plus />
-              Add Item
-            </Button>
+        </DataTable.Toolbar>
+
+        {!isLoading && items.length === 0 && (
+          <div className="px-6 py-16 text-center">
+            <DocumentText className="w-12 h-12 text-ui-fg-muted mx-auto mb-4" />
+            <Text className="text-ui-fg-muted mb-2">No price list items found</Text>
+            <Text size="small" className="text-ui-fg-subtle mb-4">
+              Add items manually or upload a CSV file to get started
+            </Text>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => setShowAddItemModal(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Item
+              </Button>
+              <Button variant="secondary" onClick={() => setShowUploadModal(true)}>
+                <ArrowUpTray className="w-4 h-4 mr-2" />
+                Upload CSV
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
 
-      {isLoading && (
-        <div className="px-6 py-8 text-center">
-          <Text>Loading price list...</Text>
-        </div>
-      )}
-
-      {!isLoading && items.length === 0 && (
-        <div className="px-6 py-8 text-center">
-          <DocumentText className="w-12 h-12 text-ui-fg-muted mx-auto mb-4" />
-          <Text className="text-ui-fg-muted mb-2">No price list items found</Text>
-          <Text size="small" className="text-ui-fg-subtle mb-4">
-            Add items manually or upload a CSV file to get started
-          </Text>
-          <div className="flex gap-2 justify-center">
-            <Button onClick={() => setShowAddItemModal(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Item
-            </Button>
-            <Button variant="secondary" onClick={() => setShowUploadModal(true)}>
-              <ArrowUpTray className="w-4 h-4 mr-2" />
-              Upload CSV
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {!isLoading && items.length > 0 && (
-        <div className="px-6 py-6">
-          <Table>
-            <Table.Header>
-              <Table.Row>
-                <Table.HeaderCell>Product SKU</Table.HeaderCell>
-                <Table.HeaderCell>Supplier SKU</Table.HeaderCell>
-                <Table.HeaderCell>Cost Price</Table.HeaderCell>
-                <Table.HeaderCell>Quantity</Table.HeaderCell>
-                <Table.HeaderCell>Lead Time</Table.HeaderCell>
-                <Table.HeaderCell>Actions</Table.HeaderCell>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {items.map((item: PriceListItem) => (
-                <Table.Row key={item.id}>
-                  <Table.Cell>
-                    <Text className="font-mono text-sm">{item.variant_sku}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text className="font-mono text-sm">{item.supplier_sku}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text className="font-medium">
-                      {priceList?.currency_code || "USD"} {(item.cost_price / 100).toFixed(2)}
-                    </Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text>{item.quantity}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text>{item.lead_time_days ? `${item.lead_time_days} days` : "—"}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <div className="flex gap-2">
-                      <Button variant="secondary" size="small">
-                        <PencilSquare />
-                      </Button>
-                      <Button 
-                        variant="danger" 
-                        size="small" 
-                        onClick={() => deleteItemMutation.mutate(item.id)}
-                      >
-                        <Trash />
-                      </Button>
-                    </div>
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table>
-        </div>
-      )}
+        {(items.length > 0 || isLoading) && (
+          <>
+            <DataTable.Table />
+            <DataTable.Pagination />
+          </>
+        )}
+      </DataTable>
 
       {/* Single Add Item Modal */}
       <FocusModal open={showAddItemModal} onOpenChange={handleModalClose}>
@@ -528,7 +722,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex flex-col gap-y-2">
                     <Label htmlFor="supplier_sku">Supplier SKU</Label>
                     <Controller
@@ -558,15 +752,91 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                     />
                   </div>
                   <div className="flex flex-col gap-y-2">
-                    <Label htmlFor="cost_price">Cost Price *</Label>
+                    <Label htmlFor="gross_price">Gross Price (RRP)</Label>
                     <Controller
-                      name="cost_price"
+                      name="gross_price"
                       control={addItemForm.control}
                       render={({ field, fieldState }) => (
                         <div className="flex flex-col gap-y-1">
                           <Input
                             {...field}
-                            id="cost_price"
+                            id="gross_price"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-ui-fg-error">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
+                        </div>
+                      )}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-y-2">
+                    <Label htmlFor="discount_amount">Discount Amount</Label>
+                    <Controller
+                      name="discount_amount"
+                      control={addItemForm.control}
+                      render={({ field, fieldState }) => (
+                        <div className="flex flex-col gap-y-1">
+                          <Input
+                            {...field}
+                            id="discount_amount"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-ui-fg-error">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
+                        </div>
+                      )}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-y-2">
+                    <Label htmlFor="discount_percentage">Discount %</Label>
+                    <Controller
+                      name="discount_percentage"
+                      control={addItemForm.control}
+                      render={({ field, fieldState }) => (
+                        <div className="flex flex-col gap-y-1">
+                          <Input
+                            {...field}
+                            id="discount_percentage"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            placeholder="0.00"
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-ui-fg-error">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
+                        </div>
+                      )}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-y-2">
+                    <Label htmlFor="net_price">Net Price (What You Pay) *</Label>
+                    <Controller
+                      name="net_price"
+                      control={addItemForm.control}
+                      render={({ field, fieldState }) => (
+                        <div className="flex flex-col gap-y-1">
+                          <Input
+                            {...field}
+                            id="net_price"
                             type="number"
                             step="0.01"
                             min="0"
@@ -630,7 +900,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                       )}
                     />
                   </div>
-                  <div className="md:col-span-2 flex flex-col gap-y-2">
+                  <div className="md:col-span-3 flex flex-col gap-y-2">
                     <Label htmlFor="notes">Notes</Label>
                     <Controller
                       name="notes"
@@ -694,6 +964,230 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
           </FocusModal.Body>
         </FocusModal.Content>
       </FocusModal>
+
+      {/* Edit Item Drawer */}
+      <Drawer open={showEditDrawer} onOpenChange={setShowEditDrawer}>
+        <Drawer.Content>
+          <Drawer.Header>
+            <Drawer.Title>Edit Price List Item</Drawer.Title>
+            <Drawer.Description>
+              Update the pricing information for this item
+            </Drawer.Description>
+          </Drawer.Header>
+          <Drawer.Body className="p-6">
+            <form onSubmit={handleUpdateItem} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-y-2">
+                  <Label htmlFor="edit_supplier_sku">Supplier SKU</Label>
+                  <Controller
+                    name="supplier_sku"
+                    control={editItemForm.control}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        id="edit_supplier_sku"
+                        placeholder="Enter supplier SKU"
+                      />
+                    )}
+                  />
+                </div>
+                <div className="flex flex-col gap-y-2">
+                  <Label htmlFor="edit_variant_sku">Variant SKU</Label>
+                  <Controller
+                    name="variant_sku"
+                    control={editItemForm.control}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        id="edit_variant_sku"
+                        placeholder="Enter variant SKU"
+                      />
+                    )}
+                  />
+                </div>
+                <div className="flex flex-col gap-y-2">
+                  <Label htmlFor="edit_gross_price">Gross Price (RRP)</Label>
+                  <Controller
+                    name="gross_price"
+                    control={editItemForm.control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex flex-col gap-y-1">
+                        <Input
+                          {...field}
+                          id="edit_gross_price"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                        {fieldState.error && (
+                          <Text size="xsmall" className="text-ui-fg-error">
+                            {fieldState.error.message}
+                          </Text>
+                        )}
+                      </div>
+                    )}
+                  />
+                </div>
+                <div className="flex flex-col gap-y-2">
+                  <Label htmlFor="edit_discount_amount">Discount Amount</Label>
+                  <Controller
+                    name="discount_amount"
+                    control={editItemForm.control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex flex-col gap-y-1">
+                        <Input
+                          {...field}
+                          id="edit_discount_amount"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                        {fieldState.error && (
+                          <Text size="xsmall" className="text-ui-fg-error">
+                            {fieldState.error.message}
+                          </Text>
+                        )}
+                      </div>
+                    )}
+                  />
+                </div>
+                <div className="flex flex-col gap-y-2">
+                  <Label htmlFor="edit_discount_percentage">Discount %</Label>
+                  <Controller
+                    name="discount_percentage"
+                    control={editItemForm.control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex flex-col gap-y-1">
+                        <Input
+                          {...field}
+                          id="edit_discount_percentage"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          placeholder="0.00"
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                        {fieldState.error && (
+                          <Text size="xsmall" className="text-ui-fg-error">
+                            {fieldState.error.message}
+                          </Text>
+                        )}
+                      </div>
+                    )}
+                  />
+                </div>
+                <div className="flex flex-col gap-y-2">
+                  <Label htmlFor="edit_net_price">Net Price (What You Pay) *</Label>
+                  <Controller
+                    name="net_price"
+                    control={editItemForm.control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex flex-col gap-y-1">
+                        <Input
+                          {...field}
+                          id="edit_net_price"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                        {fieldState.error && (
+                          <Text size="xsmall" className="text-ui-fg-error">
+                            {fieldState.error.message}
+                          </Text>
+                        )}
+                      </div>
+                    )}
+                  />
+                </div>
+                <div className="flex flex-col gap-y-2">
+                  <Label htmlFor="edit_quantity">Quantity</Label>
+                  <Controller
+                    name="quantity"
+                    control={editItemForm.control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex flex-col gap-y-1">
+                        <Input
+                          {...field}
+                          id="edit_quantity"
+                          type="number"
+                          min="1"
+                          placeholder="1"
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        />
+                        {fieldState.error && (
+                          <Text size="xsmall" className="text-ui-fg-error">
+                            {fieldState.error.message}
+                          </Text>
+                        )}
+                      </div>
+                    )}
+                  />
+                </div>
+                <div className="flex flex-col gap-y-2">
+                  <Label htmlFor="edit_lead_time_days">Lead Time (Days)</Label>
+                  <Controller
+                    name="lead_time_days"
+                    control={editItemForm.control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex flex-col gap-y-1">
+                        <Input
+                          {...field}
+                          id="edit_lead_time_days"
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        />
+                        {fieldState.error && (
+                          <Text size="xsmall" className="text-ui-fg-error">
+                            {fieldState.error.message}
+                          </Text>
+                        )}
+                      </div>
+                    )}
+                  />
+                </div>
+                <div className="md:col-span-3 flex flex-col gap-y-2">
+                  <Label htmlFor="edit_notes">Notes</Label>
+                  <Controller
+                    name="notes"
+                    control={editItemForm.control}
+                    render={({ field }) => (
+                      <Textarea
+                        {...field}
+                        id="edit_notes"
+                        rows={3}
+                        placeholder="Additional notes..."
+                      />
+                    )}
+                  />
+                </div>
+              </div>
+            </form>
+          </Drawer.Body>
+          <Drawer.Footer>
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={handleEditDrawerClose}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleUpdateItem}
+                disabled={editItemMutation.isPending}
+                loading={editItemMutation.isPending}
+              >
+                Update Item
+              </Button>
+            </div>
+          </Drawer.Footer>
+        </Drawer.Content>
+      </Drawer>
     </Container>
   )
 }

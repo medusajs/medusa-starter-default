@@ -16,6 +16,7 @@ import { Plus, Eye, PencilSquare, Users, DocumentText } from "@medusajs/icons"
 import { useQuery } from "@tanstack/react-query"
 import { Link, useNavigate } from "react-router-dom"
 import { CreateSupplierModal } from "../../components/create-supplier-modal"
+import { EditSupplierForm } from "../../components/edit-supplier-form"
 
 export interface Supplier {
   id: string
@@ -159,14 +160,18 @@ const SuppliersPage = () => {
           >
             <Eye className="w-4 h-4" />
           </Button>
-          <Button
-            variant="transparent"
-            size="small"
-            onClick={() => navigate(`/suppliers/${row.original.id}/edit`)}
-            title="Edit Supplier"
-          >
-            <PencilSquare className="w-4 h-4" />
-          </Button>
+          <EditSupplierForm 
+            supplier={row.original}
+            trigger={
+              <Button
+                variant="transparent"
+                size="small"
+                title="Edit Supplier"
+              >
+                <PencilSquare className="w-4 h-4" />
+              </Button>
+            }
+          />
           <Button
             variant="transparent"
             size="small"

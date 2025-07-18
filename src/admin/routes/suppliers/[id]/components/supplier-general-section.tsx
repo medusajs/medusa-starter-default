@@ -6,10 +6,12 @@ import {
   Text,
   toast,
   usePrompt,
+  DropdownMenu,
 } from "@medusajs/ui"
 import { useTranslation } from "react-i18next"
 import { useNavigate, Link } from "react-router-dom"
 import { ActionMenu } from "../../../../components/common/action-menu"
+import { EditSupplierForm } from "../../../../components/edit-supplier-form"
 
 type SupplierGeneralSectionProps = {
   supplier: any
@@ -75,7 +77,17 @@ export const SupplierGeneralSection = ({
                   {
                     label: "Edit",
                     icon: <PencilSquare />,
-                    to: "edit",
+                    render: () => (
+                      <EditSupplierForm 
+                        supplier={supplier}
+                        trigger={
+                          <DropdownMenu.Item className="flex items-center gap-2">
+                            <PencilSquare className="w-4 h-4" />
+                            Edit
+                          </DropdownMenu.Item>
+                        }
+                      />
+                    ),
                   },
                   {
                     label: "View Purchase Orders",

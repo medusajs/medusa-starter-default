@@ -16,11 +16,39 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
 import { toast } from "@medusajs/ui"
 
 import { KanbanColumn } from "./kanban-column"
 import { KanbanCard } from "./kanban-card"
+
+// Hook to fetch customers for display
+const useCustomers = () => {
+  return useQuery({
+    queryKey: ["customers"],
+    queryFn: async () => {
+      const response = await fetch(`/admin/customers?limit=1000`)
+      if (!response.ok) throw new Error("Failed to fetch customers")
+      const data = await response.json()
+      return data.customers || []
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// Hook to fetch technicians for display
+const useTechnicians = () => {
+  return useQuery({
+    queryKey: ["technicians"],
+    queryFn: async () => {
+      const response = await fetch(`/admin/technicians?limit=1000`)
+      if (!response.ok) throw new Error("Failed to fetch technicians")
+      const data = await response.json()
+      return data.technicians || []
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
 
 // Define status constants locally to avoid potential import issues
 const SERVICE_ORDER_STATUS = {
@@ -119,6 +147,36 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
   const [isUpdating, setIsUpdating] = useState<Record<string, boolean>>({})
   const queryClient = useQueryClient()
 
+  // Fetch customers and technicians for lookup
+  const { data: customers = [] } = useCustomers()
+  const { data: technicians = [] } = useTechnicians()
+
+  // Create lookup maps for customers and technicians
+  const customerLookup = useMemo(() => {
+    const map = new Map()
+    customers.forEach(customer => {
+      map.set(customer.id, customer)
+    })
+    return map
+  }, [customers])
+
+  const technicianLookup = useMemo(() => {
+    const map = new Map()
+    technicians.forEach(technician => {
+      map.set(technician.id, technician)
+    })
+    return map
+  }, [technicians])
+
+  // Enhance service orders with customer and technician data
+  const enhancedServiceOrders = useMemo(() => {
+    return serviceOrders.map(order => ({
+      ...order,
+      customer: order.customer_id ? customerLookup.get(order.customer_id) : null,
+      technician: order.technician_id ? technicianLookup.get(order.technician_id) : null,
+    }))
+  }, [serviceOrders, customerLookup, technicianLookup])
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -137,7 +195,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     })
     
     // Group orders by their status, applying optimistic updates
-    serviceOrders.forEach(order => {
+    enhancedServiceOrders.forEach(order => {
       const effectiveStatus = optimisticUpdates[order.id] || order.status
       if (grouped[effectiveStatus]) {
         grouped[effectiveStatus].push({
@@ -148,7 +206,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     })
     
     return grouped
-  }, [serviceOrders, optimisticUpdates])
+  }, [enhancedServiceOrders, optimisticUpdates])
 
   // Mutation for updating order status
   const updateStatusMutation = useMutation({

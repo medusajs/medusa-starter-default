@@ -2,12 +2,14 @@ import { defineWidgetConfig } from "@medusajs/admin-sdk"
 import {
   Container,
   Heading,
-  Table,
   Badge,
   Button,
   Input,
   Text,
   toast,
+  DataTable,
+  useDataTable,
+  createDataTableColumnHelper,
 } from "@medusajs/ui"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
@@ -34,14 +36,41 @@ type VariantWithSourcing = {
       name: string
     }
     price: number
+    gross_price?: number
+    discount_amount?: number
+    discount_percentage?: number
+    net_price: number
     supplier_sku: string | null
     price_list_name?: string | null
+    source_type?: 'supplier_product' | 'price_list'
   }[]
+}
+
+type FlatSourcingRow = {
+  id: string // unique row id
+  variant_id: string
+  variant_title: string
+  variant_sku: string | null
+  supplier_id: string
+  supplier_name: string
+  supplier_sku: string | null
+  price: number
+  gross_price?: number
+  discount_amount?: number
+  discount_percentage?: number
+  net_price: number
+  source_type: 'supplier_product' | 'price_list'
+  sourcing_id: string
 }
 
 const ProductSourcingWidget = ({ data: product }: WidgetProps) => {
   const queryClient = useQueryClient()
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({})
+  const [searchValue, setSearchValue] = useState("")
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  })
 
   const { data, isLoading, error } = useQuery<{
     variants: VariantWithSourcing[]
@@ -58,8 +87,28 @@ const ProductSourcingWidget = ({ data: product }: WidgetProps) => {
       
       return response.json()
     },
-    enabled: !!product?.id, // Prevent query from running until product is available
+    enabled: !!product?.id,
   })
+
+  // Transform nested data to flat structure for DataTable
+  const flattenedSourcingData: FlatSourcingRow[] = data?.variants?.flatMap(variant => 
+    variant.sourcing.map(sourcing => ({
+      id: `${variant.id}-${sourcing.supplier.id}`,
+      variant_id: variant.id,
+      variant_title: variant.title,
+      variant_sku: variant.sku,
+      supplier_id: sourcing.supplier.id,
+      supplier_name: sourcing.supplier.name,
+      supplier_sku: sourcing.supplier_sku,
+      price: sourcing.price,
+      gross_price: sourcing.gross_price,
+      discount_amount: sourcing.discount_amount,
+      discount_percentage: sourcing.discount_percentage,
+      net_price: sourcing.net_price,
+      source_type: sourcing.source_type || 'supplier_product',
+      sourcing_id: sourcing.id
+    }))
+  ) || []
 
   const addItemMutation = useMutation({
     mutationFn: async (data: {
@@ -94,12 +143,8 @@ const ProductSourcingWidget = ({ data: product }: WidgetProps) => {
     }
   })
 
-  const handleAddToPurchaseList = (
-    variant: VariantWithSourcing,
-    sourcingOption: VariantWithSourcing["sourcing"][0]
-  ) => {
-    const key = `${variant.id}-${sourcingOption.supplier.id}`
-    const quantity = quantities[key]
+  const handleAddToPurchaseList = (row: FlatSourcingRow) => {
+    const quantity = quantities[row.id]
 
     if (!quantity || quantity <= 0) {
       toast.warning("Please enter a quantity greater than 0.")
@@ -107,20 +152,13 @@ const ProductSourcingWidget = ({ data: product }: WidgetProps) => {
     }
 
     addItemMutation.mutate({
-      supplier_id: sourcingOption.supplier.id,
+      supplier_id: row.supplier_id,
       item: {
-        product_variant_id: variant.id,
+        product_variant_id: row.variant_id,
         quantity: quantity,
-        unit_price: sourcingOption.price,
+        unit_price: row.net_price,
       },
     })
-  }
-
-  const getCheapestPrice = (sourcingOptions: VariantWithSourcing["sourcing"]) => {
-    if (!sourcingOptions || sourcingOptions.length === 0) {
-      return null
-    }
-    return Math.min(...sourcingOptions.map(s => s.price))
   }
 
   const formatPrice = (price: number) => {
@@ -129,6 +167,118 @@ const ProductSourcingWidget = ({ data: product }: WidgetProps) => {
       currency: 'USD',
     }).format(price / 100)
   }
+
+  // DataTable setup
+  const columnHelper = createDataTableColumnHelper<FlatSourcingRow>()
+  
+  const columns = [
+    columnHelper.accessor("variant_title", {
+      header: "Variant",
+      enableSorting: true,
+      cell: ({ getValue, row }) => (
+        <div className="flex flex-col gap-y-1">
+          <Text weight="plus">{getValue()}</Text>
+          {row.original.variant_sku && (
+            <Text size="small" className="text-ui-fg-muted">
+              SKU: {row.original.variant_sku}
+            </Text>
+          )}
+        </div>
+      ),
+    }),
+    columnHelper.accessor("supplier_name", {
+      header: "Supplier",
+      enableSorting: true,
+      cell: ({ getValue }) => (
+        <Text weight="plus">{getValue()}</Text>
+      ),
+    }),
+    columnHelper.accessor("supplier_sku", {
+      header: "Supplier SKU",
+      enableSorting: true,
+      cell: ({ getValue }) => (
+        <Text className="text-ui-fg-muted">{getValue() || "-"}</Text>
+      ),
+    }),
+    columnHelper.accessor("gross_price", {
+      header: "Gross Price",
+      enableSorting: true,
+      cell: ({ getValue }) => (
+        <Text>{getValue() ? formatPrice(getValue()) : "—"}</Text>
+      ),
+    }),
+    columnHelper.display({
+      id: "discount",
+      header: "Discount",
+      cell: ({ row }) => {
+        const { discount_amount, discount_percentage } = row.original
+        if (discount_amount) {
+          return <Text>{formatPrice(discount_amount)}</Text>
+        }
+        if (discount_percentage) {
+          return <Text>{discount_percentage}%</Text>
+        }
+        return <Text>—</Text>
+      },
+    }),
+    columnHelper.accessor("net_price", {
+      header: "Net Price",
+      enableSorting: true,
+      cell: ({ getValue }) => (
+        <Text weight="plus">{formatPrice(getValue())}</Text>
+      ),
+    }),
+    columnHelper.display({
+      id: "quantity",
+      header: "Quantity",
+      cell: ({ row }) => (
+        <Input
+          type="number"
+          min="1"
+          step="1"
+          placeholder="0"
+          className="w-20"
+          value={quantities[row.original.id] || ""}
+          onChange={(e) => {
+            const value = parseInt(e.target.value) || 0
+            setQuantities({
+              ...quantities,
+              [row.original.id]: value,
+            })
+          }}
+        />
+      ),
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: "Action",
+      cell: ({ row }) => (
+        <Button
+          size="small"
+          onClick={() => handleAddToPurchaseList(row.original)}
+          disabled={addItemMutation.isPending || !quantities[row.original.id] || quantities[row.original.id] <= 0}
+        >
+          {addItemMutation.isPending ? "Adding..." : "Add to List"}
+        </Button>
+      ),
+    }),
+  ]
+
+  const table = useDataTable({
+    data: flattenedSourcingData,
+    columns,
+    rowCount: flattenedSourcingData.length,
+    getRowId: (row) => row.id,
+    isLoading,
+    search: {
+      state: searchValue,
+      onSearchChange: setSearchValue,
+    },
+    pagination: {
+      state: pagination,
+      onPaginationChange: setPagination,
+    },
+  })
 
   if (!product?.id) {
     return null
@@ -150,128 +300,31 @@ const ProductSourcingWidget = ({ data: product }: WidgetProps) => {
     )
   }
 
-  return (
-    <Container className="divide-y p-0">
-      <div className="px-6 py-4">
-        <Heading level="h2">Sourcing</Heading>
-        {data?.variants && (
-          <Text size="small" className="text-ui-fg-subtle mt-1">
-            {data.variants.length} variant{data.variants.length !== 1 ? 's' : ''} available
-          </Text>
-        )}
-      </div>
-      
-      {isLoading && (
-        <div className="px-6 py-8 text-center">
-          <Text>Loading sourcing options...</Text>
+  if (flattenedSourcingData.length === 0 && !isLoading) {
+    return (
+      <Container className="divide-y p-0">
+        <div className="px-6 py-4">
+          <Heading level="h2">Sourcing</Heading>
         </div>
-      )}
-      
-      {data?.variants && data.variants.length === 0 && (
         <div className="px-6 py-8 text-center">
           <Text className="text-ui-fg-muted">No sourcing options available for this product</Text>
         </div>
-      )}
-      
-      {data?.variants?.map((variant) => (
-        <div key={variant.id} className="px-6 py-6">
-          <div className="mb-4">
-            <Heading level="h3" className="mb-1">
-              {variant.title}
-            </Heading>
-            {variant.sku && (
-              <Text size="small" className="text-ui-fg-subtle">
-                SKU: {variant.sku}
-              </Text>
-            )}
-          </div>
-          
-          {variant.sourcing.length === 0 ? (
-            <Text className="text-ui-fg-muted">No sourcing options available for this variant</Text>
-          ) : (
-            <Table>
-              <Table.Header>
-                <Table.Row>
-                  <Table.HeaderCell>Supplier</Table.HeaderCell>
-                  <Table.HeaderCell>Price</Table.HeaderCell>
-                  <Table.HeaderCell>Quantity</Table.HeaderCell>
-                  <Table.HeaderCell>Action</Table.HeaderCell>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {variant.sourcing.map((sourcingOption) => {
-                  const cheapestPrice = getCheapestPrice(variant.sourcing)
-                  const isCheapest = sourcingOption.price === cheapestPrice
-                  const inputKey = `${variant.id}-${sourcingOption.supplier.id}`
+      </Container>
+    )
+  }
 
-                  return (
-                    <Table.Row key={sourcingOption.id}>
-                      <Table.Cell>
-                        <div>
-                          <Text weight="plus">{sourcingOption.supplier.name}</Text>
-                          {sourcingOption.supplier_sku && (
-                            <Text size="small" className="text-ui-fg-subtle">
-                              Supplier SKU: {sourcingOption.supplier_sku}
-                            </Text>
-                          )}
-                          {sourcingOption.price_list_name && (
-                            <div className="flex items-center gap-1 mt-1">
-                              <Badge color="blue" size="2xsmall">
-                                Price List
-                              </Badge>
-                              <Text size="small" className="text-ui-fg-subtle">
-                                {sourcingOption.price_list_name}
-                              </Text>
-                            </div>
-                          )}
-                        </div>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <div className="flex items-center gap-2">
-                          <Text>{formatPrice(sourcingOption.price)}</Text>
-                          {isCheapest && variant.sourcing.length > 1 && (
-                            <Badge color="green" size="2xsmall">
-                              Cheapest
-                            </Badge>
-                          )}
-                        </div>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Input
-                          type="number"
-                          min="1"
-                          step="1"
-                          placeholder="0"
-                          className="w-20"
-                          value={quantities[inputKey] || ""}
-                          onChange={(e) => {
-                            const value = parseInt(e.target.value) || 0
-                            setQuantities({
-                              ...quantities,
-                              [inputKey]: value,
-                            })
-                          }}
-                        />
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Button
-                          size="small"
-                          onClick={() =>
-                            handleAddToPurchaseList(variant, sourcingOption)
-                          }
-                          disabled={addItemMutation.isPending || !quantities[inputKey] || quantities[inputKey] <= 0}
-                        >
-                          {addItemMutation.isPending ? "Adding..." : "Add to List"}
-                        </Button>
-                      </Table.Cell>
-                    </Table.Row>
-                  )
-                })}
-              </Table.Body>
-            </Table>
-          )}
-        </div>
-      ))}
+  return (
+    <Container className="divide-y p-0">
+      <DataTable instance={table}>
+        <DataTable.Toolbar>
+          <div className="flex items-center justify-between w-full">
+            <Heading level="h2">Sourcing</Heading>
+            <DataTable.Search placeholder="Search sourcing options..." />
+          </div>
+        </DataTable.Toolbar>
+        <DataTable.Table />
+        <DataTable.Pagination />
+      </DataTable>
     </Container>
   )
 }

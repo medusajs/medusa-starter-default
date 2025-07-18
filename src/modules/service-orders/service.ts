@@ -195,9 +195,9 @@ class ServiceOrdersService extends MedusaService({
     // Get service orders using the base service method
     const serviceOrders = await this.listServiceOrders(filters)
     
-    // For now, return the service orders as-is
-    // In a full implementation, you would fetch linked customer and technician data here
-    // This ensures consistency with the detail view data structure
+    // For now, return service orders as-is and let the frontend handle the lookup
+    // This matches the behavior seen in the list view where lookups are done client-side
+    // TODO: Implement proper server-side linking when MedusaJS Query API is fully set up
     return serviceOrders
   }
   

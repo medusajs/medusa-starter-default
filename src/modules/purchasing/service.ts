@@ -317,7 +317,10 @@ class PurchasingService extends MedusaService({
     product_id: string
     supplier_sku?: string
     variant_sku?: string
-    cost_price: number
+    gross_price?: number
+    discount_amount?: number
+    discount_percentage?: number
+    net_price: number
     quantity?: number
     lead_time_days?: number
     notes?: string
@@ -341,7 +344,10 @@ class PurchasingService extends MedusaService({
         {
           supplier_sku: itemData.supplier_sku,
           variant_sku: itemData.variant_sku,
-          cost_price: itemData.cost_price,
+          gross_price: itemData.gross_price,
+          discount_amount: itemData.discount_amount,
+          discount_percentage: itemData.discount_percentage,
+          net_price: itemData.net_price,
           quantity: itemData.quantity || 1,
           lead_time_days: itemData.lead_time_days,
           notes: itemData.notes
@@ -355,7 +361,10 @@ class PurchasingService extends MedusaService({
         product_id: itemData.product_id,
         supplier_sku: itemData.supplier_sku,
         variant_sku: itemData.variant_sku,
-        cost_price: itemData.cost_price,
+        gross_price: itemData.gross_price,
+        discount_amount: itemData.discount_amount,
+        discount_percentage: itemData.discount_percentage,
+        net_price: itemData.net_price,
         quantity: itemData.quantity || 1,
         lead_time_days: itemData.lead_time_days,
         notes: itemData.notes

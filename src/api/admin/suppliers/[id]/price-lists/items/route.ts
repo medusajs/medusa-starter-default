@@ -15,7 +15,10 @@ type PostAdminCreatePriceListItemType = {
   product_id: string
   supplier_sku?: string
   variant_sku?: string
-  cost_price: number
+  gross_price?: number
+  discount_amount?: number
+  discount_percentage?: number
+  net_price: number
   quantity?: number
   lead_time_days?: number
   notes?: string
@@ -24,7 +27,10 @@ type PostAdminCreatePriceListItemType = {
 type PutAdminUpdatePriceListItemType = {
   supplier_sku?: string
   variant_sku?: string
-  cost_price: number
+  gross_price?: number
+  discount_amount?: number
+  discount_percentage?: number
+  net_price: number
   quantity?: number
   lead_time_days?: number
   notes?: string
