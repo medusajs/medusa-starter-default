@@ -89,13 +89,13 @@ const SuppliersPage = () => {
 
   const columns = [
     columnHelper.accessor("name", {
-      header: "Supplier Name",
+      header: "Supplier",
       enableSorting: true,
       cell: ({ getValue, row }) => (
         <div>
           <Link 
             to={`/suppliers/${row.original.id}`}
-            className="font-medium text-blue-600 hover:underline"
+            className="txt-compact-medium-plus hover:text-ui-fg-base transition-colors"
           >
             {getValue()}
           </Link>
@@ -112,7 +112,7 @@ const SuppliersPage = () => {
       cell: ({ getValue, row }) => (
         <div>
           {getValue() && (
-            <Text className="font-medium">{getValue()}</Text>
+            <Text className="txt-compact-medium">{getValue()}</Text>
           )}
           {row.original.email && (
             <Text size="small" className="text-ui-fg-subtle">
@@ -137,20 +137,23 @@ const SuppliersPage = () => {
     }),
     columnHelper.accessor("purchase_orders_count", {
       header: "Orders",
-      cell: ({ getValue, row }) => (
-        <div>
-          <Text>{getValue() || 0} orders</Text>
-          {row.original.last_order_date && (
-            <Text size="small" className="text-ui-fg-subtle">
-              Last: {new Date(row.original.last_order_date).toLocaleDateString()}
-            </Text>
-          )}
-        </div>
+      cell: ({ getValue }) => (
+        <Text className="txt-compact-medium">
+          {getValue() || 0}
+        </Text>
+      ),
+    }),
+    columnHelper.accessor("last_order_date", {
+      header: "Last Order",
+      cell: ({ getValue }) => (
+        <Text className="txt-compact-small text-ui-fg-subtle">
+          {getValue() ? new Date(getValue()).toLocaleDateString() : "—"}
+        </Text>
       ),
     }),
     columnHelper.display({
       id: "actions",
-      header: "Actions",
+      header: "",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <Button

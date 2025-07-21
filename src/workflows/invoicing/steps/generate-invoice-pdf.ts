@@ -7,6 +7,7 @@ import {
   ContainerRegistrationKeys 
 } from "@medusajs/framework/utils"
 import { INVOICING_MODULE } from "../../../modules/invoicing"
+import puppeteer from "puppeteer"
 
 type GenerateInvoicePdfInput = {
   invoice_id: string
@@ -67,16 +68,41 @@ export const generateInvoicePdfStep = createStep(
     // Generate HTML content for PDF
     const htmlContent = generateInvoiceHtml(invoiceData, customer)
     
-    // Convert HTML to PDF (in a real implementation, you'd use a library like Puppeteer)
-    // For now, we'll create a simple HTML file that can be converted to PDF
-    const filename = `invoice-${invoiceData.invoice_number}.html`
-    
-    const file = await fileService.createFiles({
-      filename,
-      mimeType: "text/html",
-      content: htmlContent,
-      access: "private",
+    // Convert HTML to PDF using Puppeteer
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     })
+    
+    try {
+      const page = await browser.newPage()
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
+      
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '20mm',
+          bottom: '20mm',
+          left: '15mm',
+          right: '15mm'
+        }
+      })
+      
+      const filename = `invoice-${invoiceData.invoice_number}.pdf`
+      
+      const file = await fileService.createFiles({
+        filename,
+        mimeType: "application/pdf",
+        content: pdfBuffer,
+        access: "private",
+      })
+      
+      await browser.close()
+    } catch (error) {
+      await browser.close()
+      throw error
+    }
     
     // Update invoice with PDF file ID
     await invoicingService.updateInvoices(input.invoice_id, {
