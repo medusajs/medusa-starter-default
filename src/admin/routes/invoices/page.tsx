@@ -34,7 +34,11 @@ import {
 import { useNavigate, Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
+<<<<<<< HEAD
 import { useCustomTranslation } from "../../hooks/use-custom-translation"
+=======
+import { InvoiceViewModal } from "../../components/invoice-view-modal"
+>>>>>>> 22e8989 (Improve Invoicing module)
 
 // Types for invoice data
 interface Invoice {
@@ -189,24 +193,25 @@ const useDeleteInvoice = () => {
   })
 }
 
-const useGeneratePdf = () => {
+const useDownloadInvoice = () => {
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/admin/invoices/${id}/pdf`, {
-        method: "POST",
-      })
-      if (!response.ok) throw new Error("Failed to generate PDF")
-      return response.json()
-    },
-    onSuccess: (data) => {
-      // Create download link
+      // Trigger download by opening URL with download parameter
+      const response = await fetch(`/admin/invoices/${id}/pdf?download=true`)
+      if (!response.ok) throw new Error("Failed to download invoice")
+      
+      // Create blob from response and trigger download
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
-      link.href = data.pdf_url
-      link.download = data.filename
+      link.href = url
+      link.download = `factuur-${Date.now()}.html` // Fallback filename
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
       
+<<<<<<< HEAD
       toast.success("PDF generated", {
         description: "The invoice PDF has been successfully generated and downloaded.",
       })
@@ -214,6 +219,18 @@ const useGeneratePdf = () => {
     onError: () => {
       toast.error("Error", {
         description: "An error occurred while generating the PDF.",
+=======
+      return { success: true }
+    },
+    onSuccess: () => {
+      toast.success("Download gestart", {
+        description: "De factuur wordt gedownload.",
+      })
+    },
+    onError: () => {
+      toast.error("Fout", {
+        description: "Er is een fout opgetreden bij het downloaden van de factuur.",
+>>>>>>> 22e8989 (Improve Invoicing module)
       })
     },
   })
@@ -223,16 +240,57 @@ const useGeneratePdf = () => {
 const PAGE_SIZE = 20
 
 // Invoice actions component
+<<<<<<< HEAD
 const InvoiceActions = ({ invoice }: { invoice: Invoice }) => {
   const { t } = useCustomTranslation()
+=======
+const InvoiceActions = ({ 
+  invoice, 
+  onViewClick 
+}: { 
+  invoice: Invoice
+  onViewClick: (invoice: Invoice) => void 
+}) => {
+>>>>>>> 22e8989 (Improve Invoicing module)
   const navigate = useNavigate()
-  const generatePdf = useGeneratePdf()
+  const downloadInvoice = useDownloadInvoice()
 
   return (
+<<<<<<< HEAD
     <DropdownMenu>
       <DropdownMenu.Trigger asChild>
         <IconButton size="small" variant="transparent">
           <EllipsisHorizontal className="h-4 w-4" />
+=======
+    <div className="flex items-center gap-2">
+      <IconButton
+        size="small"
+        variant="transparent"
+        onClick={() => onViewClick(invoice)}
+        title="Bekijk factuur"
+      >
+        <Eye className="w-4 h-4" />
+      </IconButton>
+      
+      <IconButton
+        size="small"
+        variant="transparent"
+        onClick={() => downloadInvoice.mutate(invoice.id)}
+        disabled={downloadInvoice.isPending}
+        title="Download factuur"
+      >
+        <ArrowDownTray className="w-4 h-4" />
+      </IconButton>
+      
+      {invoice.status === "draft" && (
+        <IconButton
+          size="small"
+          variant="transparent"
+          onClick={() => navigate(`/invoices/${invoice.id}/edit`)}
+          title="Bewerk factuur"
+        >
+          <PencilSquare className="w-4 h-4" />
+>>>>>>> 22e8989 (Improve Invoicing module)
         </IconButton>
       </DropdownMenu.Trigger>
       <DropdownMenu.Content side="bottom">
@@ -273,6 +331,10 @@ const InvoicesListTable = () => {
   const { data, isLoading, error } = useInvoices()
   const filters = useInvoiceFilters()
   
+  // Modal state
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+  
   // Filter state management
   const [search, setSearch] = useState("")
   const [filtering, setFiltering] = useState<DataTableFilteringState>({})
@@ -281,7 +343,24 @@ const InvoicesListTable = () => {
     pageSize: PAGE_SIZE,
   })
 
+<<<<<<< HEAD
   // Data processing (move before conditional returns)
+=======
+  const handleViewInvoice = (invoice: Invoice) => {
+    setSelectedInvoice(invoice)
+    setIsViewModalOpen(true)
+  }
+
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false)
+    setSelectedInvoice(null)
+  }
+
+  if (error) {
+    throw error
+  }
+
+>>>>>>> 22e8989 (Improve Invoicing module)
   const invoices = data?.invoices || []
   const count = data?.count || 0
 
@@ -293,12 +372,12 @@ const InvoicesListTable = () => {
       header: t("custom.invoices.number"),
       enableSorting: true,
       cell: ({ getValue, row }) => (
-        <Link 
-          to={`/invoices/${row.original.id}`}
-          className="text-blue-600 hover:text-blue-800 font-medium"
+        <button
+          onClick={() => handleViewInvoice(row.original)}
+          className="text-blue-600 hover:text-blue-800 font-medium cursor-pointer text-left"
         >
           {getValue()}
-        </Link>
+        </button>
       ),
     }),
     columnHelper.accessor("customer", {
@@ -345,8 +424,18 @@ const InvoicesListTable = () => {
     }),
     columnHelper.display({
       id: "actions",
+<<<<<<< HEAD
       header: t("custom.general.actions"),
       cell: ({ row }) => <InvoiceActions invoice={row.original} />,
+=======
+      header: "Acties",
+      cell: ({ row }) => (
+        <InvoiceActions 
+          invoice={row.original} 
+          onViewClick={handleViewInvoice}
+        />
+      ),
+>>>>>>> 22e8989 (Improve Invoicing module)
     }),
   ]
 
@@ -427,6 +516,15 @@ const InvoicesListTable = () => {
         <DataTable.Table />
         <DataTable.Pagination />
       </DataTable>
+
+      {/* View Modal */}
+      {selectedInvoice && (
+        <InvoiceViewModal
+          invoice={selectedInvoice}
+          isOpen={isViewModalOpen}
+          onClose={handleCloseViewModal}
+        />
+      )}
     </Container>
   )
 }

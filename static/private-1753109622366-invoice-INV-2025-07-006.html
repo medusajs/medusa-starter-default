@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factuur INV-2025-07-006</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            line-height: 1.4;
+        }
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #2c5530;
+            padding-bottom: 20px;
+        }
+        .company-info {
+            flex: 1;
+        }
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c5530;
+            margin-bottom: 5px;
+        }
+        .invoice-title {
+            text-align: right;
+            flex: 1;
+        }
+        .invoice-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #d32f2f;
+            margin-bottom: 10px;
+        }
+        .invoice-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .bill-to, .invoice-details {
+            flex: 1;
+            margin-right: 20px;
+        }
+        .section-title {
+            font-weight: bold;
+            color: #2c5530;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        .items-table th {
+            background-color: #2c5530;
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+        .items-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .items-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .totals {
+            float: right;
+            width: 300px;
+            margin-top: 20px;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+        .total-row.final {
+            border-top: 2px solid #2c5530;
+            font-weight: bold;
+            font-size: 18px;
+            color: #2c5530;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        .footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+        }
+        .payment-terms {
+            background-color: #f5f5f5;
+            padding: 15px;
+            margin-top: 20px;
+            border-left: 4px solid #2c5530;
+        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="invoice-header">
+        <div class="company-info">
+            <div class="company-name">Tractor & Machinery Sales</div>
+            <div>Tractorstraat 123</div>
+            <div>2000 Antwerpen, België</div>
+            <div>BTW: BE 0123.456.789</div>
+            <div>Tel: +32 3 123 45 67</div>
+            <div>Email: info@tractorsales.be</div>
+        </div>
+        <div class="invoice-title">
+            <div class="invoice-number">FACTUUR</div>
+            <div class="invoice-number">INV-2025-07-006</div>
+        </div>
+    </div>
+
+    <div class="invoice-info">
+        <div class="bill-to">
+            <div class="section-title">Facturatie Adres</div>
+            <div><strong>Hannes Depauw</strong></div>
+            
+            <div>Admin Created Order</div>
+            
+            <div>1000 Brussels</div>
+            <div>be</div>
+            <div>Email: hannesdepauw@hotmail.com</div>
+            
+        </div>
+        <div class="invoice-details">
+            <div class="section-title">Factuur Details</div>
+            <div><strong>Factuurdatum:</strong> 21/7/2025</div>
+            <div><strong>Vervaldatum:</strong> 20/8/2025</div>
+            <div><strong>Status:</strong> Concept</div>
+            <div><strong>Betalingsvoorwaarden:</strong> 30 dagen</div>
+        </div>
+    </div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>Beschrijving</th>
+                <th>SKU</th>
+                <th class="text-center">Aantal</th>
+                <th class="text-right">Eenheidsprijs</th>
+                <th class="text-right">BTW</th>
+                <th class="text-right">Totaal</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+                <tr>
+                    <td>
+                        <strong>0000000121</strong>
+                        <br><small>Default</small>
+                        
+                    </td>
+                    <td>-</td>
+                    <td class="text-center">1</td>
+                    <td class="text-right">€ 0,10</td>
+                    <td class="text-right">21%</td>
+                    <td class="text-right">€ 0,10</td>
+                </tr>
+            
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="total-row">
+            <span>Subtotaal:</span>
+            <span>€ 0,10</span>
+        </div>
+        
+        <div class="total-row">
+            <span>BTW:</span>
+            <span>€ 0,02</span>
+        </div>
+        <div class="total-row final">
+            <span>Totaal te betalen:</span>
+            <span>€ 0,12</span>
+        </div>
+    </div>
+
+    <div style="clear: both;"></div>
+
+    
+    <div class="payment-terms">
+        <div class="section-title">Opmerkingen</div>
+        <div>Automatisch gegenereerde factuur bij fulfillment</div>
+    </div>
+    
+
+    <div class="payment-terms">
+        <div class="section-title">Betalingsinformatie</div>
+        <div>Gelieve te betalen binnen 30 dagen na factuurdatum.</div>
+        <div>Bankrekeningnummer: BE68 5390 0754 7034</div>
+        <div>BIC: BBRUBEBB</div>
+        <div>Vermeld bij betaling: INV-2025-07-006</div>
+    </div>
+
+    <div class="footer">
+        <div class="text-center">
+            <div>Tractor & Machinery Sales • BTW: BE 0123.456.789 • KvK: 12345678</div>
+            <div>www.tractorsales.be • info@tractorsales.be • +32 3 123 45 67</div>
+        </div>
+    </div>
+</body>
+</html>
+  

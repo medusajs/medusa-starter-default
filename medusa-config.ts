@@ -39,6 +39,7 @@ module.exports = defineConfig({
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     }
   },
+<<<<<<< HEAD
   admin: {
     vite: () => {
       return {
@@ -80,6 +81,17 @@ module.exports = defineConfig({
       }
     },
   },
+=======
+  plugins: [
+    {
+      resolve: "@rsc-labs/medusa-documents-v2",
+      options: {
+        invoice_number_template: "INV-{year}-{month}-{sequence}",
+        document_language: "nl"
+      }
+    }
+  ],
+>>>>>>> 22e8989 (Improve Invoicing module)
   modules: [
     // Use in-memory modules for development, Redis for production
     ...(process.env.NODE_ENV === 'development' ? [

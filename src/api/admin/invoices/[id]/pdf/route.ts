@@ -1,7 +1,11 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { INVOICING_MODULE } from "../../../../../modules/invoicing"
+<<<<<<< HEAD
 import { generateInvoicePdfWorkflow } from "../../../../../workflows/invoicing/generate-invoice-pdf-workflow"
+=======
+>>>>>>> 22e8989 (Improve Invoicing module)
 import { Modules } from "@medusajs/framework/utils"
+import { generateInvoicePdfWorkflow } from "../../../../../workflows/invoicing/generate-invoice-pdf"
 
 interface RegenerateInvoicePdfRequest {
   regenerate?: boolean
@@ -12,6 +16,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     const invoicingService: any = req.scope.resolve(INVOICING_MODULE)
     const fileService = req.scope.resolve(Modules.FILE)
     const invoiceId = req.params.id
+    const { download = false, preview = false } = req.query
     
     // Get invoice to check if PDF already exists
     const invoice = await invoicingService.retrieveInvoice(invoiceId)
@@ -27,9 +32,17 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     
     // Generate PDF if it doesn't exist
     if (!fileId) {
+<<<<<<< HEAD
       const { result } = await generateInvoicePdfWorkflow.run({
         input: { invoice_id: invoiceId }
       }, { container: req.scope })
+=======
+      const { result } = await generateInvoicePdfWorkflow(req.scope).run({
+        input: {
+          invoice_id: invoiceId
+        }
+      })
+>>>>>>> 22e8989 (Improve Invoicing module)
       
       fileId = result.file.id
     }
@@ -37,18 +50,92 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     // Get file details
     const file = await fileService.retrieveFile(fileId)
     
+<<<<<<< HEAD
     // Return file URL for download
     res.json({ 
       file: {
         id: file.id,
         url: file.url,
         filename: `invoice-${invoice.invoice_number}.pdf`
+=======
+    // If we have an order_id and the documents plugin generated a PDF
+    if (invoice.order_id) {
+      const documentsService = req.scope.resolve("documentsModuleService")
+      
+      try {
+        // For download mode, use the plugin's direct PDF endpoint
+        if (download === 'true') {
+          return res.redirect(`/admin/orders/${invoice.order_id}/invoice/pdf`)
+        }
+        
+        // For preview mode, return the plugin's PDF URL
+        res.json({ 
+          file: {
+            id: invoice.pdf_file_id || `invoice-${invoice.id}`,
+            url: `/admin/orders/${invoice.order_id}/invoice/pdf`,
+            filename: `factuur-${invoice.invoice_number}.pdf`,
+            content_type: 'application/pdf'
+          },
+          invoice: {
+            id: invoice.id,
+            invoice_number: invoice.invoice_number,
+            status: invoice.status,
+            total_amount: invoice.total_amount,
+            currency_code: invoice.currency_code
+          }
+        })
+        return
+      } catch (documentsError) {
+        console.warn("Could not use documents plugin, falling back:", documentsError.message)
+>>>>>>> 22e8989 (Improve Invoicing module)
       }
-    })
+    }
+
+    // Fallback: Check if we have a generated file
+    if (fileId) {
+      // Get file details
+      const file = await fileService.retrieveFile(fileId)
+      
+      // For download mode, trigger actual file download
+      if (download === 'true') {
+        res.setHeader('Content-Disposition', `attachment; filename="factuur-${invoice.invoice_number}.pdf"`)
+        res.setHeader('Content-Type', 'application/pdf')
+        
+        // Fetch file content and send as stream
+        const fileResponse = await fetch(file.url)
+        const fileBuffer = await fileResponse.arrayBuffer()
+        
+        res.send(Buffer.from(fileBuffer))
+        return
+      }
+      
+      // For preview mode or regular API call, return file info
+      res.json({ 
+        file: {
+          id: file.id,
+          url: file.url,
+          filename: `factuur-${invoice.invoice_number}.pdf`,
+          content_type: 'application/pdf'
+        },
+        invoice: {
+          id: invoice.id,
+          invoice_number: invoice.invoice_number,
+          status: invoice.status,
+          total_amount: invoice.total_amount,
+          currency_code: invoice.currency_code
+        }
+      })
+    } else {
+      // No file available
+      return res.status(404).json({ 
+        error: "PDF not available",
+        details: "Invoice PDF has not been generated yet"
+      })
+    }
   } catch (error) {
-    console.error("Error generating invoice PDF:", error)
+    console.error("Error handling invoice PDF:", error)
     res.status(500).json({ 
-      error: "Failed to generate invoice PDF",
+      error: "Failed to handle invoice PDF",
       details: error instanceof Error ? error.message : "Unknown error"
     })
   }
@@ -61,15 +148,27 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     
     // Always regenerate if specifically requested
     if (regenerate) {
+<<<<<<< HEAD
       const { result } = await generateInvoicePdfWorkflow.run({
         input: { invoice_id: invoiceId }
       }, { container: req.scope })
+=======
+      const { result } = await generateInvoicePdfWorkflow(req.scope).run({
+        input: {
+          invoice_id: invoiceId
+        }
+      })
+>>>>>>> 22e8989 (Improve Invoicing module)
       
       return res.json({ 
         file: {
           id: result.file.id,
           url: result.file.url,
+<<<<<<< HEAD
           filename: `invoice-${result.invoice.invoice_number}.pdf`
+=======
+          filename: `factuur-${result.invoice.invoice_number}.pdf`
+>>>>>>> 22e8989 (Improve Invoicing module)
         },
         regenerated: true
       })
