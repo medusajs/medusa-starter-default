@@ -82,7 +82,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
   
   // Fetch customers for the dropdown
   const { data: customers = [], isLoading: customersLoading } = useQuery({
-    queryKey: ["customers"],
+    queryKey: ["edit-service-order-customers"],
     queryFn: async () => {
       const response = await fetch("/admin/customers?limit=100")
       if (!response.ok) {
@@ -93,22 +93,9 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
     },
   })
   
-  // Fetch machines for the dropdown
-  const { data: machines = [], isLoading: machinesLoading } = useQuery({
-    queryKey: ["machines"],
-    queryFn: async () => {
-      const response = await fetch("/admin/machines?limit=100&status=active")
-      if (!response.ok) {
-        throw new Error("Failed to fetch machines")
-      }
-      const data = await response.json()
-      return data.machines || []
-    },
-  })
-  
   // Fetch technicians for the dropdown
   const { data: technicians = [], isLoading: techniciansLoading } = useQuery({
-    queryKey: ["technicians"],
+    queryKey: ["edit-service-order-technicians"],
     queryFn: async () => {
       const response = await fetch("/admin/technicians?limit=100&status=active")
       if (!response.ok) {
@@ -143,6 +130,31 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
       service_postal_code: "",
       service_country: "",
     },
+  })
+
+  // Watch customer_id for machines query
+  const selectedCustomerId = form.watch('customer_id')
+
+  // Fetch machines for the dropdown
+  const { data: machines = [], isLoading: machinesLoading } = useQuery({
+    queryKey: ["machines", selectedCustomerId],
+    queryFn: async () => {
+      // If customer is selected, fetch only their machines
+      const params = new URLSearchParams({
+        limit: '100',
+        status: 'active',
+      })
+      if (selectedCustomerId) {
+        params.append('customer_id', selectedCustomerId)
+      }
+      const response = await fetch(`/admin/machines?${params}`)
+      if (!response.ok) {
+        throw new Error("Failed to fetch machines")
+      }
+      const data = await response.json()
+      return data.machines || []
+    },
+    enabled: !!selectedCustomerId, // Only fetch when customer is selected
   })
 
   // Update form values when serviceOrder changes
@@ -231,9 +243,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
   }
 
   // Filter machines by selected customer
-  const customerMachines = machines.filter((machine: any) => 
-    !form.watch('customer_id') || machine.customer_id === form.watch('customer_id')
-  )
+  const customerMachines = machines
 
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>

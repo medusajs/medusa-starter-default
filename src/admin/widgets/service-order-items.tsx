@@ -10,7 +10,7 @@ import {
   FocusModal,
   toast
 } from "@medusajs/ui"
-import { Tools, Plus } from "@medusajs/icons"
+import { Tools, Plus, Trash } from "@medusajs/icons"
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
@@ -70,6 +70,8 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["service-order-items", serviceOrder.id] })
       queryClient.invalidateQueries({ queryKey: ["service-order", serviceOrder.id] })
+      // Also invalidate comments to show the event
+      queryClient.invalidateQueries({ queryKey: ["service-order-comments", serviceOrder.id] })
       setShowAddModal(false)
       setFormData({
         title: '',
@@ -86,9 +88,35 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
     }
   })
 
+  const deleteItemMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      const response = await fetch(`/admin/service-orders/${serviceOrder.id}/items/${itemId}`, {
+        method: "DELETE",
+      })
+      if (!response.ok) throw new Error("Failed to remove item")
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["service-order-items", serviceOrder.id] })
+      queryClient.invalidateQueries({ queryKey: ["service-order", serviceOrder.id] })
+      // Also invalidate comments to show the event
+      queryClient.invalidateQueries({ queryKey: ["service-order-comments", serviceOrder.id] })
+      toast.success("Item removed successfully")
+    },
+    onError: (error) => {
+      toast.error(`Failed to remove item: ${error.message}`)
+    }
+  })
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     addItemMutation.mutate(formData)
+  }
+
+  const handleDeleteItem = (itemId: string, itemTitle: string) => {
+    if (confirm(`Are you sure you want to remove "${itemTitle}" from this service order?`)) {
+      deleteItemMutation.mutate(itemId)
+    }
   }
 
   if (!serviceOrder) {
@@ -135,6 +163,7 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
                 <Table.HeaderCell>Unit Price</Table.HeaderCell>
                 <Table.HeaderCell>Total</Table.HeaderCell>
                 <Table.HeaderCell>Status</Table.HeaderCell>
+                <Table.HeaderCell>Actions</Table.HeaderCell>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -163,9 +192,24 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
                     <Text size="small">${item.total_price?.toFixed(2)}</Text>
                   </Table.Cell>
                   <Table.Cell>
-                    <Badge size="2xsmall" variant="secondary">
+                    <Badge size="2xsmall" color={
+                      item.status === 'pending' ? 'orange' :
+                      item.status === 'ordered' ? 'blue' :
+                      item.status === 'received' ? 'green' :
+                      item.status === 'used' ? 'purple' : 'grey'
+                    }>
                       {item.status}
                     </Badge>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Button
+                      variant="transparent"
+                      size="small"
+                      onClick={() => handleDeleteItem(item.id, item.title)}
+                      disabled={deleteItemMutation.isPending}
+                    >
+                      <Trash className="w-4 h-4" />
+                    </Button>
                   </Table.Cell>
                 </Table.Row>
               ))}

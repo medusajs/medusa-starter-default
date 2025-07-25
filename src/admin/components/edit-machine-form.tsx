@@ -19,7 +19,7 @@ import { toast } from "@medusajs/ui"
 import { useEffect } from "react"
 
 const schema = zod.object({
-  brand_name: zod.string().nullable().optional(),
+  brand_id: zod.string().nullable().optional(),
   model_number: zod.string().min(1, "Model number is required"),
   serial_number: zod.string().min(1, "Serial number is required"),
   license_plate: zod.string().nullable().optional(),
@@ -49,7 +49,7 @@ interface Brand {
 
 interface Machine {
   id: string
-  brand_name?: string | null
+  brand_id?: string | null
   model_number: string
   serial_number: string
   license_plate?: string | null
@@ -93,7 +93,7 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
   
   // Fetch customers for the dropdown
   const { data: customers = [], isLoading: customersLoading } = useQuery({
-    queryKey: ["customers"],
+    queryKey: ["edit-machine-customers"],
     queryFn: async () => {
       const response = await fetch("/admin/customers?limit=100")
       if (!response.ok) {
@@ -107,7 +107,7 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      brand_name: "",
+      brand_id: "",
       model_number: "",
       serial_number: "",
       license_plate: "",
@@ -131,7 +131,7 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
   useEffect(() => {
     if (machine) {
       form.reset({
-        brand_name: machine.brand_name || "",
+        brand_id: machine.brand_id || "",
         model_number: machine.model_number || "",
         serial_number: machine.serial_number || "",
         license_plate: machine.license_plate || "",
@@ -205,7 +205,7 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
               <div className="grid grid-cols-2 gap-4">
                 <Controller
                   control={form.control}
-                  name="brand_name"
+                  name="brand_id"
                   render={({ field, fieldState }) => (
                     <div className="flex flex-col space-y-2">
                       <Label size="small" weight="plus">

@@ -41,7 +41,7 @@ const CreateServiceOrder = () => {
 
   // Fetch customers
   const { data: customers = [] } = useQuery({
-    queryKey: ['customers'],
+    queryKey: ['service-orders-create-customers'],
     queryFn: async () => {
       const response = await fetch('/admin/customers?limit=100')
       if (!response.ok) throw new Error('Failed to fetch customers')
@@ -52,20 +52,27 @@ const CreateServiceOrder = () => {
 
   // Fetch machines
   const { data: machinesData = [] } = useQuery({
-    queryKey: ['machines'],
+    queryKey: ['service-orders-create-machines', formData.customer_id],
     queryFn: async () => {
-      const response = await fetch('/admin/machines?limit=100&status=active')
+      // If customer is selected, fetch only their machines
+      const params = new URLSearchParams({
+        limit: '100',
+        status: 'active',
+        ...(formData.customer_id && { customer_id: formData.customer_id })
+      })
+      const response = await fetch(`/admin/machines?${params}`)
       if (!response.ok) throw new Error('Failed to fetch machines')
       const data = await response.json()
       return data.machines || []
     },
+    enabled: !!formData.customer_id, // Only fetch when customer is selected
   })
   
   const machines = Array.isArray(machinesData) ? machinesData : []
 
   // Fetch technicians
   const { data: technicians = [] } = useQuery({
-    queryKey: ['technicians'],
+    queryKey: ['service-orders-create-technicians'],
     queryFn: async () => {
       const response = await fetch('/admin/technicians?limit=100&status=active')
       if (!response.ok) throw new Error('Failed to fetch technicians')
@@ -74,10 +81,8 @@ const CreateServiceOrder = () => {
     },
   })
 
-  // Filter machines by selected customer
-  const customerMachines = machines.filter((machine: any) => 
-    !formData.customer_id || machine.customer_id === formData.customer_id
-  )
+  // No need for additional filtering since we're fetching machines by customer_id
+  const customerMachines = machines
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {

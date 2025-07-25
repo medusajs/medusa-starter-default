@@ -18,7 +18,6 @@ import {
   Button, 
   Badge, 
   StatusBadge,
-  IconButton, 
   Text,
   DataTable,
   useDataTable,
@@ -218,31 +217,31 @@ const InvoiceActions = ({ invoice }: { invoice: Invoice }) => {
 
   return (
     <div className="flex items-center gap-2">
-      <IconButton
+      <Button
         size="small"
         variant="transparent"
         onClick={() => navigate(`/invoices/${invoice.id}`)}
       >
         <Eye className="w-4 h-4" />
-      </IconButton>
+      </Button>
       
-      <IconButton
+      <Button
         size="small"
         variant="transparent"
         onClick={() => generatePdf.mutate(invoice.id)}
         disabled={generatePdf.isPending}
       >
         <ArrowDownTray className="w-4 h-4" />
-      </IconButton>
+      </Button>
       
       {invoice.status === "draft" && (
-        <IconButton
+        <Button
           size="small"
           variant="transparent"
           onClick={() => navigate(`/invoices/${invoice.id}/edit`)}
         >
           <PencilSquare className="w-4 h-4" />
-        </IconButton>
+        </Button>
       )}
     </div>
   )
@@ -262,14 +261,11 @@ const InvoicesListTable = () => {
     pageSize: PAGE_SIZE,
   })
 
-  if (error) {
-    throw error
-  }
-
+  // Data processing (move before conditional returns)
   const invoices = data?.invoices || []
   const count = data?.count || 0
 
-  // Column helper - following official pattern
+  // Column helper and definitions (move before conditional returns)
   const columnHelper = createDataTableColumnHelper<Invoice>()
 
   const columns = [
@@ -310,32 +306,22 @@ const InvoicesListTable = () => {
     }),
     columnHelper.accessor("total_amount", {
       header: "Totaal",
-      enableSorting: true,
-      cell: ({ getValue, row }) => (
-        <Text weight="plus" className="text-right">
-          {formatCurrency(getValue(), row.original.currency_code)}
-        </Text>
-      ),
-    }),
-    columnHelper.accessor("invoice_date", {
-      header: "Factuurdatum",
-      enableSorting: true,
-      cell: ({ getValue }) => formatDate(getValue()),
-    }),
-    columnHelper.accessor("due_date", {
-      header: "Vervaldatum",
-      enableSorting: true,
-      cell: ({ getValue, row }) => {
-        const dueDate = new Date(getValue())
-        const today = new Date()
-        const isOverdue = dueDate < today && row.original.status !== "paid"
-        
+      cell: ({ getValue }) => {
+        const total = getValue() || 0
         return (
-          <Text className={isOverdue ? "text-red-600" : ""}>
-            {formatDate(getValue())}
+          <Text size="small" className="font-mono">
+            €{(total / 100).toFixed(2)}
           </Text>
         )
       },
+    }),
+    columnHelper.accessor("created_at", {
+      header: "Aangemaakt",
+      cell: ({ getValue }) => (
+        <Text size="small">
+          {new Date(getValue()).toLocaleDateString()}
+        </Text>
+      ),
     }),
     columnHelper.display({
       id: "actions",
@@ -344,6 +330,7 @@ const InvoicesListTable = () => {
     }),
   ]
 
+  // DataTable setup (move before conditional returns)
   const table = useDataTable({
     data: invoices,
     columns,
@@ -363,6 +350,22 @@ const InvoicesListTable = () => {
       onPaginationChange: setPagination,
     },
   })
+
+  // NOW we can have conditional returns after all hooks are called
+  if (error) {
+    throw error
+  }
+
+  // Show loading state (move after all hooks)
+  if (isLoading) {
+    return (
+      <Container className="p-6">
+        <div className="flex items-center justify-center h-32">
+          <Text className="text-ui-fg-subtle">Loading invoices...</Text>
+        </div>
+      </Container>
+    )
+  }
 
   return (
     <Container className="divide-y p-0">
@@ -392,7 +395,7 @@ const InvoicesListTable = () => {
       <DataTable instance={table}>
         <DataTable.Toolbar className="flex items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-2">
-            <DataTable.FilterMenu tooltip="Filter facturen" />
+            <DataTable.FilterMenu />
           </div>
           <div className="flex items-center gap-2">
             <DataTable.Search placeholder="Zoek facturen..." />

@@ -8,8 +8,8 @@ import { SingleColumnPageSkeleton } from "../../../components/common/skeleton"
 import ServiceOrderOverviewWidget from "../../../widgets/service-order-overview"
 import ServiceOrderItemsWidget from "../../../widgets/service-order-items"
 import ServiceOrderTimeEntriesWidget from "../../../widgets/service-order-time-entries"
-import ServiceOrderStatusHistoryWidget from "../../../widgets/service-order-status-history"
 import ServiceOrderStatusActionsWidget from "../../../widgets/service-order-status-actions"
+import ServiceOrderCommentsWidget from "../../../widgets/service-order-comments"
 
 const ServiceOrderDetails = () => {
   const { id } = useParams()
@@ -94,13 +94,13 @@ const ServiceOrderDetails = () => {
         showMetadata={false}
       >
         <TwoColumnPage.Main>
-          <ServiceOrderOverviewWidget data={so} />
           <ServiceOrderItemsWidget data={so} />
           <ServiceOrderTimeEntriesWidget data={so} />
-          <ServiceOrderStatusHistoryWidget data={so} />
+          <ServiceOrderCommentsWidget data={so} />
         </TwoColumnPage.Main>
 
         <TwoColumnPage.Sidebar>
+          <ServiceOrderOverviewWidget data={so} />
           <ServiceOrderStatusActionsWidget data={so} />
         </TwoColumnPage.Sidebar>
       </TwoColumnPage>

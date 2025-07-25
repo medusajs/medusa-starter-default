@@ -1,11 +1,13 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MACHINES_MODULE, MachinesModuleService } from "../../../../modules/machines"
+import { BRANDS_MODULE } from "../../../../modules/brands"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
     const { id } = req.params
     const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+    const brandsService = req.scope.resolve(BRANDS_MODULE)
     
     // Use query.graph to get machine with basic data for now
     // TODO: Add relationships once module links are properly configured
@@ -21,8 +23,25 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       })
     }
     
+    const machine = machines[0]
+    
+    // Populate brand information
+    let machineWithBrand = { ...machine, brand_name: null as string | null, brand_code: null as string | null }
+    if (machine.brand_id) {
+      try {
+        const brand = await brandsService.retrieveBrand(machine.brand_id)
+        machineWithBrand = {
+          ...machine,
+          brand_name: brand.name,
+          brand_code: brand.code
+        }
+      } catch (error) {
+        console.warn(`Failed to fetch brand ${machine.brand_id}:`, error)
+      }
+    }
+    
     res.json({
-      machine: machines[0]
+      machine: machineWithBrand
     })
   } catch (error) {
     console.error("Error fetching machine:", error)

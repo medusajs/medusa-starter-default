@@ -12,7 +12,6 @@ import {
   Select,
   DatePicker,
   Tabs,
-  IconButton,
   DataTable,
   useDataTable,
   createDataTableColumnHelper,
@@ -114,12 +113,15 @@ const useServiceOrders = () => {
 // Hook to fetch customers for display
 const useCustomers = () => {
   return useQuery({
-    queryKey: ["customers"],
+    queryKey: ["service-orders-customers"],
     queryFn: async () => {
       const response = await fetch(`/admin/customers?limit=1000`)
       if (!response.ok) throw new Error("Failed to fetch customers")
       const data = await response.json()
-      return data.customers || []
+      return {
+        customers: data.customers || [],
+        count: data.count || 0
+      }
     },
     staleTime: 5 * 60 * 1000,
   })
@@ -128,12 +130,15 @@ const useCustomers = () => {
 // Hook to fetch technicians for display
 const useTechnicians = () => {
   return useQuery({
-    queryKey: ["technicians"],
+    queryKey: ["service-orders-technicians"],
     queryFn: async () => {
       const response = await fetch(`/admin/technicians?limit=1000`)
       if (!response.ok) throw new Error("Failed to fetch technicians")
       const data = await response.json()
-      return data.technicians || []
+      return {
+        technicians: data.technicians || [],
+        count: data.count || 0
+      }
     },
     staleTime: 5 * 60 * 1000,
   })
@@ -144,8 +149,8 @@ const ServiceOrderActions = ({ serviceOrder }: { serviceOrder: ServiceOrder }) =
   const navigate = useNavigate()
 
   return (
-    <div className="flex items-center gap-1">
-      <IconButton
+    <div className="flex items-center gap-2">
+      <Button
         size="small"
         variant="transparent"
         onClick={(e) => {
@@ -154,11 +159,11 @@ const ServiceOrderActions = ({ serviceOrder }: { serviceOrder: ServiceOrder }) =
         }}
       >
         <Tools className="h-4 w-4" />
-      </IconButton>
+      </Button>
       <EditServiceOrderForm 
         serviceOrder={serviceOrder} 
         trigger={
-          <IconButton
+          <Button
             size="small"
             variant="transparent"
             onClick={(e) => {
@@ -166,7 +171,7 @@ const ServiceOrderActions = ({ serviceOrder }: { serviceOrder: ServiceOrder }) =
             }}
           >
             <PencilSquare className="h-4 w-4" />
-          </IconButton>
+          </Button>
         }
       />
     </div>
@@ -183,8 +188,8 @@ export const config = defineRouteConfig({
 const ServiceOrdersListTable = () => {
   const navigate = useNavigate()
   const { data, isLoading, error } = useServiceOrders()
-  const { data: customers = [] } = useCustomers()
-  const { data: technicians = [] } = useTechnicians()
+  const { data: customersData } = useCustomers()
+  const { data: techniciansData } = useTechnicians()
   const filters = useServiceOrderFilters()
   
   // Filter state management
@@ -195,31 +200,38 @@ const ServiceOrdersListTable = () => {
     pageSize: PAGE_SIZE,
   })
 
-  if (error) {
-    throw error
-  }
+  // Extract arrays from data - following MedusaJS native patterns
+  const customers = customersData?.customers || []
+  const technicians = techniciansData?.technicians || []
 
-  const serviceOrders = data?.service_orders || []
-  const count = data?.count || 0
-  
-  // Create lookup maps for efficient customer/technician display
+  // Create lookup maps for efficient customer/technician display (moved before conditional returns)
   const customerLookup = React.useMemo(() => {
     const map = new Map()
-    customers.forEach((customer: any) => {
-      map.set(customer.id, customer)
-    })
+    // Ensure customers is an array before calling forEach
+    if (Array.isArray(customers)) {
+      customers.forEach((customer: any) => {
+        map.set(customer.id, customer)
+      })
+    }
     return map
   }, [customers])
   
   const technicianLookup = React.useMemo(() => {
     const map = new Map()
-    technicians.forEach((technician: any) => {
-      map.set(technician.id, technician)
-    })
+    // Ensure technicians is an array before calling forEach
+    if (Array.isArray(technicians)) {
+      technicians.forEach((technician: any) => {
+        map.set(technician.id, technician)
+      })
+    }
     return map
   }, [technicians])
 
-  // Status and priority variants
+  // Data processing (move before conditional returns)
+  const serviceOrders = data?.service_orders || []
+  const count = data?.count || 0
+
+  // Status and priority variants (move before conditional returns)
   const statusVariants = {
     draft: "orange",
     scheduled: "blue", 
@@ -250,7 +262,7 @@ const ServiceOrdersListTable = () => {
     customer_location: "green",
   } as const
 
-  // Column helper - following official pattern
+  // Column helper and columns definition (move before conditional returns)
   const columnHelper = createDataTableColumnHelper<ServiceOrder>()
 
   const columns = [
@@ -383,6 +395,7 @@ const ServiceOrdersListTable = () => {
     }),
   ]
 
+  // DataTable setup (move before conditional returns)
   const table = useDataTable({
     data: serviceOrders,
     columns,
@@ -403,12 +416,28 @@ const ServiceOrdersListTable = () => {
     },
   })
 
+  // NOW we can have conditional returns after all hooks are called
+  if (error) {
+    throw error
+  }
+
+  // Show loading state for all dependent data
+  if (isLoading) {
+    return (
+      <Container className="p-6">
+        <div className="flex items-center justify-center h-32">
+          <Text className="text-ui-fg-subtle">Loading service orders...</Text>
+        </div>
+      </Container>
+    )
+  }
+
   return (
     <div className="overflow-hidden">
       <DataTable instance={table}>
         <DataTable.Toolbar className="flex items-center justify-between gap-4 px-6 py-4 bg-ui-bg-subtle/30">
           <div className="flex items-center gap-2">
-            <DataTable.FilterMenu tooltip="Filter service orders" />
+            <DataTable.FilterMenu />
           </div>
           <div className="flex items-center gap-2">
             <DataTable.Search placeholder="Search service orders..." className="w-80" />
@@ -468,13 +497,14 @@ const ServiceOrdersList = () => {
             </Tabs.List>
           </div>
           
-          <Tabs.Content value="list" className="mt-0">
-            <ServiceOrdersListTable />
+          <Tabs.Content value="list" className="mt-0" key="list-tab">
+            <ServiceOrdersListTable key="service-orders-list-table" />
           </Tabs.Content>
 
-          <Tabs.Content value="kanban" className="mt-0">
+          <Tabs.Content value="kanban" className="mt-0" key="kanban-tab">
             <div className="p-6">
               <KanbanView 
+                key="service-orders-kanban-view"
                 serviceOrders={serviceOrders}
                 isLoading={isLoading}
                 onRefetch={() => {}}
@@ -487,4 +517,9 @@ const ServiceOrdersList = () => {
   )
 }
 
-export default ServiceOrdersList
+// Main service orders page component
+const ServiceOrdersPage = () => {
+  return <ServiceOrdersList />
+}
+
+export default ServiceOrdersPage

@@ -6,7 +6,6 @@ import {
   Heading, 
   Button, 
   Badge, 
-  IconButton, 
   Text,
   DataTable,
   useDataTable,
@@ -151,14 +150,14 @@ const TechnicianActions = ({ technician }: { technician: Technician }) => {
     e.preventDefault()
     e.stopPropagation()
     
-    if (window.confirm(`Are you sure you want to delete "${technician.first_name} ${technician.last_name}"?`)) {
+    if (window.confirm(`Are you sure you want to delete technician "${technician.first_name} ${technician.last_name}"?`)) {
       deleteTechnicianMutation.mutate(technician.id)
     }
   }
 
   return (
-    <div className="flex items-center gap-1">
-      <IconButton
+    <div className="flex items-center gap-2">
+      <Button
         size="small"
         variant="transparent"
         onClick={(e) => {
@@ -167,23 +166,26 @@ const TechnicianActions = ({ technician }: { technician: Technician }) => {
         }}
       >
         <Eye className="h-4 w-4" />
-      </IconButton>
-      <EditTechnicianForm technician={technician} trigger={
-        <IconButton 
-          size="small"
-          variant="transparent"
-        >
-          <PencilSquare className="h-4 w-4" />
-        </IconButton>
-      } />
-      <IconButton
+      </Button>
+      <EditTechnicianForm 
+        technician={technician} 
+        trigger={
+          <Button
+            size="small"
+            variant="transparent"
+          >
+            <PencilSquare className="h-4 w-4" />
+          </Button>
+        }
+      />
+      <Button
         size="small"
         variant="transparent"
         onClick={handleDelete}
         disabled={deleteTechnicianMutation.isPending}
       >
         <Trash className="h-4 w-4" />
-      </IconButton>
+      </Button>
     </div>
   )
 }
@@ -208,14 +210,11 @@ const TechniciansListTable = () => {
     pageSize: PAGE_SIZE,
   })
 
-  if (error) {
-    throw error
-  }
-
+  // Data processing (move before conditional returns)
   const technicians = data?.technicians || []
   const count = data?.count || 0
 
-  // Status badge helper
+  // Status badge helper (move before conditional returns)
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       active: { color: "green", label: "Active" },
@@ -232,7 +231,7 @@ const TechniciansListTable = () => {
     )
   }
 
-  // Column helper - following official pattern
+  // Column helper and definitions (move before conditional returns)
   const columnHelper = createDataTableColumnHelper<Technician>()
 
   const columns = [
@@ -285,6 +284,7 @@ const TechniciansListTable = () => {
     }),
   ]
 
+  // DataTable setup (move before conditional returns)
   const table = useDataTable({
     data: technicians,
     columns,
@@ -305,6 +305,22 @@ const TechniciansListTable = () => {
     },
   })
 
+  // NOW we can have conditional returns after all hooks are called
+  if (error) {
+    throw error
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <Container className="p-6">
+        <div className="flex items-center justify-center h-32">
+          <Text className="text-ui-fg-subtle">Loading technicians...</Text>
+        </div>
+      </Container>
+    )
+  }
+
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
@@ -319,7 +335,7 @@ const TechniciansListTable = () => {
       <DataTable instance={table}>
         <DataTable.Toolbar className="flex items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-2">
-            <DataTable.FilterMenu tooltip="Filter technicians" />
+            <DataTable.FilterMenu />
           </div>
           <div className="flex items-center gap-2">
             <DataTable.Search placeholder="Search technicians..." />

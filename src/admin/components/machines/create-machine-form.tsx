@@ -19,7 +19,7 @@ import { Plus } from "@medusajs/icons"
 
 // Validation schema
 const createMachineSchema = z.object({
-  brand_name: z.string().nullable().optional(),
+  brand_id: z.string().nullable().optional(),
   model_number: z.string().min(1, "Model number is required").max(100, "Model number is too long"),
   serial_number: z.string().min(1, "Serial number is required").max(100, "Serial number is too long"),
   license_plate: z.string().max(50).nullable().optional(),
@@ -70,20 +70,23 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
 
   // Fetch customers
   const { data: customers = [], isLoading: customersLoading } = useQuery({
-    queryKey: ['customers'],
+    queryKey: ['create-machine-customers'],
     queryFn: fetchCustomers,
   })
 
   // Fetch brands
-  const { data: brands = [], isLoading: brandsLoading } = useQuery({
+  const { data: brandsData = [], isLoading: brandsLoading } = useQuery({
     queryKey: ['brands'],
     queryFn: fetchBrands,
   })
 
+  // Ensure brands is always an array
+  const brands = Array.isArray(brandsData) ? brandsData : []
+
   const form = useForm<CreateMachineFormData>({
     resolver: zodResolver(createMachineSchema),
     defaultValues: {
-      brand_name: undefined,
+      brand_id: undefined,
       model_number: "",
       serial_number: "",
       license_plate: "",
@@ -112,6 +115,7 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
         },
         body: JSON.stringify({
           ...data,
+          brand_id: data.brand_id || null,
           year: data.year || null,
           engine_hours: data.engine_hours || null,
           horsepower: data.horsepower || null,
@@ -152,7 +156,7 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
   return (
     <FocusModal open={isOpen} onOpenChange={setIsOpen}>
       <FocusModal.Trigger asChild>
-        <Button size="small">
+        <Button size="small" variant="secondary">
           <Plus className="h-4 w-4" />
           Create Machine
         </Button>
@@ -188,7 +192,7 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Controller
                       control={form.control}
-                      name="brand_name"
+                      name="brand_id"
                       render={({ field, fieldState }) => (
                         <div className="space-y-2">
                           <Label size="small" weight="plus">
@@ -347,7 +351,7 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                           <Label size="small" weight="plus">
                             Fuel Type
                           </Label>
-                          <Select value={field.value} onValueChange={field.onChange}>
+                          <Select value={field.value || undefined} onValueChange={field.onChange}>
                             <Select.Trigger>
                               <Select.Value />
                             </Select.Trigger>

@@ -10,9 +10,10 @@ import {
   StatusBadge,
   toast
 } from "@medusajs/ui"
-import { PencilSquare } from "@medusajs/icons"
+import { PencilSquare, Clock, ExclamationCircle } from "@medusajs/icons"
 import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { ActionMenu } from "../components/common/action-menu"
 
 interface ServiceOrder {
   id: string
@@ -98,13 +99,32 @@ const ServiceOrderStatusActionsWidget = ({ data: serviceOrder }: ServiceOrderSta
 
   return (
     <Container className="divide-y p-0">
-      <div className="px-6 py-4">
+      <div className="flex items-center justify-between px-6 py-4">
         <Heading level="h2">Status & Actions</Heading>
+        <ActionMenu
+          groups={[
+            {
+              actions: [
+                {
+                  label: "Update Status",
+                  onClick: () => setShowUpdateModal(true),
+                  icon: <PencilSquare />,
+                },
+              ],
+            },
+          ]}
+        />
       </div>
 
+      {/* Current Status */}
       <div className="px-6 py-4">
-        <div className="space-y-4">
-          <div>
+        <div className="grid grid-cols-[28px_1fr] items-start gap-x-3 mb-4">
+          <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
+            <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
+              <ExclamationCircle className="text-ui-fg-subtle" />
+            </div>
+          </div>
+          <div className="min-w-0">
             <Text size="small" weight="plus" className="text-ui-fg-subtle mb-2">
               Current Status
             </Text>
@@ -112,26 +132,24 @@ const ServiceOrderStatusActionsWidget = ({ data: serviceOrder }: ServiceOrderSta
               {serviceOrder.status.replace('_', ' ')}
             </StatusBadge>
           </div>
+        </div>
+      </div>
 
-          <div>
+      {/* Priority */}
+      <div className="px-6 py-4">
+        <div className="grid grid-cols-[28px_1fr] items-start gap-x-3">
+          <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
+            <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
+              <Clock className="text-ui-fg-subtle" />
+            </div>
+          </div>
+          <div className="min-w-0">
             <Text size="small" weight="plus" className="text-ui-fg-subtle mb-2">
-              Priority
+              Priority Level
             </Text>
-            <Badge color={priorityVariants[serviceOrder.priority as keyof typeof priorityVariants]}>
+            <Badge size="2xsmall" color={priorityVariants[serviceOrder.priority as keyof typeof priorityVariants]}>
               {serviceOrder.priority} priority
             </Badge>
-          </div>
-
-          <div>
-            <Button 
-              size="small" 
-              variant="secondary" 
-              onClick={() => setShowUpdateModal(true)}
-              className="w-full"
-            >
-              <PencilSquare className="w-4 h-4 mr-2" />
-              Update Status
-            </Button>
           </div>
         </div>
       </div>

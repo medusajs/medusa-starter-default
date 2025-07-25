@@ -25,12 +25,15 @@ import { KanbanCard } from "./kanban-card"
 // Hook to fetch customers for display
 const useCustomers = () => {
   return useQuery({
-    queryKey: ["customers"],
+    queryKey: ["service-orders-customers"],
     queryFn: async () => {
       const response = await fetch(`/admin/customers?limit=1000`)
       if (!response.ok) throw new Error("Failed to fetch customers")
       const data = await response.json()
-      return data.customers || []
+      return {
+        customers: data.customers || [],
+        count: data.count || 0
+      }
     },
     staleTime: 5 * 60 * 1000,
   })
@@ -39,12 +42,15 @@ const useCustomers = () => {
 // Hook to fetch technicians for display
 const useTechnicians = () => {
   return useQuery({
-    queryKey: ["technicians"],
+    queryKey: ["service-orders-technicians"],
     queryFn: async () => {
       const response = await fetch(`/admin/technicians?limit=1000`)
       if (!response.ok) throw new Error("Failed to fetch technicians")
       const data = await response.json()
-      return data.technicians || []
+      return {
+        technicians: data.technicians || [],
+        count: data.count || 0
+      }
     },
     staleTime: 5 * 60 * 1000,
   })
@@ -67,7 +73,16 @@ type ServiceOrder = {
   status: string
   priority: string
   service_type: string
+  service_location: string
   description: string
+  customer_id?: string
+  technician_id?: string
+  machine_id?: string
+  scheduled_start_date?: string
+  total_cost: number
+  created_at: string
+  updated_at: string
+  // Enhanced fields for display
   customer?: {
     first_name: string
     last_name: string
@@ -76,9 +91,6 @@ type ServiceOrder = {
     first_name: string
     last_name: string
   }
-  scheduled_start_date?: string
-  total_cost: number
-  created_at: string
 }
 
 type KanbanViewProps = {
@@ -148,23 +160,33 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
   const queryClient = useQueryClient()
 
   // Fetch customers and technicians for lookup
-  const { data: customers = [] } = useCustomers()
-  const { data: technicians = [] } = useTechnicians()
+  const { data: customersData } = useCustomers()
+  const { data: techniciansData } = useTechnicians()
+
+  // Extract arrays from data - following MedusaJS native patterns
+  const customers = customersData?.customers || []
+  const technicians = techniciansData?.technicians || []
 
   // Create lookup maps for customers and technicians
   const customerLookup = useMemo(() => {
     const map = new Map()
-    customers.forEach(customer => {
-      map.set(customer.id, customer)
-    })
+    // Ensure customers is an array before calling forEach
+    if (Array.isArray(customers)) {
+      customers.forEach((customer: any) => {
+        map.set(customer.id, customer)
+      })
+    }
     return map
   }, [customers])
 
   const technicianLookup = useMemo(() => {
     const map = new Map()
-    technicians.forEach(technician => {
-      map.set(technician.id, technician)
-    })
+    // Ensure technicians is an array before calling forEach
+    if (Array.isArray(technicians)) {
+      technicians.forEach((technician: any) => {
+        map.set(technician.id, technician)
+      })
+    }
     return map
   }, [technicians])
 

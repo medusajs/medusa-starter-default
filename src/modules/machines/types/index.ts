@@ -1,6 +1,6 @@
 export type MachineDTO = {
   id: string
-  brand_name?: string | null
+  brand_id?: string | null
   model_number: string
   serial_number: string
   license_plate?: string | null
@@ -24,7 +24,7 @@ export type MachineDTO = {
 }
 
 export type CreateMachineDTO = {
-  brand_name?: string | null
+  brand_id?: string | null
   model_number: string
   serial_number: string
   license_plate?: string | null
@@ -46,7 +46,7 @@ export type CreateMachineDTO = {
 
 export type UpdateMachineDTO = {
   id: string
-  brand_name?: string | null
+  brand_id?: string | null
   model_number?: string
   serial_number?: string
   license_plate?: string | null
@@ -68,7 +68,7 @@ export type UpdateMachineDTO = {
 
 export type UpsertMachineDTO = {
   id?: string
-  brand_name?: string | null
+  brand_id?: string | null
   model_number?: string
   serial_number?: string
   license_plate?: string | null
@@ -90,7 +90,7 @@ export type UpsertMachineDTO = {
 
 export type FilterableMachineProps = {
   id?: string | string[]
-  brand_name?: string | string[]
+  brand_id?: string | string[]
   model_number?: string | string[]
   serial_number?: string | string[]
   license_plate?: string | string[]

@@ -174,7 +174,7 @@ const CreateOrderWidget = ({ }: CreateOrderWidgetProps) => {
 
   // Fetch customers with search
   const { data: customers = [] } = useQuery({
-    queryKey: ['customers', customerSearch],
+    queryKey: ['create-order-widget-customers', customerSearch],
     queryFn: async () => {
       const params = new URLSearchParams({
         limit: '20',

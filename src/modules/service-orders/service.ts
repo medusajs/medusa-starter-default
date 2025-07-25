@@ -3,6 +3,9 @@ import ServiceOrder, { ServiceOrderType, ServiceOrderPriority, ServiceOrderStatu
 import ServiceOrderItem, { ServiceOrderItemStatus } from "./models/service-order-item" 
 import ServiceOrderTimeEntry, { WorkCategory } from "./models/service-order-time-entry"
 import ServiceOrderStatusHistory from "./models/service-order-status-history"
+import ServiceOrderComment, { CommentAuthorType } from "./models/service-order-comment"
+import { CreateServiceOrderCommentDTO, UpdateServiceOrderCommentDTO } from "./types"
+import { ServiceOrderEventLogger } from "./helpers/event-logger"
 
 type CreateServiceOrderInput = {
   description: string
@@ -44,7 +47,12 @@ class ServiceOrdersService extends MedusaService({
   ServiceOrderItem,
   ServiceOrderTimeEntry,
   ServiceOrderStatusHistory,
+  ServiceOrderComment,
 }) {
+
+  constructor(container: any) {
+    super(...arguments)
+  }
   
   async generateServiceOrderNumber(): Promise<string> {
     const year = new Date().getFullYear()
@@ -116,6 +124,19 @@ class ServiceOrdersService extends MedusaService({
         changed_at: new Date(),
         reason,
       })
+
+      // Log status change event
+      try {
+        const eventTemplate = ServiceOrderEventLogger.EventTemplates.statusChanged(oldStatus, newStatus, reason)
+        await ServiceOrderEventLogger.logEvent({
+          serviceOrderId: id,
+          userId,
+          ...eventTemplate
+        }, this)
+      } catch (eventError) {
+        console.error("Failed to log status change event:", eventError)
+        // Don't fail the main operation if event logging fails
+      }
       
       return updatedServiceOrder
       
@@ -134,8 +155,50 @@ class ServiceOrdersService extends MedusaService({
     
     // Update service order totals
     await this.updateServiceOrderTotals(serviceOrderId)
+
+    // Log part added event with grouping
+    try {
+      const eventTemplate = ServiceOrderEventLogger.EventTemplates.partAdded(item)
+      await ServiceOrderEventLogger.logEvent({
+        serviceOrderId,
+        ...eventTemplate
+      }, this, ServiceOrderEventLogger.GroupConfigs.parts)
+    } catch (eventError) {
+      console.error("Failed to log part added event:", eventError)
+      // Don't fail the main operation if event logging fails
+    }
     
     return item
+  }
+
+  async removeServiceOrderItem(serviceOrderId: string, itemId: string, userId?: string) {
+    // Get item details before deletion for event logging
+    const items = await this.listServiceOrderItems({ id: itemId })
+    const item = items[0]
+    if (!item) {
+      throw new Error("Service order item not found")
+    }
+
+    // Delete the item
+    await this.deleteServiceOrderItems([itemId])
+    
+    // Update service order totals
+    await this.updateServiceOrderTotals(serviceOrderId)
+
+    // Log part removed event with grouping
+    try {
+      const eventTemplate = ServiceOrderEventLogger.EventTemplates.partRemoved(item)
+      await ServiceOrderEventLogger.logEvent({
+        serviceOrderId,
+        userId,
+        ...eventTemplate
+      }, this, ServiceOrderEventLogger.GroupConfigs.parts)
+    } catch (eventError) {
+      console.error("Failed to log part removed event:", eventError)
+      // Don't fail the main operation if event logging fails
+    }
+
+    return { deleted: true, id: itemId }
   }
   
   async addTimeEntry(serviceOrderId: string, timeEntryData: CreateTimeEntryInput) {
@@ -154,6 +217,18 @@ class ServiceOrdersService extends MedusaService({
     
     // Update service order totals
     await this.updateServiceOrderTotals(serviceOrderId)
+
+    // Log time entry added event with grouping
+    try {
+      const eventTemplate = ServiceOrderEventLogger.EventTemplates.timeEntryAdded(timeEntry)
+      await ServiceOrderEventLogger.logEvent({
+        serviceOrderId,
+        ...eventTemplate
+      }, this, ServiceOrderEventLogger.GroupConfigs.timeEntries)
+    } catch (eventError) {
+      console.error("Failed to log time entry added event:", eventError)
+      // Don't fail the main operation if event logging fails
+    }
     
     return timeEntry
   }
@@ -206,6 +281,7 @@ class ServiceOrdersService extends MedusaService({
     const items = await this.listServiceOrderItems({ service_order_id: serviceOrderId })
     const timeEntries = await this.listServiceOrderTimeEntries({ service_order_id: serviceOrderId })
     const statusHistory = await this.listServiceOrderStatusHistories({ service_order_id: serviceOrderId })
+    const comments = await this.listServiceOrderComments({ service_order_id: serviceOrderId })
     
     // TODO: Use MedusaJS Query API to fetch linked customer and machine data
     // For now, we'll include the IDs and let the frontend handle fetching details
@@ -214,7 +290,115 @@ class ServiceOrdersService extends MedusaService({
       items,
       time_entries: timeEntries,
       status_history: statusHistory,
+      comments,
     }
+  }
+
+  // Comment Management Methods
+  async createServiceOrderComment(data: CreateServiceOrderCommentDTO) {
+    const comment = await this.createServiceOrderComments({
+      ...data,
+      is_edited: false,
+    })
+
+    return comment
+  }
+
+  async updateServiceOrderComment(data: UpdateServiceOrderCommentDTO) {
+    const { id, ...updateData } = data
+    
+    const comment = await this.updateServiceOrderComments(
+      { id },
+      {
+        ...updateData,
+        is_edited: true,
+        edited_at: new Date(),
+      }
+    )
+
+    return comment
+  }
+
+  async deleteServiceOrderComment(commentId: string) {
+    await this.deleteServiceOrderComments([commentId])
+  }
+
+  async getServiceOrderCommentsWithReplies(serviceOrderId: string) {
+    const comments = await this.listServiceOrderComments(
+      { service_order_id: serviceOrderId },
+      { 
+        select: [
+          "id", 
+          "message", 
+          "author_id", 
+          "author_type", 
+          "author_name", 
+          "parent_comment_id",
+          "is_internal",
+          "is_pinned",
+          "attachments",
+          "mentions",
+          "is_edited",
+          "edited_at",
+          "metadata",
+          "created_at",
+          "updated_at"
+        ],
+        order: { created_at: "ASC" }
+      }
+    )
+
+    // Organize comments by threading - top-level comments and their replies
+    const topLevelComments = comments.filter(c => !c.parent_comment_id)
+    const replies = comments.filter(c => c.parent_comment_id)
+
+    // Group replies by parent comment ID
+    const repliesByParent = replies.reduce((acc, reply) => {
+      if (!acc[reply.parent_comment_id!]) {
+        acc[reply.parent_comment_id!] = []
+      }
+      acc[reply.parent_comment_id!].push(reply)
+      return acc
+    }, {} as Record<string, any[]>)
+
+    // Attach replies to their parent comments
+    const commentsWithReplies = topLevelComments.map(comment => ({
+      ...comment,
+      replies: repliesByParent[comment.id] || []
+    }))
+
+    return commentsWithReplies
+  }
+
+  async pinComment(commentId: string, isPinned: boolean = true) {
+    const comment = await this.updateServiceOrderComments(
+      { id: commentId },
+      { is_pinned: isPinned }
+    )
+
+    return comment
+  }
+
+  async getServiceOrderCommentsByMention(userId: string) {
+    // For now, we'll get all comments and filter client-side
+    // TODO: Implement proper JSON field filtering when MedusaJS supports it
+    const allComments = await this.listServiceOrderComments({})
+    
+    // Filter comments that mention the user
+    const mentionedComments = allComments.filter(comment => {
+      if (!comment.mentions) return false
+      
+      // Handle both array and object formats
+      if (Array.isArray(comment.mentions)) {
+        return comment.mentions.includes(userId)
+      }
+      
+      // Handle object format where mentions might be stored differently
+      const mentionsObj = comment.mentions as Record<string, any>
+      return Object.values(mentionsObj).includes(userId)
+    })
+
+    return mentionedComments
   }
 }
 

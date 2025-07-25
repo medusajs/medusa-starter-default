@@ -120,6 +120,47 @@ export type UpdateServiceOrderDTO = {
   metadata?: Record<string, any> | null
 }
 
+export type ServiceOrderCommentDTO = {
+  id: string
+  service_order_id: string
+  message: string
+  author_id: string
+  author_type: "user" | "technician" | "customer" | "system"
+  author_name: string
+  parent_comment_id?: string | null
+  is_internal: boolean
+  is_pinned: boolean
+  attachments?: Record<string, any> | null
+  mentions?: Record<string, any> | null
+  is_edited: boolean
+  edited_at?: Date | null
+  metadata?: Record<string, any> | null
+  created_at: Date
+  updated_at: Date
+  deleted_at?: Date | null
+}
+
+export type CreateServiceOrderCommentDTO = {
+  service_order_id: string
+  message: string
+  author_id: string
+  author_type: "user" | "technician" | "customer" | "system"
+  author_name: string
+  parent_comment_id?: string | null
+  is_internal?: boolean
+  is_pinned?: boolean
+  attachments?: Record<string, any> | null
+  mentions?: Record<string, any> | null
+  metadata?: Record<string, any> | null
+}
+
+export type UpdateServiceOrderCommentDTO = {
+  id: string
+  message?: string
+  is_pinned?: boolean
+  metadata?: Record<string, any> | null
+}
+
 export type FilterableServiceOrderProps = {
   id?: string | string[]
   service_order_number?: string | string[]

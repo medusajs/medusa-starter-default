@@ -5,7 +5,7 @@ const Machine = model
     id: model.id({ prefix: "machine" }).primaryKey(),
     
     // Basic Information
-    brand_name: model.text().nullable(), // Reference to brands module
+    brand_id: model.text().nullable(), // Reference to brands module
     model_number: model.text().searchable(), // More descriptive than just "model"
     serial_number: model.text().searchable(),
     license_plate: model.text().searchable().nullable(),
@@ -49,8 +49,8 @@ const Machine = model
       where: "deleted_at IS NULL",
     },
     {
-      name: "IDX_machine_brand_name",
-      on: ["brand_name"],
+      name: "IDX_machine_brand_id",
+      on: ["brand_id"],
       unique: false,
       where: "deleted_at IS NULL",
     },

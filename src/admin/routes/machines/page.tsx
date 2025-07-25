@@ -6,7 +6,6 @@ import {
   Heading, 
   Button, 
   Badge, 
-  IconButton, 
   Text,
   DataTable,
   useDataTable,
@@ -23,7 +22,9 @@ import { EditMachineForm } from "../../components/edit-machine-form"
 // Types for our machine data - matching what EditMachineForm expects
 interface Machine {
   id: string
+  brand_id?: string | null
   brand_name?: string | null
+  brand_code?: string | null
   model_number: string
   serial_number: string
   year?: number | null
@@ -31,15 +32,15 @@ interface Machine {
   fuel_type?: string | null
   horsepower?: number | null
   weight?: number | null
-  purchase_date?: Date | null
-  purchase_price?: string | null
-  current_value?: string | null
+  purchase_date?: string | null
+  purchase_price?: number | null
+  current_value?: number | null
   status: "active" | "inactive" | "maintenance" | "sold"
   location?: string | null
   notes?: string | null
   customer_id?: string | null
-  created_at: Date
-  updated_at: Date
+  created_at: string
+  updated_at: string
 }
 
 const PAGE_SIZE = 20
@@ -143,8 +144,8 @@ const MachineActions = ({ machine }: { machine: Machine }) => {
   }
 
   return (
-    <div className="flex items-center gap-1">
-      <IconButton
+    <div className="flex items-center gap-2">
+      <Button
         size="small"
         variant="transparent"
         onClick={(e) => {
@@ -153,23 +154,23 @@ const MachineActions = ({ machine }: { machine: Machine }) => {
         }}
       >
         <Eye className="h-4 w-4" />
-      </IconButton>
+      </Button>
       <EditMachineForm machine={machine} trigger={
-        <IconButton 
+        <Button 
           size="small"
           variant="transparent"
         >
           <PencilSquare className="h-4 w-4" />
-        </IconButton>
+        </Button>
       } />
-      <IconButton
+      <Button
         size="small"
         variant="transparent"
         onClick={handleDelete}
         disabled={deleteMachineMutation.isPending}
       >
         <Trash className="h-4 w-4" />
-      </IconButton>
+      </Button>
     </div>
   )
 }
@@ -194,14 +195,11 @@ const MachinesListTable = () => {
     pageSize: PAGE_SIZE,
   })
 
-  if (error) {
-    throw error
-  }
-
+  // Data processing (move before conditional returns)
   const machines = data?.machines || []
   const count = data?.count || 0
 
-  // Status badge helper
+  // Status badge helper (move before conditional returns)
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       active: { color: "green", label: "Active" },
@@ -218,7 +216,7 @@ const MachinesListTable = () => {
     )
   }
 
-  // Column helper - following official pattern
+  // Column helper and definitions (move before conditional returns)
   const columnHelper = createDataTableColumnHelper<Machine>()
 
   const columns = [
@@ -272,7 +270,7 @@ const MachinesListTable = () => {
     }),
   ]
 
-  // Table instance - following official pattern
+  // Table instance setup (move before conditional returns)
   const table = useDataTable({
     data: machines,
     columns,
@@ -293,6 +291,22 @@ const MachinesListTable = () => {
     },
   })
 
+  // NOW we can have conditional returns after all hooks are called
+  if (error) {
+    throw error
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <Container className="p-6">
+        <div className="flex items-center justify-center h-32">
+          <Text className="text-ui-fg-subtle">Loading machines...</Text>
+        </div>
+      </Container>
+    )
+  }
+
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
@@ -307,7 +321,7 @@ const MachinesListTable = () => {
       <DataTable instance={table}>
         <DataTable.Toolbar className="flex items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-2">
-            <DataTable.FilterMenu tooltip="Filter machines" />
+            <DataTable.FilterMenu />
           </div>
           <div className="flex items-center gap-2">
             <DataTable.Search placeholder="Search machines..." />

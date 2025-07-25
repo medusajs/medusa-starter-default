@@ -16,6 +16,8 @@ import {
 } from "react-hook-form"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "@medusajs/ui"
+import { Plus } from "@medusajs/icons"
+import { useState } from "react"
 
 const schema = zod.object({
   first_name: zod.string().min(1, "First name is required"),
@@ -42,6 +44,7 @@ type FormData = zod.infer<typeof schema>
 
 export const CreateTechnicianForm = () => {
   const queryClient = useQueryClient()
+  const [isOpen, setIsOpen] = useState(false)
   
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -87,6 +90,7 @@ export const CreateTechnicianForm = () => {
       toast.success("Technician created successfully!")
       queryClient.invalidateQueries({ queryKey: ["technicians"] })
       form.reset()
+      setIsOpen(false)
     },
     onError: (error) => {
       toast.error("Failed to create technician. Please try again.")
@@ -99,9 +103,12 @@ export const CreateTechnicianForm = () => {
   })
 
   return (
-    <FocusModal>
+    <FocusModal open={isOpen} onOpenChange={setIsOpen}>
       <FocusModal.Trigger asChild>
-        <Button>Create Technician</Button>
+        <Button size="small" variant="secondary">
+          <Plus className="h-4 w-4" />
+          Create Technician
+        </Button>
       </FocusModal.Trigger>
       <FocusModal.Content>
         <FormProvider {...form}>

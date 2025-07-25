@@ -106,6 +106,19 @@ export class MachinesModuleService
   }
 
   @InjectManager()
+  async getMachinesByBrand(
+    brandId: string,
+    config?: any,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<MachineDTO[]> {
+    return await this.listMachines(
+      { brand_id: brandId },
+      config,
+      sharedContext
+    )
+  }
+
+  @InjectManager()
   async updateMachineStatus(
     machineId: string,
     status: "active" | "inactive" | "maintenance" | "sold",
@@ -127,7 +140,6 @@ export class MachinesModuleService
   ): Promise<MachineDTO[]> {
     const filters = {
       $or: [
-        { name: { $ilike: `%${searchTerm}%` } },
         { model_number: { $ilike: `%${searchTerm}%` } },
         { serial_number: { $ilike: `%${searchTerm}%` } },
         { description: { $ilike: `%${searchTerm}%` } },

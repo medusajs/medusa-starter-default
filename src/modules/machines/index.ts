@@ -8,4 +8,5 @@ export default Module(MACHINES_MODULE, {
 })
 
 export * from "./types"
-export * from "./workflows" 
+export * from "./workflows"
+export { MachinesModuleService } 

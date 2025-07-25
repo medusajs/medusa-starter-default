@@ -1,5 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MACHINES_MODULE, MachinesModuleService } from "../../../modules/machines"
+import { BRANDS_MODULE } from "../../../modules/brands"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { createMachineWorkflow } from "../../../modules/machines/workflows"
 import { CreateMachineDTO } from "../../../modules/machines/types"
@@ -7,6 +8,7 @@ import { CreateMachineDTO } from "../../../modules/machines/types"
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
     const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+    const brandsService = req.scope.resolve(BRANDS_MODULE)
     
     const { 
       limit = 50, 
@@ -15,6 +17,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       status,
       customer_id,
       location,
+      brand_id,
       ...filters 
     } = req.query
     
@@ -23,12 +26,12 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     
     if (status) queryFilters.status = status
     if (customer_id) queryFilters.customer_id = customer_id
+    if (brand_id) queryFilters.brand_id = brand_id
     if (location) queryFilters.location = { $ilike: `%${location}%` }
     
     // Add search functionality
     if (q) {
       queryFilters.$or = [
-        { brand_name: { $ilike: `%${q}%` } },
         { model_number: { $ilike: `%${q}%` } },
         { serial_number: { $ilike: `%${q}%` } },
         { description: { $ilike: `%${q}%` } },
@@ -53,9 +56,37 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       take: Number(limit),
       skip: Number(offset),
     })
+
+    // Populate brand information for each machine
+    const machinesWithBrands = await Promise.all(
+      machines.map(async (machine: any) => {
+        if (machine.brand_id) {
+          try {
+            const brand = await brandsService.retrieveBrand(machine.brand_id)
+            return {
+              ...machine,
+              brand_name: brand.name,
+              brand_code: brand.code
+            }
+          } catch (error) {
+            console.warn(`Failed to fetch brand ${machine.brand_id}:`, error)
+            return {
+              ...machine,
+              brand_name: null,
+              brand_code: null
+            }
+          }
+        }
+        return {
+          ...machine,
+          brand_name: null,
+          brand_code: null
+        }
+      })
+    )
     
     res.json({
-      machines,
+      machines: machinesWithBrands,
       count,
       offset: Number(offset),
       limit: Number(limit),

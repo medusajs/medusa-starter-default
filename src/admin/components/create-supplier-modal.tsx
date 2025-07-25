@@ -123,7 +123,7 @@ export const CreateSupplierModal = ({ onSuccess }: CreateSupplierModalProps) => 
   return (
     <FocusModal open={isOpen} onOpenChange={setIsOpen}>
       <FocusModal.Trigger asChild>
-        <Button size="small">
+        <Button size="small" variant="secondary">
           <Plus className="h-4 w-4" />
           Create Supplier
         </Button>

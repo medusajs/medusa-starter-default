@@ -139,7 +139,7 @@ const CustomerMachinesWidget = ({ data: customer }: WidgetProps) => {
                     <Text size="small">{machine.location || "—"}</Text>
                   </Table.Cell>
                   <Table.Cell>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
                       <Button 
                         size="small" 
                         variant="transparent"

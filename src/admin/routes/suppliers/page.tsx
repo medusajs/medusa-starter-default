@@ -66,13 +66,6 @@ const SuppliersPage = () => {
     pageSize: 20,
   })
 
-  if (error) {
-    throw error
-  }
-
-  const suppliers = data?.suppliers || []
-  const count = data?.count || 0
-
   const columnHelper = createDataTableColumnHelper<Supplier>()
   const filterHelper = createDataTableFilterHelper<Supplier>()
 
@@ -87,6 +80,11 @@ const SuppliersPage = () => {
     }),
   ]
 
+  // Data processing (move before conditional returns)
+  const suppliers = data?.suppliers || []
+  const count = data?.count || 0
+
+  // Column definitions (move before conditional returns)
   const columns = [
     columnHelper.accessor("name", {
       header: "Supplier",
@@ -145,11 +143,14 @@ const SuppliersPage = () => {
     }),
     columnHelper.accessor("last_order_date", {
       header: "Last Order",
-      cell: ({ getValue }) => (
-        <Text className="txt-compact-small text-ui-fg-subtle">
-          {getValue() ? new Date(getValue()).toLocaleDateString() : "—"}
-        </Text>
-      ),
+      cell: ({ getValue }) => {
+        const date = getValue()
+        return (
+          <Text className="txt-compact-small text-ui-fg-subtle">
+            {date ? new Date(date).toLocaleDateString() : "—"}
+          </Text>
+        )
+      },
     }),
     columnHelper.display({
       id: "actions",
@@ -188,6 +189,7 @@ const SuppliersPage = () => {
     }),
   ]
 
+  // DataTable setup (move before conditional returns)
   const table = useDataTable({
     data: suppliers,
     columns,
@@ -207,6 +209,22 @@ const SuppliersPage = () => {
       onPaginationChange: setPagination,
     },
   })
+
+  // NOW we can have conditional returns after all hooks are called
+  if (error) {
+    throw error
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <Container className="p-6">
+        <div className="flex items-center justify-center h-32">
+          <Text className="text-ui-fg-subtle">Loading suppliers...</Text>
+        </div>
+      </Container>
+    )
+  }
 
   return (
     <Container className="divide-y p-0">
