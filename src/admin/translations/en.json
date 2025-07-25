@@ -1,0 +1,187 @@
+{
+  "$schema": "./$schema.json",
+  "custom": {
+    "general": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "edit": "Edit",
+      "delete": "Delete",
+      "create": "Create",
+      "view": "View",
+      "save": "Save",
+      "cancel": "Cancel",
+      "status": "Status",
+      "name": "Name",
+      "description": "Description",
+      "notes": "Notes",
+      "created": "Created",
+      "updated": "Updated",
+      "details": "Details",
+      "actions": "Actions"
+    },
+    "machines": {
+      "title": "Machines",
+      "create": "Create Machine",
+      "edit": "Edit Machine",
+      "delete": "Delete Machine",
+      "deleteSuccess": "Machine deleted successfully",
+      "model": "Model",
+      "serial": "Serial Number",
+      "year": "Year",
+      "hours": "Engine Hours",
+      "type": "Machine Type",
+      "brand": "Brand",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive", 
+        "maintenance": "Maintenance",
+        "sold": "Sold"
+      },
+      "fields": {
+        "model_number": "Model Number",
+        "serial_number": "Serial Number",
+        "license_plate": "License Plate",
+        "year": "Year",
+        "machine_type": "Machine Type",
+        "engine_hours": "Engine Hours",
+        "customer": "Customer",
+        "brand": "Brand"
+      }
+    },
+    "suppliers": {
+      "title": "Suppliers",
+      "create": "Create Supplier",
+      "edit": "Edit Supplier",
+      "delete": "Delete Supplier",
+      "deleteConfirm": "Are you sure you want to delete supplier \"{{name}}\"?",
+      "deleteSuccess": "Supplier \"{{name}}\" deleted successfully",
+      "code": "Code",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "actions": {
+        "viewPurchaseOrders": "View Purchase Orders"
+      }
+    },
+    "technicians": {
+      "title": "Technicians",
+      "create": "Create Technician",
+      "edit": "Edit Technician",
+      "delete": "Delete Technician",
+      "department": "Department",
+      "certification": "Certification Level",
+      "hire_date": "Hire Date",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "on_leave": "On Leave"
+      },
+      "departments": {
+        "service": "Service",
+        "maintenance": "Maintenance",
+        "support": "Support",
+        "field_service": "Field Service"
+      },
+      "certifications": {
+        "entry": "Entry Level",
+        "intermediate": "Intermediate", 
+        "advanced": "Advanced",
+        "expert": "Expert"
+      }
+    },
+    "serviceOrders": {
+      "title": "Service Orders",
+      "create": "Create Service Order",
+      "edit": "Edit Service Order",
+      "delete": "Delete Service Order",
+      "priority": "Priority",
+      "service_type": "Service Type",
+      "location": "Service Location",
+      "customer": "Customer",
+      "machine": "Machine",
+      "technician": "Technician",
+      "status": {
+        "draft": "Draft",
+        "scheduled": "Scheduled",
+        "in_progress": "In Progress",
+        "waiting_parts": "Waiting for Parts",
+        "customer_approval": "Customer Approval",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "priorities": {
+        "low": "Low",
+        "normal": "Normal",
+        "high": "High",
+        "urgent": "Urgent"
+      },
+      "types": {
+        "normal": "Normal",
+        "warranty": "Warranty",
+        "setup": "Setup",
+        "emergency": "Emergency",
+        "preventive": "Preventive"
+      },
+      "locations": {
+        "workshop": "Workshop",
+        "customer_location": "Customer Location"
+      }
+    },
+    "invoices": {
+      "title": "Invoices",
+      "create": "Create Invoice",
+      "edit": "Edit Invoice",
+      "delete": "Delete Invoice",
+      "number": "Invoice Number",
+      "date": "Invoice Date",
+      "due_date": "Due Date",
+      "amount": "Amount",
+      "type": "Type",
+      "status": {
+        "draft": "Draft",
+        "sent": "Sent",
+        "paid": "Paid",
+        "overdue": "Overdue",
+        "cancelled": "Cancelled"
+      },
+      "types": {
+        "product_sale": "Product Sale",
+        "service_work": "Service Work",
+        "mixed": "Mixed"
+      }
+    },
+    "purchaseOrders": {
+      "title": "Purchase Orders",
+      "create": "Create Purchase Order",
+      "edit": "Edit Purchase Order",
+      "delete": "Delete Purchase Order",
+      "number": "Order Number",
+      "date": "Order Date",
+      "supplier": "Supplier",
+      "amount": "Amount",
+      "status": {
+        "draft": "Draft",
+        "sent": "Sent",
+        "confirmed": "Confirmed",
+        "received": "Received",
+        "cancelled": "Cancelled"
+      },
+      "priorities": {
+        "urgent": "Urgent",
+        "high": "High",
+        "normal": "Normal",
+        "low": "Low"
+      }
+    },
+    "brands": {
+      "title": "Brands",
+      "create": "Create Brand",
+      "edit": "Edit Brand",
+      "delete": "Delete Brand",
+      "code": "Brand Code",
+      "type": "Type",
+      "oem": "OEM",
+      "aftermarket": "Aftermarket"
+    }
+  }
+} 

@@ -24,6 +24,7 @@ import {
 import { useQuery } from "@tanstack/react-query"
 import { Link, useNavigate } from "react-router-dom"
 import { CreatePurchaseOrderModal } from "../../components/create-purchase-order-modal"
+import { useCustomTranslation } from "../../hooks/use-custom-translation"
 
 interface PurchaseOrder {
   id: string
@@ -86,36 +87,40 @@ const formatCurrency = (amount: number, currency: string) => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(amount / 100)
 }
 
-const columnHelper = createDataTableColumnHelper<PurchaseOrder>()
-const filterHelper = createDataTableFilterHelper<PurchaseOrder>()
+const usePurchaseOrderFilters = () => {
+  const { t } = useCustomTranslation()
+  const filterHelper = createDataTableFilterHelper<PurchaseOrder>()
 
-const filters = [
-  filterHelper.accessor("status", { 
-    label: "Status", 
-    type: "select", 
-    options: [
-      { label: "Draft", value: "draft" }, 
-      { label: "Sent", value: "sent" },
-      { label: "Confirmed", value: "confirmed" }, 
-      { label: "Received", value: "received" },
-      { label: "Cancelled", value: "cancelled" },
-    ]
-  }),
-  filterHelper.accessor("priority", { 
-    label: "Priority", 
-    type: "select", 
-    options: [
-      { label: "Urgent", value: "urgent" }, 
-      { label: "High", value: "high" },
-      { label: "Normal", value: "normal" }, 
-      { label: "Low", value: "low" },
-    ]
-  }),
-]
+  return [
+    filterHelper.accessor("status", { 
+      label: t("custom.general.status"), 
+      type: "select", 
+      options: [
+        { label: t("custom.purchaseOrders.status.draft"), value: "draft" }, 
+        { label: t("custom.purchaseOrders.status.sent"), value: "sent" },
+        { label: t("custom.purchaseOrders.status.confirmed"), value: "confirmed" }, 
+        { label: t("custom.purchaseOrders.status.received"), value: "received" },
+        { label: t("custom.purchaseOrders.status.cancelled"), value: "cancelled" },
+      ]
+    }),
+    filterHelper.accessor("priority", { 
+      label: t("custom.purchaseOrders.priority"), 
+      type: "select", 
+      options: [
+        { label: t("custom.purchaseOrders.priorities.urgent"), value: "urgent" }, 
+        { label: t("custom.purchaseOrders.priorities.high"), value: "high" },
+        { label: t("custom.purchaseOrders.priorities.normal"), value: "normal" }, 
+        { label: t("custom.purchaseOrders.priorities.low"), value: "low" },
+      ]
+    }),
+  ]
+}
 
 const PurchaseOrdersPage = () => {
+  const { t } = useCustomTranslation()
   const navigate = useNavigate()
   const { data, error } = usePurchaseOrders()
+  const filters = usePurchaseOrderFilters()
   
   const [search, setSearch] = useState("")
   const [filtering, setFiltering] = useState<DataTableFilteringState>({})
@@ -130,9 +135,47 @@ const PurchaseOrdersPage = () => {
 
   const purchaseOrders = data?.purchase_orders || []
   const count = data?.count || 0
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      draft: { color: "grey", label: t("custom.purchaseOrders.status.draft") },
+      sent: { color: "blue", label: t("custom.purchaseOrders.status.sent") },
+      confirmed: { color: "orange", label: t("custom.purchaseOrders.status.confirmed") },
+      received: { color: "green", label: t("custom.purchaseOrders.status.received") },
+      cancelled: { color: "red", label: t("custom.purchaseOrders.status.cancelled") },
+    } as const
+
+    const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey", label: status }
+    
+    return (
+      <Badge size="2xsmall" color={config.color as any}>
+        {config.label}
+      </Badge>
+    )
+  }
+
+  const getPriorityBadge = (priority: string) => {
+    const priorityConfig = {
+      urgent: { color: "red", label: t("custom.purchaseOrders.priorities.urgent") },
+      high: { color: "orange", label: t("custom.purchaseOrders.priorities.high") },
+      normal: { color: "blue", label: t("custom.purchaseOrders.priorities.normal") },
+      low: { color: "grey", label: t("custom.purchaseOrders.priorities.low") },
+    } as const
+
+    const config = priorityConfig[priority as keyof typeof priorityConfig] || { color: "grey", label: priority }
+    
+    return (
+      <Badge size="2xsmall" color={config.color as any}>
+        {config.label}
+      </Badge>
+    )
+  }
+
+  const columnHelper = createDataTableColumnHelper<PurchaseOrder>()
+
   const columns = [
     columnHelper.accessor("po_number", { 
-      header: "PO Number",
+      header: t("custom.purchaseOrders.number"),
       enableSorting: true,
       cell: ({ getValue, row }) => (
         <div className="flex items-center gap-2">
@@ -147,68 +190,31 @@ const PurchaseOrdersPage = () => {
       ),
     }),
     columnHelper.accessor("supplier.name", { 
-      header: "Supplier", 
+      header: t("custom.purchaseOrders.supplier"),
       cell: ({ getValue }) => (
-        <Text className="font-medium">{getValue() || "N/A"}</Text>
-      )
+        <Text>{getValue() || "No supplier"}</Text>
+      ),
     }),
     columnHelper.accessor("status", { 
-      header: "Status",
-      cell: ({ getValue }) => (
-        <Badge size="2xsmall" color={getStatusColor(getValue()) as any}>
-          {getValue()?.replace('_', ' ').toUpperCase()}
-        </Badge>
-      )
+      header: t("custom.general.status"),
+      cell: ({ getValue }) => getStatusBadge(getValue()),
     }),
     columnHelper.accessor("priority", { 
-      header: "Priority",
-      cell: ({ getValue }) => (
-        <Badge size="2xsmall" color={getPriorityColor(getValue()) as any}>
-          {getValue()?.toUpperCase()}
-        </Badge>
-      )
-    }),
-    columnHelper.accessor("order_date", { 
-      header: "Order Date", 
-      cell: ({ getValue }) => (
-        <Text>{new Date(getValue()).toLocaleDateString()}</Text>
-      )
-    }),
-    columnHelper.accessor("items_count", { 
-      header: "Items", 
-      cell: ({ getValue }) => (
-        <Text>{getValue() || 0}</Text>
-      )
+      header: t("custom.purchaseOrders.priority"),
+      cell: ({ getValue }) => getPriorityBadge(getValue()),
     }),
     columnHelper.accessor("total_amount", { 
-      header: "Total", 
+      header: t("custom.purchaseOrders.amount"),
       cell: ({ getValue, row }) => (
-        <Text className="font-medium">{formatCurrency(getValue(), row.original.currency_code)}</Text>
-      )
+        <Text className="font-mono">
+          {formatCurrency(getValue(), row.original.currency_code)}
+        </Text>
+      ),
     }),
-    columnHelper.display({ 
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="transparent"
-            size="small"
-            onClick={() => navigate(`/purchase-orders/${row.original.id}`)}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-          {row.original.status === 'draft' && (
-            <Button
-              variant="transparent"
-              size="small"
-              onClick={() => navigate(`/purchase-orders/${row.original.id}/edit`)}
-              title="Edit Purchase Order"
-            >
-              <PencilSquare className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
+    columnHelper.accessor("order_date", { 
+      header: t("custom.purchaseOrders.date"),
+      cell: ({ getValue }) => (
+        <Text>{new Date(getValue()).toLocaleDateString()}</Text>
       ),
     }),
   ]
@@ -237,7 +243,7 @@ const PurchaseOrdersPage = () => {
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Purchase Orders</Heading>
+          <Heading>{t("custom.purchaseOrders.title")}</Heading>
           <Text className="text-ui-fg-subtle" size="small">
             Manage purchase orders and track supplier deliveries ({count} orders)
           </Text>
@@ -269,5 +275,9 @@ const PurchaseOrdersPage = () => {
   )
 }
 
-export const config = defineRouteConfig({ label: "Purchase Orders", icon: DocumentText })
+export const config = defineRouteConfig({ 
+  label: "Purchase Orders", 
+  icon: DocumentText 
+})
+
 export default PurchaseOrdersPage

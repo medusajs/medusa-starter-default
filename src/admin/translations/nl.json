@@ -1,0 +1,187 @@
+{
+  "$schema": "./$schema.json",
+  "custom": {
+    "general": {
+      "active": "Actief",
+      "inactive": "Inactief",
+      "edit": "Bewerken",
+      "delete": "Verwijderen",
+      "create": "Aanmaken",
+      "view": "Bekijken",
+      "save": "Opslaan",
+      "cancel": "Annuleren",
+      "status": "Status",
+      "name": "Naam",
+      "description": "Beschrijving",
+      "notes": "Opmerkingen",
+      "created": "Aangemaakt",
+      "updated": "Bijgewerkt",
+      "details": "Details",
+      "actions": "Acties"
+    },
+    "machines": {
+      "title": "Machines",
+      "create": "Machine Aanmaken",
+      "edit": "Machine Bewerken",
+      "delete": "Machine Verwijderen",
+      "deleteSuccess": "Machine succesvol verwijderd",
+      "model": "Model",
+      "serial": "Serienummer",
+      "year": "Jaar",
+      "hours": "Draaiuren",
+      "type": "Machine Type",
+      "brand": "Merk",
+      "status": {
+        "active": "Actief",
+        "inactive": "Inactief",
+        "maintenance": "Onderhoud",
+        "sold": "Verkocht"
+      },
+      "fields": {
+        "model_number": "Modelnummer",
+        "serial_number": "Serienummer",
+        "license_plate": "Kenteken",
+        "year": "Jaar",
+        "machine_type": "Machine Type",
+        "engine_hours": "Draaiuren",
+        "customer": "Klant",
+        "brand": "Merk"
+      }
+    },
+    "suppliers": {
+      "title": "Leveranciers",
+      "create": "Leverancier Aanmaken",
+      "edit": "Leverancier Bewerken",
+      "delete": "Leverancier Verwijderen",
+      "deleteConfirm": "Weet je zeker dat je leverancier \"{{name}}\" wilt verwijderen?",
+      "deleteSuccess": "Leverancier \"{{name}}\" succesvol verwijderd",
+      "code": "Code",
+      "email": "E-mail",
+      "phone": "Telefoon",
+      "address": "Adres",
+      "actions": {
+        "viewPurchaseOrders": "Inkooporders Bekijken"
+      }
+    },
+    "technicians": {
+      "title": "Techniekers",
+      "create": "Technieker Aanmaken",
+      "edit": "Technieker Bewerken",
+      "delete": "Technieker Verwijderen",
+      "department": "Afdeling",
+      "certification": "Certificatieniveau",
+      "hire_date": "Datum in Dienst",
+      "status": {
+        "active": "Actief",
+        "inactive": "Inactief",
+        "on_leave": "Met Verlof"
+      },
+      "departments": {
+        "service": "Service",
+        "maintenance": "Onderhoud",
+        "support": "Support",
+        "field_service": "Buitendienst"
+      },
+      "certifications": {
+        "entry": "Instapniveau",
+        "intermediate": "Gemiddeld",
+        "advanced": "Gevorderd",
+        "expert": "Expert"
+      }
+    },
+    "serviceOrders": {
+      "title": "Serviceopdrachten",
+      "create": "Serviceopdracht Aanmaken",
+      "edit": "Serviceopdracht Bewerken",
+      "delete": "Serviceopdracht Verwijderen",
+      "priority": "Prioriteit",
+      "service_type": "Service Type",
+      "location": "Service Locatie",
+      "customer": "Klant",
+      "machine": "Machine",
+      "technician": "Technieker",
+      "status": {
+        "draft": "Concept",
+        "scheduled": "Ingepland",
+        "in_progress": "In Behandeling",
+        "waiting_parts": "Wachten op Onderdelen",
+        "customer_approval": "Klantgoedkeuring",
+        "completed": "Voltooid",
+        "cancelled": "Geannuleerd"
+      },
+      "priorities": {
+        "low": "Laag",
+        "normal": "Normaal",
+        "high": "Hoog",
+        "urgent": "Urgent"
+      },
+      "types": {
+        "normal": "Normaal",
+        "warranty": "Garantie",
+        "setup": "Installatie",
+        "emergency": "Noodgeval",
+        "preventive": "Preventief"
+      },
+      "locations": {
+        "workshop": "Werkplaats",
+        "customer_location": "Klantlocatie"
+      }
+    },
+    "invoices": {
+      "title": "Facturen",
+      "create": "Factuur Aanmaken",
+      "edit": "Factuur Bewerken", 
+      "delete": "Factuur Verwijderen",
+      "number": "Factuurnummer",
+      "date": "Factuurdatum",
+      "due_date": "Vervaldatum",
+      "amount": "Bedrag",
+      "type": "Type",
+      "status": {
+        "draft": "Concept",
+        "sent": "Verzonden",
+        "paid": "Betaald",
+        "overdue": "Vervallen",
+        "cancelled": "Geannuleerd"
+      },
+      "types": {
+        "product_sale": "Productverkoop",
+        "service_work": "Servicewerk",
+        "mixed": "Gemengd"
+      }
+    },
+    "purchaseOrders": {
+      "title": "Inkooporders",
+      "create": "Inkooporder Aanmaken",
+      "edit": "Inkooporder Bewerken",
+      "delete": "Inkooporder Verwijderen",
+      "number": "Ordernummer",
+      "date": "Orderdatum",
+      "supplier": "Leverancier",
+      "amount": "Bedrag",
+      "status": {
+        "draft": "Concept",
+        "sent": "Verzonden",
+        "confirmed": "Bevestigd",
+        "received": "Ontvangen",
+        "cancelled": "Geannuleerd"
+      },
+      "priorities": {
+        "urgent": "Urgent",
+        "high": "Hoog",
+        "normal": "Normaal",
+        "low": "Laag"
+      }
+    },
+    "brands": {
+      "title": "Merken",
+      "create": "Merk Aanmaken",
+      "edit": "Merk Bewerken",
+      "delete": "Merk Verwijderen",
+      "code": "Merkcode",
+      "type": "Type",
+      "oem": "OEM",
+      "aftermarket": "Aftermarket"
+    }
+  }
+} 

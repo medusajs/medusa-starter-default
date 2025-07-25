@@ -1,24 +1,37 @@
 import React from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { Plus, Eye, PencilSquare, Trash, Users } from "@medusajs/icons"
 import { 
-  Container, 
-  Heading, 
   Button, 
   Badge, 
+  Container, 
+  Heading, 
   Text,
   DataTable,
   useDataTable,
   createDataTableColumnHelper,
   createDataTableFilterHelper,
+  DropdownMenu,
+  IconButton,
   toast
 } from "@medusajs/ui"
 import type { DataTableFilteringState } from "@medusajs/ui"
+import { 
+  Plus, 
+  Eye, 
+  PencilSquare, 
+  Trash, 
+  Users,
+  EllipsisHorizontal,
+  DocumentText,
+  ArrowUpTray,
+  Tools
+} from "@medusajs/icons"
 import { useSearchParams, useNavigate, Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
 import { CreateTechnicianForm } from "../../components/create-technician-form"
 import { EditTechnicianForm } from "../../components/edit-technician-form"
+import { useCustomTranslation } from "../../hooks/use-custom-translation"
 
 // Types for our technician data
 interface Technician {
@@ -52,44 +65,46 @@ const filterHelper = createDataTableFilterHelper<Technician>()
 
 // Technician filters following native Medusa pattern
 const useTechnicianFilters = () => {
+  const { t } = useCustomTranslation()
+  
   return [
     filterHelper.accessor("status", {
-      label: "Status",
+      label: t("custom.general.status"),
       type: "select",
       options: [
-        { label: "Active", value: "active" },
-        { label: "Inactive", value: "inactive" },
-        { label: "On Leave", value: "on_leave" },
+        { label: t("custom.technicians.status.active"), value: "active" },
+        { label: t("custom.technicians.status.inactive"), value: "inactive" },
+        { label: t("custom.technicians.status.on_leave"), value: "on_leave" },
       ],
     }),
     filterHelper.accessor("department", {
-      label: "Department",
+      label: t("custom.technicians.department"),
       type: "select",
       options: [
-        { label: "Service", value: "service" },
-        { label: "Maintenance", value: "maintenance" },
-        { label: "Support", value: "support" },
-        { label: "Field Service", value: "field_service" },
+        { label: t("custom.technicians.departments.service"), value: "service" },
+        { label: t("custom.technicians.departments.maintenance"), value: "maintenance" },
+        { label: t("custom.technicians.departments.support"), value: "support" },
+        { label: t("custom.technicians.departments.field_service"), value: "field_service" },
       ],
     }),
     filterHelper.accessor("certification_level", {
-      label: "Certification Level",
+      label: t("custom.technicians.certification"),
       type: "select",
       options: [
-        { label: "Entry Level", value: "entry" },
-        { label: "Intermediate", value: "intermediate" },
-        { label: "Advanced", value: "advanced" },
-        { label: "Expert", value: "expert" },
+        { label: t("custom.technicians.certifications.entry"), value: "entry" },
+        { label: t("custom.technicians.certifications.intermediate"), value: "intermediate" },
+        { label: t("custom.technicians.certifications.advanced"), value: "advanced" },
+        { label: t("custom.technicians.certifications.expert"), value: "expert" },
       ],
     }),
     filterHelper.accessor("created_at", {
-      label: "Created At",
+      label: t("custom.general.created"),
       type: "date",
       format: "date",
       options: [],
     }),
     filterHelper.accessor("hire_date", {
-      label: "Hire Date",
+      label: t("custom.technicians.hire_date"),
       type: "date",
       format: "date",
       options: [],
@@ -143,6 +158,7 @@ const useDeleteTechnician = () => {
 
 // Technician actions component
 const TechnicianActions = ({ technician }: { technician: Technician }) => {
+  const { t } = useCustomTranslation()
   const navigate = useNavigate()
   const deleteTechnicianMutation = useDeleteTechnician()
 
@@ -156,37 +172,37 @@ const TechnicianActions = ({ technician }: { technician: Technician }) => {
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        size="small"
-        variant="transparent"
-        onClick={(e) => {
-          e.stopPropagation()
-          navigate(`/technicians/${technician.id}`)
-        }}
-      >
-        <Eye className="h-4 w-4" />
-      </Button>
-      <EditTechnicianForm 
-        technician={technician} 
-        trigger={
-          <Button
-            size="small"
-            variant="transparent"
-          >
-            <PencilSquare className="h-4 w-4" />
-          </Button>
-        }
-      />
-      <Button
-        size="small"
-        variant="transparent"
-        onClick={handleDelete}
-        disabled={deleteTechnicianMutation.isPending}
-      >
-        <Trash className="h-4 w-4" />
-      </Button>
-    </div>
+    <DropdownMenu>
+      <DropdownMenu.Trigger asChild>
+        <IconButton size="small" variant="transparent">
+          <EllipsisHorizontal className="h-4 w-4" />
+        </IconButton>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content side="bottom">
+        <EditTechnicianForm 
+          technician={technician} 
+          trigger={
+            <DropdownMenu.Item
+              onSelect={(e) => {
+                e.preventDefault()
+              }}
+              className="[&>svg]:text-ui-fg-subtle flex items-center gap-2"
+            >
+              <PencilSquare className="h-4 w-4" />
+              {t("custom.general.edit")}
+            </DropdownMenu.Item>
+          }
+        />
+        <DropdownMenu.Item
+          onClick={handleDelete}
+          disabled={deleteTechnicianMutation.isPending}
+          className="[&>svg]:text-ui-fg-subtle flex items-center gap-2 text-ui-fg-error"
+        >
+          <Trash className="h-4 w-4" />
+          {t("custom.general.delete")}
+        </DropdownMenu.Item>
+      </DropdownMenu.Content>
+    </DropdownMenu>
   )
 }
 
@@ -198,6 +214,7 @@ export const config = defineRouteConfig({
 
 // Technicians list table component - following official DataTable pattern
 const TechniciansListTable = () => {
+  const { t } = useCustomTranslation()
   const navigate = useNavigate()
   const { data, isLoading, error } = useTechnicians()
   const filters = useTechnicianFilters()
@@ -217,9 +234,9 @@ const TechniciansListTable = () => {
   // Status badge helper (move before conditional returns)
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { color: "green", label: "Active" },
-      inactive: { color: "red", label: "Inactive" },
-      on_leave: { color: "orange", label: "On Leave" },
+      active: { color: "green", label: t("custom.technicians.status.active") },
+      inactive: { color: "red", label: t("custom.technicians.status.inactive") },
+      on_leave: { color: "orange", label: t("custom.technicians.status.on_leave") },
     } as const
 
     const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey", label: status }
@@ -262,24 +279,44 @@ const TechniciansListTable = () => {
       ),
     }),
     columnHelper.accessor("department", {
-      header: "Department",
-      cell: ({ getValue }) => (
-        <Text className="capitalize">{getValue() || "—"}</Text>
-      ),
+      header: t("custom.technicians.department"),
+      cell: ({ getValue }) => {
+        const dept = getValue()
+        if (!dept) return <Text>—</Text>
+        
+        const deptLabels = {
+          service: t("custom.technicians.departments.service"),
+          maintenance: t("custom.technicians.departments.maintenance"),
+          support: t("custom.technicians.departments.support"),
+          field_service: t("custom.technicians.departments.field_service"),
+        }
+        
+        return <Text>{deptLabels[dept as keyof typeof deptLabels] || dept}</Text>
+      },
     }),
-    columnHelper.accessor("specializations", {
-      header: "Specializations",
-      cell: ({ getValue }) => (
-        <Text className="capitalize">{getValue() || "—"}</Text>
-      ),
+    columnHelper.accessor("certification_level", {
+      header: t("custom.technicians.certification"),
+      cell: ({ getValue }) => {
+        const cert = getValue()
+        if (!cert) return <Text>—</Text>
+        
+        const certLabels = {
+          entry: t("custom.technicians.certifications.entry"),
+          intermediate: t("custom.technicians.certifications.intermediate"),
+          advanced: t("custom.technicians.certifications.advanced"),
+          expert: t("custom.technicians.certifications.expert"),
+        }
+        
+        return <Text>{certLabels[cert as keyof typeof certLabels] || cert}</Text>
+      },
     }),
     columnHelper.accessor("status", {
-      header: "Status",
+      header: t("custom.general.status"),
       cell: ({ getValue }) => getStatusBadge(getValue()),
     }),
     columnHelper.display({
       id: "actions",
-      header: "Actions",
+      header: t("custom.general.actions"),
       cell: ({ row }) => <TechnicianActions technician={row.original} />,
     }),
   ]
@@ -291,6 +328,9 @@ const TechniciansListTable = () => {
     filters,
     rowCount: count,
     getRowId: (row) => row.id,
+    onRowClick: (event, row) => {
+      navigate(`/technicians/${row.id}`)
+    },
     search: {
       state: search,
       onSearchChange: setSearch,
@@ -325,7 +365,7 @@ const TechniciansListTable = () => {
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Technicians</Heading>
+          <Heading>{t("custom.technicians.title")}</Heading>
           <Text className="text-ui-fg-subtle" size="small">
             Manage your service technicians ({count} technicians)
           </Text>

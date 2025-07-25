@@ -1,6 +1,6 @@
 import React from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { Plus, Eye, PencilSquare, Trash, Tools } from "@medusajs/icons"
+import { Plus, PencilSquare, Trash, Tools, EllipsisHorizontal } from "@medusajs/icons"
 import { 
   Container, 
   Heading, 
@@ -11,15 +11,18 @@ import {
   useDataTable,
   createDataTableColumnHelper,
   createDataTableFilterHelper,
-  toast
+  toast,
+  DropdownMenu,
+  IconButton
 } from "@medusajs/ui"
 import type { DataTableFilteringState } from "@medusajs/ui"
-import { useSearchParams, useNavigate, Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { CreateMachineForm } from "../../components/machines/create-machine-form"
 import { EditMachineForm } from "../../components/edit-machine-form"
+import { useCustomTranslation } from "../../hooks/use-custom-translation"
 
-// Types for our machine data - matching what EditMachineForm expects
+// Types for our machine data
 interface Machine {
   id: string
   brand_id?: string | null
@@ -50,14 +53,16 @@ const filterHelper = createDataTableFilterHelper<Machine>()
 
 // Machine filters following native Medusa pattern
 const useMachineFilters = () => {
+  const { t } = useCustomTranslation()
+  
   return [
     filterHelper.accessor("status", {
-      label: "Status",
+      label: t("custom.general.status"),
       type: "select",
       options: [
-        { label: "Active", value: "active" },
-        { label: "Inactive", value: "inactive" },
-        { label: "Maintenance", value: "maintenance" },
+        { label: t("custom.machines.status.active"), value: "active" },
+        { label: t("custom.machines.status.inactive"), value: "inactive" },
+        { label: t("custom.machines.status.maintenance"), value: "maintenance" },
       ],
     }),
     filterHelper.accessor("fuel_type", {
@@ -71,7 +76,7 @@ const useMachineFilters = () => {
       ],
     }),
     filterHelper.accessor("created_at", {
-      label: "Created At",
+      label: t("custom.general.created"),
       type: "date",
       format: "date",
       options: [],
@@ -106,6 +111,7 @@ const useMachines = () => {
 // Delete machine mutation
 const useDeleteMachine = () => {
   const queryClient = useQueryClient()
+  const { t } = useCustomTranslation()
   
   return useMutation({
     mutationFn: async (id: string) => {
@@ -120,7 +126,7 @@ const useDeleteMachine = () => {
       return response.json()
     },
     onSuccess: () => {
-      toast.success("Machine deleted successfully")
+      toast.success(t("custom.machines.deleteSuccess"))
       queryClient.invalidateQueries({ queryKey: ["machines"] })
     },
     onError: () => {
@@ -131,6 +137,7 @@ const useDeleteMachine = () => {
 
 // Machine actions component
 const MachineActions = ({ machine }: { machine: Machine }) => {
+  const { t } = useCustomTranslation()
   const navigate = useNavigate()
   const deleteMachineMutation = useDeleteMachine()
 
@@ -144,49 +151,47 @@ const MachineActions = ({ machine }: { machine: Machine }) => {
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        size="small"
-        variant="transparent"
-        onClick={(e) => {
-          e.stopPropagation()
-          navigate(`/machines/${machine.id}`)
-        }}
-      >
-        <Eye className="h-4 w-4" />
-      </Button>
-      <EditMachineForm machine={machine} trigger={
-        <Button 
-          size="small"
-          variant="transparent"
+    <DropdownMenu>
+      <DropdownMenu.Trigger asChild>
+        <IconButton size="small" variant="transparent">
+          <EllipsisHorizontal className="h-4 w-4" />
+        </IconButton>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content side="bottom">
+        <EditMachineForm 
+          machine={machine} 
+          trigger={
+            <DropdownMenu.Item
+              onSelect={(e) => {
+                e.preventDefault()
+              }}
+              className="[&>svg]:text-ui-fg-subtle flex items-center gap-2"
+            >
+              <PencilSquare className="h-4 w-4" />
+              {t("custom.general.edit")}
+            </DropdownMenu.Item>
+          }
+        />
+        <DropdownMenu.Item
+          onClick={handleDelete}
+          disabled={deleteMachineMutation.isPending}
+          className="[&>svg]:text-ui-fg-subtle flex items-center gap-2 text-ui-fg-error"
         >
-          <PencilSquare className="h-4 w-4" />
-        </Button>
-      } />
-      <Button
-        size="small"
-        variant="transparent"
-        onClick={handleDelete}
-        disabled={deleteMachineMutation.isPending}
-      >
-        <Trash className="h-4 w-4" />
-      </Button>
-    </div>
+          <Trash className="h-4 w-4" />
+          {t("custom.general.delete")}
+        </DropdownMenu.Item>
+      </DropdownMenu.Content>
+    </DropdownMenu>
   )
 }
 
-// Route config
-export const config = defineRouteConfig({
-  label: "Machines",
-  icon: Tools,
-})
-
-// Machines list table component - following official DataTable pattern
+// Machines list table component
 const MachinesListTable = () => {
+  const { t } = useCustomTranslation()
   const navigate = useNavigate()
   const { data, isLoading, error } = useMachines()
   const filters = useMachineFilters()
-  
+
   // Filter state management
   const [search, setSearch] = React.useState("")
   const [filtering, setFiltering] = React.useState<DataTableFilteringState>({})
@@ -195,16 +200,16 @@ const MachinesListTable = () => {
     pageSize: PAGE_SIZE,
   })
 
-  // Data processing (move before conditional returns)
+  // Data processing
   const machines = data?.machines || []
   const count = data?.count || 0
 
-  // Status badge helper (move before conditional returns)
+  // Status badge helper
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { color: "green", label: "Active" },
-      inactive: { color: "red", label: "Inactive" },
-      maintenance: { color: "orange", label: "Maintenance" },
+      active: { color: "green", label: t("custom.machines.status.active") },
+      inactive: { color: "red", label: t("custom.machines.status.inactive") },
+      maintenance: { color: "orange", label: t("custom.machines.status.maintenance") },
     } as const
 
     const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey", label: status }
@@ -216,26 +221,26 @@ const MachinesListTable = () => {
     )
   }
 
-  // Column helper and definitions (move before conditional returns)
+  // Column helper and definitions
   const columnHelper = createDataTableColumnHelper<Machine>()
 
   const columns = [
     columnHelper.accessor("brand_name", {
-      header: "Brand",
+      header: t("custom.machines.brand"),
       enableSorting: true,
       cell: ({ getValue }) => (
         <Text className="font-medium">{getValue() || 'Unknown'}</Text>
       ),
     }),
     columnHelper.accessor("model_number", {
-      header: "Model",
+      header: t("custom.machines.model"),
       enableSorting: true,
       cell: ({ getValue }) => (
         <Text>{getValue()}</Text>
       ),
     }),
     columnHelper.accessor("serial_number", {
-      header: "Serial Number",
+      header: t("custom.machines.serial"),
       cell: ({ getValue }) => (
         <Text className="font-mono text-sm">{getValue()}</Text>
       ),
@@ -247,14 +252,14 @@ const MachinesListTable = () => {
       ),
     }),
     columnHelper.accessor("year", {
-      header: "Year",
+      header: t("custom.machines.year"),
       enableSorting: true,
       cell: ({ getValue }) => (
         <Text>{getValue()}</Text>
       ),
     }),
     columnHelper.accessor("status", {
-      header: "Status",
+      header: t("custom.general.status"),
       cell: ({ getValue }) => getStatusBadge(getValue()),
     }),
     columnHelper.accessor("location", {
@@ -265,18 +270,21 @@ const MachinesListTable = () => {
     }),
     columnHelper.display({
       id: "actions",
-      header: "Actions",
+      header: t("custom.general.actions"),
       cell: ({ row }) => <MachineActions machine={row.original} />,
     }),
   ]
 
-  // Table instance setup (move before conditional returns)
+  // Table instance setup
   const table = useDataTable({
     data: machines,
     columns,
     filters,
     rowCount: count,
     getRowId: (row) => row.id,
+    onRowClick: (event, row) => {
+      navigate(`/machines/${row.id}`)
+    },
     search: {
       state: search,
       onSearchChange: setSearch,
@@ -291,7 +299,6 @@ const MachinesListTable = () => {
     },
   })
 
-  // NOW we can have conditional returns after all hooks are called
   if (error) {
     throw error
   }
@@ -311,7 +318,7 @@ const MachinesListTable = () => {
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Machines</Heading>
+          <Heading>{t("custom.machines.title")}</Heading>
           <Text className="text-ui-fg-subtle" size="small">
             Manage your equipment and machinery ({count} machines)
           </Text>
@@ -334,9 +341,16 @@ const MachinesListTable = () => {
   )
 }
 
-// Main machines page component
-const MachinesPage = () => {
+// Route config - use custom translation hook
+const MachinesPageWithConfig = () => {
+  const { t } = useCustomTranslation()
+  
   return <MachinesListTable />
 }
 
-export default MachinesPage
+export const config = defineRouteConfig({
+  label: "Machines", // This will be hardcoded for now as route config doesn't support dynamic translation
+  icon: Tools,
+})
+
+export default MachinesPageWithConfig

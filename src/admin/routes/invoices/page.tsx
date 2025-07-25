@@ -1,34 +1,40 @@
 import React from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { 
+  Button, 
+  Badge, 
+  Container, 
+  Heading, 
+  Text,
+  DataTable,
+  useDataTable,
+  createDataTableColumnHelper,
+  createDataTableFilterHelper,
+  DropdownMenu,
+  IconButton,
+  toast,
+  StatusBadge
+} from "@medusajs/ui"
+import type { DataTableFilteringState } from "@medusajs/ui"
+import { 
   Plus, 
   Eye, 
   PencilSquare, 
-  DocumentText, 
-  ArrowDownTray,
+  ArrowDownTray, 
+  DocumentText,
+  EllipsisHorizontal,
+  Trash,
+  ArrowUpTray,
   Clock,
   CheckCircleSolid,
   ExclamationCircleSolid,
   XCircle,
   ReceiptPercent
 } from "@medusajs/icons"
-import { 
-  Container, 
-  Heading, 
-  Button, 
-  Badge, 
-  StatusBadge,
-  Text,
-  DataTable,
-  useDataTable,
-  createDataTableColumnHelper,
-  createDataTableFilterHelper,
-  toast
-} from "@medusajs/ui"
-import type { DataTableFilteringState } from "@medusajs/ui"
 import { useNavigate, Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
+import { useCustomTranslation } from "../../hooks/use-custom-translation"
 
 // Types for invoice data
 interface Invoice {
@@ -77,12 +83,14 @@ const formatDate = (date: string) => {
 
 // Status badge component
 const InvoiceStatusBadge = ({ status }: { status: Invoice["status"] }) => {
+  const { t } = useCustomTranslation()
+  
   const statusConfig = {
-    draft: { color: "grey" as const, icon: PencilSquare, label: "Concept" },
-    sent: { color: "blue" as const, icon: Clock, label: "Verzonden" },
-    paid: { color: "green" as const, icon: CheckCircleSolid, label: "Betaald" },
-    overdue: { color: "red" as const, icon: ExclamationCircleSolid, label: "Vervallen" },
-    cancelled: { color: "grey" as const, icon: XCircle, label: "Geannuleerd" }
+    draft: { color: "grey" as const, icon: PencilSquare, label: t("custom.invoices.status.draft") },
+    sent: { color: "blue" as const, icon: Clock, label: t("custom.invoices.status.sent") },
+    paid: { color: "green" as const, icon: CheckCircleSolid, label: t("custom.invoices.status.paid") },
+    overdue: { color: "red" as const, icon: ExclamationCircleSolid, label: t("custom.invoices.status.overdue") },
+    cancelled: { color: "grey" as const, icon: XCircle, label: t("custom.invoices.status.cancelled") }
   }
 
   const config = statusConfig[status]
@@ -98,10 +106,12 @@ const InvoiceStatusBadge = ({ status }: { status: Invoice["status"] }) => {
 
 // Type badge component
 const InvoiceTypeBadge = ({ type }: { type: Invoice["invoice_type"] }) => {
+  const { t } = useCustomTranslation()
+  
   const typeConfig = {
-    product_sale: { color: "blue" as const, label: "Productverkoop" },
-    service_work: { color: "green" as const, label: "Servicewerk" },
-    mixed: { color: "purple" as const, label: "Gemengd" }
+    product_sale: { color: "blue" as const, label: t("custom.invoices.types.product_sale") },
+    service_work: { color: "green" as const, label: t("custom.invoices.types.service_work") },
+    mixed: { color: "purple" as const, label: t("custom.invoices.types.mixed") }
   }
 
   const config = typeConfig[type]
@@ -126,33 +136,35 @@ const useInvoices = () => {
 }
 
 const useInvoiceFilters = () => {
+  const { t } = useCustomTranslation()
   const filterHelper = createDataTableFilterHelper<Invoice>()
   
   return [
     filterHelper.accessor("status", {
-      label: "Status",
+      label: t("custom.general.status"),
       type: "select",
       options: [
-        { label: "Concept", value: "draft" },
-        { label: "Verzonden", value: "sent" },
-        { label: "Betaald", value: "paid" },
-        { label: "Vervallen", value: "overdue" },
-        { label: "Geannuleerd", value: "cancelled" },
+        { label: t("custom.invoices.status.draft"), value: "draft" },
+        { label: t("custom.invoices.status.sent"), value: "sent" },
+        { label: t("custom.invoices.status.paid"), value: "paid" },
+        { label: t("custom.invoices.status.overdue"), value: "overdue" },
+        { label: t("custom.invoices.status.cancelled"), value: "cancelled" },
       ],
     }),
     filterHelper.accessor("invoice_type", {
-      label: "Type",
+      label: t("custom.invoices.type"),
       type: "select",
       options: [
-        { label: "Productverkoop", value: "product_sale" },
-        { label: "Servicewerk", value: "service_work" },
-        { label: "Gemengd", value: "mixed" },
+        { label: t("custom.invoices.types.product_sale"), value: "product_sale" },
+        { label: t("custom.invoices.types.service_work"), value: "service_work" },
+        { label: t("custom.invoices.types.mixed"), value: "mixed" },
       ],
     }),
   ]
 }
 
 const useDeleteInvoice = () => {
+  const { t } = useCustomTranslation()
   const queryClient = useQueryClient()
   
   return useMutation({
@@ -165,13 +177,13 @@ const useDeleteInvoice = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] })
-      toast.success("Factuur verwijderd", {
-        description: "De factuur is succesvol verwijderd.",
+      toast.success("Invoice deleted", {
+        description: "The invoice has been successfully deleted.",
       })
     },
     onError: (error) => {
-      toast.error("Fout", {
-        description: "Er is een fout opgetreden bij het verwijderen van de factuur.",
+      toast.error("Error", {
+        description: "An error occurred while deleting the invoice.",
       })
     },
   })
@@ -195,13 +207,13 @@ const useGeneratePdf = () => {
       link.click()
       document.body.removeChild(link)
       
-      toast.success("PDF gegenereerd", {
-        description: "De factuur PDF is succesvol gegenereerd en gedownload.",
+      toast.success("PDF generated", {
+        description: "The invoice PDF has been successfully generated and downloaded.",
       })
     },
     onError: () => {
-      toast.error("Fout", {
-        description: "Er is een fout opgetreden bij het genereren van de PDF.",
+      toast.error("Error", {
+        description: "An error occurred while generating the PDF.",
       })
     },
   })
@@ -212,43 +224,51 @@ const PAGE_SIZE = 20
 
 // Invoice actions component
 const InvoiceActions = ({ invoice }: { invoice: Invoice }) => {
+  const { t } = useCustomTranslation()
   const navigate = useNavigate()
   const generatePdf = useGeneratePdf()
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        size="small"
-        variant="transparent"
-        onClick={() => navigate(`/invoices/${invoice.id}`)}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
-      
-      <Button
-        size="small"
-        variant="transparent"
-        onClick={() => generatePdf.mutate(invoice.id)}
-        disabled={generatePdf.isPending}
-      >
-        <ArrowDownTray className="w-4 h-4" />
-      </Button>
-      
-      {invoice.status === "draft" && (
-        <Button
-          size="small"
-          variant="transparent"
-          onClick={() => navigate(`/invoices/${invoice.id}/edit`)}
-        >
-          <PencilSquare className="w-4 h-4" />
-        </Button>
-      )}
-    </div>
+    <DropdownMenu>
+      <DropdownMenu.Trigger asChild>
+        <IconButton size="small" variant="transparent">
+          <EllipsisHorizontal className="h-4 w-4" />
+        </IconButton>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content side="bottom">
+        {invoice.status === "draft" && (
+          <>
+            <DropdownMenu.Item
+              onClick={(e) => {
+                e.stopPropagation()
+                navigate(`/invoices/${invoice.id}/edit`)
+              }}
+              className="[&>svg]:text-ui-fg-subtle flex items-center gap-2"
+            >
+              <PencilSquare className="h-4 w-4" />
+              {t("custom.general.edit")}
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onClick={(e) => {
+                e.stopPropagation()
+                // TODO: Add delete invoice functionality
+                console.log('Delete invoice:', invoice.id)
+              }}
+              className="[&>svg]:text-ui-fg-subtle flex items-center gap-2 text-ui-fg-error"
+            >
+              <Trash className="h-4 w-4" />
+              {t("custom.general.delete")}
+            </DropdownMenu.Item>
+          </>
+        )}
+      </DropdownMenu.Content>
+    </DropdownMenu>
   )
 }
 
 // DataTable setup
 const InvoicesListTable = () => {
+  const { t } = useCustomTranslation()
   const navigate = useNavigate()
   const { data, isLoading, error } = useInvoices()
   const filters = useInvoiceFilters()
@@ -270,7 +290,7 @@ const InvoicesListTable = () => {
 
   const columns = [
     columnHelper.accessor("invoice_number", {
-      header: "Factuurnummer",
+      header: t("custom.invoices.number"),
       enableSorting: true,
       cell: ({ getValue, row }) => (
         <Link 
@@ -282,10 +302,10 @@ const InvoicesListTable = () => {
       ),
     }),
     columnHelper.accessor("customer", {
-      header: "Klant",
+      header: "Customer",
       cell: ({ getValue }) => {
         const customer = getValue()
-        if (!customer) return <Text className="text-ui-fg-muted">Geen klant</Text>
+        if (!customer) return <Text className="text-ui-fg-muted">No customer</Text>
         
         const name = customer.company_name || `${customer.first_name} ${customer.last_name}`
         return (
@@ -297,15 +317,15 @@ const InvoicesListTable = () => {
       },
     }),
     columnHelper.accessor("invoice_type", {
-      header: "Type",
+      header: t("custom.invoices.type"),
       cell: ({ getValue }) => <InvoiceTypeBadge type={getValue()} />,
     }),
     columnHelper.accessor("status", {
-      header: "Status",
+      header: t("custom.general.status"),
       cell: ({ getValue }) => <InvoiceStatusBadge status={getValue()} />,
     }),
     columnHelper.accessor("total_amount", {
-      header: "Totaal",
+      header: "Total",
       cell: ({ getValue }) => {
         const total = getValue() || 0
         return (
@@ -316,7 +336,7 @@ const InvoicesListTable = () => {
       },
     }),
     columnHelper.accessor("created_at", {
-      header: "Aangemaakt",
+      header: t("custom.general.created"),
       cell: ({ getValue }) => (
         <Text size="small">
           {new Date(getValue()).toLocaleDateString()}
@@ -325,7 +345,7 @@ const InvoicesListTable = () => {
     }),
     columnHelper.display({
       id: "actions",
-      header: "Acties",
+      header: t("custom.general.actions"),
       cell: ({ row }) => <InvoiceActions invoice={row.original} />,
     }),
   ]
@@ -337,6 +357,9 @@ const InvoicesListTable = () => {
     filters,
     rowCount: count,
     getRowId: (row) => row.id,
+    onRowClick: (event, row) => {
+      navigate(`/invoices/${row.id}`)
+    },
     search: {
       state: search,
       onSearchChange: setSearch,
@@ -371,9 +394,9 @@ const InvoicesListTable = () => {
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Facturen</Heading>
+          <Heading>{t("custom.invoices.title")}</Heading>
           <Text className="text-ui-fg-subtle" size="small">
-            Beheer uw facturen en betalingen ({count} facturen)
+            Manage your invoices and payments ({count} invoices)
           </Text>
         </div>
         <div className="flex items-center gap-2">
@@ -386,7 +409,7 @@ const InvoicesListTable = () => {
           <Button size="small" variant="secondary" asChild>
             <Link to="/invoices/create">
               <Plus className="w-4 h-4 mr-2" />
-              Nieuwe Factuur
+              {t("custom.invoices.create")}
             </Link>
           </Button>
         </div>
@@ -398,7 +421,7 @@ const InvoicesListTable = () => {
             <DataTable.FilterMenu />
           </div>
           <div className="flex items-center gap-2">
-            <DataTable.Search placeholder="Zoek facturen..." />
+            <DataTable.Search placeholder="Search invoices..." />
           </div>
         </DataTable.Toolbar>
         <DataTable.Table />
@@ -410,7 +433,7 @@ const InvoicesListTable = () => {
 
 // Route config
 export const config = defineRouteConfig({
-  label: "Facturen",
+  label: "Invoices",
   icon: DocumentText,
 })
 

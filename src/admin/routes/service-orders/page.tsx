@@ -1,6 +1,6 @@
 import React from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { PencilSquare, Plus, Tools, EllipsisHorizontal, SquareTwoStack, ChevronUpMini, ChevronDownMini, ChevronRightMini, ExclamationCircle } from "@medusajs/icons"
+import { PencilSquare, Plus, Tools, EllipsisHorizontal, SquareTwoStack, ChevronUpMini, ChevronDownMini, ChevronRightMini, ExclamationCircle, DocumentText, ArrowUpTray, Trash } from "@medusajs/icons"
 import {
   Button,
   Container,
@@ -17,11 +17,14 @@ import {
   createDataTableColumnHelper,
   createDataTableFilterHelper,
   toast,
+  DropdownMenu,
+  IconButton,
 } from "@medusajs/ui"
 import type { DataTableFilteringState } from "@medusajs/ui"
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { useCustomTranslation } from "../../hooks/use-custom-translation"
 
 import { KanbanView } from "./components/kanban-view"
 import { EditServiceOrderForm } from "../../components/edit-service-order-form"
@@ -51,32 +54,34 @@ const filterHelper = createDataTableFilterHelper<ServiceOrder>()
 
 // Service Order filters following native Medusa pattern
 const useServiceOrderFilters = () => {
+  const { t } = useCustomTranslation()
+  
   return [
     filterHelper.accessor("status", {
-      label: "Status",
+      label: t("custom.general.status"),
       type: "select",
       options: [
-        { label: "Draft", value: "draft" },
-        { label: "Scheduled", value: "scheduled" },
-        { label: "In Progress", value: "in_progress" },
-        { label: "Waiting Parts", value: "waiting_parts" },
-        { label: "Customer Approval", value: "customer_approval" },
-        { label: "Completed", value: "completed" },
-        { label: "Cancelled", value: "cancelled" },
+        { label: t("custom.serviceOrders.status.draft"), value: "draft" },
+        { label: t("custom.serviceOrders.status.scheduled"), value: "scheduled" },
+        { label: t("custom.serviceOrders.status.in_progress"), value: "in_progress" },
+        { label: t("custom.serviceOrders.status.waiting_parts"), value: "waiting_parts" },
+        { label: t("custom.serviceOrders.status.customer_approval"), value: "customer_approval" },
+        { label: t("custom.serviceOrders.status.completed"), value: "completed" },
+        { label: t("custom.serviceOrders.status.cancelled"), value: "cancelled" },
       ],
     }),
     filterHelper.accessor("priority", {
-      label: "Priority",
+      label: t("custom.serviceOrders.priority"),
       type: "select",
       options: [
-        { label: "Low", value: "low" },
-        { label: "Normal", value: "normal" },
-        { label: "High", value: "high" },
-        { label: "Urgent", value: "urgent" },
+        { label: t("custom.serviceOrders.priorities.low"), value: "low" },
+        { label: t("custom.serviceOrders.priorities.normal"), value: "normal" },
+        { label: t("custom.serviceOrders.priorities.high"), value: "high" },
+        { label: t("custom.serviceOrders.priorities.urgent"), value: "urgent" },
       ],
     }),
     filterHelper.accessor("created_at", {
-      label: "Created At",
+      label: t("custom.general.created"),
       type: "date",
       format: "date",
       options: [],
@@ -146,35 +151,44 @@ const useTechnicians = () => {
 
 // Service order actions component
 const ServiceOrderActions = ({ serviceOrder }: { serviceOrder: ServiceOrder }) => {
+  const { t } = useCustomTranslation()
   const navigate = useNavigate()
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        size="small"
-        variant="transparent"
-        onClick={(e) => {
-          e.stopPropagation()
-          navigate(`/service-orders/${serviceOrder.id}`)
-        }}
-      >
-        <Tools className="h-4 w-4" />
-      </Button>
-      <EditServiceOrderForm 
-        serviceOrder={serviceOrder} 
-        trigger={
-          <Button
-            size="small"
-            variant="transparent"
-            onClick={(e) => {
-              e.stopPropagation()
-            }}
-          >
-            <PencilSquare className="h-4 w-4" />
-          </Button>
-        }
-      />
-    </div>
+    <DropdownMenu>
+      <DropdownMenu.Trigger asChild>
+        <IconButton size="small" variant="transparent">
+          <EllipsisHorizontal className="h-4 w-4" />
+        </IconButton>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content side="bottom">
+        <EditServiceOrderForm 
+          serviceOrder={serviceOrder} 
+          trigger={
+            <DropdownMenu.Item
+              onSelect={(e) => {
+                e.preventDefault()
+              }}
+              className="[&>svg]:text-ui-fg-subtle flex items-center gap-2"
+            >
+              <PencilSquare className="h-4 w-4" />
+              {t("custom.general.edit")}
+            </DropdownMenu.Item>
+          }
+        />
+        <DropdownMenu.Item
+          onClick={(e) => {
+            e.stopPropagation()
+            // TODO: Add delete service order functionality
+            console.log('Delete service order:', serviceOrder.id)
+          }}
+          className="[&>svg]:text-ui-fg-subtle flex items-center gap-2 text-ui-fg-error"
+        >
+          <Trash className="h-4 w-4" />
+          {t("custom.general.delete")}
+        </DropdownMenu.Item>
+      </DropdownMenu.Content>
+    </DropdownMenu>
   )
 }
 
@@ -186,6 +200,7 @@ export const config = defineRouteConfig({
 
 // Service Orders list table component - following official DataTable pattern
 const ServiceOrdersListTable = () => {
+  const { t } = useCustomTranslation()
   const navigate = useNavigate()
   const { data, isLoading, error } = useServiceOrders()
   const { data: customersData } = useCustomers()
@@ -232,35 +247,60 @@ const ServiceOrdersListTable = () => {
   const count = data?.count || 0
 
   // Status and priority variants (move before conditional returns)
-  const statusVariants = {
-    draft: "orange",
-    scheduled: "blue", 
-    in_progress: "purple",
-    waiting_parts: "orange",
-    customer_approval: "orange",
-    completed: "green",
-    cancelled: "red",
-  } as const
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      draft: { color: "orange", label: t("custom.serviceOrders.status.draft") },
+      scheduled: { color: "blue", label: t("custom.serviceOrders.status.scheduled") },
+      in_progress: { color: "purple", label: t("custom.serviceOrders.status.in_progress") },
+      waiting_parts: { color: "orange", label: t("custom.serviceOrders.status.waiting_parts") },
+      customer_approval: { color: "orange", label: t("custom.serviceOrders.status.customer_approval") },
+      completed: { color: "green", label: t("custom.serviceOrders.status.completed") },
+      cancelled: { color: "red", label: t("custom.serviceOrders.status.cancelled") },
+    } as const
 
-  const priorityVariants = {
-    low: "grey",
-    normal: "blue",
-    high: "orange", 
-    urgent: "red",
-  } as const
+    const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey", label: status }
+    
+    return (
+      <Badge size="2xsmall" color={config.color as any}>
+        {config.label}
+      </Badge>
+    )
+  }
 
-  const serviceTypeVariants = {
-    normal: "blue",
-    warranty: "green",
-    setup: "purple",
-    emergency: "red",
-    preventive: "orange",
-  } as const
-  
-  const serviceLocationVariants = {
-    workshop: "blue",
-    customer_location: "green",
-  } as const
+  const getPriorityBadge = (priority: string) => {
+    const priorityConfig = {
+      low: { color: "grey", label: t("custom.serviceOrders.priorities.low") },
+      normal: { color: "blue", label: t("custom.serviceOrders.priorities.normal") },
+      high: { color: "orange", label: t("custom.serviceOrders.priorities.high") },
+      urgent: { color: "red", label: t("custom.serviceOrders.priorities.urgent") },
+    } as const
+
+    const config = priorityConfig[priority as keyof typeof priorityConfig] || { color: "grey", label: priority }
+    
+    return (
+      <Badge size="2xsmall" color={config.color as any}>
+        {config.label}
+      </Badge>
+    )
+  }
+
+  const getServiceTypeBadge = (serviceType: string) => {
+    const typeConfig = {
+      normal: { color: "blue", label: t("custom.serviceOrders.types.normal") },
+      warranty: { color: "green", label: t("custom.serviceOrders.types.warranty") },
+      setup: { color: "purple", label: t("custom.serviceOrders.types.setup") },
+      emergency: { color: "red", label: t("custom.serviceOrders.types.emergency") },
+      preventive: { color: "orange", label: t("custom.serviceOrders.types.preventive") },
+    } as const
+
+    const config = typeConfig[serviceType as keyof typeof typeConfig] || { color: "grey", label: serviceType }
+    
+    return (
+      <Badge size="2xsmall" color={config.color as any}>
+        {config.label}
+      </Badge>
+    )
+  }
 
   // Column helper and columns definition (move before conditional returns)
   const columnHelper = createDataTableColumnHelper<ServiceOrder>()
@@ -274,18 +314,11 @@ const ServiceOrdersListTable = () => {
       ),
     }),
     columnHelper.accessor("service_type", {
-      header: "Service Type",
-      cell: ({ getValue }) => (
-        <Badge 
-          size="2xsmall"
-          color={serviceTypeVariants[getValue() as keyof typeof serviceTypeVariants] || "grey"}
-        >
-          {getValue().charAt(0).toUpperCase() + getValue().slice(1)}
-        </Badge>
-      ),
+      header: t("custom.serviceOrders.service_type"),
+      cell: ({ getValue }) => getServiceTypeBadge(getValue()),
     }),
     columnHelper.accessor("customer_id", {
-      header: "Customer",
+      header: t("custom.serviceOrders.customer"),
       cell: ({ getValue }) => {
         const customerId = getValue()
         if (!customerId) return <Text className="text-ui-fg-muted">—</Text>
@@ -301,12 +334,12 @@ const ServiceOrdersListTable = () => {
       },
     }),
     columnHelper.accessor("technician_id", {
-      header: "Technician", 
+      header: t("custom.serviceOrders.technician"),
       cell: ({ getValue }) => {
         const technicianId = getValue()
-        if (!technicianId) return <Text className="text-ui-fg-muted">Unassigned</Text>
+        if (!technicianId) return <Text className="text-ui-fg-muted">—</Text>
         const technician = technicianLookup.get(technicianId)
-        if (!technician) return <Text className="text-ui-fg-muted">Unknown</Text>
+        if (!technician) return <Text className="text-ui-fg-muted">Unassigned</Text>
         return (
           <Text>
             {technician.first_name && technician.last_name 
@@ -316,81 +349,28 @@ const ServiceOrdersListTable = () => {
         )
       },
     }),
-    columnHelper.accessor("status", {
-      header: "Status",
-      cell: ({ getValue }) => (
-        <Badge 
-          size="2xsmall"
-          color={statusVariants[getValue() as keyof typeof statusVariants] || "grey"}
-        >
-          {getValue().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-        </Badge>
-      ),
-    }),
     columnHelper.accessor("priority", {
-      header: "Priority",
-      cell: ({ getValue }) => {
-        const priority = getValue() as keyof typeof priorityVariants
-        const getIcon = () => {
-          switch (priority) {
-            case "urgent":
-              return <ExclamationCircle className="h-4 w-4" />
-            case "high":
-              return <ChevronUpMini className="h-4 w-4" />
-            case "normal":
-              return <ChevronRightMini className="h-4 w-4" />
-            case "low":
-              return <ChevronDownMini className="h-4 w-4" />
-            default:
-              return <ChevronRightMini className="h-4 w-4" />
-          }
-        }
-        
-        return (
-          <div className="flex items-center gap-2">
-            <div className={`text-ui-tag-${priorityVariants[priority] || "grey"}-text`}>
-              {getIcon()}
-            </div>
-            <Text size="small" className="capitalize">
-              {priority}
-            </Text>
-          </div>
-        )
-      },
+      header: t("custom.serviceOrders.priority"),
+      cell: ({ getValue }) => getPriorityBadge(getValue()),
     }),
-    columnHelper.accessor("service_location", {
-      header: "Location",
-      cell: ({ getValue }) => (
-        <Badge 
-          size="2xsmall"
-          color={serviceLocationVariants[getValue() as keyof typeof serviceLocationVariants] || "grey"}
-        >
-          {getValue() === 'workshop' ? 'Workshop' : 'Customer Location'}
-        </Badge>
-      ),
+    columnHelper.accessor("status", {
+      header: t("custom.general.status"),
+      cell: ({ getValue }) => getStatusBadge(getValue()),
     }),
     columnHelper.accessor("total_cost", {
       header: "Total Cost",
       cell: ({ getValue }) => {
         const cost = getValue() || 0
         return (
-          <Text size="small" className="font-mono">
+          <Text className="font-mono">
             €{(cost / 100).toFixed(2)}
           </Text>
         )
       },
     }),
-    columnHelper.accessor("created_at", {
-      header: "Created",
-      cell: ({ getValue }) => (
-        <Text size="small">
-          {new Date(getValue()).toLocaleDateString()}
-        </Text>
-      ),
-    }),
     columnHelper.display({
       id: "actions",
-      header: "Actions",
+      header: t("custom.general.actions"),
       cell: ({ row }) => <ServiceOrderActions serviceOrder={row.original} />,
     }),
   ]
@@ -413,6 +393,9 @@ const ServiceOrdersListTable = () => {
     pagination: {
       state: pagination,
       onPaginationChange: setPagination,
+    },
+    onRowClick: (event, row) => {
+      navigate(`/service-orders/${row.id}`)
     },
   })
 
@@ -452,6 +435,7 @@ const ServiceOrdersListTable = () => {
 
 // Service orders list component
 const ServiceOrdersList = () => {
+  const { t } = useCustomTranslation()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState("list")
   
@@ -468,7 +452,7 @@ const ServiceOrdersList = () => {
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Service Orders</Heading>
+          <Heading>{t("custom.serviceOrders.title")}</Heading>
           <Text className="text-ui-fg-subtle" size="small">
             Manage your service requests and work orders ({count} orders)
           </Text>
@@ -476,7 +460,7 @@ const ServiceOrdersList = () => {
         <Button size="small" variant="secondary" asChild>
           <Link to="/service-orders/create">
             <Plus className="w-4 h-4 mr-2" />
-            Create Service Order
+            {t("custom.serviceOrders.create")}
           </Link>
         </Button>
       </div>

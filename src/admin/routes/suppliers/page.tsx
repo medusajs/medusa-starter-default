@@ -1,22 +1,34 @@
 import { useState } from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { 
+  Button, 
+  Badge, 
   Container, 
   Heading, 
-  Button, 
-  Badge,
+  Text,
   DataTable,
   useDataTable,
   createDataTableColumnHelper,
   createDataTableFilterHelper,
-  Text,
-  DataTableFilteringState
+  DropdownMenu,
+  IconButton
 } from "@medusajs/ui"
-import { Plus, Eye, PencilSquare, Users, DocumentText } from "@medusajs/icons"
+import type { DataTableFilteringState } from "@medusajs/ui"
+import { 
+  Plus, 
+  Eye, 
+  PencilSquare, 
+  DocumentText, 
+  Buildings,
+  EllipsisHorizontal,
+  Trash,
+  ArrowUpTray
+} from "@medusajs/icons"
 import { useQuery } from "@tanstack/react-query"
 import { Link, useNavigate } from "react-router-dom"
 import { CreateSupplierModal } from "../../components/create-supplier-modal"
 import { EditSupplierForm } from "../../components/edit-supplier-form"
+import { useCustomTranslation } from "../../hooks/use-custom-translation"
 
 export interface Supplier {
   id: string
@@ -55,7 +67,50 @@ const useSuppliers = () => {
   })
 }
 
+// Supplier actions component
+const SupplierActions = ({ supplier }: { supplier: Supplier }) => {
+  const { t } = useCustomTranslation()
+  
+  return (
+    <DropdownMenu>
+      <DropdownMenu.Trigger asChild>
+        <IconButton size="small" variant="transparent">
+          <EllipsisHorizontal className="h-4 w-4" />
+        </IconButton>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content side="bottom">
+        <EditSupplierForm 
+          supplier={supplier}
+          trigger={
+            <DropdownMenu.Item
+              onSelect={(e) => {
+                e.preventDefault()
+              }}
+              className="[&>svg]:text-ui-fg-subtle flex items-center gap-2"
+            >
+              <PencilSquare className="h-4 w-4" />
+              {t("custom.general.edit")}
+            </DropdownMenu.Item>
+          }
+        />
+        <DropdownMenu.Item
+          onClick={(e) => {
+            e.stopPropagation()
+            // TODO: Add delete supplier functionality
+            console.log('Delete supplier:', supplier.id)
+          }}
+          className="[&>svg]:text-ui-fg-subtle flex items-center gap-2 text-ui-fg-error"
+        >
+          <Trash className="h-4 w-4" />
+          {t("custom.general.delete")}
+        </DropdownMenu.Item>
+      </DropdownMenu.Content>
+    </DropdownMenu>
+  )
+}
+
 const SuppliersPage = () => {
+  const { t } = useCustomTranslation()
   const navigate = useNavigate()
   const { data, isLoading, error } = useSuppliers()
   
@@ -71,11 +126,11 @@ const SuppliersPage = () => {
 
   const filters = [
     filterHelper.accessor("is_active", {
-      label: "Status",
+      label: t("custom.general.status"),
       type: "select",
       options: [
-        { label: "Active", value: "true" },
-        { label: "Inactive", value: "false" },
+        { label: t("custom.general.active"), value: "true" },
+        { label: t("custom.general.inactive"), value: "false" },
       ],
     }),
   ]
@@ -87,7 +142,7 @@ const SuppliersPage = () => {
   // Column definitions (move before conditional returns)
   const columns = [
     columnHelper.accessor("name", {
-      header: "Supplier",
+      header: t("custom.suppliers.title"),
       enableSorting: true,
       cell: ({ getValue, row }) => (
         <div>
@@ -98,94 +153,46 @@ const SuppliersPage = () => {
             {getValue()}
           </Link>
           {row.original.code && (
-            <Text size="small" className="text-ui-fg-subtle">
-              {row.original.code}
+            <Text className="text-ui-fg-subtle" size="small">
+              {t("custom.suppliers.code")}: {row.original.code}
             </Text>
           )}
         </div>
       ),
     }),
-    columnHelper.accessor("contact_person", {
-      header: "Contact",
-      cell: ({ getValue, row }) => (
-        <div>
-          {getValue() && (
-            <Text className="txt-compact-medium">{getValue()}</Text>
-          )}
-          {row.original.email && (
-            <Text size="small" className="text-ui-fg-subtle">
-              {row.original.email}
-            </Text>
-          )}
-          {row.original.phone && (
-            <Text size="small" className="text-ui-fg-subtle">
-              {row.original.phone}
-            </Text>
-          )}
-        </div>
+    columnHelper.accessor("email", {
+      header: t("custom.suppliers.email"),
+      cell: ({ getValue }) => (
+        <Text>{getValue() || "—"}</Text>
+      ),
+    }),
+    columnHelper.accessor("phone", {
+      header: t("custom.suppliers.phone"),
+      cell: ({ getValue }) => (
+        <Text>{getValue() || "—"}</Text>
+      ),
+    }),
+    columnHelper.accessor("city", {
+      header: "City",
+      cell: ({ getValue }) => (
+        <Text>{getValue() || "—"}</Text>
       ),
     }),
     columnHelper.accessor("is_active", {
-      header: "Status",
+      header: t("custom.general.status"),
       cell: ({ getValue }) => (
-        <Badge size="2xsmall" color={getValue() ? "green" : "red"}>
-          {getValue() ? "Active" : "Inactive"}
+        <Badge 
+          size="2xsmall" 
+          color={getValue() ? "green" : "red"}
+        >
+          {getValue() ? t("custom.general.active") : t("custom.general.inactive")}
         </Badge>
       ),
     }),
-    columnHelper.accessor("purchase_orders_count", {
-      header: "Orders",
-      cell: ({ getValue }) => (
-        <Text className="txt-compact-medium">
-          {getValue() || 0}
-        </Text>
-      ),
-    }),
-    columnHelper.accessor("last_order_date", {
-      header: "Last Order",
-      cell: ({ getValue }) => {
-        const date = getValue()
-        return (
-          <Text className="txt-compact-small text-ui-fg-subtle">
-            {date ? new Date(date).toLocaleDateString() : "—"}
-          </Text>
-        )
-      },
-    }),
     columnHelper.display({
       id: "actions",
-      header: "",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="transparent"
-            size="small"
-            onClick={() => navigate(`/suppliers/${row.original.id}`)}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-          <EditSupplierForm 
-            supplier={row.original}
-            trigger={
-              <Button
-                variant="transparent"
-                size="small"
-                title="Edit Supplier"
-              >
-                <PencilSquare className="w-4 h-4" />
-              </Button>
-            }
-          />
-          <Button
-            variant="transparent"
-            size="small"
-            onClick={() => navigate(`/purchase-orders?supplier_id=${row.original.id}`)}
-            title="View Orders"
-          >
-            <DocumentText className="w-4 h-4" />
-          </Button>
-        </div>
-      ),
+      header: t("custom.general.actions"),
+      cell: ({ row }) => <SupplierActions supplier={row.original} />,
     }),
   ]
 
@@ -196,6 +203,9 @@ const SuppliersPage = () => {
     filters,
     rowCount: count,
     getRowId: (row) => row.id,
+    onRowClick: (event, row) => {
+      navigate(`/suppliers/${row.id}`)
+    },
     search: {
       state: search,
       onSearchChange: setSearch,
@@ -230,7 +240,7 @@ const SuppliersPage = () => {
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
         <div>
-          <Heading>Suppliers</Heading>
+          <Heading>{t("custom.suppliers.title")}</Heading>
           <Text className="text-ui-fg-subtle" size="small">
             Manage your supplier database and relationships ({count} suppliers)
           </Text>
@@ -264,7 +274,7 @@ const SuppliersPage = () => {
 
 export const config = defineRouteConfig({
   label: "Suppliers",
-  icon: Users,
+  icon: Buildings,
 })
 
 export default SuppliersPage 

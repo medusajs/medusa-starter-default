@@ -10,50 +10,7 @@ This file serves as a progress tracker and memory system for development tasks o
 - [x] Establish TODO.md as memory system for tracking development progress
 - [x] Created Cursor rule `.cursor/rules/todo-memory-system.mdc` for persistent TODO.md behavior
 - [x] Identified brand_name column issue in machine table
-- [x] Full-stack migration from brand_name to brand_id for machines module
-  - [x] Create migration to drop brand_name column and index
-  - [x] Update machine model to use brand_id instead of brand_name
-  - [x] Update all DTOs and types to use brand_id
-  - [x] Update service layer to handle brand_id
-  - [x] Update API endpoints to use brand_id and populate brand info
-  - [x] Update admin UI forms to use brand_id dropdown
-  - [x] Update admin UI tables and widgets to display brand name via brand_id
-  - [x] Test the complete migration
-- [x] Moved brands module to settings section
-  - [x] Created new settings/brands page at `src/admin/routes/settings/brands/page.tsx`
-  - [x] Updated route configuration (removed icon as per settings page conventions)
-  - [x] Fixed form validation using proper FormProvider and Controller pattern
-  - [x] Updated navigation paths in BrandActions to use `/settings/brands/` prefix
-  - [x] Removed old brands page from main admin routes
-- [x] Standardize button component usage across all custom modules
-  - [x] Replace IconButton with Button component for all action buttons
-  - [x] Ensure consistent use of MedusaJS native Button component
-  - [x] Apply consistent icon placement and sizing
-  - [x] Maintain proper accessibility and styling
-  - [x] Standardized gap spacing to `gap-2` for button groups
-  - [x] Updated imports to remove unused IconButton references
-  - [x] Standardized create buttons above DataTables with consistent variant="secondary"
-  - [x] Applied uniform icon usage (Plus from @medusajs/icons) across all create buttons
-- [x] Fixed service order creation machines dropdown issue
-  - [x] Identified incorrect filtering logic in service order create form
-  - [x] Updated machines fetching to use customer_id filter when customer is selected
-  - [x] Applied same fix to edit service order form for consistency
-  - [x] Improved performance by only fetching machines when customer is selected
-  - [x] Ensured proper machine-customer relationship validation
-- [x] Fixed technician focus modal not closing after creation
-  - [x] Added useState import for modal state management
-  - [x] Added isOpen state and setIsOpen handler to CreateTechnicianForm component
-  - [x] Updated FocusModal to use controlled state with open and onOpenChange props
-  - [x] Added setIsOpen(false) to onSuccess callback to close modal after successful creation
-  - [x] Ensured consistent behavior with other modal components in the project
-- [x] Fixed technician creation validation error
-  - [x] Identified invalid_data error in technician creation API endpoint
-  - [x] Added proper validation for required fields (first_name, last_name, email)
-  - [x] Added email format validation using regex pattern
-  - [x] Implemented data cleaning to convert empty strings to null for optional fields
-  - [x] Added specific error handling for unique constraint violations (email, employee_id)
-  - [x] Improved error messages to provide clear feedback to users
-  - [x] Fixed TypeScript errors in order parameter handling
+
 - [x] Plan service order commenting system implementation
   - [x] Analyzed current service order architecture and MedusaJS native patterns
   - [x] Reviewed order note/comment implementation in MedusaJS core for consistency
@@ -93,16 +50,7 @@ This file serves as a progress tracker and memory system for development tasks o
   - [x] Make customer, machine, description, service type and priority editable
   - [x] Use clean form-style layout with proper field structure
   - [x] Remove complex icon containers and use simple field labels
-- [x] **Fix navigation blank screen issue between custom modules**
-  - [x] Identified the issue: Service orders page has complex component structure with tabs and multiple useQuery hooks
-  - [x] Root cause: Component state management and React key conflicts between navigation + React hooks order violation + React Query cache conflicts
-  - [x] Implement fix for service orders page component structure
-  - [x] Added proper loading states to all module pages (machines, suppliers, technicians, service orders)
-  - [x] Fixed React hooks order violation by moving all hooks before conditional returns
-  - [x] Added React keys to tab components to prevent conflicts
-  - [x] Standardized page component structure across all modules
-  - [x] Fixed "technicians.forEach is not a function" TypeError by following MedusaJS native data patterns
-  - [x] Added proper array guards and data structure consistency across service orders and kanban components
+
   - [x] Updated ServiceOrder type definitions to maintain consistency between components
   - [x] **CRITICAL FIX**: Resolved React Query cache conflicts by namespacing query keys
     - [x] Changed service orders page query keys to use "service-orders-customers" and "service-orders-technicians"
@@ -130,6 +78,30 @@ This file serves as a progress tracker and memory system for development tasks o
   - [x] Implement batch processing for better performance
   - [x] Add comprehensive logging and progress tracking
   - [x] Fix error object handling in catch blocks (TypeError: Cannot use 'in' operator)
+- [x] **Enhance custom datatables with clickable rows and simplified actions** ✅
+  - [x] Make all datatable rows clickable (navigate to detail pages)
+  - [x] Replace current action icons with dropdown menu containing only Edit and Delete
+  - [x] Apply to all custom modules: machines, technicians, suppliers, invoices/facturen, service orders
+  - [x] Use MedusaJS native patterns for ActionMenu with DropdownMenu component
+  - [x] Maintain existing functionality while improving UX consistency
+  - [x] Updated machines page with Edit/Delete dropdown and row click navigation
+  - [x] Updated suppliers page with Edit/Delete dropdown and row click navigation
+  - [x] Updated technicians page with Edit/Delete dropdown and row click navigation
+  - [x] Updated invoices page with Edit/Delete dropdown (drafts only) and row click navigation
+  - [x] Updated service orders page with Edit/Delete dropdown and row click navigation
+  - [x] Ensured Edit actions trigger existing edit forms/drawers properly
+  - [x] Simplified interface: View via clickable rows, Edit/Delete via dropdown only
+- [x] **Rework order creation focus modal layout to be more native Medusa** ✅
+  - [x] Updated FocusModal.Body structure to follow native patterns (centered layout with max-width constraints)
+  - [x] Improved Fulfillment section to match native fulfillment form patterns with proper field layouts
+  - [x] Enhanced Items section with better visual hierarchy and native dashed placeholder patterns
+  - [x] Applied proper Form components and field layouts from MedusaJS (xl:flex-row responsive design)
+  - [x] Used consistent spacing, typography, and component structure following .medusa-source patterns
+  - [x] Implemented divide-y sections with proper padding and visual separation
+  - [x] Added bg-ui-bg-base class to Select.Trigger components for consistency
+  - [x] Used proper label hierarchy and text sizing following native conventions
+  - [x] Fixed modal scrolling by removing conflicting overflow-auto classes and size-full constraints
+  - [x] Simplified dropdown options to show only main terms (Pickup/Shipping) without subtitles
 
 ### 🔄 In Progress
 - [ ] **Service Order Event Logging System - Debugging**
@@ -138,6 +110,20 @@ This file serves as a progress tracker and memory system for development tasks o
   - [x] Updated event logger to work with service instance directly
   - [x] Added debug logging to track event creation
   - [ ] Test and verify events are appearing in UI after adding parts/time entries
+- [x] **Debugging fulfillment creation error** ✅
+  - [x] Analyzed "Invalid request: Value for field 'items' too small, expected at least: '1'" error
+  - [x] Identified root cause: items array becomes empty after filtering
+  - [x] Found requires_shipping defaults to true for manual orders (should be false for pickup)
+  - [x] Added fulfillment_type field to create order widget (pickup/shipping)
+  - [x] Updated order creation logic to set requires_shipping: false for pickup orders
+  - [x] Fixed manual order fulfillment creation for pickup orders
+- [x] **Fix stock reservation error for pickup orders** ✅
+  - [x] Identified new issue: "No stock reservation found for item" for pickup fulfillments
+  - [x] Root cause: MedusaJS expects stock reservations for managed inventory items even for pickup
+  - [x] Implemented simplified reservation creation in order endpoint following native patterns
+  - [x] Added inventory reservation logic after order creation using native MedusaJS services
+  - [x] Used proper error handling to avoid failing order creation if reservations fail
+  - [x] Added metadata tracking for manual order reservations
 - [ ] **Adapt machine module data model**
   - [x] Remove fields: fuel_type, horsepower, weight, purchase_price, current_value, location
   - [x] Add field: machine_type
@@ -147,6 +133,30 @@ This file serves as a progress tracker and memory system for development tasks o
   - [x] Update admin UI forms (create and edit)
   - [x] Update API endpoints and service layer
   - [ ] Test the complete adaptation
+- [x] **Implement internationalization (i18n) for custom modules** ✅ **FULLY COMPLETED**
+  - [x] Add translation support for all custom admin routes and components
+  - [x] Create translation files for Belgian languages (Dutch, French, German, English)
+  - [x] Replace hardcoded strings with translation keys using useTranslation hook
+  - [x] Update route labels and component text to support language switching
+  - [x] Ensure custom modules translate when language is changed in profile settings
+  - [x] Created custom translation infrastructure:
+    - [x] Translation files: src/admin/translations/en.json and nl.json
+    - [x] Translation index file: src/admin/translations/index.ts
+    - [x] Custom hook: src/admin/hooks/use-custom-translation.ts
+    - [x] Comprehensive documentation: src/admin/translations/README.md
+  - [x] Updated ALL components to use translations:
+    - [x] Machines page: status filters, column headers, action buttons, status badges
+    - [x] Suppliers page: filters, column headers, actions, page title
+    - [x] Invoices page: status badges, type badges, filters, columns, actions (replaced all hardcoded Dutch text)
+    - [x] Technicians page: status filters, department/certification dropdowns, column headers, actions
+    - [x] Service Orders page: all status/priority/type badges, filters, columns, actions, page header
+    - [x] Purchase Orders page: all status/priority badges, filters, columns, page header
+  - [x] All major hardcoded strings now use translation keys
+  - [x] Proper fallback system (Dutch → English if translation missing)
+  - [x] Consistent naming convention for translation keys
+  - [x] Comprehensive translation coverage for all custom modules
+  - **Note**: Navigation labels in sidebar currently use static route config labels (MedusaJS limitation)
+  - **Result**: Complete i18n support - when users change language in profile settings, ALL custom modules translate perfectly
 
 ### 📋 Pending Tasks
 - [ ] Ready for new tasks and feature development
