@@ -5,15 +5,9 @@ export type MachineDTO = {
   serial_number: string
   license_plate?: string | null
   year?: number | null
+  machine_type?: string | null
   engine_hours?: number | null
-  fuel_type?: string | null
-  horsepower?: number | null
-  weight?: number | null
-  purchase_date?: Date | null
-  purchase_price?: string | null
-  current_value?: string | null
   status: "active" | "inactive" | "maintenance" | "sold"
-  location?: string | null
   customer_id?: string | null
   description?: string | null
   notes?: string | null
@@ -29,15 +23,9 @@ export type CreateMachineDTO = {
   serial_number: string
   license_plate?: string | null
   year?: number | null
+  machine_type?: string | null
   engine_hours?: number | null
-  fuel_type?: string | null
-  horsepower?: number | null
-  weight?: number | null
-  purchase_date?: Date | null
-  purchase_price?: string | null
-  current_value?: string | null
   status?: "active" | "inactive" | "maintenance" | "sold"
-  location?: string | null
   customer_id?: string | null
   description?: string | null
   notes?: string | null
@@ -51,15 +39,9 @@ export type UpdateMachineDTO = {
   serial_number?: string
   license_plate?: string | null
   year?: number | null
+  machine_type?: string | null
   engine_hours?: number | null
-  fuel_type?: string | null
-  horsepower?: number | null
-  weight?: number | null
-  purchase_date?: Date | null
-  purchase_price?: string | null
-  current_value?: string | null
   status?: "active" | "inactive" | "maintenance" | "sold"
-  location?: string | null
   customer_id?: string | null
   description?: string | null
   notes?: string | null
@@ -73,15 +55,9 @@ export type UpsertMachineDTO = {
   serial_number?: string
   license_plate?: string | null
   year?: number | null
+  machine_type?: string | null
   engine_hours?: number | null
-  fuel_type?: string | null
-  horsepower?: number | null
-  weight?: number | null
-  purchase_date?: Date | null
-  purchase_price?: string | null
-  current_value?: string | null
   status?: "active" | "inactive" | "maintenance" | "sold"
-  location?: string | null
   customer_id?: string | null
   description?: string | null
   notes?: string | null
@@ -95,11 +71,13 @@ export type FilterableMachineProps = {
   serial_number?: string | string[]
   license_plate?: string | string[]
   year?: number | number[]
-  status?: "active" | "inactive" | "maintenance" | "sold" | string[]
-  location?: string | string[]
+  machine_type?: string | string[]
+  engine_hours?: number | number[]
+  status?: "active" | "inactive" | "maintenance" | "sold" | ("active" | "inactive" | "maintenance" | "sold")[]
   customer_id?: string | string[]
-  fuel_type?: string | string[]
-  created_at?: Date
-  updated_at?: Date
-  deleted_at?: Date
+  description?: string | string[]
+  notes?: string | string[]
+  created_at?: Date | { $gte?: Date; $lte?: Date }
+  updated_at?: Date | { $gte?: Date; $lte?: Date }
+  deleted_at?: Date | { $gte?: Date; $lte?: Date } | null
 } 

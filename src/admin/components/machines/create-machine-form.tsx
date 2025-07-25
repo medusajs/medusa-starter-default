@@ -24,15 +24,9 @@ const createMachineSchema = z.object({
   serial_number: z.string().min(1, "Serial number is required").max(100, "Serial number is too long"),
   license_plate: z.string().max(50).nullable().optional(),
   year: z.number().int().min(1900).max(new Date().getFullYear() + 1).nullable().optional(),
+  machine_type: z.string().max(100).nullable().optional(),
   engine_hours: z.number().min(0).nullable().optional(),
-  fuel_type: z.string().nullable().optional(),
-  horsepower: z.number().min(0).nullable().optional(),
-  weight: z.number().min(0).nullable().optional(),
-  purchase_date: z.string().nullable().optional(),
-  purchase_price: z.string().nullable().optional(),
-  current_value: z.string().nullable().optional(),
   status: z.enum(["active", "inactive", "maintenance", "sold"]).default("active"),
-  location: z.string().max(255).nullable().optional(),
   customer_id: z.string().nullable().optional(),
   description: z.string().max(1000).nullable().optional(),
   notes: z.string().max(2000).nullable().optional(),
@@ -91,15 +85,9 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
       serial_number: "",
       license_plate: "",
       year: undefined,
+      machine_type: "",
       engine_hours: undefined,
-      fuel_type: "",
-      horsepower: undefined,
-      weight: undefined,
-      purchase_date: "",
-      purchase_price: "",
-      current_value: "",
       status: "active",
-      location: "",
       customer_id: undefined,
       description: "",
       notes: "",
@@ -117,13 +105,8 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
           ...data,
           brand_id: data.brand_id || null,
           year: data.year || null,
+          machine_type: data.machine_type || null,
           engine_hours: data.engine_hours || null,
-          horsepower: data.horsepower || null,
-          weight: data.weight || null,
-          purchase_date: data.purchase_date || null,
-          purchase_price: data.purchase_price || null,
-          current_value: data.current_value || null,
-          location: data.location || null,
           customer_id: data.customer_id || null,
           description: data.description || null,
           notes: data.notes || null,
@@ -322,6 +305,28 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                     
                     <Controller
                       control={form.control}
+                      name="machine_type"
+                      render={({ field, fieldState }) => (
+                        <div className="space-y-2">
+                          <Label size="small" weight="plus">
+                            Machine Type
+                          </Label>
+                          <Input
+                            {...field}
+                            value={field.value || ""}
+                            placeholder="e.g., Excavator, Loader, Truck"
+                          />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-red-500">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
+                        </div>
+                      )}
+                    />
+                    
+                    <Controller
+                      control={form.control}
                       name="status"
                       render={({ field }) => (
                         <div className="space-y-2">
@@ -337,30 +342,6 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                               <Select.Item value="inactive">Inactive</Select.Item>
                               <Select.Item value="maintenance">Maintenance</Select.Item>
                               <Select.Item value="sold">Sold</Select.Item>
-                            </Select.Content>
-                          </Select>
-                        </div>
-                      )}
-                    />
-                    
-                    <Controller
-                      control={form.control}
-                      name="fuel_type"
-                      render={({ field }) => (
-                        <div className="space-y-2">
-                          <Label size="small" weight="plus">
-                            Fuel Type
-                          </Label>
-                          <Select value={field.value || undefined} onValueChange={field.onChange}>
-                            <Select.Trigger>
-                              <Select.Value />
-                            </Select.Trigger>
-                            <Select.Content>
-                              <Select.Item value="diesel">Diesel</Select.Item>
-                              <Select.Item value="gasoline">Gasoline</Select.Item>
-                              <Select.Item value="electric">Electric</Select.Item>
-                              <Select.Item value="hybrid">Hybrid</Select.Item>
-                              <Select.Item value="lpg">LPG</Select.Item>
                             </Select.Content>
                           </Select>
                         </div>
@@ -400,79 +381,6 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                     
                     <Controller
                       control={form.control}
-                      name="horsepower"
-                      render={({ field, fieldState }) => (
-                        <div className="space-y-2">
-                          <Label size="small" weight="plus">
-                            Horsepower (HP)
-                          </Label>
-                          <Input
-                            type="number"
-                            min={0}
-                            value={field.value || ""}
-                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                            placeholder="e.g., 300"
-                          />
-                          {fieldState.error && (
-                            <Text size="xsmall" className="text-red-500">
-                              {fieldState.error.message}
-                            </Text>
-                          )}
-                        </div>
-                      )}
-                    />
-                    
-                    <Controller
-                      control={form.control}
-                      name="weight"
-                      render={({ field, fieldState }) => (
-                        <div className="space-y-2">
-                          <Label size="small" weight="plus">
-                            Weight (kg)
-                          </Label>
-                          <Input
-                            type="number"
-                            min={0}
-                            value={field.value || ""}
-                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                            placeholder="e.g., 15000"
-                          />
-                          {fieldState.error && (
-                            <Text size="xsmall" className="text-red-500">
-                              {fieldState.error.message}
-                            </Text>
-                          )}
-                        </div>
-                      )}
-                    />
-                    
-                    <Controller
-                      control={form.control}
-                      name="location"
-                      render={({ field }) => (
-                        <div className="space-y-2">
-                          <Label size="small" weight="plus">
-                            Current Location
-                          </Label>
-                          <Input
-                            {...field}
-                            value={field.value || ""}
-                            placeholder="e.g., Construction Site A"
-                          />
-                        </div>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                {/* Assignment & Financial */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Customer Assignment */}
-                  <div className="border border-ui-border-base rounded-lg p-6">
-                    <Heading level="h3" className="mb-4">Customer Assignment</Heading>
-                    
-                    <Controller
-                      control={form.control}
                       name="customer_id"
                       render={({ field }) => (
                         <div className="space-y-2">
@@ -508,64 +416,48 @@ export const CreateMachineForm = ({ onSuccess }: CreateMachineFormProps) => {
                       )}
                     />
                   </div>
+                </div>
 
-                  {/* Financial Information */}
-                  <div className="border border-ui-border-base rounded-lg p-6">
-                    <Heading level="h3" className="mb-4">Financial Information</Heading>
-                    
-                    <div className="space-y-4">
-                      <Controller
-                        control={form.control}
-                        name="purchase_date"
-                        render={({ field }) => (
-                          <div className="space-y-2">
-                            <Label size="small" weight="plus">
-                              Purchase Date
-                            </Label>
-                            <Input
-                              type="date"
-                              {...field}
-                              value={field.value || ""}
-                            />
-                          </div>
-                        )}
-                      />
-                      
-                      <Controller
-                        control={form.control}
-                        name="purchase_price"
-                        render={({ field }) => (
-                          <div className="space-y-2">
-                            <Label size="small" weight="plus">
-                              Purchase Price (€)
-                            </Label>
-                            <Input
-                              {...field}
-                              value={field.value || ""}
-                              placeholder="e.g., 150000"
-                            />
-                          </div>
-                        )}
-                      />
-                      
-                      <Controller
-                        control={form.control}
-                        name="current_value"
-                        render={({ field }) => (
-                          <div className="space-y-2">
-                            <Label size="small" weight="plus">
-                              Current Value (€)
-                            </Label>
-                            <Input
-                              {...field}
-                              value={field.value || ""}
-                              placeholder="e.g., 120000"
-                            />
-                          </div>
-                        )}
-                      />
-                    </div>
-                  </div>
+                {/* Customer Assignment */}
+                <div className="border border-ui-border-base rounded-lg p-6">
+                  <Heading level="h3" className="mb-4">Customer Assignment</Heading>
+                  
+                  <Controller
+                    control={form.control}
+                    name="customer_id"
+                    render={({ field }) => (
+                      <div className="space-y-2">
+                        <Label size="small" weight="plus">
+                          Assigned Customer
+                        </Label>
+                        <Select 
+                          value={field.value || undefined} 
+                          onValueChange={(value) => field.onChange(value || undefined)}
+                          disabled={customersLoading}
+                        >
+                          <Select.Trigger>
+                            <Select.Value placeholder="Select customer (optional)" />
+                          </Select.Trigger>
+                          <Select.Content>
+                            {customers.map((customer: any) => (
+                              <Select.Item key={customer.id} value={customer.id}>
+                                {customer.first_name} {customer.last_name}
+                                {customer.email && ` (${customer.email})`}
+                              </Select.Item>
+                            ))}
+                            {customers.length === 0 && !customersLoading && (
+                              <div className="px-2 py-1 text-sm text-ui-fg-subtle">
+                                No customers available
+                              </div>
+                            )}
+                          </Select.Content>
+                        </Select>
+                        <Text size="xsmall" className="text-ui-fg-subtle">
+                          Leave empty if no customer is assigned
+                        </Text>
+                      </div>
+                    )}
+                  />
                 </div>
 
                 {/* Additional Information */}

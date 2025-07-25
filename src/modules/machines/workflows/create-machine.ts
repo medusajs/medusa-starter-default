@@ -52,20 +52,6 @@ export const validateMachineInputStep = createStep(
           "Engine hours cannot be negative"
         )
       }
-
-      if (machine.horsepower !== null && machine.horsepower !== undefined && machine.horsepower < 0) {
-        throw new MedusaError(
-          MedusaError.Types.INVALID_DATA,
-          "Horsepower cannot be negative"
-        )
-      }
-
-      if (machine.weight !== null && machine.weight !== undefined && machine.weight < 0) {
-        throw new MedusaError(
-          MedusaError.Types.INVALID_DATA,
-          "Weight cannot be negative"
-        )
-      }
     }
 
     return { validated: true }

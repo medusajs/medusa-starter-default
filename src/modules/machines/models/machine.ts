@@ -10,21 +10,13 @@ const Machine = model
     serial_number: model.text().searchable(),
     license_plate: model.text().searchable().nullable(),
     year: model.number().nullable(),
+    machine_type: model.text().searchable().nullable(), // New field for machine type
     
     // Technical Specifications  
     engine_hours: model.number().nullable(),
-    fuel_type: model.text().nullable(),
-    horsepower: model.number().nullable(),
-    weight: model.number().nullable(), // in kg
-    
-    // Financial Information
-    purchase_date: model.dateTime().nullable(),
-    purchase_price: model.bigNumber().nullable(),
-    current_value: model.bigNumber().nullable(),
     
     // Status and Location
     status: model.enum(["active", "inactive", "maintenance", "sold"]).default("active"),
-    location: model.text().searchable().nullable(),
     
     // Customer Assignment - This will be linked via module links
     // We keep the ID for backward compatibility but relationships are handled via links
@@ -69,6 +61,12 @@ const Machine = model
     {
       name: "IDX_machine_year",
       on: ["year"],
+      unique: false,
+      where: "deleted_at IS NULL",
+    },
+    {
+      name: "IDX_machine_machine_type",
+      on: ["machine_type"],
       unique: false,
       where: "deleted_at IS NULL",
     },

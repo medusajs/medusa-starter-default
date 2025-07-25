@@ -3,7 +3,8 @@ import {
   ContainerRegistrationKeys, 
   Modules,
 } from "@medusajs/framework/utils"
-import { MACHINES_MODULE } from "../modules/machines"
+import { createMachineWorkflow } from "../modules/machines/workflows/create-machine"
+import { createCustomersWorkflow } from "@medusajs/medusa/core-flows"
 import * as fs from "fs"
 import * as path from "path"
 
@@ -92,10 +93,33 @@ function parseNumber(value: string): number | null {
   return isNaN(parsed) ? null : parsed;
 }
 
+// Helper function to validate and normalize machine status
+function normalizeStatus(status: string): "active" | "inactive" | "maintenance" | "sold" {
+  const normalizedStatus = status?.toLowerCase().trim();
+  
+  switch (normalizedStatus) {
+    case 'inactive':
+    case 'disabled':
+    case 'out_of_service':
+      return 'inactive';
+    case 'maintenance':
+    case 'repair':
+    case 'service':
+      return 'maintenance';
+    case 'sold':
+    case 'disposed':
+      return 'sold';
+    case 'active':
+    case 'operational':
+    case 'available':
+    default:
+      return 'active';
+  }
+}
+
 export default async function loadCustomersMachines({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
   const customerModuleService = container.resolve(Modules.CUSTOMER);
-  const machinesService = container.resolve(MACHINES_MODULE);
 
   logger.info("Starting customers and machines import process...");
 
@@ -117,13 +141,17 @@ export default async function loadCustomersMachines({ container }: ExecArgs) {
 
     // Track created customers and machines
     const customerMap = new Map<string, string>(); // client_id -> customer_id
-    const machineMap = new Map<string, string>(); // machine_id -> machine_id
+    const processedMachines = new Set<string>(); // track processed machine serial numbers
     let customersCreated = 0;
     let machinesCreated = 0;
     let customersSkipped = 0;
     let machinesSkipped = 0;
+    let errors = 0;
 
-    // Process records
+    // Group machines by customer to optimize batch processing
+    const machinesByCustomer = new Map<string, any[]>();
+
+    // First pass: Process customers and group machines
     for (const row of records) {
       try {
         // Skip rows without essential data
@@ -144,119 +172,141 @@ export default async function loadCustomersMachines({ container }: ExecArgs) {
 
             if (existingCustomers.length > 0) {
               customerId = existingCustomers[0].id;
+              customerMap.set(row.client_id, customerId);
               logger.info(`Found existing customer: ${row.email}`);
             } else {
-              // Create new customer
-              const customerData = {
-                email: row.email || `customer-${row.client_id}@example.com`,
-                first_name: row.name?.split(' ')[0] || `Customer ${row.client_id}`,
-                last_name: row.name?.split(' ').slice(1).join(' ') || '',
-                phone: row.phone || row.mobile || null,
-                company_name: row.name || null,
-                addresses: [{
-                  first_name: row.name?.split(' ')[0] || `Customer ${row.client_id}`,
-                  last_name: row.name?.split(' ').slice(1).join(' ') || '',
-                  address_1: row.street || '',
-                  address_2: row.house_number || '',
-                  city: row.city || '',
-                  postal_code: row.zip_code || '',
-                  country_code: row.country?.toLowerCase() || 'be',
-                  phone: row.phone || row.mobile || null,
-                }],
-                metadata: {
-                  client_id: row.client_id,
-                  adsolut_id: row.adsolut_id,
-                  vat: row.vat,
-                  fax: row.fax,
-                  mobile: row.mobile,
-                  created_at_original: row.created_at,
-                  updated_at_original: row.updated_at,
+              // Use createCustomersWorkflow for proper customer creation
+              const { result } = await createCustomersWorkflow(container).run({
+                input: {
+                  customersData: [{
+                    email: row.email || `customer-${row.client_id}@example.com`,
+                    first_name: row.name?.split(' ')[0] || `Customer ${row.client_id}`,
+                    last_name: row.name?.split(' ').slice(1).join(' ') || '',
+                    phone: row.phone || row.mobile || null,
+                    company_name: row.name || null,
+                    addresses: [{
+                      first_name: row.name?.split(' ')[0] || `Customer ${row.client_id}`,
+                      last_name: row.name?.split(' ').slice(1).join(' ') || '',
+                      address_1: row.street || '',
+                      address_2: row.house_number || '',
+                      city: row.city || '',
+                      postal_code: row.zip_code || '',
+                      country_code: row.country?.toLowerCase() || 'be',
+                      phone: row.phone || row.mobile || null,
+                    }],
+                    metadata: {
+                      client_id: row.client_id,
+                      adsolut_id: row.adsolut_id,
+                      vat: row.vat,
+                      fax: row.fax,
+                      mobile: row.mobile,
+                      created_at_original: row.created_at,
+                      updated_at_original: row.updated_at,
+                    }
+                  }]
                 }
-              };
+              });
 
-              const customer = await customerModuleService.createCustomers(customerData);
-              customerId = customer.id;
+              customerId = result[0].id;
               customerMap.set(row.client_id, customerId);
               customersCreated++;
-              logger.info(`Created customer: ${customer.email} (${customer.first_name} ${customer.last_name})`);
+              logger.info(`Created customer: ${result[0].email} (${result[0].first_name} ${result[0].last_name})`);
             }
           } catch (error) {
-            if (error.message && error.message.includes('unique')) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            if (errorMessage.includes('unique') || errorMessage.includes('already exists')) {
               logger.warn(`Customer with email ${row.email} already exists, skipping...`);
               customersSkipped++;
             } else {
-              logger.error(`Error creating customer for client_id ${row.client_id}:`, error.message);
+              logger.error(`Error creating customer for client_id ${row.client_id}:`, error);
+              errors++;
             }
             continue;
           }
         }
 
-        // Process Machine
-        let machineId = machineMap.get(row.machine_id);
+        // Group machine data by customer for batch processing
+        if (!machinesByCustomer.has(customerId)) {
+          machinesByCustomer.set(customerId, []);
+        }
         
-        if (!machineId) {
-          try {
-            // Check if machine already exists by serial number
-            const existingMachines = await machinesService.listMachines({
-              serial_number: row.vin || row.machine_id
-            });
-
-            if (existingMachines.length > 0) {
-              machineId = existingMachines[0].id;
-              logger.info(`Found existing machine: ${row.vin || row.machine_id}`);
-            } else {
-              // Create new machine
-              const machineData = {
-                model_number: row.model || row.category || 'Unknown Model',
-                serial_number: row.vin || row.machine_id,
-                license_plate: row.license_plate || null,
-                year: parseNumber(row.build_date) || parseNumber(row.year) || null,
-                engine_hours: parseNumber(row.tlm) || null,
-                fuel_type: null, // Not in CSV
-                horsepower: null, // Not in CSV
-                weight: null, // Not in CSV
-                purchase_date: parseDate(row.delivery_date) || null,
-                purchase_price: null, // Not in CSV
-                current_value: null, // Not in CSV
-                status: row.rental === 'true' ? 'active' : 'active', // Default to active
-                location: null, // Not in CSV
-                customer_id: customerId,
-                description: row.machine_description || row.comment || null,
-                notes: row.work_needed || row.comment || null,
-                metadata: {
-                  machine_id: row.machine_id,
-                  id_machine: row.id_machine,
-                  category: row.category,
-                  brand: row.brand,
-                  rental: row.rental === 'true',
-                  maintenance: row.maintenance === 'true',
-                  build_date: row.build_date,
-                  delivery_date: row.delivery_date,
-                  tlm: row.tlm,
-                  created_at_original: row.created_at_machine,
-                  updated_at_original: row.updated_at_machine,
-                }
-              };
-
-              const machine = await machinesService.createMachines(machineData);
-              machineId = machine.id;
-              machineMap.set(row.machine_id, machineId);
-              machinesCreated++;
-              logger.info(`Created machine: ${machine.model_number} (${machine.serial_number}) for customer ${customerId}`);
-            }
-          } catch (error) {
-            if (error.message && error.message.includes('unique')) {
-              logger.warn(`Machine with serial number ${row.vin || row.machine_id} already exists, skipping...`);
-              machinesSkipped++;
-            } else {
-              logger.error(`Error creating machine for machine_id ${row.machine_id}:`, error.message);
-            }
-            continue;
-          }
+        // Skip if we've already processed this machine
+        const machineSerial = row.vin || row.machine_id;
+        if (processedMachines.has(machineSerial)) {
+          logger.info(`Machine ${machineSerial} already processed, skipping...`);
+          machinesSkipped++;
+          continue;
         }
+
+        machinesByCustomer.get(customerId)!.push({
+          row,
+          machineData: {
+            model_number: row.model || row.category || 'Unknown Model',
+            serial_number: machineSerial,
+            license_plate: row.license_plate || null,
+            year: parseNumber(row.build_date) || parseNumber(row.year) || null,
+            engine_hours: parseNumber(row.tlm) || null,
+            status: normalizeStatus(row.rental === 'true' ? 'active' : 'active'), // Proper status enum
+            customer_id: customerId,
+            description: row.machine_description || row.comment || null,
+            notes: row.work_needed || row.comment || null,
+            metadata: {
+              machine_id: row.machine_id,
+              id_machine: row.id_machine,
+              category: row.category,
+              brand: row.brand,
+              rental: row.rental === 'true',
+              maintenance: row.maintenance === 'true',
+              build_date: row.build_date,
+              delivery_date: row.delivery_date,
+              tlm: row.tlm,
+              created_at_original: row.created_at_machine,
+              updated_at_original: row.updated_at_machine,
+            }
+          }
+        });
 
       } catch (error) {
         logger.error(`Error processing row:`, error);
+        errors++;
+        continue;
+      }
+    }
+
+    // Second pass: Create machines using workflows in batches
+    for (const [customerId, machineDataList] of machinesByCustomer) {
+      try {
+        if (machineDataList.length === 0) continue;
+
+        logger.info(`Processing ${machineDataList.length} machines for customer ${customerId}`);
+
+        // Use createMachineWorkflow for proper machine creation
+        const workflowResult = await createMachineWorkflow(container).run({
+          input: {
+            machines: machineDataList.map(item => item.machineData)
+          }
+        });
+
+        const { result } = workflowResult;
+        const createdMachines = (result as any).machines;
+
+        // Mark machines as processed
+        machineDataList.forEach(item => {
+          processedMachines.add(item.machineData.serial_number);
+        });
+
+        machinesCreated += Array.isArray(createdMachines) ? createdMachines.length : 0;
+        logger.info(`Successfully created ${Array.isArray(createdMachines) ? createdMachines.length : 0} machines for customer ${customerId}`);
+
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('unique') || errorMessage.includes('already exists')) {
+          logger.warn(`Some machines for customer ${customerId} already exist, skipping batch...`);
+          machinesSkipped += machineDataList.length;
+        } else {
+          logger.error(`Error creating machines for customer ${customerId}:`, error);
+          errors += machineDataList.length;
+        }
         continue;
       }
     }
@@ -265,6 +315,7 @@ export default async function loadCustomersMachines({ container }: ExecArgs) {
     logger.info(`Customers: ${customersCreated} created, ${customersSkipped} skipped`);
     logger.info(`Machines: ${machinesCreated} created, ${machinesSkipped} skipped`);
     logger.info(`Total customer-machine relationships processed: ${customerMap.size}`);
+    logger.info(`Errors encountered: ${errors}`);
 
   } catch (error) {
     logger.error("Error during CSV import:", error);

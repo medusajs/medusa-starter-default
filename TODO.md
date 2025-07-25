@@ -93,16 +93,6 @@ This file serves as a progress tracker and memory system for development tasks o
   - [x] Make customer, machine, description, service type and priority editable
   - [x] Use clean form-style layout with proper field structure
   - [x] Remove complex icon containers and use simple field labels
-
-### 🔄 In Progress
-- [ ] **Service Order Event Logging System - Debugging**
-  - [x] Fixed metadata field missing from comments query
-  - [x] Fixed container resolution issues in event logger
-  - [x] Updated event logger to work with service instance directly
-  - [x] Added debug logging to track event creation
-  - [ ] Test and verify events are appearing in UI after adding parts/time entries
-
-### ✅ Completed
 - [x] **Fix navigation blank screen issue between custom modules**
   - [x] Identified the issue: Service orders page has complex component structure with tabs and multiple useQuery hooks
   - [x] Root cause: Component state management and React key conflicts between navigation + React hooks order violation + React Query cache conflicts
@@ -131,6 +121,32 @@ This file serves as a progress tracker and memory system for development tasks o
       - [x] Fixed technicians page - moved useDataTable before conditional returns
       - [x] Fixed invoices page - moved useDataTable before conditional returns
       - [x] Ensured all custom modules follow proper React hooks patterns
+- [x] **Review and improve load-customers-machines script to follow MedusaJS best practices**
+  - [x] Fix TypeScript errors in machine creation (status enum values)
+  - [x] Replace direct service calls with proper workflows (createCustomersWorkflow, createMachineWorkflow)
+  - [x] Improve error handling and validation
+  - [x] Use proper MedusaJS patterns for script architecture
+  - [x] Apply better data parsing and transformation (normalizeStatus helper)
+  - [x] Implement batch processing for better performance
+  - [x] Add comprehensive logging and progress tracking
+  - [x] Fix error object handling in catch blocks (TypeError: Cannot use 'in' operator)
+
+### 🔄 In Progress
+- [ ] **Service Order Event Logging System - Debugging**
+  - [x] Fixed metadata field missing from comments query
+  - [x] Fixed container resolution issues in event logger
+  - [x] Updated event logger to work with service instance directly
+  - [x] Added debug logging to track event creation
+  - [ ] Test and verify events are appearing in UI after adding parts/time entries
+- [ ] **Adapt machine module data model**
+  - [x] Remove fields: fuel_type, horsepower, weight, purchase_price, current_value, location
+  - [x] Add field: machine_type
+  - [x] Create migration for database schema changes
+  - [x] Update machine model definition
+  - [x] Update TypeScript types and DTOs
+  - [x] Update admin UI forms (create and edit)
+  - [x] Update API endpoints and service layer
+  - [ ] Test the complete adaptation
 
 ### 📋 Pending Tasks
 - [ ] Ready for new tasks and feature development

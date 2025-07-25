@@ -24,15 +24,9 @@ const schema = zod.object({
   serial_number: zod.string().min(1, "Serial number is required"),
   license_plate: zod.string().nullable().optional(),
   year: zod.number().min(1800, "Year must be valid").max(new Date().getFullYear() + 1, "Year cannot be in the future").nullable().optional(),
+  machine_type: zod.string().max(100).nullable().optional(),
   engine_hours: zod.number().min(0, "Engine hours must be positive").nullable().optional(),
-  fuel_type: zod.string().nullable().optional(),
-  horsepower: zod.number().min(0, "Horsepower must be positive").nullable().optional(),
-  weight: zod.number().min(0, "Weight must be positive").nullable().optional(),
-  purchase_date: zod.string().nullable().optional(),
-  purchase_price: zod.number().min(0, "Purchase price must be positive").nullable().optional(),
-  current_value: zod.number().min(0, "Current value must be positive").nullable().optional(),
   status: zod.enum(["active", "inactive", "maintenance", "sold"]),
-  location: zod.string().nullable().optional(),
   description: zod.string().nullable().optional(),
   notes: zod.string().nullable().optional(),
   customer_id: zod.string().nullable().optional(),
@@ -54,15 +48,9 @@ interface Machine {
   serial_number: string
   license_plate?: string | null
   year?: number | null
+  machine_type?: string | null
   engine_hours?: number | null
-  fuel_type?: string | null
-  horsepower?: number | null
-  weight?: number | null
-  purchase_date?: string | null
-  purchase_price?: number | null
-  current_value?: number | null
   status: "active" | "inactive" | "maintenance" | "sold"
-  location?: string | null
   description?: string | null
   notes?: string | null
   customer_id?: string | null
@@ -112,15 +100,9 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
       serial_number: "",
       license_plate: "",
       year: undefined,
+      machine_type: "",
       engine_hours: undefined,
-      fuel_type: "",
-      horsepower: undefined,
-      weight: undefined,
-      purchase_date: "",
-      purchase_price: undefined,
-      current_value: undefined,
       status: "active",
-      location: "",
       description: "",
       notes: "",
       customer_id: "",
@@ -136,15 +118,9 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
         serial_number: machine.serial_number || "",
         license_plate: machine.license_plate || "",
         year: machine.year || undefined,
+        machine_type: machine.machine_type || "",
         engine_hours: machine.engine_hours || undefined,
-        fuel_type: machine.fuel_type || "",
-        horsepower: machine.horsepower || undefined,
-        weight: machine.weight || undefined,
-        purchase_date: machine.purchase_date || "",
-        purchase_price: machine.purchase_price || undefined,
-        current_value: machine.current_value || undefined,
         status: machine.status || "active",
-        location: machine.location || "",
         description: machine.description || "",
         notes: machine.notes || "",
         customer_id: machine.customer_id || "",
@@ -281,7 +257,12 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                       <Label size="small" weight="plus">
                         License Plate
                       </Label>
-                      <Input {...field} />
+                      <Input 
+                        value={field.value || ""} 
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
                     </div>
                   )}
                 />
@@ -295,10 +276,11 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                         Year
                       </Label>
                       <Input 
-                        {...field} 
                         type="number" 
                         value={field.value || ''}
                         onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                        onBlur={field.onBlur}
+                        name={field.name}
                       />
                       {fieldState.error && (
                         <span className="text-red-500 text-sm">
@@ -311,23 +293,18 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                 
                 <Controller
                   control={form.control}
-                  name="fuel_type"
+                  name="machine_type"
                   render={({ field, fieldState }) => (
                     <div className="flex flex-col space-y-2">
                       <Label size="small" weight="plus">
-                        Fuel Type
+                        Machine Type
                       </Label>
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <Select.Trigger>
-                          <Select.Value placeholder="Select fuel type" />
-                        </Select.Trigger>
-                        <Select.Content>
-                          <Select.Item value="diesel">Diesel</Select.Item>
-                          <Select.Item value="gasoline">Gasoline</Select.Item>
-                          <Select.Item value="electric">Electric</Select.Item>
-                          <Select.Item value="hybrid">Hybrid</Select.Item>
-                        </Select.Content>
-                      </Select>
+                      <Input 
+                        value={field.value || ""} 
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
                       {fieldState.error && (
                         <span className="text-red-500 text-sm">
                           {fieldState.error.message}
@@ -393,129 +370,6 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                 
                 <Controller
                   control={form.control}
-                  name="horsepower"
-                  render={({ field, fieldState }) => (
-                    <div className="flex flex-col space-y-2">
-                      <Label size="small" weight="plus">
-                        Horsepower
-                      </Label>
-                      <Input 
-                        {...field} 
-                        type="number" 
-                        value={field.value || ''}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                      />
-                      {fieldState.error && (
-                        <span className="text-red-500 text-sm">
-                          {fieldState.error.message}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                />
-                
-                <Controller
-                  control={form.control}
-                  name="weight"
-                  render={({ field, fieldState }) => (
-                    <div className="flex flex-col space-y-2">
-                      <Label size="small" weight="plus">
-                        Weight (kg)
-                      </Label>
-                      <Input 
-                        {...field} 
-                        type="number" 
-                        value={field.value || ''}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                      />
-                      {fieldState.error && (
-                        <span className="text-red-500 text-sm">
-                          {fieldState.error.message}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                />
-                
-                <Controller
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <div className="flex flex-col space-y-2">
-                      <Label size="small" weight="plus">
-                        Location
-                      </Label>
-                      <Input {...field} />
-                    </div>
-                  )}
-                />
-              </div>
-              
-              {/* Financial Information */}
-              <div className="grid grid-cols-2 gap-4">
-                <Controller
-                  control={form.control}
-                  name="purchase_date"
-                  render={({ field }) => (
-                    <div className="flex flex-col space-y-2">
-                      <Label size="small" weight="plus">
-                        Purchase Date
-                      </Label>
-                      <Input {...field} type="date" />
-                    </div>
-                  )}
-                />
-                
-                <Controller
-                  control={form.control}
-                  name="purchase_price"
-                  render={({ field, fieldState }) => (
-                    <div className="flex flex-col space-y-2">
-                      <Label size="small" weight="plus">
-                        Purchase Price
-                      </Label>
-                      <Input 
-                        {...field} 
-                        type="number" 
-                        step="0.01"
-                        value={field.value || ''}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                      />
-                      {fieldState.error && (
-                        <span className="text-red-500 text-sm">
-                          {fieldState.error.message}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                />
-                
-                <Controller
-                  control={form.control}
-                  name="current_value"
-                  render={({ field, fieldState }) => (
-                    <div className="flex flex-col space-y-2">
-                      <Label size="small" weight="plus">
-                        Current Value
-                      </Label>
-                      <Input 
-                        {...field} 
-                        type="number" 
-                        step="0.01"
-                        value={field.value || ''}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                      />
-                      {fieldState.error && (
-                        <span className="text-red-500 text-sm">
-                          {fieldState.error.message}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                />
-                
-                <Controller
-                  control={form.control}
                   name="customer_id"
                   render={({ field }) => (
                     <div className="flex flex-col space-y-2">
@@ -556,7 +410,12 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                       <Label size="small" weight="plus">
                         Description
                       </Label>
-                      <Textarea {...field} />
+                      <Textarea 
+                        value={field.value || ""} 
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
                     </div>
                   )}
                 />
@@ -569,7 +428,12 @@ export const EditMachineForm = ({ machine, trigger }: EditMachineFormProps) => {
                       <Label size="small" weight="plus">
                         Notes
                       </Label>
-                      <Textarea {...field} />
+                      <Textarea 
+                        value={field.value || ""} 
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
                     </div>
                   )}
                 />

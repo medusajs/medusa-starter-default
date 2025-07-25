@@ -16,8 +16,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       q,
       status,
       customer_id,
-      location,
       brand_id,
+      machine_type,
       ...filters 
     } = req.query
     
@@ -27,13 +27,14 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     if (status) queryFilters.status = status
     if (customer_id) queryFilters.customer_id = customer_id
     if (brand_id) queryFilters.brand_id = brand_id
-    if (location) queryFilters.location = { $ilike: `%${location}%` }
+    if (machine_type) queryFilters.machine_type = { $ilike: `%${machine_type}%` }
     
     // Add search functionality
     if (q) {
       queryFilters.$or = [
         { model_number: { $ilike: `%${q}%` } },
         { serial_number: { $ilike: `%${q}%` } },
+        { machine_type: { $ilike: `%${q}%` } },
         { description: { $ilike: `%${q}%` } },
         { notes: { $ilike: `%${q}%` } },
       ]
