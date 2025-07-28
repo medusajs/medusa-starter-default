@@ -11,7 +11,8 @@ import {
   createDataTableColumnHelper,
   createDataTableFilterHelper,
   DropdownMenu,
-  IconButton
+  IconButton,
+  StatusBadge
 } from "@medusajs/ui"
 import type { DataTableFilteringState } from "@medusajs/ui"
 import { 
@@ -181,12 +182,9 @@ const SuppliersPage = () => {
     columnHelper.accessor("is_active", {
       header: t("custom.general.status"),
       cell: ({ getValue }) => (
-        <Badge 
-          size="2xsmall" 
-          color={getValue() ? "green" : "red"}
-        >
+        <StatusBadge color={getValue() ? "green" : "red"}>
           {getValue() ? t("custom.general.active") : t("custom.general.inactive")}
-        </Badge>
+        </StatusBadge>
       ),
     }),
     columnHelper.display({

@@ -117,9 +117,9 @@ const InvoiceTypeBadge = ({ type }: { type: Invoice["invoice_type"] }) => {
   const config = typeConfig[type]
 
   return (
-    <Badge color={config.color}>
+    <StatusBadge color={config.color}>
       {config.label}
-    </Badge>
+    </StatusBadge>
   )
 }
 

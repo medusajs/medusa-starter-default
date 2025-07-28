@@ -28,6 +28,8 @@ type CreateServiceOrderItemInput = {
   unit_price: number
   is_warranty_covered?: boolean
   notes?: string
+  product_id?: string
+  variant_id?: string
 }
 
 type CreateTimeEntryInput = {

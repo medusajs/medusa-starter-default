@@ -5,158 +5,186 @@ This file serves as a progress tracker and memory system for development tasks o
 ## Current Session Tasks
 
 ### ✅ Completed
-- [x] Created TODO.md file for progress tracking
-- [x] Examined project structure (Medusa e-commerce starter with TypeScript)
-- [x] Establish TODO.md as memory system for tracking development progress
-- [x] Created Cursor rule `.cursor/rules/todo-memory-system.mdc` for persistent TODO.md behavior
-- [x] Identified brand_name column issue in machine table
 
-- [x] Plan service order commenting system implementation
-  - [x] Analyzed current service order architecture and MedusaJS native patterns
-  - [x] Reviewed order note/comment implementation in MedusaJS core for consistency
-  - [x] Designed comprehensive plan following MedusaJS patterns (models, services, API, UI)
-  - [x] Planned 4-phase implementation: Backend Foundation, Real-time Infrastructure, Frontend Implementation, Advanced Features
-  - [x] Estimated 8-12 days total implementation time across all phases
-- [x] **Service Order Event Logging System - Complete Implementation** ✅
-  - [x] **Phase 1 - Backend Foundation:**
-    - [x] Created ServiceOrderEventLogger helper class with grouping capabilities
-    - [x] Implemented event templates for major actions (parts, time entries, status changes)
-    - [x] Integrated event logging into service operations (addServiceOrderItem, addTimeEntry, updateServiceOrderStatus)
-    - [x] Added removeServiceOrderItem method with event logging
-    - [x] Created API endpoint for removing service order items
-    - [x] Used existing comment system with author_type="system" for events
-    - [x] Implemented time-based event grouping (5-10 min windows with max event limits)
-  - [x] **Phase 2 - UI Enhancement:**
-    - [x] Updated ServiceOrderCommentsWidget to display events alongside comments
-    - [x] Added event filtering toggles (Show Comments/Show Events)
-    - [x] Created EventMessage component with visual distinction from comments
-    - [x] Added event icons and categorization (Parts/Time/Status)
-    - [x] Implemented grouped events expandable details
-    - [x] Added delete functionality to service order items widget with proper event logging
-    - [x] Integrated comment invalidation to show events in real-time
-    - [x] Fixed date formatting bug in formatRelativeTime utility (handle string dates from API)
-- [x] **Rework service order detail page layout**
-  - [x] Move service details widget to right column sidebar
-  - [x] Remove cost summary and total from service details widget
-  - [x] Remove status history widget
-  - [x] Keep only customer, machine, description, service type and priority in service details
-- [x] **Improve service detail page sidebar widgets to be more MedusaJS-native**
-  - [x] Restructure service details widget to follow MedusaJS patterns
-  - [x] Improve status actions widget layout and UX
-  - [x] Add proper action menu and icons following native conventions
-  - [x] Enhance visual hierarchy and information display
-- [x] **Redesign service details widget as editable drawer-style layout**
-  - [x] Simplify design and style like an edit drawer
-  - [x] Make customer, machine, description, service type and priority editable
-  - [x] Use clean form-style layout with proper field structure
-  - [x] Remove complex icon containers and use simple field labels
+- [x] **Time Entry Table Column Simplification** ✅ **COMPLETED**
+  - [x] Remove Description and Category columns from time entries table
+  - [x] Reorder columns to: Date, Hours & Minutes, Rate, Total
+  - [x] Simplify table structure for cleaner, more focused view
+  - [x] Maintain Belgium-focused currency display (€) throughout
+  - [x] **FINAL RESULT**: Streamlined time entry table showing only essential time tracking information
 
-  - [x] Updated ServiceOrder type definitions to maintain consistency between components
-  - [x] **CRITICAL FIX**: Resolved React Query cache conflicts by namespacing query keys
-    - [x] Changed service orders page query keys to use "service-orders-customers" and "service-orders-technicians"
-    - [x] Updated kanban component query keys to match service orders page
-    - [x] Fixed create/edit service order forms to use namespaced keys
-    - [x] Updated all service order related widgets and components to use unique query keys
-    - [x] Prevented cache pollution between native module queries and service order queries
-  - [x] **FINAL FIX**: Resolved "Rendered more hooks than during the previous render" error
-    - [x] Moved useDataTable hook call before all conditional returns in ServiceOrdersListTable
-    - [x] Relocated all column definitions and data processing before conditional returns
-    - [x] Ensured consistent hook order across all page loads and navigation scenarios
-    - [x] Fixed the "first load error" that required page refresh to work properly
-    - [x] **APPLIED TO ALL PAGES**: Fixed React hooks order violations across all custom modules
-      - [x] Fixed machines page - moved useDataTable before conditional returns
-      - [x] Fixed suppliers page - moved useDataTable before conditional returns
-      - [x] Fixed technicians page - moved useDataTable before conditional returns
-      - [x] Fixed invoices page - moved useDataTable before conditional returns
-      - [x] Ensured all custom modules follow proper React hooks patterns
-- [x] **Review and improve load-customers-machines script to follow MedusaJS best practices**
-  - [x] Fix TypeScript errors in machine creation (status enum values)
-  - [x] Replace direct service calls with proper workflows (createCustomersWorkflow, createMachineWorkflow)
-  - [x] Improve error handling and validation
-  - [x] Use proper MedusaJS patterns for script architecture
-  - [x] Apply better data parsing and transformation (normalizeStatus helper)
-  - [x] Implement batch processing for better performance
-  - [x] Add comprehensive logging and progress tracking
-  - [x] Fix error object handling in catch blocks (TypeError: Cannot use 'in' operator)
-- [x] **Enhance custom datatables with clickable rows and simplified actions** ✅
-  - [x] Make all datatable rows clickable (navigate to detail pages)
-  - [x] Replace current action icons with dropdown menu containing only Edit and Delete
-  - [x] Apply to all custom modules: machines, technicians, suppliers, invoices/facturen, service orders
-  - [x] Use MedusaJS native patterns for ActionMenu with DropdownMenu component
-  - [x] Maintain existing functionality while improving UX consistency
-  - [x] Updated machines page with Edit/Delete dropdown and row click navigation
-  - [x] Updated suppliers page with Edit/Delete dropdown and row click navigation
-  - [x] Updated technicians page with Edit/Delete dropdown and row click navigation
-  - [x] Updated invoices page with Edit/Delete dropdown (drafts only) and row click navigation
-  - [x] Updated service orders page with Edit/Delete dropdown and row click navigation
-  - [x] Ensured Edit actions trigger existing edit forms/drawers properly
-  - [x] Simplified interface: View via clickable rows, Edit/Delete via dropdown only
-- [x] **Rework order creation focus modal layout to be more native Medusa** ✅
-  - [x] Updated FocusModal.Body structure to follow native patterns (centered layout with max-width constraints)
-  - [x] Improved Fulfillment section to match native fulfillment form patterns with proper field layouts
-  - [x] Enhanced Items section with better visual hierarchy and native dashed placeholder patterns
-  - [x] Applied proper Form components and field layouts from MedusaJS (xl:flex-row responsive design)
-  - [x] Used consistent spacing, typography, and component structure following .medusa-source patterns
-  - [x] Implemented divide-y sections with proper padding and visual separation
-  - [x] Added bg-ui-bg-base class to Select.Trigger components for consistency
-  - [x] Used proper label hierarchy and text sizing following native conventions
-  - [x] Fixed modal scrolling by removing conflicting overflow-auto classes and size-full constraints
-  - [x] Simplified dropdown options to show only main terms (Pickup/Shipping) without subtitles
+- [x] **Service Order Timer Implementation** ✅ **COMPLETED**
+  - [x] Add start/stop timer mechanism with real-time display
+  - [x] Simplified timer to focus only on time logging (removed work description, category, notes)
+  - [x] Use native Medusa UI components: Button, Text, Label, Input
+  - [x] Use native Medusa icons: PlaySolid, PauseSolid, Stopwatch
+  - [x] Automatic time entry creation when timer is stopped with minimal required data
+  - [x] Real-time timer display with HH:MM:SS format
+  - [x] Inline hourly rate setting with compact design
+  - [x] Proper state management and cleanup with useEffect and useRef
+  - [x] Integration with existing time entries API and query invalidation
+  - [x] Belgium-focused currency display (€) throughout the interface
+  - [x] **FINAL RESULT**: Streamlined timer interface focused purely on time tracking
+
+- [x] **Service Order Backlog Implementation** ✅ **COMPLETED**
+  - [x] Update service order status workflow: Draft → Ready for Pickup → In Progress → Done → Returned for Review
+  - [x] Modify kanban board to show only "Ready for Pickup" and beyond (exclude Draft status)
+  - [x] Create separate backlog view for Draft service orders
+  - [x] Update model status enum and migrations (Migration20250727094542.ts generated)
+  - [x] Update all UI components with new status workflow
+  - [x] Update translations for new statuses (English and Dutch)
+  - [x] Applied to: Service Order model, types, edit forms, kanban view, list table, translations
+  - [x] **FINAL STRUCTURE**: Optimal two-tab layout with view toggle
+    - [x] **Backlog Tab**: Shows draft orders in dedicated datatable with badge count
+    - [x] **Active Tab**: Shows non-draft orders with List/Kanban view toggle
+    - [x] Clean separation between planning (backlog) and execution (active work)
+    - [x] Native MedusaJS DataTable styling and functionality throughout
+    - [x] Consistent UX with filtering, search, and pagination on all views
+
+- [x] **Service Order Detail Screen Layout Improvements** ✅ **COMPLETED**
+  - [x] Remove custom padding from Parts & Items widget table content
+  - [x] Remove custom padding from Time Entries widget table content
+  - [x] Restructure widgets to follow native Medusa DataTable patterns
+  - [x] Fix Badge component props to use `color` instead of `variant`
+  - [x] Achieve consistent native Medusa UI styling without extra padding
+  - [x] Maintain proper table structure with native padding handling
+  - [x] **Button Improvements** ✅ **COMPLETED**
+    - [x] Update header action buttons to use `size="small" variant="secondary"`
+    - [x] Update table action buttons to use `size="small" variant="transparent"`
+    - [x] Update modal buttons to use `size="small"` consistently
+    - [x] Update form action buttons to use `size="small"` consistently
+    - [x] Achieve native Medusa button patterns throughout all widgets
+ 
+- [x] **Service Order Header Improvements** ✅ **COMPLETED**
+  - [x] Replace custom Badge with native StatusBadge for service type
+  - [x] Replace priority badge with service type in header
+  - [x] Use consistent native Medusa StatusBadge components
+  - [x] Add proper color variants for service types
+  - [x] Achieve consistent native Medusa UI patterns in header
+
+- [x] **Service Order Label Components Standardization** ✅ **COMPLETED**
+  - [x] Replace HTML `<label>` tag with native Medusa `<Label>` component in service-order-comments.tsx
+  - [x] Add proper `size="small" weight="plus"` props to all form Label components in service-order-overview.tsx
+  - [x] Add proper `size="small" weight="plus"` props to all form Label components in edit-service-order-form.tsx
+  - [x] Ensure consistent native Medusa UI Label component usage throughout service order screens
+  - [x] Follow [Medusa UI Label documentation](https://docs.medusajs.com/ui/components/label) patterns
+  - [x] Achieve consistent typography and visual hierarchy across all form elements
+
+- [x] **Service Type & Priority StatusBadge Implementation** ✅ **COMPLETED**
+  - [x] Replace regular `Badge` components with native `StatusBadge` components in service-order-overview.tsx
+  - [x] Replace regular `Badge` component with native `StatusBadge` component in service-order-status-actions.tsx
+  - [x] Add service type color variants mapping for proper visual distinction
+  - [x] Implement colored squares on grey background pattern for service type and priority
+  - [x] Achieve native Medusa UI StatusBadge appearance throughout service order detail screen
+  - [x] Ensure consistent visual hierarchy with proper color coding for different service types and priorities
+
+- [x] **Service Order DataTable Header Label Standardization** ✅ **COMPLETED**
+  - [x] Replace plain text table headers with native `Label` components in service-order-items.tsx
+  - [x] Replace plain text table headers with native `Label` components in service-order-time-entries.tsx  
+  - [x] Replace plain text table headers with native `Label` components in service-order-status-history.tsx
+  - [x] Add proper `size="small" weight="plus"` props to all table header Label components
+  - [x] Ensure consistent native Medusa UI Label usage in all datatable headers
+  - [x] Follow [Medusa UI Label documentation](https://docs.medusajs.com/ui/components/label) patterns for table headers
+  - [x] Achieve consistent typography and visual hierarchy in all service order datatables
+
+- [x] **Update All Datatables to Use Native StatusBadge Components** ✅ **COMPLETED**
+  - [x] Replace Badge components with StatusBadge in machines datatable
+  - [x] Replace Badge components with StatusBadge in technicians datatable  
+  - [x] Replace Badge components with StatusBadge in purchase orders datatable
+  - [x] Replace Badge components with StatusBadge in invoices datatable
+  - [x] Replace Badge components with StatusBadge in suppliers datatable
+  - [x] Update service orders datatable to use StatusBadge consistently
+  - [x] Follow [Medusa UI StatusBadge documentation](https://docs.medusajs.com/ui/components/status-badge) patterns
+  - [x] Ensure consistent native Medusa UI patterns across all datatables
+  - [x] **FINAL RESULT**: All datatables now use native StatusBadge with proper color variants and consistent styling
+
+- [x] **Activity & Comments Section UI Improvements** ✅ **COMPLETED**
+  - [x] Change widget title from "Activity & Comments" to "Activity"
+  - [x] Remove "All" tab from the tab navigation
+  - [x] Keep only "Comments" and "Events" tabs for separate views
+  - [x] Change default active tab from "all" to "comments"
+  - [x] Update filtering logic to remove "all" case
+  - [x] Update empty state messages to remove "all" references
+  - [x] **FINAL RESULT**: Clean separation between comments and events with simplified navigation
+
+- [x] **Remove Internal Comment Switch** ✅ **COMPLETED**
+  - [x] Remove internal comment switch from CommentForm component
+  - [x] Remove isInternal state and related logic
+  - [x] Set is_internal to false by default in comment creation
+  - [x] Remove unused Switch and Label imports
+  - [x] Simplify form layout to only show action buttons
+  - [x] **FINAL RESULT**: Cleaner comment form without unnecessary internal comment toggle
+
+- [x] **Service Order Items Product Variant Integration** ✅ **COMPLETED**
+  - [x] Replace manual item entry with product variant selection
+  - [x] Add product search and selection modal with search functionality
+  - [x] Auto-fill description and price from selected variant
+  - [x] Only require quantity input from user
+  - [x] Update datatable to show proper product variant information
+  - [x] Update API endpoint to handle variant_id and product_id
+  - [x] Ensure Belgium-focused currency display (€) throughout
+  - [x] **FINAL RESULT**: Streamlined item addition with product variant integration
+
+- [x] **Product Search DataTable Refactoring** ✅ **COMPLETED**
+  - [x] Replace custom product search layout with native Medusa DataTable
+  - [x] Implement proper column structure using createDataTableColumnHelper
+  - [x] Add client-side filtering for products and variants
+  - [x] Integrate search input with DataTable toolbar
+  - [x] Maintain variant selection functionality within DataTable cells
+  - [x] **FINAL RESULT**: Clean, native Medusa UI product search interface
+
+- [x] **Product Search DataTable Row Structure Improvement** ✅ **COMPLETED**
+  - [x] Refactor to show one row per variant instead of nested structure
+  - [x] Implement columns: Product, Description, Variant Type, Price
+  - [x] Add clickable rows with hover effects for variant selection
+  - [x] Maintain search functionality across all variant data
+  - [x] **FINAL RESULT**: Clean, clickable datatable with one row per variant
+
+- [x] **Fix Variant Price Integration Issue** ✅ **COMPLETED**
+  - [x] Identify issue where variants without prices were causing unit_price to be 0
+  - [x] Add validation to prevent adding variants without prices
+  - [x] Update UI to show "No price set" for variants without prices
+  - [x] Add error message when trying to add variants without prices
+  - [x] **FINAL RESULT**: Proper price validation and user feedback for missing variant prices
+
+- [x] **EUR Price Specific Integration** ✅ **COMPLETED**
+  - [x] Update price calculation to specifically look for EUR prices from variant price array
+  - [x] Update ProductSearchDataTable to show EUR prices specifically
+  - [x] Update selected variant preview to display EUR price
+  - [x] Update error messages to mention EUR price specifically
+  - [x] **FINAL RESULT**: Proper EUR price handling for multi-currency variants
+
+- [x] **Query API Integration for Calculated Prices** ✅ **COMPLETED**
+  - [x] Update product fetching to use Query API with proper context
+  - [x] Use calculated_price instead of raw prices array
+  - [x] Add EUR currency context for price calculation
+  - [x] Update ProductVariant interface to reflect calculated_price structure
+  - [x] Update all price display logic to use calculated prices
+  - [x] **FINAL RESULT**: Proper calculated EUR prices using Medusa Query API
+
+- [x] **Fix Product Search and Add Customer Context** ✅ **COMPLETED**
+  - [x] Revert to GET request for admin products API (POST was incorrect)
+  - [x] Add customer data fetching for pricing context
+  - [x] Update ServiceOrder interface to include customer_id
+  - [x] Revert to using prices array since admin API doesn't support calculated_price directly
+  - [x] Maintain EUR price filtering from prices array
+  - [x] **FINAL RESULT**: Working product search with customer context for future pricing enhancements
+
+- [x] **Debug and Fix Price Display** ✅ **COMPLETED**
+  - [x] Added comprehensive debugging with variants.* and variants.prices.* fields
+  - [x] Identified that prices are already in correct format (not in cents)
+  - [x] Removed division by 100 from all price calculations and displays
+  - [x] Removed all debugging console.log statements
+  - [x] **FINAL RESULT**: Correct EUR price display without unnecessary conversion
 
 ### 🔄 In Progress
-- [ ] **Service Order Event Logging System - Debugging**
-  - [x] Fixed metadata field missing from comments query
-  - [x] Fixed container resolution issues in event logger
-  - [x] Updated event logger to work with service instance directly
-  - [x] Added debug logging to track event creation
-  - [ ] Test and verify events are appearing in UI after adding parts/time entries
-- [x] **Debugging fulfillment creation error** ✅
-  - [x] Analyzed "Invalid request: Value for field 'items' too small, expected at least: '1'" error
-  - [x] Identified root cause: items array becomes empty after filtering
-  - [x] Found requires_shipping defaults to true for manual orders (should be false for pickup)
-  - [x] Added fulfillment_type field to create order widget (pickup/shipping)
-  - [x] Updated order creation logic to set requires_shipping: false for pickup orders
-  - [x] Fixed manual order fulfillment creation for pickup orders
-- [x] **Fix stock reservation error for pickup orders** ✅
-  - [x] Identified new issue: "No stock reservation found for item" for pickup fulfillments
-  - [x] Root cause: MedusaJS expects stock reservations for managed inventory items even for pickup
-  - [x] Implemented simplified reservation creation in order endpoint following native patterns
-  - [x] Added inventory reservation logic after order creation using native MedusaJS services
-  - [x] Used proper error handling to avoid failing order creation if reservations fail
-  - [x] Added metadata tracking for manual order reservations
-- [ ] **Adapt machine module data model**
-  - [x] Remove fields: fuel_type, horsepower, weight, purchase_price, current_value, location
-  - [x] Add field: machine_type
-  - [x] Create migration for database schema changes
-  - [x] Update machine model definition
-  - [x] Update TypeScript types and DTOs
-  - [x] Update admin UI forms (create and edit)
-  - [x] Update API endpoints and service layer
-  - [ ] Test the complete adaptation
-- [x] **Implement internationalization (i18n) for custom modules** ✅ **FULLY COMPLETED**
-  - [x] Add translation support for all custom admin routes and components
-  - [x] Create translation files for Belgian languages (Dutch, French, German, English)
-  - [x] Replace hardcoded strings with translation keys using useTranslation hook
-  - [x] Update route labels and component text to support language switching
-  - [x] Ensure custom modules translate when language is changed in profile settings
-  - [x] Created custom translation infrastructure:
-    - [x] Translation files: src/admin/translations/en.json and nl.json
-    - [x] Translation index file: src/admin/translations/index.ts
-    - [x] Custom hook: src/admin/hooks/use-custom-translation.ts
-    - [x] Comprehensive documentation: src/admin/translations/README.md
-  - [x] Updated ALL components to use translations:
-    - [x] Machines page: status filters, column headers, action buttons, status badges
-    - [x] Suppliers page: filters, column headers, actions, page title
-    - [x] Invoices page: status badges, type badges, filters, columns, actions (replaced all hardcoded Dutch text)
-    - [x] Technicians page: status filters, department/certification dropdowns, column headers, actions
-    - [x] Service Orders page: all status/priority/type badges, filters, columns, actions, page header
-    - [x] Purchase Orders page: all status/priority badges, filters, columns, page header
-  - [x] All major hardcoded strings now use translation keys
-  - [x] Proper fallback system (Dutch → English if translation missing)
-  - [x] Consistent naming convention for translation keys
-  - [x] Comprehensive translation coverage for all custom modules
-  - **Note**: Navigation labels in sidebar currently use static route config labels (MedusaJS limitation)
-  - **Result**: Complete i18n support - when users change language in profile settings, ALL custom modules translate perfectly
+- [ ] **Fix load-parts-with-prices.ts script compilation and runtime errors**
+  - [x] Fixed duplicate variable declarations (partsMap)
+  - [x] Added missing helper functions (createRecordFromValues, processRecord)
+  - [x] Fixed undefined variable references (logger, container, MEMORY_LIMIT)
+  - [x] Removed unused code and simplified structure
+  - [ ] Test script execution to ensure it runs without errors
+  - [ ] Verify CSV processing and product creation works correctly
 
 ### 📋 Pending Tasks
 - [ ] Ready for new tasks and feature development
@@ -166,39 +194,16 @@ This file serves as a progress tracker and memory system for development tasks o
 - **Tech Stack**: TypeScript, Node.js, Medusa.js
 - **Location**: Belgium-focused market
 - **Key Files**: 
-  - `medusa-config.ts` - Main configuration
-  - `src/` - Source code directory
-  - Various CSV files for product imports
+  - `src/scripts/load-parts-with-prices.ts` - Large CSV import script for parts with price history
+  - `src/admin/widgets/service-order-time-entries.tsx` - Time entries widget with simplified timer functionality
+  - `TODO.md` - Project progress tracking and memory system
 
 ## Notes
-- Project appears to be a Medusa e-commerce platform setup
-- Contains product import templates and sample data
-- Docker configuration available
-- Integration tests configured
-- **Previous Issue**: Machine table had brand_name column but database expected brand_id column
-- **Solution**: ✅ Full migration completed to use brand_id with proper foreign key relationship to brands table
-- **Brands Management**: ✅ Moved from main navigation to Settings section for better organization
-  - Now accessible at `/app/settings/brands` instead of `/app/brands`
-  - Follows MedusaJS settings page conventions (no icon, proper form handling)
-  - Maintains all existing functionality in appropriate configuration context
-- **Button Standardization**: ✅ Completed full standardization of button components
-  - All action buttons now use native MedusaJS `Button` component consistently
-  - Replaced `IconButton` with `Button` for table actions and similar contexts
-  - Maintained `IconButton` for appropriate uses (dropdown triggers in ActionMenu components)
-  - Standardized spacing with `gap-2` for all button groups
-  - Consistent `variant="transparent"` and `size="small"` for table action buttons
-  - All icons properly placed inside Button components with consistent sizing (`h-4 w-4`)
-  - **Create Buttons**: All create buttons above DataTables now use consistent patterns:
-    - `size="small"` and `variant="secondary"`
-    - `<Plus className="h-4 w-4" />` icon from `@medusajs/icons`
-    - Consistent button text formatting
-    - Uniform trigger patterns in Modal components
-- **Service Order Commenting System**: 📋 Comprehensive implementation plan completed
-  - Will follow MedusaJS native patterns for activity feeds and communication
-  - Includes real-time chat functionality using SSE (Server-Sent Events)
-  - Architecture: ServiceOrderComment model → Service layer → API endpoints → Real-time UI
-  - Integration points: Service order detail page, notification system, activity timeline
-  - Advanced features: file attachments, @mentions, comment threading, internal/public visibility
+- Script is configured to start from line 71000 for resuming large imports
+- Uses streaming CSV processing to handle 1.5M+ records efficiently
+- Implements memory monitoring and batch processing for optimal performance
+- Follows MedusaJS native patterns for product creation and database operations
+- Timer feature simplified to focus only on time logging, work details handled elsewhere
+- Belgium-focused currency (€) used throughout the interface
 
---- 
-*Last updated: Current session - Completed comprehensive planning for service order commenting system implementation* 
+*Last updated: Current session - Simplified timer to focus purely on time logging without work details*

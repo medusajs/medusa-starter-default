@@ -8,10 +8,15 @@ import {
   Input,
   Textarea,
   FocusModal,
-  toast
+  Label,
+  Select,
+  toast,
+  DataTable,
+  useDataTable,
+  createDataTableColumnHelper
 } from "@medusajs/ui"
-import { Tools, Plus, Trash } from "@medusajs/icons"
-import { useState } from "react"
+import { Tools, Plus, Trash, MagnifyingGlass } from "@medusajs/icons"
+import { useState, useMemo } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 interface ServiceOrderItem {
@@ -24,29 +29,185 @@ interface ServiceOrderItem {
   total_price: number
   status: string
   notes?: string
+  product_id?: string
+  variant_id?: string
+}
+
+interface ProductVariant {
+  id: string
+  title: string
+  sku: string
+  prices: Array<{
+    amount: number
+    currency_code: string
+  }>
+  product: {
+    id: string
+    title: string
+    description?: string
+  }
+}
+
+interface Product {
+  id: string
+  title: string
+  description?: string
+  variants: ProductVariant[]
 }
 
 interface ServiceOrder {
   id: string
   service_order_number: string
+  customer_id?: string
 }
 
 interface ServiceOrderItemsWidgetProps {
   data: ServiceOrder
 }
 
+// Product Search DataTable Component
+const ProductSearchDataTable = ({ 
+  products, 
+  onVariantSelect, 
+  searchValue, 
+  onSearchChange 
+}: {
+  products: Product[]
+  onVariantSelect: (variant: ProductVariant) => void
+  searchValue: string
+  onSearchChange: (value: string) => void
+}) => {
+  const columnHelper = createDataTableColumnHelper<ProductVariant>()
+  
+  // Flatten products into variants for the datatable
+  const variants = useMemo(() => {
+    const allVariants: ProductVariant[] = []
+    products.forEach(product => {
+      product.variants?.forEach(variant => {
+        allVariants.push({
+          ...variant,
+          product: product // Keep product info for display
+        })
+      })
+    })
+    return allVariants
+  }, [products])
+  
+  // Filter variants based on search value
+  const filteredVariants = useMemo(() => {
+    if (!searchValue) return variants
+    
+    return variants.filter(variant => 
+      variant.product.title.toLowerCase().includes(searchValue.toLowerCase()) ||
+      variant.product.description?.toLowerCase().includes(searchValue.toLowerCase()) ||
+      variant.title.toLowerCase().includes(searchValue.toLowerCase()) ||
+      variant.sku.toLowerCase().includes(searchValue.toLowerCase())
+    )
+  }, [variants, searchValue])
+  
+  const columns = [
+    columnHelper.accessor("product.title", {
+      header: "Product",
+      enableSorting: true,
+      cell: ({ row }) => (
+        <div 
+          className="flex flex-col gap-y-1 cursor-pointer hover:bg-ui-bg-subtle p-2 rounded"
+          onClick={() => onVariantSelect(row.original)}
+        >
+          <Text weight="plus">{row.original.product.title}</Text>
+          {row.original.product.description && (
+            <Text size="small" className="text-ui-fg-muted">
+              {row.original.product.description}
+            </Text>
+          )}
+        </div>
+      ),
+    }),
+    columnHelper.accessor("title", {
+      header: "Variant Type",
+      enableSorting: true,
+      cell: ({ getValue, row }) => (
+        <div 
+          className="cursor-pointer hover:bg-ui-bg-subtle p-2 rounded"
+          onClick={() => onVariantSelect(row.original)}
+        >
+          <Text size="small">
+            {getValue() === 'Default' ? 'Default Variant' : getValue()}
+          </Text>
+        </div>
+      ),
+    }),
+    columnHelper.accessor("prices", {
+      header: "Price (EUR)",
+      cell: ({ row }) => {
+        
+        const eurPrice = row.original.prices?.find(price => price.currency_code === 'eur')
+        
+        return (
+          <div 
+            className="cursor-pointer hover:bg-ui-bg-subtle p-2 rounded"
+            onClick={() => onVariantSelect(row.original)}
+          >
+            <Text size="small" weight="plus">
+              {eurPrice ? `€${eurPrice.amount.toFixed(2)}` : 'No EUR price set'}
+            </Text>
+          </div>
+        )
+      },
+    }),
+  ]
+
+  const table = useDataTable({
+    columns,
+    data: filteredVariants,
+    getRowId: (variant) => variant.id,
+    rowCount: filteredVariants.length,
+    isLoading: false,
+  })
+
+  return (
+    <DataTable instance={table}>
+      <DataTable.Toolbar className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
+        <Heading level="h2">Select Product Variant</Heading>
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Search products or variants..."
+            value={searchValue}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-64"
+          />
+        </div>
+      </DataTable.Toolbar>
+      <DataTable.Table />
+    </DataTable>
+  )
+}
+
 const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidgetProps) => {
   const queryClient = useQueryClient()
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showProductSearch, setShowProductSearch] = useState(false)
+  const [productSearch, setProductSearch] = useState("")
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    sku: '',
     quantity_needed: 1,
-    unit_price: 0,
     notes: '',
   })
 
+  // Fetch customer data for pricing context
+  const { data: customer } = useQuery({
+    queryKey: ['customer', serviceOrder?.customer_id],
+    queryFn: async () => {
+      if (!serviceOrder?.customer_id) return null
+      const response = await fetch(`/admin/customers/${serviceOrder.customer_id}`)
+      if (!response.ok) throw new Error('Failed to fetch customer')
+      const data = await response.json()
+      return data.customer
+    },
+    enabled: !!serviceOrder?.customer_id,
+  })
+
+  // Fetch service order items
   const { data: items, isLoading } = useQuery({
     queryKey: ["service-order-items", serviceOrder?.id],
     queryFn: async () => {
@@ -55,6 +216,23 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
       return response.json()
     },
     enabled: !!serviceOrder?.id,
+  })
+
+  // Fetch products for search with customer pricing context
+  const { data: products, isLoading: productsLoading } = useQuery({
+    queryKey: ["products", productSearch, customer?.id],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        limit: "50",
+        fields: "id,title,description,variants.*,variants.prices.*",
+        ...(productSearch && { q: productSearch })
+      })
+      
+      const response = await fetch(`/admin/products?${params}`)
+      if (!response.ok) throw new Error("Failed to fetch products")
+      return response.json()
+    },
+    enabled: showProductSearch,
   })
 
   const addItemMutation = useMutation({
@@ -70,15 +248,11 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["service-order-items", serviceOrder.id] })
       queryClient.invalidateQueries({ queryKey: ["service-order", serviceOrder.id] })
-      // Also invalidate comments to show the event
       queryClient.invalidateQueries({ queryKey: ["service-order-comments", serviceOrder.id] })
       setShowAddModal(false)
+      setSelectedVariant(null)
       setFormData({
-        title: '',
-        description: '',
-        sku: '',
         quantity_needed: 1,
-        unit_price: 0,
         notes: '',
       })
       toast.success("Item added successfully")
@@ -99,7 +273,6 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["service-order-items", serviceOrder.id] })
       queryClient.invalidateQueries({ queryKey: ["service-order", serviceOrder.id] })
-      // Also invalidate comments to show the event
       queryClient.invalidateQueries({ queryKey: ["service-order-comments", serviceOrder.id] })
       toast.success("Item removed successfully")
     },
@@ -108,9 +281,41 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
     }
   })
 
+  const handleVariantSelect = (variant: ProductVariant) => {
+    setSelectedVariant(variant)
+    setShowProductSearch(false)
+    setProductSearch("")
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    addItemMutation.mutate(formData)
+    if (!selectedVariant) {
+      toast.error("Please select a product variant")
+      return
+    }
+    
+    // Get the EUR price from the variant's prices array
+    const eurPrice = selectedVariant.prices?.find(price => price.currency_code === 'eur')
+    const unitPrice = eurPrice ? eurPrice.amount : 0 // Don't divide by 100
+    
+    // Check if the variant has an EUR price
+    if (!eurPrice || eurPrice.amount === 0) {
+      toast.error("This variant doesn't have an EUR price set up. Please set an EUR price for this variant first.")
+      return
+    }
+    
+    const itemData = {
+      title: `${selectedVariant.product.title}${selectedVariant.title !== 'Default' ? ` - ${selectedVariant.title}` : ''}`,
+      description: selectedVariant.product.description || '',
+      sku: selectedVariant.sku,
+      quantity_needed: formData.quantity_needed,
+      unit_price: unitPrice,
+      notes: formData.notes,
+      product_id: selectedVariant.product.id,
+      variant_id: selectedVariant.id,
+    }
+
+    addItemMutation.mutate(itemData)
   }
 
   const handleDeleteItem = (itemId: string, itemTitle: string) => {
@@ -134,90 +339,89 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
             {serviceOrderItems.length} item{serviceOrderItems.length !== 1 ? 's' : ''} added
           </Text>
         </div>
-        <Button size="small" onClick={() => setShowAddModal(true)}>
+        <Button size="small" variant="secondary" onClick={() => setShowAddModal(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Add Item
         </Button>
       </div>
 
-      <div className="px-6 py-4">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Text>Loading items...</Text>
-          </div>
-        ) : serviceOrderItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8">
-            <Tools className="w-12 h-12 text-ui-fg-muted mb-4" />
-            <Text className="text-ui-fg-muted mb-2">No items added yet</Text>
-            <Text size="small" className="text-ui-fg-subtle">
-              Add parts and items needed for this service order
-            </Text>
-          </div>
-        ) : (
-          <Table>
-            <Table.Header>
-              <Table.Row>
-                <Table.HeaderCell>Item</Table.HeaderCell>
-                <Table.HeaderCell>SKU</Table.HeaderCell>
-                <Table.HeaderCell>Quantity</Table.HeaderCell>
-                <Table.HeaderCell>Unit Price</Table.HeaderCell>
-                <Table.HeaderCell>Total</Table.HeaderCell>
-                <Table.HeaderCell>Status</Table.HeaderCell>
-                <Table.HeaderCell>Actions</Table.HeaderCell>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <Text>Loading items...</Text>
+        </div>
+      ) : serviceOrderItems.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-8">
+          <Tools className="w-12 h-12 text-ui-fg-muted mb-4" />
+          <Text className="text-ui-fg-muted mb-2">No items added yet</Text>
+          <Text size="small" className="text-ui-fg-subtle">
+            Add parts and items needed for this service order
+          </Text>
+        </div>
+      ) : (
+        <Table>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell><Label size="small" weight="plus">Item</Label></Table.HeaderCell>
+              <Table.HeaderCell><Label size="small" weight="plus">SKU</Label></Table.HeaderCell>
+              <Table.HeaderCell><Label size="small" weight="plus">Quantity</Label></Table.HeaderCell>
+              <Table.HeaderCell><Label size="small" weight="plus">Unit Price</Label></Table.HeaderCell>
+              <Table.HeaderCell><Label size="small" weight="plus">Total</Label></Table.HeaderCell>
+              <Table.HeaderCell><Label size="small" weight="plus">Status</Label></Table.HeaderCell>
+              <Table.HeaderCell><Label size="small" weight="plus">Actions</Label></Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {serviceOrderItems.map((item: ServiceOrderItem) => (
+              <Table.Row key={item.id}>
+                <Table.Cell>
+                  <div>
+                    <Text weight="plus" size="small">{item.title}</Text>
+                    {item.description && (
+                      <Text size="small" className="text-ui-fg-subtle">
+                        {item.description}
+                      </Text>
+                    )}
+                  </div>
+                </Table.Cell>
+                <Table.Cell>
+                  <Text size="small">{item.sku || '-'}</Text>
+                </Table.Cell>
+                <Table.Cell>
+                  <Text size="small">{item.quantity_needed}</Text>
+                </Table.Cell>
+                <Table.Cell>
+                  <Text size="small">€{item.unit_price?.toFixed(2)}</Text>
+                </Table.Cell>
+                <Table.Cell>
+                  <Text size="small">€{item.total_price?.toFixed(2)}</Text>
+                </Table.Cell>
+                <Table.Cell>
+                  <Badge size="2xsmall" color={
+                    item.status === 'pending' ? 'orange' :
+                    item.status === 'ordered' ? 'blue' :
+                    item.status === 'received' ? 'green' :
+                    item.status === 'used' ? 'purple' : 'grey'
+                  }>
+                    {item.status}
+                  </Badge>
+                </Table.Cell>
+                <Table.Cell>
+                  <Button
+                    variant="transparent"
+                    size="small"
+                    onClick={() => handleDeleteItem(item.id, item.title)}
+                    disabled={deleteItemMutation.isPending}
+                  >
+                    <Trash className="w-4 h-4" />
+                  </Button>
+                </Table.Cell>
               </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {serviceOrderItems.map((item: ServiceOrderItem) => (
-                <Table.Row key={item.id}>
-                  <Table.Cell>
-                    <div>
-                      <Text weight="plus" size="small">{item.title}</Text>
-                      {item.description && (
-                        <Text size="small" className="text-ui-fg-subtle">
-                          {item.description}
-                        </Text>
-                      )}
-                    </div>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text size="small">{item.sku || '-'}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text size="small">{item.quantity_needed}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text size="small">${item.unit_price?.toFixed(2)}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text size="small">${item.total_price?.toFixed(2)}</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Badge size="2xsmall" color={
-                      item.status === 'pending' ? 'orange' :
-                      item.status === 'ordered' ? 'blue' :
-                      item.status === 'received' ? 'green' :
-                      item.status === 'used' ? 'purple' : 'grey'
-                    }>
-                      {item.status}
-                    </Badge>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Button
-                      variant="transparent"
-                      size="small"
-                      onClick={() => handleDeleteItem(item.id, item.title)}
-                      disabled={deleteItemMutation.isPending}
-                    >
-                      <Trash className="w-4 h-4" />
-                    </Button>
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table>
-        )}
-      </div>
+            ))}
+          </Table.Body>
+        </Table>
+      )}
 
+      {/* Add Item Modal */}
       <FocusModal open={showAddModal} onOpenChange={setShowAddModal}>
         <FocusModal.Content>
           <FocusModal.Header>
@@ -233,57 +437,78 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
                 <div className="mb-8 text-center">
                   <Heading level="h2" className="mb-2">Add Item</Heading>
                   <Text className="text-ui-fg-subtle">
-                    Add a new part or item to this service order
+                    Select a product variant and specify the quantity needed
                   </Text>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Product Variant Selection */}
                   <div>
-                    <Input
-                      placeholder="Item title"
-                      value={formData.title}
-                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                      required
-                    />
+                    <Label size="small" weight="plus">Product Variant</Label>
+                    <div className="mt-2">
+                      {selectedVariant ? (
+                        <div className="flex items-center justify-between p-3 border rounded-md bg-ui-bg-subtle">
+                          <div className="flex-1">
+                            <Text weight="plus" size="small">
+                              {selectedVariant.product.title}
+                              {selectedVariant.title !== 'Default' ? ` - ${selectedVariant.title}` : ''}
+                            </Text>
+                            <Text size="small" className="text-ui-fg-subtle">
+                              SKU: {selectedVariant.sku}
+                            </Text>
+                            {(() => {
+                              const eurPrice = selectedVariant.prices?.find(price => price.currency_code === 'eur')
+                              return eurPrice ? (
+                                <Text size="small" className="text-ui-fg-subtle">
+                                  €{eurPrice.amount.toFixed(2)}
+                                </Text>
+                              ) : (
+                                <Text size="small" className="text-ui-fg-subtle text-ui-fg-muted">
+                                  No EUR price set
+                                </Text>
+                              )
+                            })()}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="small"
+                            onClick={() => setShowProductSearch(true)}
+                          >
+                            Change
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => setShowProductSearch(true)}
+                          className="w-full"
+                        >
+                          <MagnifyingGlass className="w-4 h-4 mr-2" />
+                          Select Product Variant
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
+                  {/* Quantity */}
                   <div>
-                    <Textarea
-                      placeholder="Description (optional)"
-                      value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <Input
-                      placeholder="SKU (optional)"
-                      value={formData.sku}
-                      onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
-                    />
+                    <Label size="small" weight="plus">Quantity Needed</Label>
                     <Input
                       type="number"
-                      placeholder="Quantity needed"
+                      min="1"
                       value={formData.quantity_needed}
-                      onChange={(e) => setFormData(prev => ({ ...prev, quantity_needed: parseInt(e.target.value) }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, quantity_needed: parseInt(e.target.value) || 1 }))}
                       required
                     />
                   </div>
 
+                  {/* Notes */}
                   <div>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="Unit price"
-                      value={formData.unit_price}
-                      onChange={(e) => setFormData(prev => ({ ...prev, unit_price: parseFloat(e.target.value) }))}
-                      required
-                    />
-                  </div>
-
-                  <div>
+                    <Label size="small" weight="plus">Notes (optional)</Label>
                     <Textarea
-                      placeholder="Notes (optional)"
+                      placeholder="Additional notes about this item"
                       value={formData.notes}
                       onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                     />
@@ -300,13 +525,49 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
                     </Button>
                     <Button 
                       type="submit" 
-                      disabled={addItemMutation.isPending}
+                      disabled={addItemMutation.isPending || !selectedVariant}
                     >
                       {addItemMutation.isPending ? "Adding..." : "Add Item"}
                     </Button>
                   </div>
                 </form>
               </div>
+            </div>
+          </FocusModal.Body>
+        </FocusModal.Content>
+      </FocusModal>
+
+      {/* Product Search Modal */}
+      <FocusModal open={showProductSearch} onOpenChange={setShowProductSearch}>
+        <FocusModal.Content>
+          <FocusModal.Header>
+            <div className="flex items-center justify-between">
+              <Heading level="h2">Select Product Variant</Heading>
+              <FocusModal.Close asChild>
+                <Button variant="secondary">Cancel</Button>
+              </FocusModal.Close>
+            </div>
+          </FocusModal.Header>
+          <FocusModal.Body>
+            <div className="p-6">
+              {productsLoading ? (
+                <div className="text-center py-8">
+                  <Text>Loading products...</Text>
+                </div>
+              ) : products?.products?.length === 0 ? (
+                <div className="text-center py-8">
+                  <Text className="text-ui-fg-muted">
+                    {productSearch ? 'No products found' : 'No products available'}
+                  </Text>
+                </div>
+              ) : (
+                <ProductSearchDataTable 
+                  products={products?.products || []} 
+                  onVariantSelect={handleVariantSelect}
+                  searchValue={productSearch}
+                  onSearchChange={setProductSearch}
+                />
+              )}
             </div>
           </FocusModal.Body>
         </FocusModal.Content>

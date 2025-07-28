@@ -1,6 +1,6 @@
-import { Container, Heading, Text, Badge, Skeleton, Button, Input, Select, Textarea } from "@medusajs/ui"
+import { Container, Heading, Text, Badge, Skeleton, Button, Input, Select, Textarea, Label, StatusBadge } from "@medusajs/ui"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { PencilSquare } from "@medusajs/icons"
+import { PencilSquare, User, CogSixTooth, Buildings } from "@medusajs/icons"
 import { useState } from "react"
 import { useForm, Controller } from "react-hook-form"
 
@@ -127,6 +127,18 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
     urgent: "red",
   } as const
 
+  const serviceTypeVariants = {
+    maintenance: "blue",
+    repair: "orange", 
+    inspection: "green",
+    installation: "purple",
+    warranty: "orange",
+    emergency: "red",
+    normal: "blue",
+    setup: "purple",
+    preventive: "green",
+  } as const
+
   const serviceTypes = [
     'maintenance',
     'repair',
@@ -163,9 +175,7 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
           <div className="flex flex-col gap-y-4">
             {/* Customer Field */}
             <div className="flex flex-col space-y-2">
-              <Text size="small" weight="plus" className="text-ui-fg-base">
-                Customer
-              </Text>
+              <Label htmlFor="customer" size="small" weight="plus">Customer</Label>
               <Controller
                 control={form.control}
                 name="customer_id"
@@ -190,9 +200,7 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
 
             {/* Machine Field */}
             <div className="flex flex-col space-y-2">
-              <Text size="small" weight="plus" className="text-ui-fg-base">
-                Machine/Equipment
-              </Text>
+              <Label htmlFor="machine" size="small" weight="plus">Machine/Equipment</Label>
               <Controller
                 control={form.control}
                 name="machine_id"
@@ -215,9 +223,7 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
 
             {/* Description Field */}
             <div className="flex flex-col space-y-2">
-              <Text size="small" weight="plus" className="text-ui-fg-base">
-                Description
-              </Text>
+              <Label htmlFor="description" size="small" weight="plus">Description</Label>
               <Controller
                 control={form.control}
                 name="description"
@@ -229,9 +235,7 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
 
             {/* Service Type Field */}
             <div className="flex flex-col space-y-2">
-              <Text size="small" weight="plus" className="text-ui-fg-base">
-                Service Type
-              </Text>
+              <Label htmlFor="service_type" size="small" weight="plus">Service Type</Label>
               <Controller
                 control={form.control}
                 name="service_type"
@@ -254,9 +258,7 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
 
             {/* Priority Field */}
             <div className="flex flex-col space-y-2">
-              <Text size="small" weight="plus" className="text-ui-fg-base">
-                Priority
-              </Text>
+              <Label htmlFor="priority" size="small" weight="plus">Priority</Label>
               <Controller
                 control={form.control}
                 name="priority"
@@ -298,88 +300,154 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
           </div>
         </form>
       ) : (
-        <div className="px-6 py-4">
-          <div className="flex flex-col gap-y-4">
-            {/* Customer Display */}
-            <div className="flex flex-col space-y-1">
-              <Text size="small" weight="plus" className="text-ui-fg-subtle">
-                Customer
-              </Text>
-              {customerLoading ? (
-                <Skeleton className="h-5 w-48" />
-              ) : customer ? (
-                <div>
-                  <Text size="small">
-                    {customer.first_name && customer.last_name 
-                      ? `${customer.first_name} ${customer.last_name}` 
-                      : customer.email}
-                  </Text>
-                  {customer.company_name && (
-                    <Text size="small" className="text-ui-fg-subtle">
-                      {customer.company_name}
-                    </Text>
-                  )}
+        <>
+          {/* Customer Section */}
+          <div className="px-6 py-4">
+            <div className="grid grid-cols-[28px_1fr] items-start gap-x-3">
+              <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
+                <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
+                  <User className="text-ui-fg-subtle" />
                 </div>
-              ) : (
-                <Text size="small" className="text-ui-fg-muted">No customer assigned</Text>
-              )}
-            </div>
-
-            {/* Machine Display */}
-            <div className="flex flex-col space-y-1">
-              <Text size="small" weight="plus" className="text-ui-fg-subtle">
-                Machine/Equipment
-              </Text>
-              {machineLoading ? (
-                <Skeleton className="h-5 w-48" />
-              ) : machine ? (
-                <div>
-                  <Text size="small">
-                    {machine.brand_name || 'Unknown Brand'} - {machine.model_number}
-                  </Text>
-                  {machine.serial_number && (
-                    <Text size="small" className="text-ui-fg-subtle">
-                      S/N: {machine.serial_number}
-                    </Text>
-                  )}
-                  {machine.year && (
-                    <Text size="small" className="text-ui-fg-subtle">
-                      Year: {machine.year}
-                    </Text>
-                  )}
-                </div>
-              ) : (
-                <Text size="small" className="text-ui-fg-muted">No machine assigned</Text>
-              )}
-            </div>
-
-            {/* Description Display */}
-            <div className="flex flex-col space-y-1">
-              <Text size="small" weight="plus" className="text-ui-fg-subtle">
-                Description
-              </Text>
-              <Text size="small">{serviceOrder.description}</Text>
-            </div>
-            
-            {/* Service Type & Priority Display */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col space-y-1">
-                <Text size="small" weight="plus" className="text-ui-fg-subtle">
-                  Service Type
-                </Text>
-                <Badge size="2xsmall">{serviceOrder.service_type}</Badge>
               </div>
-              <div className="flex flex-col space-y-1">
-                <Text size="small" weight="plus" className="text-ui-fg-subtle">
-                  Priority
-                </Text>
-                <Badge size="2xsmall" color={priorityVariants[serviceOrder.priority as keyof typeof priorityVariants]}>
-                  {serviceOrder.priority}
-                </Badge>
+              <div className="min-w-0">
+                <Label size="small" weight="plus" className="mb-2">
+                  Customer
+                </Label>
+                {customerLoading ? (
+                  <Skeleton className="h-5 w-48" />
+                ) : customer ? (
+                  <div>
+                    <Text size="small">
+                      {customer.first_name && customer.last_name 
+                        ? `${customer.first_name} ${customer.last_name}` 
+                        : customer.email}
+                    </Text>
+                    {customer.company_name && (
+                      <Text size="small" className="text-ui-fg-subtle">
+                        {customer.company_name}
+                      </Text>
+                    )}
+                  </div>
+                ) : (
+                  <Text size="small" className="text-ui-fg-muted">No customer assigned</Text>
+                )}
               </div>
             </div>
           </div>
-        </div>
+
+          {/* Machine Section */}
+          <div className="px-6 py-4">
+            <div className="grid grid-cols-[28px_1fr] items-start gap-x-3">
+              <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
+                <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
+                  <CogSixTooth className="text-ui-fg-subtle" />
+                </div>
+              </div>
+              <div className="min-w-0">
+                <Label size="small" weight="plus" className="mb-2">
+                  Machine
+                </Label>
+                {machineLoading ? (
+                  <Skeleton className="h-5 w-48" />
+                ) : machine ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Label size="small" weight="plus" className="text-ui-fg-subtle">
+                        Brand:
+                      </Label>
+                      <Text size="small">
+                        {machine.brand_name || 'Unknown Brand'}
+                      </Text>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label size="small" weight="plus" className="text-ui-fg-subtle">
+                        Model:
+                      </Label>
+                      <Text size="small">
+                        {machine.model_number}
+                      </Text>
+                    </div>
+                    {machine.serial_number && (
+                      <div className="flex items-center gap-2">
+                        <Label size="small" weight="plus" className="text-ui-fg-subtle">
+                          Serial Number:
+                        </Label>
+                        <Text size="small">
+                          {machine.serial_number}
+                        </Text>
+                      </div>
+                    )}
+                    {machine.year && (
+                      <div className="flex items-center gap-2">
+                        <Label size="small" weight="plus" className="text-ui-fg-subtle">
+                          Year:
+                        </Label>
+                        <Text size="small">
+                          {machine.year}
+                        </Text>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Text size="small" className="text-ui-fg-muted">No machine assigned</Text>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Description Section */}
+          <div className="px-6 py-4">
+            <div className="grid grid-cols-[28px_1fr] items-start gap-x-3">
+              <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
+                <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
+                  <Buildings className="text-ui-fg-subtle" />
+                </div>
+              </div>
+              <div className="min-w-0">
+                <Label size="small" weight="plus" className="mb-2">
+                  Description
+                </Label>
+                <Text size="small">{serviceOrder.description}</Text>
+              </div>
+            </div>
+          </div>
+
+          {/* Service Type & Priority Section */}
+          <div className="px-6 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-[28px_1fr] items-start gap-x-3">
+                <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
+                  <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
+                    <CogSixTooth className="text-ui-fg-subtle" />
+                  </div>
+                </div>
+                <div className="min-w-0 flex flex-col">
+                  <Label size="small" weight="plus" className="mb-2">
+                    Service Type
+                  </Label>
+                  <StatusBadge color={serviceTypeVariants[serviceOrder.service_type as keyof typeof serviceTypeVariants] || "blue"}>
+                    {serviceOrder.service_type}
+                  </StatusBadge>
+                </div>
+              </div>
+              <div className="grid grid-cols-[28px_1fr] items-start gap-x-3">
+                <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
+                  <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
+                    <User className="text-ui-fg-subtle" />
+                  </div>
+                </div>
+                <div className="min-w-0 flex flex-col">
+                  <Label size="small" weight="plus" className="mb-2">
+                    Priority
+                  </Label>
+                  <StatusBadge color={priorityVariants[serviceOrder.priority as keyof typeof priorityVariants]}>
+                    {serviceOrder.priority}
+                  </StatusBadge>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </Container>
   )

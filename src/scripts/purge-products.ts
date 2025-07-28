@@ -1,4 +1,4 @@
-mimport { ExecArgs } from "@medusajs/framework/types"
+import { ExecArgs } from "@medusajs/framework/types"
 import { 
   ContainerRegistrationKeys, 
   Modules
@@ -17,27 +17,21 @@ export default async function purgeProducts({ container }: ExecArgs, options: Pu
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
   const productModuleService = container.resolve(Modules.PRODUCT);
 
+  // Default to confirmed purge for simple execution
   const {
     batchSize = 50,
-    confirmPurge = false,
+    confirmPurge = true, // Changed to true by default
     dryRun = false
   } = options;
 
   logger.info("🚨 PRODUCT PURGE SCRIPT INITIATED");
   logger.info("=====================================");
 
-  if (!confirmPurge && !dryRun) {
-    logger.error("❌ SAFETY CHECK: You must explicitly confirm purge or run in dry-run mode");
-    logger.info("💡 To confirm purge: Add { confirmPurge: true } as second parameter");
-    logger.info("💡 To run dry-run: Add { dryRun: true } as second parameter");
-    logger.info("💡 Example: yarn seed purge-products '{\"confirmPurge\": true}'");
-    return;
-  }
-
   if (dryRun) {
     logger.info("🔍 DRY RUN MODE - No data will be deleted");
   } else {
     logger.warn("⚠️  DESTRUCTIVE OPERATION - This will permanently delete ALL products and variants");
+    logger.info("🔄 Proceeding with purge operation...");
   }
 
   try {
@@ -173,4 +167,4 @@ export default async function purgeProducts({ container }: ExecArgs, options: Pu
 }
 
 // Export types for external usage
-export type { PurgeOptions }; 
+export type { PurgeOptions };

@@ -1,13 +1,11 @@
 import { model } from "@medusajs/framework/utils"
 
 export const ServiceOrderStatus = {
-  DRAFT: "draft",
-  SCHEDULED: "scheduled", 
-  IN_PROGRESS: "in_progress",
-  WAITING_PARTS: "waiting_parts",
-  CUSTOMER_APPROVAL: "customer_approval",
-  COMPLETED: "completed",
-  CANCELLED: "cancelled",
+  DRAFT: "draft", // In backlog - not visible on kanban board
+  READY_FOR_PICKUP: "ready_for_pickup", // Ready to start - shows on kanban board
+  IN_PROGRESS: "in_progress", // Currently being worked on
+  DONE: "done", // Work completed
+  RETURNED_FOR_REVIEW: "returned_for_review", // Denied by invoicing department
 } as const
 
 export const ServiceOrderType = {

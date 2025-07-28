@@ -7,9 +7,9 @@ import {
   Badge,
   Avatar,
   toast,
-  Switch
+  Tabs
 } from "@medusajs/ui"
-import { ChatBubble, MapPin, EllipsisHorizontal, ArrowUturnLeft, PencilSquare, Trash, Clock, Tools, User } from "@medusajs/icons"
+import { ChatBubble, ArrowUturnLeft, PencilSquare, Trash, Clock, Tools, User } from "@medusajs/icons"
 import { useState, useRef, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { formatRelativeTime } from "../utils/format-time"
@@ -62,7 +62,6 @@ const CommentForm = ({
   onCancel?: () => void
 }) => {
   const [message, setMessage] = useState(initialValue)
-  const [isInternal, setIsInternal] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const queryClient = useQueryClient()
 
@@ -97,15 +96,14 @@ const CommentForm = ({
       author_name: "Current User", // TODO: Get from auth context
       author_type: "user",
       parent_comment_id: parentId,
-      is_internal: isInternal
+      is_internal: false
     })
   }
 
   const handleResize = () => {
-    const textarea = textareaRef.current
-    if (textarea) {
-      textarea.style.height = "auto"
-      textarea.style.height = textarea.scrollHeight + "px"
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
     }
   }
 
@@ -115,48 +113,33 @@ const CommentForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="relative">
+      <div className="space-y-2">
         <Textarea
           ref={textareaRef}
+          placeholder={parentId ? "Write a reply..." : "Add a comment..."}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder={parentId ? "Write a reply..." : "Add a comment..."}
-          rows={3}
-          className="resize-none"
           onInput={handleResize}
+          rows={3}
+          className="min-h-[80px]"
         />
-      </div>
-      
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={isInternal}
-              onChange={(e) => setIsInternal(e.target.checked)}
-              className="rounded"
-            />
-            Internal comment
-          </label>
-        </div>
-        
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end">
           {onCancel && (
             <Button 
-              type="button" 
+              size="small" 
               variant="secondary" 
-              size="small"
+              type="button"
               onClick={onCancel}
             >
               Cancel
             </Button>
           )}
           <Button 
-            type="submit" 
-            size="small"
+            size="small" 
+            type="submit"
             disabled={!message.trim() || createCommentMutation.isPending}
           >
-            {createCommentMutation.isPending ? "Posting..." : (parentId ? "Reply" : "Comment")}
+            {createCommentMutation.isPending ? "Posting..." : "Post"}
           </Button>
         </div>
       </div>
@@ -167,71 +150,51 @@ const CommentForm = ({
 // Event Icon Component
 const EventIcon = ({ eventType }: { eventType?: string }) => {
   switch (eventType) {
-    case 'part_added':
-    case 'part_removed':
-    case 'parts_batch':
-      return <Tools className="h-4 w-4 text-ui-tag-neutral-icon" />
-    case 'time_entry_added':
-    case 'time_entries_batch':
-      return <Clock className="h-4 w-4 text-ui-tag-blue-icon" />
-    case 'status_changed':
-      return <EllipsisHorizontal className="h-4 w-4 text-ui-tag-green-icon" />
-    case 'technician_assigned':
-      return <User className="h-4 w-4 text-ui-tag-purple-icon" />
+    case 'status_change':
+      return <Clock className="h-4 w-4" />
+    case 'item_added':
+      return <Tools className="h-4 w-4" />
+    case 'time_entry':
+      return <Clock className="h-4 w-4" />
     default:
-      return <EllipsisHorizontal className="h-4 w-4 text-ui-tag-neutral-icon" />
+      return <User className="h-4 w-4" />
   }
 }
 
 // Event Message Component
 const EventMessage = ({ comment }: { comment: ServiceOrderComment }) => {
-  if (comment.author_type !== 'system') return null
-  
-  const eventType = comment.metadata?.event_type
-  const eventData = comment.metadata?.event_data
-  
   return (
-    <div className="flex items-start gap-3 py-3 px-4 bg-ui-bg-subtle rounded-lg border-l-4 border-ui-tag-neutral-border">
-      <div className="flex-shrink-0 mt-0.5">
-        <EventIcon eventType={eventType} />
+    <div className="flex items-start gap-3">
+      <div className="flex-shrink-0">
+        <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
+          <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
+            <EventIcon eventType={comment.metadata?.event_type} />
+          </div>
+        </div>
       </div>
+      
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <Text size="small" className="font-medium text-ui-fg-base">
+          <Text size="small" className="font-medium">
             System Event
           </Text>
           <Badge size="2xsmall" color="grey">
-            {eventType?.replace('_', ' ') || 'activity'}
+            {comment.metadata?.event_type?.replace('_', ' ') || 'event'}
           </Badge>
           <Text size="xsmall" className="text-ui-fg-subtle">
             {formatRelativeTime(comment.created_at)}
           </Text>
         </div>
-        <Text size="small" className="text-ui-fg-base">
+        
+        <Text size="small" className="text-ui-fg-subtle">
           {comment.message}
         </Text>
-        
-        {/* Show grouped events details if available */}
-        {eventData?.groupedEvents && (
-          <details className="mt-2">
-            <summary className="text-xs text-ui-fg-subtle cursor-pointer hover:text-ui-fg-base">
-              View {eventData.eventCount} individual actions
-            </summary>
-            <div className="mt-2 space-y-1 pl-4 border-l border-ui-border-base">
-              {eventData.groupedEvents.map((event: any, index: number) => (
-                <Text key={index} size="xsmall" className="text-ui-fg-subtle block">
-                  • {event.data?.title || event.data?.description || event.type}
-                </Text>
-              ))}
-            </div>
-          </details>
-        )}
       </div>
     </div>
   )
 }
 
-// Updated Comment Item Component
+// Comment Item Component
 const CommentItem = ({ 
   comment, 
   serviceOrderId, 
@@ -246,7 +209,6 @@ const CommentItem = ({
     return <EventMessage comment={comment} />
   }
 
-  // Existing comment rendering logic
   const [isEditing, setIsEditing] = useState(false)
   const [editMessage, setEditMessage] = useState(comment.message)
   const queryClient = useQueryClient()
@@ -294,15 +256,6 @@ const CommentItem = ({
   const handleDelete = () => {
     if (confirm("Are you sure you want to delete this comment?")) {
       deleteCommentMutation.mutate()
-    }
-  }
-
-  const getAuthorColor = (authorType: string) => {
-    switch (authorType) {
-      case 'technician': return 'blue'
-      case 'customer': return 'green'
-      case 'system': return 'grey'
-      default: return 'purple'
     }
   }
 
@@ -407,8 +360,7 @@ const CommentItem = ({
 
 const ServiceOrderCommentsWidget = ({ data: serviceOrder }: ServiceOrderCommentsWidgetProps) => {
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
-  const [showEvents, setShowEvents] = useState(true)
-  const [showComments, setShowComments] = useState(true)
+  const [activeTab, setActiveTab] = useState("comments")
 
   const { data: comments, isLoading } = useQuery({
     queryKey: ['service-order-comments', serviceOrder.id],
@@ -425,13 +377,11 @@ const ServiceOrderCommentsWidget = ({ data: serviceOrder }: ServiceOrderComments
     setReplyingTo(replyingTo === commentId ? null : commentId)
   }
 
-  // Filter comments/events based on toggle states
+  // Filter comments based on active tab
   const filteredComments = comments?.filter((comment: ServiceOrderComment) => {
-    if (comment.author_type === 'system') {
-      return showEvents
-    } else {
-      return showComments
-    }
+    if (activeTab === "comments") return comment.author_type !== 'system'
+    if (activeTab === "events") return comment.author_type === 'system'
+    return true
   }) || []
 
   // Count events and comments separately
@@ -441,9 +391,13 @@ const ServiceOrderCommentsWidget = ({ data: serviceOrder }: ServiceOrderComments
   if (isLoading) {
     return (
       <Container className="divide-y p-0">
-        <div className="px-6 py-4">
-          <Heading level="h2">Activity & Comments</Heading>
-          <Text size="small" className="text-ui-fg-subtle mt-2">Loading activity...</Text>
+        <div className="flex items-center justify-between px-6 py-4">
+          <div>
+            <Heading level="h2">Activity</Heading>
+            <Text size="small" className="text-ui-fg-subtle">
+              Loading activity...
+            </Text>
+          </div>
         </div>
       </Container>
     )
@@ -451,44 +405,27 @@ const ServiceOrderCommentsWidget = ({ data: serviceOrder }: ServiceOrderComments
 
   return (
     <Container className="divide-y p-0">
-      <div className="px-6 py-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <ChatBubble className="h-5 w-5" />
-            <Heading level="h2">Activity & Comments</Heading>
-            <div className="flex gap-1">
-              <Badge size="small" color="grey">{commentCount} comments</Badge>
-              <Badge size="small" color="blue">{eventCount} events</Badge>
-            </div>
-          </div>
+      <div className="flex items-center justify-between px-6 py-4">
+        <div>
+          <Heading level="h2">Activity</Heading>
+          <Text size="small" className="text-ui-fg-subtle">
+            {commentCount} comments, {eventCount} events
+          </Text>
         </div>
+      </div>
 
-        {/* Filter Controls */}
-        <div className="flex items-center gap-4 mb-4 p-3 bg-ui-bg-subtle rounded-lg">
-          <Text size="small" className="font-medium">Show:</Text>
-          <div className="flex items-center gap-2">
-            <Switch 
-              checked={showComments} 
-              onCheckedChange={setShowComments}
-              id="show-comments"
-            />
-            <label htmlFor="show-comments" className="text-sm cursor-pointer">
-              Comments ({commentCount})
-            </label>
-          </div>
-          <div className="flex items-center gap-2">
-            <Switch 
-              checked={showEvents} 
-              onCheckedChange={setShowEvents}
-              id="show-events"
-            />
-            <label htmlFor="show-events" className="text-sm cursor-pointer">
-              System Events ({eventCount})
-            </label>
-          </div>
-        </div>
-        
-        {/* New Comment Form */}
+      {/* Tab Navigation */}
+      <div className="px-6 py-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs.List>
+            <Tabs.Trigger value="comments">Comments ({commentCount})</Tabs.Trigger>
+            <Tabs.Trigger value="events">Events ({eventCount})</Tabs.Trigger>
+          </Tabs.List>
+        </Tabs>
+      </div>
+      
+      {/* New Comment Form */}
+      <div className="px-6 py-4">
         <CommentForm
           serviceOrderId={serviceOrder.id}
           onSuccess={() => {}}
@@ -498,12 +435,16 @@ const ServiceOrderCommentsWidget = ({ data: serviceOrder }: ServiceOrderComments
       {/* Activity List */}
       <div className="px-6 py-4">
         {filteredComments.length === 0 ? (
-          <Text size="small" className="text-ui-fg-subtle text-center py-8">
-            {!showComments && !showEvents 
-              ? "Enable comments or events to see activity"
-              : "No activity yet. Be the first to add a comment!"
-            }
-          </Text>
+          <div className="flex flex-col items-center justify-center py-8">
+            <ChatBubble className="w-12 h-12 text-ui-fg-muted mb-4" />
+            <Text className="text-ui-fg-muted mb-2">No activity yet</Text>
+            <Text size="small" className="text-ui-fg-subtle">
+              {activeTab === "comments"
+                ? "Be the first to add a comment"
+                : "No system events recorded yet"
+              }
+            </Text>
+          </div>
         ) : (
           <div className="space-y-6">
             {filteredComments.map((comment: ServiceOrderComment) => (

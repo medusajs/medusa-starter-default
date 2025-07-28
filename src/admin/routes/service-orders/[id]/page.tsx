@@ -1,6 +1,6 @@
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { ArrowLeft } from "@medusajs/icons"
-import { Button, Heading, StatusBadge, Badge, Text, Container } from "@medusajs/ui"
+import { Button, Heading, StatusBadge, Text, Container } from "@medusajs/ui"
 import { useQuery } from "@tanstack/react-query"
 import { Link, useParams } from "react-router-dom"
 import { TwoColumnPage } from "../../../components/layout/pages"
@@ -46,11 +46,13 @@ const ServiceOrderDetails = () => {
     cancelled: "red",
   } as const
 
-  const priorityVariants = {
-    low: "grey",
-    normal: "blue",
-    high: "orange",
-    urgent: "red", 
+  const serviceTypeVariants = {
+    maintenance: "blue",
+    repair: "orange",
+    inspection: "green", 
+    installation: "purple",
+    warranty: "grey",
+    emergency: "red",
   } as const
 
   return (
@@ -69,9 +71,9 @@ const ServiceOrderDetails = () => {
               <StatusBadge color={statusVariants[so.status as keyof typeof statusVariants]}>
                 {so.status.replace('_', ' ')}
               </StatusBadge>
-              <Badge color={priorityVariants[so.priority as keyof typeof priorityVariants]}>
-                {so.priority} priority
-              </Badge>
+              <StatusBadge color={serviceTypeVariants[so.service_type as keyof typeof serviceTypeVariants]}>
+                {so.service_type}
+              </StatusBadge>
             </div>
             <Text className="text-ui-fg-subtle">
               {so.description}

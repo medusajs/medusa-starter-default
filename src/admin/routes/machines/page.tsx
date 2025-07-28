@@ -13,7 +13,8 @@ import {
   createDataTableFilterHelper,
   toast,
   DropdownMenu,
-  IconButton
+  IconButton,
+  StatusBadge
 } from "@medusajs/ui"
 import type { DataTableFilteringState } from "@medusajs/ui"
 import { useNavigate } from "react-router-dom"
@@ -207,17 +208,18 @@ const MachinesListTable = () => {
   // Status badge helper
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { color: "green", label: t("custom.machines.status.active") },
-      inactive: { color: "red", label: t("custom.machines.status.inactive") },
-      maintenance: { color: "orange", label: t("custom.machines.status.maintenance") },
+      active: { color: "green" as const, label: t("custom.machines.status.active") },
+      inactive: { color: "red" as const, label: t("custom.machines.status.inactive") },
+      maintenance: { color: "orange" as const, label: t("custom.machines.status.maintenance") },
+      sold: { color: "grey" as const, label: t("custom.machines.status.sold") },
     } as const
 
-    const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey", label: status }
+    const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey" as const, label: status }
     
     return (
-      <Badge size="2xsmall" color={config.color as any}>
+      <StatusBadge color={config.color}>
         {config.label}
-      </Badge>
+      </StatusBadge>
     )
   }
 

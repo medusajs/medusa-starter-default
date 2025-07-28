@@ -8,6 +8,7 @@ import {
   Textarea,
   FocusModal,
   StatusBadge,
+  Label,
   toast
 } from "@medusajs/ui"
 import { PencilSquare, Clock, ExclamationCircle } from "@medusajs/icons"
@@ -124,10 +125,10 @@ const ServiceOrderStatusActionsWidget = ({ data: serviceOrder }: ServiceOrderSta
               <ExclamationCircle className="text-ui-fg-subtle" />
             </div>
           </div>
-          <div className="min-w-0">
-            <Text size="small" weight="plus" className="text-ui-fg-subtle mb-2">
+          <div className="min-w-0 flex flex-col">
+            <Label size="small" weight="plus" className="mb-2">
               Current Status
-            </Text>
+            </Label>
             <StatusBadge color={statusVariants[serviceOrder.status as keyof typeof statusVariants]}>
               {serviceOrder.status.replace('_', ' ')}
             </StatusBadge>
@@ -143,13 +144,13 @@ const ServiceOrderStatusActionsWidget = ({ data: serviceOrder }: ServiceOrderSta
               <Clock className="text-ui-fg-subtle" />
             </div>
           </div>
-          <div className="min-w-0">
-            <Text size="small" weight="plus" className="text-ui-fg-subtle mb-2">
+          <div className="min-w-0 flex flex-col">
+            <Label size="small" weight="plus" className="mb-2">
               Priority Level
-            </Text>
-            <Badge size="2xsmall" color={priorityVariants[serviceOrder.priority as keyof typeof priorityVariants]}>
+            </Label>
+            <StatusBadge color={priorityVariants[serviceOrder.priority as keyof typeof priorityVariants]}>
               {serviceOrder.priority} priority
-            </Badge>
+            </StatusBadge>
           </div>
         </div>
       </div>
@@ -159,7 +160,7 @@ const ServiceOrderStatusActionsWidget = ({ data: serviceOrder }: ServiceOrderSta
           <FocusModal.Header>
             <div className="flex items-center justify-end">
               <FocusModal.Close asChild>
-                <Button variant="secondary">Cancel</Button>
+                <Button size="small" variant="secondary">Cancel</Button>
               </FocusModal.Close>
             </div>
           </FocusModal.Header>
@@ -175,9 +176,9 @@ const ServiceOrderStatusActionsWidget = ({ data: serviceOrder }: ServiceOrderSta
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <Text size="small" className="mb-2 text-ui-fg-subtle">
+                    <Label size="small" weight="plus" className="mb-2">
                       Current Status: {serviceOrder.status.replace('_', ' ')}
-                    </Text>
+                    </Label>
                     <Select 
                       value={newStatus} 
                       onValueChange={setNewStatus}
@@ -208,6 +209,7 @@ const ServiceOrderStatusActionsWidget = ({ data: serviceOrder }: ServiceOrderSta
 
                   <div className="flex justify-end gap-2 pt-4">
                     <Button
+                      size="small"
                       type="button"
                       variant="secondary"
                       onClick={() => {
@@ -220,6 +222,7 @@ const ServiceOrderStatusActionsWidget = ({ data: serviceOrder }: ServiceOrderSta
                       Cancel
                     </Button>
                     <Button 
+                      size="small"
                       type="submit" 
                       disabled={!newStatus || updateStatusMutation.isPending}
                     >

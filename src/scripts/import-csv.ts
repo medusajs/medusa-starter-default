@@ -128,11 +128,11 @@ export default async function importCsvProducts({ container }: ExecArgs) {
             prices: [
               row['Variant Price EUR'] && {
                 currency_code: 'eur',
-                amount: Math.round(parseFloat(row['Variant Price EUR']) * 100),
+                amount: parseFloat(row['Variant Price EUR']),
               },
               row['Variant Price USD'] && {
                 currency_code: 'usd',
-                amount: Math.round(parseFloat(row['Variant Price USD']) * 100),
+                amount: parseFloat(row['Variant Price USD']),
               }
             ].filter(Boolean),
             options: {

@@ -12,7 +12,8 @@ import {
   createDataTableFilterHelper,
   DropdownMenu,
   IconButton,
-  toast
+  toast,
+  StatusBadge
 } from "@medusajs/ui"
 import type { DataTableFilteringState } from "@medusajs/ui"
 import { 
@@ -234,17 +235,17 @@ const TechniciansListTable = () => {
   // Status badge helper (move before conditional returns)
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { color: "green", label: t("custom.technicians.status.active") },
-      inactive: { color: "red", label: t("custom.technicians.status.inactive") },
-      on_leave: { color: "orange", label: t("custom.technicians.status.on_leave") },
+      active: { color: "green" as const, label: t("custom.technicians.status.active") },
+      inactive: { color: "red" as const, label: t("custom.technicians.status.inactive") },
+      on_leave: { color: "orange" as const, label: t("custom.technicians.status.on_leave") },
     } as const
 
-    const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey", label: status }
+    const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey" as const, label: status }
     
     return (
-      <Badge size="2xsmall" color={config.color as any}>
+      <StatusBadge color={config.color}>
         {config.label}
-      </Badge>
+      </StatusBadge>
     )
   }
 

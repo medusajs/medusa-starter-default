@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useCallback } from "react"
 import {
   DndContext,
   DragEndEvent,
@@ -16,6 +16,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
 import { toast } from "@medusajs/ui"
 
@@ -59,12 +60,10 @@ const useTechnicians = () => {
 // Define status constants locally to avoid potential import issues
 const SERVICE_ORDER_STATUS = {
   DRAFT: "draft",
-  SCHEDULED: "scheduled",
+  READY_FOR_PICKUP: "ready_for_pickup",
   IN_PROGRESS: "in_progress",
-  WAITING_PARTS: "waiting_parts",
-  CUSTOMER_APPROVAL: "customer_approval",
-  COMPLETED: "completed",
-  CANCELLED: "cancelled",
+  DONE: "done",
+  RETURNED_FOR_REVIEW: "returned_for_review",
 } as const
 
 type ServiceOrder = {
@@ -101,13 +100,8 @@ type KanbanViewProps = {
 
 const statusConfig = [
   {
-    id: SERVICE_ORDER_STATUS.DRAFT,
-    label: "Draft",
-    color: "orange" as const,
-  },
-  {
-    id: SERVICE_ORDER_STATUS.SCHEDULED,
-    label: "Scheduled",
+    id: SERVICE_ORDER_STATUS.READY_FOR_PICKUP,
+    label: "Ready for Pickup",
     color: "blue" as const,
   },
   {
@@ -116,36 +110,35 @@ const statusConfig = [
     color: "purple" as const,
   },
   {
-    id: SERVICE_ORDER_STATUS.WAITING_PARTS,
-    label: "Waiting for Parts",
-    color: "orange" as const,
-  },
-  {
-    id: SERVICE_ORDER_STATUS.CUSTOMER_APPROVAL,
-    label: "Customer Approval",
-    color: "orange" as const,
-  },
-  {
-    id: SERVICE_ORDER_STATUS.COMPLETED,
-    label: "Completed",
+    id: SERVICE_ORDER_STATUS.DONE,
+    label: "Done",
     color: "green" as const,
   },
   {
-    id: SERVICE_ORDER_STATUS.CANCELLED,
-    label: "Cancelled",
-    color: "red" as const,
+    id: SERVICE_ORDER_STATUS.RETURNED_FOR_REVIEW,
+    label: "Returned for Review",
+    color: "orange" as const,
   },
 ]
 
-// Drop animation configuration following Medusa patterns
+// Enhanced drop animation configuration for smoother transitions
 const dropAnimationConfig: DropAnimation = {
   sideEffects: defaultDropAnimationSideEffects({
     styles: {
       active: {
-        opacity: "0.4",
+        opacity: "0.8",
       },
     },
   }),
+  keyframes({ transform }) {
+    return [
+      { opacity: 1, transform: "scale(1.05)" },
+      { opacity: 0.8, transform: "scale(0.95)" },
+      { opacity: 0, transform: "scale(1)" },
+    ]
+  },
+  easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
+  duration: 150,
 }
 
 export const KanbanView: React.FC<KanbanViewProps> = ({
@@ -156,7 +149,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
   const [activeId, setActiveId] = useState<string | null>(null)
   const [draggedOrder, setDraggedOrder] = useState<ServiceOrder | null>(null)
   const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, string>>({})
-  const [isUpdating, setIsUpdating] = useState<Record<string, boolean>>({})
+  const [pendingUpdates, setPendingUpdates] = useState<Set<string>>(new Set())
   const queryClient = useQueryClient()
 
   // Fetch customers and technicians for lookup
@@ -252,14 +245,15 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     onSuccess: (data, variables) => {
       toast.success("Service order status updated successfully!")
       
-      // Clear optimistic update and updating state
+      // Clear optimistic update and pending state
       setOptimisticUpdates(prev => {
         const { [variables.orderId]: removed, ...rest } = prev
         return rest
       })
-      setIsUpdating(prev => {
-        const { [variables.orderId]: removed, ...rest } = prev
-        return rest
+      setPendingUpdates(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(variables.orderId)
+        return newSet
       })
       
       onRefetch()
@@ -278,63 +272,72 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     onError: (error: Error, variables) => {
       toast.error(`Failed to update status: ${error.message}`)
       
-      // Clear optimistic update and updating state on error
+      // Clear optimistic update and pending state on error
       setOptimisticUpdates(prev => {
         const { [variables.orderId]: removed, ...rest } = prev
         return rest
       })
-      setIsUpdating(prev => {
-        const { [variables.orderId]: removed, ...rest } = prev
-        return rest
+      setPendingUpdates(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(variables.orderId)
+        return newSet
       })
       
       onRefetch() // Refresh to revert optimistic update
     },
   })
 
-  const handleDragStart = (event: DragStartEvent) => {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event
     setActiveId(active.id as string)
     
     // Find the dragged order
     const order = serviceOrders.find(o => o.id === active.id)
     setDraggedOrder(order || null)
-  }
+  }, [serviceOrders])
 
-  const handleDragOver = (event: DragOverEvent) => {
+  const handleDragOver = useCallback((event: DragOverEvent) => {
     // We can add visual feedback here if needed
-  }
+  }, [])
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event
     
-    setActiveId(null)
-    setDraggedOrder(null)
-    
-    if (!over || !active) return
+    if (!over || !active) {
+      setActiveId(null)
+      setDraggedOrder(null)
+      return
+    }
     
     const orderId = active.id as string
     const newStatus = over.id as string
     
     // Find the current order
     const currentOrder = serviceOrders.find(o => o.id === orderId)
-    if (!currentOrder || currentOrder.status === newStatus) return
+    if (!currentOrder || currentOrder.status === newStatus) {
+      setActiveId(null)
+      setDraggedOrder(null)
+      return
+    }
     
-    // Set updating state to prevent any animations
-    setIsUpdating(prev => ({
-      ...prev,
-      [orderId]: true,
-    }))
-    
-    // Apply optimistic update immediately
+    // Apply optimistic update immediately for instant visual feedback
     setOptimisticUpdates(prev => ({
       ...prev,
       [orderId]: newStatus,
     }))
     
+    // Add to pending updates for loading state
+    setPendingUpdates(prev => new Set(prev).add(orderId))
+    
+    // Clear drag state with slight delay to allow drop animation to complete
+    setTimeout(() => {
+      setActiveId(null)
+      setDraggedOrder(null)
+    }, 150)
+    
     // Update status via API
     updateStatusMutation.mutate({ orderId, newStatus })
-  }
+  }, [serviceOrders, updateStatusMutation])
 
   if (isLoading) {
     return (
@@ -369,20 +372,14 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                   items={orders.map(o => o.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {orders.map((order) => {
-                    // Skip rendering cards that are currently being updated to prevent return animation
-                    if (isUpdating[order.id]) {
-                      return null
-                    }
-                    
-                    return (
-                      <KanbanCard
-                        key={order.id}
-                        order={order}
-                        isDragging={activeId === order.id}
-                      />
-                    )
-                  })}
+                  {orders.map((order) => (
+                    <KanbanCard
+                      key={order.id}
+                      order={order}
+                      isDragging={activeId === order.id}
+                      isPending={pendingUpdates.has(order.id)}
+                    />
+                  ))}
                 </SortableContext>
               </KanbanColumn>
             )

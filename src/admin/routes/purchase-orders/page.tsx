@@ -10,7 +10,8 @@ import {
   createDataTableFilterHelper,
   Text,
   Button,
-  DataTableFilteringState
+  DataTableFilteringState,
+  StatusBadge
 } from "@medusajs/ui"
 import { 
   Eye, 
@@ -138,36 +139,36 @@ const PurchaseOrdersPage = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      draft: { color: "grey", label: t("custom.purchaseOrders.status.draft") },
-      sent: { color: "blue", label: t("custom.purchaseOrders.status.sent") },
-      confirmed: { color: "orange", label: t("custom.purchaseOrders.status.confirmed") },
-      received: { color: "green", label: t("custom.purchaseOrders.status.received") },
-      cancelled: { color: "red", label: t("custom.purchaseOrders.status.cancelled") },
+      draft: { color: "grey" as const, label: t("custom.purchaseOrders.status.draft") },
+      sent: { color: "blue" as const, label: t("custom.purchaseOrders.status.sent") },
+      confirmed: { color: "orange" as const, label: t("custom.purchaseOrders.status.confirmed") },
+      received: { color: "green" as const, label: t("custom.purchaseOrders.status.received") },
+      cancelled: { color: "red" as const, label: t("custom.purchaseOrders.status.cancelled") },
     } as const
 
-    const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey", label: status }
+    const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey" as const, label: status }
     
     return (
-      <Badge size="2xsmall" color={config.color as any}>
+      <StatusBadge color={config.color}>
         {config.label}
-      </Badge>
+      </StatusBadge>
     )
   }
 
   const getPriorityBadge = (priority: string) => {
     const priorityConfig = {
-      urgent: { color: "red", label: t("custom.purchaseOrders.priorities.urgent") },
-      high: { color: "orange", label: t("custom.purchaseOrders.priorities.high") },
-      normal: { color: "blue", label: t("custom.purchaseOrders.priorities.normal") },
-      low: { color: "grey", label: t("custom.purchaseOrders.priorities.low") },
+      urgent: { color: "red" as const, label: t("custom.purchaseOrders.priorities.urgent") },
+      high: { color: "orange" as const, label: t("custom.purchaseOrders.priorities.high") },
+      normal: { color: "blue" as const, label: t("custom.purchaseOrders.priorities.normal") },
+      low: { color: "grey" as const, label: t("custom.purchaseOrders.priorities.low") },
     } as const
 
-    const config = priorityConfig[priority as keyof typeof priorityConfig] || { color: "grey", label: priority }
+    const config = priorityConfig[priority as keyof typeof priorityConfig] || { color: "grey" as const, label: priority }
     
     return (
-      <Badge size="2xsmall" color={config.color as any}>
+      <StatusBadge color={config.color}>
         {config.label}
-      </Badge>
+      </StatusBadge>
     )
   }
 

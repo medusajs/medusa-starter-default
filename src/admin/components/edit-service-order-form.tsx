@@ -23,7 +23,7 @@ const schema = zod.object({
   description: zod.string().min(1, "Description is required"),
   service_type: zod.enum(["normal", "warranty", "setup", "emergency", "preventive"]),
   priority: zod.enum(["low", "normal", "high", "urgent"]),
-  status: zod.enum(["draft", "scheduled", "in_progress", "waiting_parts", "customer_approval", "completed", "cancelled"]),
+  status: zod.enum(["draft", "ready_for_pickup", "in_progress", "done", "returned_for_review"]),
   service_location: zod.enum(["workshop", "customer_location"]),
   customer_id: zod.string().nullable().optional(),
   machine_id: zod.string().nullable().optional(),
@@ -263,7 +263,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="service_type">Service Type</Label>
+                    <Label htmlFor="service_type" size="small" weight="plus">Service Type</Label>
                     <Controller
                       name="service_type"
                       control={form.control}
@@ -285,7 +285,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                   </div>
 
                   <div>
-                    <Label htmlFor="priority">Priority</Label>
+                    <Label htmlFor="priority" size="small" weight="plus">Priority</Label>
                     <Controller
                       name="priority"
                       control={form.control}
@@ -306,7 +306,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                   </div>
                   
                   <div>
-                    <Label htmlFor="service_location">Service Location</Label>
+                    <Label htmlFor="service_location" size="small" weight="plus">Service Location</Label>
                     <Controller
                       name="service_location"
                       control={form.control}
@@ -326,7 +326,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                 </div>
 
                 <div>
-                  <Label htmlFor="status">Status</Label>
+                  <Label htmlFor="status" size="small" weight="plus">Status</Label>
                   <Controller
                     name="status"
                     control={form.control}
@@ -337,12 +337,10 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                         </Select.Trigger>
                         <Select.Content>
                           <Select.Item value="draft">Draft</Select.Item>
-                          <Select.Item value="scheduled">Scheduled</Select.Item>
+                          <Select.Item value="ready_for_pickup">Ready for Pickup</Select.Item>
                           <Select.Item value="in_progress">In Progress</Select.Item>
-                          <Select.Item value="waiting_parts">Waiting Parts</Select.Item>
-                          <Select.Item value="customer_approval">Customer Approval</Select.Item>
-                          <Select.Item value="completed">Completed</Select.Item>
-                          <Select.Item value="cancelled">Cancelled</Select.Item>
+                          <Select.Item value="done">Done</Select.Item>
+                          <Select.Item value="returned_for_review">Returned for Review</Select.Item>
                         </Select.Content>
                       </Select>
                     )}
@@ -350,7 +348,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Description *</Label>
+                  <Label htmlFor="description" size="small" weight="plus">Description *</Label>
                   <Controller
                     name="description"
                     control={form.control}
@@ -370,7 +368,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                 </div>
 
                 <div>
-                  <Label htmlFor="customer_complaint">Customer Complaint</Label>
+                  <Label htmlFor="customer_complaint" size="small" weight="plus">Customer Complaint</Label>
                   <Controller
                     name="customer_complaint"
                     control={form.control}
@@ -392,7 +390,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="customer_id">Customer</Label>
+                    <Label htmlFor="customer_id" size="small" weight="plus">Customer</Label>
                     <Controller
                       name="customer_id"
                       control={form.control}
@@ -416,7 +414,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                   </div>
 
                   <div>
-                    <Label htmlFor="machine_id">Machine</Label>
+                    <Label htmlFor="machine_id" size="small" weight="plus">Machine</Label>
                     <Controller
                       name="machine_id"
                       control={form.control}
@@ -440,7 +438,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                 </div>
 
                 <div>
-                  <Label htmlFor="technician_id">Assigned Technician</Label>
+                  <Label htmlFor="technician_id" size="small" weight="plus">Assigned Technician</Label>
                   <Controller
                     name="technician_id"
                     control={form.control}
@@ -470,7 +468,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="scheduled_start_date">Scheduled Start Date</Label>
+                    <Label htmlFor="scheduled_start_date" size="small" weight="plus">Scheduled Start Date</Label>
                     <Controller
                       name="scheduled_start_date"
                       control={form.control}
@@ -485,7 +483,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                   </div>
 
                   <div>
-                    <Label htmlFor="scheduled_end_date">Scheduled End Date</Label>
+                    <Label htmlFor="scheduled_end_date" size="small" weight="plus">Scheduled End Date</Label>
                     <Controller
                       name="scheduled_end_date"
                       control={form.control}
@@ -502,7 +500,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="estimated_hours">Estimated Hours</Label>
+                    <Label htmlFor="estimated_hours" size="small" weight="plus">Estimated Hours</Label>
                     <Controller
                       name="estimated_hours"
                       control={form.control}
@@ -520,7 +518,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                   </div>
 
                   <div>
-                    <Label htmlFor="labor_rate">Labor Rate (€/hour)</Label>
+                    <Label htmlFor="labor_rate" size="small" weight="plus">Labor Rate (€/hour)</Label>
                     <Controller
                       name="labor_rate"
                       control={form.control}
@@ -549,7 +547,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="service_address_line_1">Address Line 1</Label>
+                      <Label htmlFor="service_address_line_1" size="small" weight="plus">Address Line 1</Label>
                       <Controller
                         name="service_address_line_1"
                         control={form.control}
@@ -564,7 +562,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                     </div>
                     
                     <div>
-                      <Label htmlFor="service_address_line_2">Address Line 2</Label>
+                      <Label htmlFor="service_address_line_2" size="small" weight="plus">Address Line 2</Label>
                       <Controller
                         name="service_address_line_2"
                         control={form.control}
@@ -581,7 +579,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="service_city">City</Label>
+                      <Label htmlFor="service_city" size="small" weight="plus">City</Label>
                       <Controller
                         name="service_city"
                         control={form.control}
@@ -596,7 +594,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                     </div>
                     
                     <div>
-                      <Label htmlFor="service_postal_code">Postal Code</Label>
+                      <Label htmlFor="service_postal_code" size="small" weight="plus">Postal Code</Label>
                       <Controller
                         name="service_postal_code"
                         control={form.control}
@@ -611,7 +609,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                     </div>
                     
                     <div>
-                      <Label htmlFor="service_country">Country</Label>
+                      <Label htmlFor="service_country" size="small" weight="plus">Country</Label>
                       <Controller
                         name="service_country"
                         control={form.control}
@@ -633,7 +631,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                 <Heading level="h3">Technical Details</Heading>
                 
                 <div>
-                  <Label htmlFor="diagnosis">Diagnosis</Label>
+                  <Label htmlFor="diagnosis" size="small" weight="plus">Diagnosis</Label>
                   <Controller
                     name="diagnosis"
                     control={form.control}
@@ -649,7 +647,7 @@ export const EditServiceOrderForm = ({ serviceOrder, trigger }: EditServiceOrder
                 </div>
 
                 <div>
-                  <Label htmlFor="notes">Internal Notes</Label>
+                  <Label htmlFor="notes" size="small" weight="plus">Internal Notes</Label>
                   <Controller
                     name="notes"
                     control={form.control}

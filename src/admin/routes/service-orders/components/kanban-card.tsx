@@ -36,6 +36,7 @@ type KanbanCardProps = {
   order: ServiceOrder
   isDragging?: boolean
   isOverlay?: boolean
+  isPending?: boolean
 }
 
 const priorityVariants = {
@@ -62,6 +63,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
   order,
   isDragging = false,
   isOverlay = false,
+  isPending = false,
 }) => {
   const {
     attributes,
@@ -72,18 +74,17 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
     isDragging: isSortableDragging,
   } = useSortable({
     id: order.id,
+    disabled: isPending,
   })
 
-  // Completely disable transitions during drag to prevent return animation
+  // Simplified and reliable animation handling
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: isOverlay || isDragging || isSortableDragging ? "none" : "transform 200ms ease, opacity 200ms ease",
-    opacity: isDragging || isSortableDragging ? 0.4 : 1,
-    // Force immediate positioning during drag
-    ...(isDragging || isSortableDragging ? { 
-      transform: "none",
-      transition: "none" 
-    } : {}),
+    transition: isOverlay || isDragging || isSortableDragging 
+      ? "none" 
+      : transition || "transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+    opacity: isDragging || isSortableDragging ? 0.4 : isPending ? 0.8 : 1,
+    pointerEvents: isPending ? "none" as const : "auto" as const,
   }
 
   const formatDate = (dateString?: string) => {
@@ -112,7 +113,9 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
     <Container
       className={`cursor-grab touch-none select-none rounded-lg border bg-ui-bg-base shadow-sm transition-all duration-200 ease-out hover:shadow-md ${
         isOverlay ? "rotate-2 shadow-xl scale-105" : ""
-      } ${isDragging || isSortableDragging ? "pointer-events-none" : ""}`}
+      } ${isDragging || isSortableDragging || isPending ? "pointer-events-none" : ""} ${
+        isPending ? "opacity-90 shadow-md" : ""
+      }`}
       ref={setNodeRef}
       style={style}
       {...attributes}
@@ -199,8 +202,8 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
       to={`/service-orders/${order.id}`}
       className="block"
       onClick={(e) => {
-        // Prevent navigation when dragging
-        if (isDragging || isSortableDragging) {
+        // Prevent navigation when dragging or pending
+        if (isDragging || isSortableDragging || isPending) {
           e.preventDefault()
         }
       }}

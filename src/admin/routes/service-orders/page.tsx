@@ -198,8 +198,8 @@ export const config = defineRouteConfig({
   icon: Tools,
 })
 
-// Service Orders list table component - following official DataTable pattern
-const ServiceOrdersListTable = () => {
+// Service Orders list table component for backlog - following official DataTable pattern
+const BacklogDataTable = () => {
   const { t } = useCustomTranslation()
   const navigate = useNavigate()
   const { data, isLoading, error } = useServiceOrders()
@@ -219,10 +219,9 @@ const ServiceOrdersListTable = () => {
   const customers = customersData?.customers || []
   const technicians = techniciansData?.technicians || []
 
-  // Create lookup maps for efficient customer/technician display (moved before conditional returns)
+  // Create lookup maps for efficient customer/technician display
   const customerLookup = React.useMemo(() => {
     const map = new Map()
-    // Ensure customers is an array before calling forEach
     if (Array.isArray(customers)) {
       customers.forEach((customer: any) => {
         map.set(customer.id, customer)
@@ -233,7 +232,6 @@ const ServiceOrdersListTable = () => {
   
   const technicianLookup = React.useMemo(() => {
     const map = new Map()
-    // Ensure technicians is an array before calling forEach
     if (Array.isArray(technicians)) {
       technicians.forEach((technician: any) => {
         map.set(technician.id, technician)
@@ -242,67 +240,65 @@ const ServiceOrdersListTable = () => {
     return map
   }, [technicians])
 
-  // Data processing (move before conditional returns)
+  // Data processing - only draft orders
   const serviceOrders = data?.service_orders || []
-  const count = data?.count || 0
+  const backlogOrders = serviceOrders.filter((order: any) => order.status === "draft")
 
-  // Status and priority variants (move before conditional returns)
+  // Status and priority badge functions
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      draft: { color: "orange", label: t("custom.serviceOrders.status.draft") },
-      scheduled: { color: "blue", label: t("custom.serviceOrders.status.scheduled") },
-      in_progress: { color: "purple", label: t("custom.serviceOrders.status.in_progress") },
-      waiting_parts: { color: "orange", label: t("custom.serviceOrders.status.waiting_parts") },
-      customer_approval: { color: "orange", label: t("custom.serviceOrders.status.customer_approval") },
-      completed: { color: "green", label: t("custom.serviceOrders.status.completed") },
-      cancelled: { color: "red", label: t("custom.serviceOrders.status.cancelled") },
+      draft: { color: "orange" as const, label: t("custom.serviceOrders.status.draft") },
+      ready_for_pickup: { color: "blue" as const, label: t("custom.serviceOrders.status.ready_for_pickup") },
+      in_progress: { color: "purple" as const, label: t("custom.serviceOrders.status.in_progress") },
+      done: { color: "green" as const, label: t("custom.serviceOrders.status.done") },
+      returned_for_review: { color: "orange" as const, label: t("custom.serviceOrders.status.returned_for_review") },
     } as const
 
-    const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey", label: status }
+    const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey" as const, label: status }
     
     return (
-      <Badge size="2xsmall" color={config.color as any}>
+      <StatusBadge color={config.color}>
         {config.label}
-      </Badge>
+      </StatusBadge>
     )
   }
 
   const getPriorityBadge = (priority: string) => {
     const priorityConfig = {
-      low: { color: "grey", label: t("custom.serviceOrders.priorities.low") },
-      normal: { color: "blue", label: t("custom.serviceOrders.priorities.normal") },
-      high: { color: "orange", label: t("custom.serviceOrders.priorities.high") },
-      urgent: { color: "red", label: t("custom.serviceOrders.priorities.urgent") },
+      low: { color: "grey" as const, label: t("custom.serviceOrders.priorities.low") },
+      normal: { color: "blue" as const, label: t("custom.serviceOrders.priorities.normal") },
+      high: { color: "orange" as const, label: t("custom.serviceOrders.priorities.high") },
+      urgent: { color: "red" as const, label: t("custom.serviceOrders.priorities.urgent") },
     } as const
 
-    const config = priorityConfig[priority as keyof typeof priorityConfig] || { color: "grey", label: priority }
+    const config = priorityConfig[priority as keyof typeof priorityConfig] || { color: "grey" as const, label: priority }
     
     return (
-      <Badge size="2xsmall" color={config.color as any}>
+      <StatusBadge color={config.color}>
         {config.label}
-      </Badge>
+      </StatusBadge>
     )
   }
 
   const getServiceTypeBadge = (serviceType: string) => {
     const typeConfig = {
-      normal: { color: "blue", label: t("custom.serviceOrders.types.normal") },
-      warranty: { color: "green", label: t("custom.serviceOrders.types.warranty") },
-      setup: { color: "purple", label: t("custom.serviceOrders.types.setup") },
-      emergency: { color: "red", label: t("custom.serviceOrders.types.emergency") },
-      preventive: { color: "orange", label: t("custom.serviceOrders.types.preventive") },
+      normal: { color: "blue" as const, label: t("custom.serviceOrders.types.normal") },
+      warranty: { color: "green" as const, label: t("custom.serviceOrders.types.warranty") },
+      setup: { color: "purple" as const, label: t("custom.serviceOrders.types.setup") },
+      emergency: { color: "red" as const, label: t("custom.serviceOrders.types.emergency") },
+      preventive: { color: "orange" as const, label: t("custom.serviceOrders.types.preventive") },
     } as const
 
-    const config = typeConfig[serviceType as keyof typeof typeConfig] || { color: "grey", label: serviceType }
+    const config = typeConfig[serviceType as keyof typeof typeConfig] || { color: "grey" as const, label: serviceType }
     
     return (
-      <Badge size="2xsmall" color={config.color as any}>
+      <StatusBadge color={config.color}>
         {config.label}
-      </Badge>
+      </StatusBadge>
     )
   }
 
-  // Column helper and columns definition (move before conditional returns)
+  // Column helper and columns definition
   const columnHelper = createDataTableColumnHelper<ServiceOrder>()
 
   const columns = [
@@ -375,12 +371,12 @@ const ServiceOrdersListTable = () => {
     }),
   ]
 
-  // DataTable setup (move before conditional returns)
+  // DataTable setup
   const table = useDataTable({
-    data: serviceOrders,
+    data: backlogOrders,
     columns,
     filters,
-    rowCount: count,
+    rowCount: backlogOrders.length,
     getRowId: (row) => row.id,
     search: {
       state: search,
@@ -399,17 +395,15 @@ const ServiceOrdersListTable = () => {
     },
   })
 
-  // NOW we can have conditional returns after all hooks are called
   if (error) {
     throw error
   }
 
-  // Show loading state for all dependent data
   if (isLoading) {
     return (
       <Container className="p-6">
         <div className="flex items-center justify-center h-32">
-          <Text className="text-ui-fg-subtle">Loading service orders...</Text>
+          <Text className="text-ui-fg-subtle">Loading backlog orders...</Text>
         </div>
       </Container>
     )
@@ -423,7 +417,236 @@ const ServiceOrdersListTable = () => {
             <DataTable.FilterMenu />
           </div>
           <div className="flex items-center gap-2">
-            <DataTable.Search placeholder="Search service orders..." className="w-80" />
+            <DataTable.Search placeholder="Search backlog orders..." className="w-80" />
+          </div>
+        </DataTable.Toolbar>
+        <DataTable.Table />
+        <DataTable.Pagination />
+      </DataTable>
+    </div>
+  )
+}
+
+// Active Orders DataTable component
+const ActiveOrdersDataTable = () => {
+  const { t } = useCustomTranslation()
+  const navigate = useNavigate()
+  const { data, isLoading, error } = useServiceOrders()
+  const { data: customersData } = useCustomers()
+  const { data: techniciansData } = useTechnicians()
+  const filters = useServiceOrderFilters()
+  
+  // Filter state management
+  const [search, setSearch] = React.useState("")
+  const [filtering, setFiltering] = React.useState<DataTableFilteringState>({})
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  })
+
+  // Extract arrays from data
+  const customers = customersData?.customers || []
+  const technicians = techniciansData?.technicians || []
+
+  // Create lookup maps
+  const customerLookup = React.useMemo(() => {
+    const map = new Map()
+    if (Array.isArray(customers)) {
+      customers.forEach((customer: any) => {
+        map.set(customer.id, customer)
+      })
+    }
+    return map
+  }, [customers])
+  
+  const technicianLookup = React.useMemo(() => {
+    const map = new Map()
+    if (Array.isArray(technicians)) {
+      technicians.forEach((technician: any) => {
+        map.set(technician.id, technician)
+      })
+    }
+    return map
+  }, [technicians])
+
+  // Data processing - only active orders (not draft)
+  const serviceOrders = data?.service_orders || []
+  const activeOrders = serviceOrders.filter((order: any) => order.status !== "draft")
+
+  // Badge functions (same as backlog)
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      draft: { color: "orange" as const, label: t("custom.serviceOrders.status.draft") },
+      ready_for_pickup: { color: "blue" as const, label: t("custom.serviceOrders.status.ready_for_pickup") },
+      in_progress: { color: "purple" as const, label: t("custom.serviceOrders.status.in_progress") },
+      done: { color: "green" as const, label: t("custom.serviceOrders.status.done") },
+      returned_for_review: { color: "orange" as const, label: t("custom.serviceOrders.status.returned_for_review") },
+    } as const
+
+    const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey" as const, label: status }
+    
+    return (
+      <StatusBadge color={config.color}>
+        {config.label}
+      </StatusBadge>
+    )
+  }
+
+  const getPriorityBadge = (priority: string) => {
+    const priorityConfig = {
+      low: { color: "grey" as const, label: t("custom.serviceOrders.priorities.low") },
+      normal: { color: "blue" as const, label: t("custom.serviceOrders.priorities.normal") },
+      high: { color: "orange" as const, label: t("custom.serviceOrders.priorities.high") },
+      urgent: { color: "red" as const, label: t("custom.serviceOrders.priorities.urgent") },
+    } as const
+
+    const config = priorityConfig[priority as keyof typeof priorityConfig] || { color: "grey" as const, label: priority }
+    
+    return (
+      <StatusBadge color={config.color}>
+        {config.label}
+      </StatusBadge>
+    )
+  }
+
+  const getServiceTypeBadge = (serviceType: string) => {
+    const typeConfig = {
+      normal: { color: "blue" as const, label: t("custom.serviceOrders.types.normal") },
+      warranty: { color: "green" as const, label: t("custom.serviceOrders.types.warranty") },
+      setup: { color: "purple" as const, label: t("custom.serviceOrders.types.setup") },
+      emergency: { color: "red" as const, label: t("custom.serviceOrders.types.emergency") },
+      preventive: { color: "orange" as const, label: t("custom.serviceOrders.types.preventive") },
+    } as const
+
+    const config = typeConfig[serviceType as keyof typeof typeConfig] || { color: "grey" as const, label: serviceType }
+    
+    return (
+      <StatusBadge color={config.color}>
+        {config.label}
+      </StatusBadge>
+    )
+  }
+
+  // Column definitions
+  const columnHelper = createDataTableColumnHelper<ServiceOrder>()
+
+  const columns = [
+    columnHelper.accessor("service_order_number", {
+      header: "Order Number",
+      enableSorting: true,
+      cell: ({ getValue }) => (
+        <Text className="font-medium">{getValue()}</Text>
+      ),
+    }),
+    columnHelper.accessor("service_type", {
+      header: t("custom.serviceOrders.service_type"),
+      cell: ({ getValue }) => getServiceTypeBadge(getValue()),
+    }),
+    columnHelper.accessor("customer_id", {
+      header: t("custom.serviceOrders.customer"),
+      cell: ({ getValue }) => {
+        const customerId = getValue()
+        if (!customerId) return <Text className="text-ui-fg-muted">—</Text>
+        const customer = customerLookup.get(customerId)
+        if (!customer) return <Text className="text-ui-fg-muted">Unknown</Text>
+        return (
+          <Text>
+            {customer.first_name && customer.last_name 
+              ? `${customer.first_name} ${customer.last_name}`
+              : customer.email || "Unknown"}
+          </Text>
+        )
+      },
+    }),
+    columnHelper.accessor("technician_id", {
+      header: t("custom.serviceOrders.technician"),
+      cell: ({ getValue }) => {
+        const technicianId = getValue()
+        if (!technicianId) return <Text className="text-ui-fg-muted">—</Text>
+        const technician = technicianLookup.get(technicianId)
+        if (!technician) return <Text className="text-ui-fg-muted">Unassigned</Text>
+        return (
+          <Text>
+            {technician.first_name && technician.last_name 
+              ? `${technician.first_name} ${technician.last_name}`
+              : technician.email || "Unknown"}
+          </Text>
+        )
+      },
+    }),
+    columnHelper.accessor("priority", {
+      header: t("custom.serviceOrders.priority"),
+      cell: ({ getValue }) => getPriorityBadge(getValue()),
+    }),
+    columnHelper.accessor("status", {
+      header: t("custom.general.status"),
+      cell: ({ getValue }) => getStatusBadge(getValue()),
+    }),
+    columnHelper.accessor("total_cost", {
+      header: "Total Cost",
+      cell: ({ getValue }) => {
+        const cost = getValue() || 0
+        return (
+          <Text className="font-mono">
+            €{(cost / 100).toFixed(2)}
+          </Text>
+        )
+      },
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: t("custom.general.actions"),
+      cell: ({ row }) => <ServiceOrderActions serviceOrder={row.original} />,
+    }),
+  ]
+
+  // DataTable setup
+  const table = useDataTable({
+    data: activeOrders,
+    columns,
+    filters,
+    rowCount: activeOrders.length,
+    getRowId: (row) => row.id,
+    search: {
+      state: search,
+      onSearchChange: setSearch,
+    },
+    filtering: {
+      state: filtering,
+      onFilteringChange: setFiltering,
+    },
+    pagination: {
+      state: pagination,
+      onPaginationChange: setPagination,
+    },
+    onRowClick: (event, row) => {
+      navigate(`/service-orders/${row.id}`)
+    },
+  })
+
+  if (error) {
+    throw error
+  }
+
+  if (isLoading) {
+    return (
+      <Container className="p-6">
+        <div className="flex items-center justify-center h-32">
+          <Text className="text-ui-fg-subtle">Loading active orders...</Text>
+        </div>
+      </Container>
+    )
+  }
+
+  return (
+    <div className="overflow-hidden">
+      <DataTable instance={table}>
+        <DataTable.Toolbar className="flex items-center justify-between gap-4 px-6 py-4 bg-ui-bg-subtle/30">
+          <div className="flex items-center gap-2">
+            <DataTable.FilterMenu />
+          </div>
+          <div className="flex items-center gap-2">
+            <DataTable.Search placeholder="Search active orders..." className="w-80" />
           </div>
         </DataTable.Toolbar>
         <DataTable.Table />
@@ -436,8 +659,8 @@ const ServiceOrdersListTable = () => {
 // Service orders list component
 const ServiceOrdersList = () => {
   const { t } = useCustomTranslation()
-  const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState("list")
+  const [activeTab, setActiveTab] = useState("active")
+  const [activeView, setActiveView] = useState("list") // "list" or "kanban"
   
   const { data, isLoading, error } = useServiceOrders()
 
@@ -447,6 +670,8 @@ const ServiceOrdersList = () => {
 
   const serviceOrders = data?.service_orders || []
   const count = data?.count || 0
+  const activeOrders = serviceOrders.filter((order: any) => order.status !== "draft")
+  const backlogCount = serviceOrders.filter((order: any) => order.status === "draft").length
 
   return (
     <Container className="divide-y p-0">
@@ -469,31 +694,70 @@ const ServiceOrdersList = () => {
       <div>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="px-6 py-3 border-b border-ui-border-base">
-            <Tabs.List className="bg-ui-bg-subtle">
-              <Tabs.Trigger value="list" className="flex items-center gap-2">
-                <Tools className="w-4 h-4" />
-                List View
-              </Tabs.Trigger>
-              <Tabs.Trigger value="kanban" className="flex items-center gap-2">
-                <SquareTwoStack className="w-4 h-4" />
-                Kanban Board
-              </Tabs.Trigger>
-            </Tabs.List>
+            <div className="flex items-center justify-between">
+              <Tabs.List className="bg-ui-bg-subtle">
+                <Tabs.Trigger value="backlog" className="flex items-center gap-2">
+                  <DocumentText className="w-4 h-4" />
+                  Backlog
+                  {backlogCount > 0 && (
+                    <Badge size="2xsmall" className="ml-1">
+                      {backlogCount}
+                    </Badge>
+                  )}
+                </Tabs.Trigger>
+                <Tabs.Trigger value="active" className="flex items-center gap-2">
+                  <Tools className="w-4 h-4" />
+                  Active
+                  {activeOrders.length > 0 && (
+                    <Badge size="2xsmall" className="ml-1">
+                      {activeOrders.length}
+                    </Badge>
+                  )}
+                </Tabs.Trigger>
+              </Tabs.List>
+              
+              {/* View Toggle - only show when Active tab is selected */}
+              {activeTab === "active" && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="small"
+                    variant={activeView === "list" ? "primary" : "secondary"}
+                    onClick={() => setActiveView("list")}
+                    className="flex items-center gap-2"
+                  >
+                    <Tools className="w-4 h-4" />
+                    List
+                  </Button>
+                  <Button
+                    size="small"
+                    variant={activeView === "kanban" ? "primary" : "secondary"}
+                    onClick={() => setActiveView("kanban")}
+                    className="flex items-center gap-2"
+                  >
+                    <SquareTwoStack className="w-4 h-4" />
+                    Kanban
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
           
-          <Tabs.Content value="list" className="mt-0" key="list-tab">
-            <ServiceOrdersListTable key="service-orders-list-table" />
+          <Tabs.Content value="backlog" className="mt-0" key="backlog-tab">
+            <BacklogDataTable />
           </Tabs.Content>
 
-          <Tabs.Content value="kanban" className="mt-0" key="kanban-tab">
-            <div className="p-6">
-              <KanbanView 
-                key="service-orders-kanban-view"
-                serviceOrders={serviceOrders}
-                isLoading={isLoading}
-                onRefetch={() => {}}
-              />
-            </div>
+          <Tabs.Content value="active" className="mt-0" key="active-tab">
+            {activeView === "list" ? (
+              <ActiveOrdersDataTable />
+            ) : (
+              <div className="p-6">
+                <KanbanView 
+                  serviceOrders={activeOrders}
+                  isLoading={isLoading}
+                  onRefetch={() => {}}
+                />
+              </div>
+            )}
           </Tabs.Content>
         </Tabs>
       </div>

@@ -1,4 +1,4 @@
-import { Container, Heading, Text, Badge, Table } from "@medusajs/ui"
+import { Container, Heading, Text, Badge, Table, Label } from "@medusajs/ui"
 import { ChevronDownMini } from "@medusajs/icons"
 
 interface StatusHistoryEntry {
@@ -72,11 +72,11 @@ const ServiceOrderStatusHistoryWidget = ({ data: serviceOrder }: ServiceOrderSta
           <Table>
             <Table.Header>
               <Table.Row>
-                <Table.HeaderCell>From</Table.HeaderCell>
-                <Table.HeaderCell>To</Table.HeaderCell>
-                <Table.HeaderCell>Changed By</Table.HeaderCell>
-                <Table.HeaderCell>Reason</Table.HeaderCell>
-                <Table.HeaderCell>Date</Table.HeaderCell>
+                <Table.HeaderCell><Label size="small" weight="plus">From</Label></Table.HeaderCell>
+                <Table.HeaderCell><Label size="small" weight="plus">To</Label></Table.HeaderCell>
+                <Table.HeaderCell><Label size="small" weight="plus">Changed By</Label></Table.HeaderCell>
+                <Table.HeaderCell><Label size="small" weight="plus">Reason</Label></Table.HeaderCell>
+                <Table.HeaderCell><Label size="small" weight="plus">Date</Label></Table.HeaderCell>
               </Table.Row>
             </Table.Header>
             <Table.Body>

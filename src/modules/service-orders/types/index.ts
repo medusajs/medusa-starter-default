@@ -5,7 +5,7 @@ export type ServiceOrderDTO = {
   machine_id?: string | null
   technician_id?: string | null
   service_type: "normal" | "warranty" | "setup" | "emergency" | "preventive"
-  status: "draft" | "scheduled" | "in_progress" | "waiting_parts" | "customer_approval" | "completed" | "cancelled"
+  status: "draft" | "ready_for_pickup" | "in_progress" | "done" | "returned_for_review"
   priority: "low" | "normal" | "high" | "urgent"
   service_location: "workshop" | "customer_location"
   description: string
@@ -47,7 +47,7 @@ export type CreateServiceOrderDTO = {
   machine_id?: string | null
   technician_id?: string | null
   service_type?: "normal" | "warranty" | "setup" | "emergency" | "preventive"
-  status?: "draft" | "scheduled" | "in_progress" | "waiting_parts" | "customer_approval" | "completed" | "cancelled"
+  status?: "draft" | "ready_for_pickup" | "in_progress" | "done" | "returned_for_review"
   priority?: "low" | "normal" | "high" | "urgent"
   service_location?: "workshop" | "customer_location"
   description: string
@@ -87,7 +87,7 @@ export type UpdateServiceOrderDTO = {
   machine_id?: string | null
   technician_id?: string | null
   service_type?: "normal" | "warranty" | "setup" | "emergency" | "preventive"
-  status?: "draft" | "scheduled" | "in_progress" | "waiting_parts" | "customer_approval" | "completed" | "cancelled"
+  status?: "draft" | "ready_for_pickup" | "in_progress" | "done" | "returned_for_review"
   priority?: "low" | "normal" | "high" | "urgent"
   service_location?: "workshop" | "customer_location"
   description?: string
@@ -168,7 +168,7 @@ export type FilterableServiceOrderProps = {
   machine_id?: string | string[]
   technician_id?: string | string[]
   service_type?: "normal" | "warranty" | "setup" | "emergency" | "preventive" | string[]
-  status?: "draft" | "scheduled" | "in_progress" | "waiting_parts" | "customer_approval" | "completed" | "cancelled" | string[]
+  status?: "draft" | "ready_for_pickup" | "in_progress" | "done" | "returned_for_review" | string[]
   priority?: "low" | "normal" | "high" | "urgent" | string[]
   service_location?: "workshop" | "customer_location" | string[]
   created_at?: Date

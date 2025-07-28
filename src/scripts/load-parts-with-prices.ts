@@ -9,6 +9,18 @@ import {
 } from "@medusajs/medusa/core-flows"
 import * as fs from "fs"
 import * as path from "path"
+import { createReadStream } from 'fs';
+import { createInterface } from 'readline';
+
+// CONFIGURATION: Set the line number to start processing from (1-based, includes header)
+// Set to 1 to start from the beginning, or any line number to resume from that point
+const START_FROM_LINE = 71000;
+
+// PERFORMANCE CONFIGURATION
+const BATCH_SIZE = 1000; // Revert to proven batch size that works well
+const SKIP_DUPLICATE_CHECKS = false; // Re-enable duplicate checks (safer)
+const REDUCE_LOGGING = true; // Keep reduced logging for better performance
+const MEMORY_LIMIT = 1024 * 1024 * 1024; // 1GB memory limit
 
 // Simple CSV parser for comma-separated values with proper quote handling
 function parseCSV(csvContent: string): any[] {
@@ -86,12 +98,49 @@ function parsePrice(value: string): number | null {
 
 // Helper function to generate handle from part name
 function generateHandle(partNumber: string, partName: string): string {
-  const baseHandle = `${partNumber}-${partName}`.toLowerCase()
-    .replace(/[^a-z0-9]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
+  // Combine part number and name
+  const combined = `${partNumber}-${partName}`;
   
-  return baseHandle.substring(0, 100); // Limit handle length
+  // Convert to lowercase and replace spaces with dashes
+  let handle = combined.toLowerCase();
+  
+  // Replace all non-alphanumeric characters (except existing dashes) with dashes
+  // This includes special characters, symbols, and accented characters
+  handle = handle.replace(/[^a-z0-9-]/g, '-');
+  
+  // Replace multiple consecutive dashes with single dash
+  handle = handle.replace(/-+/g, '-');
+  
+  // Remove leading and trailing dashes
+  handle = handle.replace(/^-+|-+$/g, '');
+  
+  // Ensure minimum length (if empty after cleaning, use part number)
+  if (!handle || handle.length === 0) {
+    handle = partNumber.toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+  
+  // If still empty, generate a basic handle
+  if (!handle || handle.length === 0) {
+    handle = `product-${Date.now()}`;
+  }
+  
+  // Limit handle length to 80 characters (Medusa best practice)
+  // Leave some room for potential suffixes if duplicates exist
+  if (handle.length > 80) {
+    handle = handle.substring(0, 80);
+    // Remove trailing dash if truncation created one
+    handle = handle.replace(/-+$/, '');
+  }
+  
+  // Final safety check: ensure it doesn't end with a dash
+  handle = handle.replace(/-+$/, '');
+  
+  // Final fallback if somehow still invalid
+  if (!handle || handle.length === 0 || !/^[a-z0-9]/.test(handle)) {
+    handle = `part-${partNumber.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+  }
+  
+  return handle;
 }
 
 interface PartData {
@@ -124,6 +173,62 @@ interface GroupedPart {
   priceHistory: PriceHistoryEntry[];
 }
 
+// Helper function to create record from CSV values
+function createRecordFromValues(headers: string[], values: string[]): PartData {
+  const record: any = {};
+  headers.forEach((header, index) => {
+    record[header] = values[index] || '';
+  });
+  return record as PartData;
+}
+
+// Helper function to process a single record
+function processRecord(record: PartData, partsMap: Map<string, GroupedPart>) {
+  if (!record.part_number || !record.part_name) {
+    return;
+  }
+
+  const partNumber = record.part_number.trim();
+  const price = parsePrice(record.price_value);
+  const createdAt = parseDate(record.price_created_at);
+  const updatedAt = parseDate(record.price_updated_at);
+  
+  if (price === null || !createdAt) {
+    return;
+  }
+
+  if (!partsMap.has(partNumber)) {
+    partsMap.set(partNumber, {
+      part_number: partNumber,
+      part_name: record.part_name.trim(),
+      part_amount: parseFloat(record.part_amount) || 1.0,
+      part_discount_code_id: record.part_discount_code_id?.trim() || '',
+      part_group_id: record.part_group_id?.trim() || '',
+      part_color_id: record.part_color_id?.trim() || '',
+      priceHistory: []
+    });
+  }
+
+  const part = partsMap.get(partNumber)!;
+  part.priceHistory.push({
+    price,
+    created_at: createdAt,
+    updated_at: updatedAt || createdAt,
+    deleted: record.price_deleted?.toLowerCase() === 'true'
+  });
+}
+
+// Monitor memory usage during processing
+function logMemoryUsage(logger: any) {
+  const used = process.memoryUsage();
+  logger.info(`Memory usage: ${Math.round(used.heapUsed / 1024 / 1024)}MB`);
+  
+  if (used.heapUsed > MEMORY_LIMIT) {
+    logger.warn('Memory usage high, forcing garbage collection');
+    global.gc && global.gc();
+  }
+}
+
 export default async function loadPartsWithPrices({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
   const salesChannelModuleService = container.resolve(Modules.SALES_CHANNEL);
@@ -150,53 +255,45 @@ export default async function loadPartsWithPrices({ container }: ExecArgs) {
       return;
     }
 
-    // Read and parse CSV
-    const csvContent = fs.readFileSync(csvPath, 'utf-8');
-    const records = parseCSV(csvContent) as PartData[];
+    // Stream processing instead of loading entire file
+    const fileStream = createReadStream(csvPath);
+    const rl = createInterface({
+      input: fileStream,
+      crlfDelay: Infinity
+    });
 
-    logger.info(`Found ${records.length} price records in CSV file`);
-
-    // Group records by part_number to consolidate price history
+    let lineNumber = 0;
+    let header: string[] = [];
     const partsMap = new Map<string, GroupedPart>();
-
-    for (const record of records) {
-      if (!record.part_number || !record.part_name) {
-        logger.warn(`Skipping record without part_number or part_name: ${JSON.stringify(record)}`);
-        continue;
-      }
-
-      const partNumber = record.part_number.trim();
-      const price = parsePrice(record.price_value);
-      const createdAt = parseDate(record.price_created_at);
-      const updatedAt = parseDate(record.price_updated_at);
+    
+    for await (const line of rl) {
+      lineNumber++;
       
-      if (price === null || !createdAt) {
-        logger.warn(`Skipping record with invalid price or date: ${JSON.stringify(record)}`);
+      // Skip lines before START_FROM_LINE
+      if (lineNumber < START_FROM_LINE) continue;
+      
+      // Parse header
+      if (lineNumber === START_FROM_LINE) {
+        header = parseCSVLine(line);
         continue;
       }
-
-      if (!partsMap.has(partNumber)) {
-        partsMap.set(partNumber, {
-          part_number: partNumber,
-          part_name: record.part_name.trim(),
-          part_amount: parseFloat(record.part_amount) || 1.0,
-          part_discount_code_id: record.part_discount_code_id?.trim() || '',
-          part_group_id: record.part_group_id?.trim() || '',
-          part_color_id: record.part_color_id?.trim() || '',
-          priceHistory: []
-        });
+      
+      // Process data lines
+      const values = parseCSVLine(line);
+      if (values.length !== header.length) continue;
+      
+      // Create record and process immediately
+      const record = createRecordFromValues(header, values);
+      processRecord(record, partsMap);
+      
+      // Log progress every 10,000 records
+      if (lineNumber % 10000 === 0) {
+        logger.info(`Processed ${lineNumber - START_FROM_LINE} records, found ${partsMap.size} unique parts`);
+        logMemoryUsage(logger);
       }
-
-      const part = partsMap.get(partNumber)!;
-      part.priceHistory.push({
-        price,
-        created_at: createdAt,
-        updated_at: updatedAt || createdAt,
-        deleted: record.price_deleted?.toLowerCase() === 'true'
-      });
     }
 
-    logger.info(`Grouped into ${partsMap.size} unique parts`);
+    logger.info(`Found ${partsMap.size} unique parts in CSV file`);
 
     // Sort price history by created_at for each part
     for (const part of partsMap.values()) {
@@ -204,7 +301,7 @@ export default async function loadPartsWithPrices({ container }: ExecArgs) {
     }
 
     // Process parts in batches
-    const batchSize = 50;
+    const batchSize = BATCH_SIZE;
     const partsArray = Array.from(partsMap.values());
     let processedCount = 0;
     let createdCount = 0;
@@ -214,17 +311,27 @@ export default async function loadPartsWithPrices({ container }: ExecArgs) {
       const batch = partsArray.slice(i, i + batchSize);
       const productsToCreate: any[] = [];
 
+      logger.info(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(partsArray.length / batchSize)} (${batch.length} parts)...`);
+
       for (const part of batch) {
         try {
-          // Check if product already exists by SKU (part_number)
-          const existingProducts = await productModuleService.listProducts({
-            handle: generateHandle(part.part_number, part.part_name)
-          });
+          // Check if product already exists by SKU (part_number) OR handle
+          if (!SKIP_DUPLICATE_CHECKS) {
+            const existingProductsBySku = await productModuleService.listProductVariants({
+              sku: part.part_number
+            });
 
-          if (existingProducts.length > 0) {
-            logger.info(`Product already exists for part ${part.part_number}, skipping...`);
-            skippedCount++;
-            continue;
+            const existingProductsByHandle = await productModuleService.listProducts({
+              handle: generateHandle(part.part_number, part.part_name)
+            });
+
+            if (existingProductsBySku.length > 0 || existingProductsByHandle.length > 0) {
+              if (!REDUCE_LOGGING) {
+                logger.info(`Product already exists for part ${part.part_number} (SKU or handle match), skipping...`);
+              }
+              skippedCount++;
+              continue;
+            }
           }
 
           // Get the latest non-deleted price
@@ -237,29 +344,29 @@ export default async function loadPartsWithPrices({ container }: ExecArgs) {
             continue;
           }
 
-          // Convert price to cents (Medusa stores prices in smallest currency unit)
-          const priceInCents = Math.round(latestPrice.price * 100);
+          // Use price as-is (Medusa stores prices in main currency unit, not cents)
+          const priceAmount = latestPrice.price;
 
           // Create product data following Medusa patterns
           const productData = {
-            title: `${part.part_name} (${part.part_number})`,
+            title: part.part_number,
             handle: generateHandle(part.part_number, part.part_name),
             status: ProductStatus.PUBLISHED,
-            description: `Part Number: ${part.part_number}\nQuantity: ${part.part_amount}`,
+            description: part.part_name,
             sales_channels: [{ id: defaultSalesChannel.id }],
             options: [{
-              title: "Default Option",
-              values: ["Default Option Value"]
+              title: "Type",
+              values: ["Standard"]
             }],
             variants: [{
               title: part.part_name,
               sku: part.part_number,
               prices: [{
                 currency_code: 'eur',
-                amount: priceInCents,
+                amount: priceAmount,
               }],
               options: {
-                "Default Option": "Default Option Value"
+                "Type": "Standard"
               },
               manage_inventory: true,
               allow_backorder: false,
@@ -319,9 +426,9 @@ export default async function loadPartsWithPrices({ container }: ExecArgs) {
 
         logger.info(`Created ${result.length} products. Progress: ${Math.round((processedCount / partsArray.length) * 100)}%`);
 
-        // Log some sample products created
-        if (result.length > 0) {
-          const sampleProducts = result.slice(0, 3);
+        // Log some sample products created (reduced logging)
+        if (!REDUCE_LOGGING && result.length > 0) {
+          const sampleProducts = result.slice(0, 2); // Reduce sample size
           for (const product of sampleProducts) {
             logger.info(`  ✓ Created: ${product.title} (Handle: ${product.handle})`);
           }
@@ -337,9 +444,11 @@ export default async function loadPartsWithPrices({ container }: ExecArgs) {
               input: { products: [productData] },
             });
             createdCount += result.length;
-            logger.info(`  ✓ Individual create succeeded: ${productData.title}`);
+            if (!REDUCE_LOGGING) {
+              logger.info(`  ✓ Individual create succeeded: ${productData.title}`);
+            }
           } catch (individualError) {
-            logger.error(`  ✗ Individual create failed for ${productData.title}:`, individualError.message);
+            logger.error(`  ✗ Individual create failed for ${productData.title}:`, individualError);
             skippedCount++;
           }
         }
