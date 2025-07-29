@@ -1,4 +1,6 @@
 import { model } from "@medusajs/framework/utils"
+import InvoiceLineItem from "./invoice-line-item"
+import InvoiceStatusHistory from "./invoice-status-history"
 
 export const InvoiceStatus = {
   DRAFT: "draft",
@@ -61,6 +63,14 @@ const Invoice = model.define("invoice", {
   // System fields
   created_by: model.text().nullable(),
   metadata: model.json().nullable(),
+
+  // Relationships
+  line_items: model.hasMany(() => InvoiceLineItem, {
+    mappedBy: "invoice",
+  }),
+  status_history: model.hasMany(() => InvoiceStatusHistory, {
+    mappedBy: "invoice",
+  }),
 })
 
 export default Invoice 

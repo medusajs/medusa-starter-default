@@ -8,7 +8,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
     const invoiceId = req.params.id
     
-    // Get invoice with full details using Remote Query
+    // Get invoice with full details using Remote Query with relationships
     const { data: [invoice] } = await query.graph({
       entity: "invoice",
       fields: [
@@ -43,14 +43,14 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
   try {
     const invoicingService: any = req.scope.resolve(INVOICING_MODULE)
     const invoiceId = req.params.id
-    const updateData = req.body
+    const updateData = req.body as any
     
     // Handle status changes separately to maintain history
     if (updateData.status) {
       const invoice = await invoicingService.changeInvoiceStatus(
         invoiceId,
         updateData.status,
-        req.auth_context?.actor_id || "system",
+        (req as any).auth_context?.actor_id || "system",
         updateData.status_reason
       )
       
@@ -69,9 +69,19 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
       await invoicingService.recalculateInvoiceTotals(invoiceId)
     }
     
-    // Return updated invoice
-    const updatedInvoice = await invoicingService.retrieveInvoice(invoiceId, {
-      relations: ["line_items", "status_history"]
+    // Return updated invoice with relationships
+    const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+    const { data: [updatedInvoice] } = await query.graph({
+      entity: "invoice",
+      fields: [
+        "*",
+        "customer.*",
+        "line_items.*",
+        "status_history.*",
+      ],
+      filters: {
+        id: invoiceId,
+      },
     })
     
     res.json({ invoice: updatedInvoice })

@@ -69,7 +69,7 @@ const formatCurrency = (amount: number, currencyCode = "EUR") => {
     style: "currency",
     currency: currencyCode,
     minimumFractionDigits: 2,
-  }).format(amount / 100) // Amount is stored in cents
+  }).format(amount) // Remove division by 100 - prices are already in correct format
 }
 
 // Format date for Belgian locale
@@ -330,7 +330,7 @@ const InvoicesListTable = () => {
         const total = getValue() || 0
         return (
           <Text size="small" className="font-mono">
-            €{(total / 100).toFixed(2)}
+            {formatCurrency(total)}
           </Text>
         )
       },

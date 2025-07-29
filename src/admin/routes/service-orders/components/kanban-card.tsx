@@ -1,11 +1,12 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Badge, Text, Container } from "@medusajs/ui"
+import { Container, Text, Badge } from "@medusajs/ui"
 import { Link } from "react-router-dom"
 import { Clock, User, Tools, ChevronUpMini, ChevronDownMini, ChevronRightMini, ExclamationCircle, ArrowUpMini, ArrowDownMini } from "@medusajs/icons"
+import { ServiceTypeLabel } from "../../../components/common/service-type-label"
 
 type ServiceOrder = {
   id: string
@@ -47,11 +48,12 @@ const priorityVariants = {
 } as const
 
 const serviceTypeVariants = {
-  normal: "blue",
-  warranty: "green",
-  setup: "purple",
-  emergency: "red",
-  preventive: "orange",
+  standard: "green",
+  warranty: "purple",
+  sales_prep: "orange",
+  internal: "red",
+  insurance: "blue",
+  quote: "orange",
 } as const
 
 const serviceLocationVariants = {
@@ -130,12 +132,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
             </Text>
           </div>
           <div className="flex-shrink-0">
-            <Badge 
-              size="2xsmall" 
-              color={serviceTypeVariants[order.service_type as keyof typeof serviceTypeVariants] || "grey"}
-            >
-              {order.service_type.charAt(0).toUpperCase() + order.service_type.slice(1)}
-            </Badge>
+            <ServiceTypeLabel serviceType={order.service_type} />
           </div>
         </div>
 

@@ -7,8 +7,8 @@ import { createInvoiceWithPdfFromOrderWorkflow } from "../workflows/invoicing/cr
 export default async function orderShippedInvoiceHandler({
   event: { data },
   container,
-}: SubscriberArgs<{ id: string }>) {
-  const orderId = data.id
+}: SubscriberArgs<{ order_id: string; fulfillment_id: string; no_notification?: boolean }>) {
+  const orderId = data.order_id
 
   try {
     // Execute the workflow to create invoice and PDF
@@ -31,5 +31,5 @@ export default async function orderShippedInvoiceHandler({
 }
 
 export const config: SubscriberConfig = {
-  event: "order.shipment_created",
+  event: "order.fulfillment_created",
 }

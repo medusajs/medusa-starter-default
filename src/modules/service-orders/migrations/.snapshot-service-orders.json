@@ -58,13 +58,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "default": "'normal'",
+          "default": "'standard'",
           "enumItems": [
-            "normal",
+            "insurance",
             "warranty",
-            "setup",
-            "emergency",
-            "preventive"
+            "internal",
+            "standard",
+            "sales_prep",
+            "quote"
           ],
           "mappedType": "enum"
         },
@@ -350,6 +351,86 @@
           "primary": false,
           "nullable": true,
           "mappedType": "text"
+        },
+        "has_appointment": {
+          "name": "has_appointment",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        },
+        "needs_replacement_vehicle": {
+          "name": "needs_replacement_vehicle",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        },
+        "includes_minor_maintenance": {
+          "name": "includes_minor_maintenance",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        },
+        "includes_major_maintenance": {
+          "name": "includes_major_maintenance",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        },
+        "is_repeated_repair": {
+          "name": "is_repeated_repair",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        },
+        "includes_cleaning": {
+          "name": "includes_cleaning",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        },
+        "est_used": {
+          "name": "est_used",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        },
+        "ca_used": {
+          "name": "ca_used",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
         },
         "created_by": {
           "name": "created_by",

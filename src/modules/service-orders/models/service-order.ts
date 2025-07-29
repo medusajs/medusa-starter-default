@@ -9,11 +9,12 @@ export const ServiceOrderStatus = {
 } as const
 
 export const ServiceOrderType = {
-  NORMAL: "normal",
+  INSURANCE: "insurance",
   WARRANTY: "warranty", 
-  SETUP: "setup", // Setting up sold tractor
-  EMERGENCY: "emergency",
-  PREVENTIVE: "preventive",
+  INTERNAL: "internal",
+  STANDARD: "standard",
+  SALES_PREP: "sales_prep",
+  QUOTE: "quote",
 } as const
 
 export const ServiceOrderPriority = {
@@ -38,7 +39,7 @@ const ServiceOrder = model.define("service_order", {
   technician_id: model.text().nullable(), // Links to Technician module
   
   // Service Details
-  service_type: model.enum(ServiceOrderType).default(ServiceOrderType.NORMAL),
+  service_type: model.enum(ServiceOrderType).default(ServiceOrderType.STANDARD),
   status: model.enum(ServiceOrderStatus).default(ServiceOrderStatus.DRAFT),
   priority: model.enum(ServiceOrderPriority).default(ServiceOrderPriority.NORMAL),
   service_location: model.enum(ServiceOrderLocation).default(ServiceOrderLocation.WORKSHOP),
@@ -79,6 +80,16 @@ const ServiceOrder = model.define("service_order", {
   customer_approval_required: model.boolean().default(false),
   internal_notes: model.text().nullable(),
   customer_notes: model.text().nullable(),
+  
+  // Service Characteristics
+  has_appointment: model.boolean().default(false),
+  needs_replacement_vehicle: model.boolean().default(false),
+  includes_minor_maintenance: model.boolean().default(false),
+  includes_major_maintenance: model.boolean().default(false),
+  is_repeated_repair: model.boolean().default(false),
+  includes_cleaning: model.boolean().default(false),
+  est_used: model.boolean().default(false),
+  ca_used: model.boolean().default(false),
   
   // System fields
   created_by: model.text().nullable(),

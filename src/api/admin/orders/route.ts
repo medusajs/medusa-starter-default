@@ -1,6 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
 import { createOrderWorkflow } from "@medusajs/medusa/core-flows"
-import { Modules } from "@medusajs/framework/utils"
+import { Modules, ContainerRegistrationKeys } from "@medusajs/framework/utils"
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
@@ -91,6 +91,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     try {
       const inventoryService = req.scope.resolve(Modules.INVENTORY)
       const stockLocationService = req.scope.resolve(Modules.STOCK_LOCATION)
+      const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
       
       // Get all stock locations and filter by sales channel manually
       const allStockLocations = await stockLocationService.listStockLocations({})
@@ -102,42 +103,89 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       if (!availableLocation) {
         console.warn(`No stock locations available`)
       } else {
-        // Create basic reservations for items (simplified approach)
-        const reservationsToCreate: any[] = []
+        // Get variant IDs from order items
+        const variantIds = order.items?.filter(item => item.variant_id).map(item => item.variant_id).filter(Boolean) || []
+        
+        if (variantIds.length === 0) {
+          console.log('No variants found in order items, skipping reservation creation')
+        } else {
+          // Query variants with their inventory items using the query.graph method
+          const { data: variants } = await query.graph({
+            entity: "variant",
+            fields: [
+              "id",
+              "manage_inventory",
+              "inventory_items.inventory_item_id",
+              "inventory_items.required_quantity"
+            ],
+            filters: { id: variantIds as string[] }
+          })
 
-        for (const orderItem of order.items || []) {
-          if (!orderItem.variant_id) continue
+          // Create basic reservations for items
+          const reservationsToCreate: any[] = []
 
-          // Create a basic reservation - the system will validate during fulfillment
-          // if the variant actually manages inventory
-          try {
-            reservationsToCreate.push({
-              line_item_id: orderItem.id,
-              inventory_item_id: `iitem_${orderItem.variant_id}`, // Simplified for now
-              location_id: availableLocation.id,
-              quantity: orderItem.quantity,
-              description: `Manual order reservation for ${order.id}`,
-              created_by: 'admin-order-creation',
-              allow_backorder: true, // Allow backorder to avoid stock validation issues
-              metadata: {
-                order_id: order.id,
-                variant_id: orderItem.variant_id,
-                source: 'manual-order-creation',
-              },
-            })
-          } catch (itemError) {
-            console.warn(`Could not prepare reservation for item ${orderItem.id}:`, itemError)
+          for (const orderItem of order.items || []) {
+            if (!orderItem.variant_id) continue
+
+            try {
+              // Find the variant data for this order item
+              const variant = variants.find(v => v.id === orderItem.variant_id)
+              
+              if (!variant) {
+                console.warn(`Variant ${orderItem.variant_id} not found in query results`)
+                continue
+              }
+
+              // Skip if variant doesn't manage inventory
+              if (!variant.manage_inventory) {
+                console.log(`Variant ${orderItem.variant_id} doesn't manage inventory, skipping reservation`)
+                continue
+              }
+
+              // Get inventory items for this variant
+              const inventoryItems = variant.inventory_items || []
+              
+              if (inventoryItems.length === 0) {
+                console.warn(`No inventory items found for variant ${orderItem.variant_id}`)
+                continue
+              }
+
+              // Create reservations for each inventory item
+              for (const inventoryItem of inventoryItems) {
+                if (!inventoryItem) continue // Add null check
+                
+                const requiredQuantity = inventoryItem.required_quantity || 1
+                const totalQuantity = orderItem.quantity * requiredQuantity
+                
+                reservationsToCreate.push({
+                  line_item_id: orderItem.id,
+                  inventory_item_id: inventoryItem.inventory_item_id,
+                  location_id: availableLocation.id,
+                  quantity: totalQuantity,
+                  description: `Manual order reservation for ${order.id}`,
+                  created_by: 'admin-order-creation',
+                  allow_backorder: true, // Allow backorder to avoid stock validation issues
+                  metadata: {
+                    order_id: order.id,
+                    variant_id: orderItem.variant_id,
+                    source: 'manual-order-creation',
+                  },
+                })
+              }
+            } catch (itemError) {
+              console.warn(`Could not prepare reservation for item ${orderItem.id}:`, itemError)
+            }
           }
-        }
 
-        // Create reservations if we have any
-        if (reservationsToCreate.length > 0) {
-          try {
-            const createdReservations = await inventoryService.createReservationItems(reservationsToCreate)
-            console.log(`Created ${createdReservations.length} inventory reservations for order ${order.id}`)
-          } catch (createError) {
-            console.warn("Some reservations could not be created:", createError.message)
-            // This is expected for items that don't have managed inventory
+          // Create reservations if we have any
+          if (reservationsToCreate.length > 0) {
+            try {
+              const createdReservations = await inventoryService.createReservationItems(reservationsToCreate)
+              console.log(`Created ${createdReservations.length} inventory reservations for order ${order.id}`)
+            } catch (createError) {
+              console.warn("Some reservations could not be created:", createError.message)
+              // This is expected for items that don't have managed inventory
+            }
           }
         }
       }

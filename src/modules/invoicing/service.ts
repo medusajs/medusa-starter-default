@@ -114,18 +114,18 @@ class InvoicingService extends MedusaService({
   async recalculateInvoiceTotals(invoiceId: string) {
     const invoice = await this.retrieveInvoice(invoiceId)
     const lineItems = await this.listInvoiceLineItems({ invoice_id: invoiceId })
-    
+
     const subtotal = lineItems.reduce((sum, item) => sum + Number(item.total_price), 0)
     const taxAmount = lineItems.reduce((sum, item) => sum + Number(item.tax_amount), 0)
     const discountAmount = lineItems.reduce((sum, item) => sum + Number(item.discount_amount), 0)
     const totalAmount = subtotal + taxAmount
-    
-    return await this.updateInvoices(invoiceId, {
+
+    return await this.updateInvoices({
       subtotal,
       tax_amount: taxAmount,
       discount_amount: discountAmount,
       total_amount: totalAmount,
-    })
+    }, { id: invoiceId })
   }
   
   async changeInvoiceStatus(invoiceId: string, newStatus: string, changedBy: string, reason?: string) {
@@ -133,11 +133,11 @@ class InvoicingService extends MedusaService({
     const oldStatus = invoice.status
     
     // Update invoice status
-    const updatedInvoice = await this.updateInvoices(invoiceId, {
-      status: newStatus,
+    const updatedInvoice = await this.updateInvoices({
+      status: newStatus as any,
       sent_date: newStatus === InvoiceStatus.SENT ? new Date() : invoice.sent_date,
       paid_date: newStatus === InvoiceStatus.PAID ? new Date() : invoice.paid_date,
-    })
+    }, { id: invoiceId })
     
     // Create status history entry
     await this.createInvoiceStatusHistories({

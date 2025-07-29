@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { PencilSquare, User, CogSixTooth, Buildings } from "@medusajs/icons"
 import { useState } from "react"
 import { useForm, Controller } from "react-hook-form"
+import { ServiceTypeLabel } from "../components/common/service-type-label"
 
 interface ServiceOrder {
   id: string
@@ -19,6 +20,14 @@ interface ServiceOrder {
   total_cost?: number
   estimated_hours?: number
   actual_hours?: number
+  has_appointment: boolean
+  needs_replacement_vehicle: boolean
+  includes_minor_maintenance: boolean
+  includes_major_maintenance: boolean
+  is_repeated_repair: boolean
+  includes_cleaning: boolean
+  est_used: boolean
+  ca_used: boolean
   created_at: string
   updated_at: string
 }
@@ -128,24 +137,21 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
   } as const
 
   const serviceTypeVariants = {
-    maintenance: "blue",
-    repair: "orange", 
-    inspection: "green",
-    installation: "purple",
-    warranty: "orange",
-    emergency: "red",
-    normal: "blue",
-    setup: "purple",
-    preventive: "green",
+    standard: "green",
+    warranty: "purple", 
+    sales_prep: "orange",
+    internal: "red",
+    insurance: "blue",
+    quote: "orange",
   } as const
 
   const serviceTypes = [
-    'maintenance',
-    'repair',
-    'inspection', 
-    'installation',
+    'insurance',
     'warranty',
-    'emergency'
+    'internal', 
+    'standard',
+    'sales_prep',
+    'quote'
   ]
 
   const priorities = [
@@ -425,9 +431,7 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
                   <Label size="small" weight="plus" className="mb-2">
                     Service Type
                   </Label>
-                  <StatusBadge color={serviceTypeVariants[serviceOrder.service_type as keyof typeof serviceTypeVariants] || "blue"}>
-                    {serviceOrder.service_type}
-                  </StatusBadge>
+                  <ServiceTypeLabel serviceType={serviceOrder.service_type} />
                 </div>
               </div>
               <div className="grid grid-cols-[28px_1fr] items-start gap-x-3">

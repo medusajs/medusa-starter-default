@@ -539,6 +539,126 @@ const ServiceOrderTimeEntriesWidget = ({ data: serviceOrder }: ServiceOrderTimeE
           </FocusModal.Body>
         </FocusModal.Content>
       </FocusModal>
+
+      <FocusModal open={showEditModal} onOpenChange={setShowEditModal}>
+        <FocusModal.Content>
+          <FocusModal.Header>
+            <div className="flex items-center justify-end">
+              <FocusModal.Close asChild>
+                <Button variant="secondary">Cancel</Button>
+              </FocusModal.Close>
+            </div>
+          </FocusModal.Header>
+          <FocusModal.Body>
+            <div className="flex flex-col items-center p-16">
+              <div className="w-full max-w-lg">
+                <div className="mb-8 text-center">
+                  <Heading level="h2" className="mb-2">Edit Time Entry</Heading>
+                  <Text className="text-ui-fg-subtle">
+                    Update time entry details
+                  </Text>
+                </div>
+
+                <form onSubmit={(e) => {
+                  e.preventDefault()
+                  if (editingEntry) {
+                    updateTimeEntryMutation.mutate({ id: editingEntry.id, timeData: formData })
+                  }
+                }} className="space-y-4">
+                  <div>
+                    <Textarea
+                      placeholder="Work description"
+                      value={formData.work_description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, work_description: e.target.value }))}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <Select
+                      value={formData.work_category}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, work_category: value }))}
+                    >
+                      <Select.Trigger>
+                        <Select.Value />
+                      </Select.Trigger>
+                      <Select.Content>
+                        <Select.Item value="diagnosis">Diagnosis</Select.Item>
+                        <Select.Item value="repair">Repair</Select.Item>
+                        <Select.Item value="testing">Testing</Select.Item>
+                        <Select.Item value="documentation">Documentation</Select.Item>
+                        <Select.Item value="travel">Travel</Select.Item>
+                      </Select.Content>
+                    </Select>
+                    
+                    <Input
+                      type="number"
+                      step="0.25"
+                      placeholder="Billable hours"
+                      value={formData.billable_hours}
+                      onChange={(e) => setFormData(prev => ({ ...prev, billable_hours: parseFloat(e.target.value) }))}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      type="datetime-local"
+                      placeholder="Start time"
+                      value={formData.start_time}
+                      onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
+                      required
+                    />
+                    
+                    <Input
+                      type="datetime-local"
+                      placeholder="End time (optional)"
+                      value={formData.end_time}
+                      onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
+                    />
+                  </div>
+
+                  <div>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="Hourly rate"
+                      value={formData.hourly_rate}
+                      onChange={(e) => setFormData(prev => ({ ...prev, hourly_rate: parseFloat(e.target.value) }))}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Textarea
+                      placeholder="Notes (optional)"
+                      value={formData.notes}
+                      onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setShowEditModal(false)}
+                      disabled={updateTimeEntryMutation.isPending}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={updateTimeEntryMutation.isPending}
+                    >
+                      {updateTimeEntryMutation.isPending ? "Updating..." : "Update Time Entry"}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </FocusModal.Body>
+        </FocusModal.Content>
+      </FocusModal>
     </Container>
   )
 }

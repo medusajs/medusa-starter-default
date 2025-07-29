@@ -6,12 +6,109 @@ This file serves as a progress tracker and memory system for development tasks o
 
 ### ✅ Completed
 
+- [x] **Fix Card Import Error in Rental Detail Page** ✅ **COMPLETED**
+  - [x] Identify issue: rental detail page importing non-existent `Card` component from `@medusajs/ui`
+  - [x] Remove `Card` import from `@medusajs/ui` imports
+  - [x] Replace all `Card` components with `Container` components using appropriate styling
+  - [x] Add `rounded-lg shadow-sm` classes to maintain card-like appearance
+  - [x] Fix icon imports: replace `Truck` with `TruckFast`, `ExclamationTriangle` with `ExclamationCircle`, remove `MapPin`
+  - [x] Fix Badge variant prop: replace `variant="outline"` with `color="grey"`
+  - [x] **FINAL RESULT**: Rental detail page now uses native Medusa UI components without import errors
+
+- [x] **App Description for User Value Proposition** ✅ **COMPLETED**
+  - [x] Create compelling description focusing on user value, not technical details
+  - [x] Emphasize modern solution vs legacy system replacement
+  - [x] Highlight Belgium market focus and business benefits
+  - [x] Target users with existing systems that need replacement due to support ending
+  - [x] **FINAL RESULT**: Comprehensive business-focused description highlighting equipment service management, modern technology, Belgium market focus, and migration benefits
+
+- [x] **Fix Invoice Totals Calculation** ✅ **COMPLETED**
+  - [x] Fix `listInvoiceLineItems` method call to properly fetch line items by invoice_id
+  - [x] Fix `updateInvoices` method calls to use correct MedusaService signature (data, selector)
+  - [x] Fix `recalculateInvoiceTotals` to properly sum line item totals without division by 100
+  - [x] Fix `changeInvoiceStatus` to use correct method signature
+  - [x] Ensure invoice totals are calculated correctly from line items
+  - [x] Cast status enum properly to avoid TypeScript errors
+  - [x] **FINAL RESULT**: Invoice totals now correctly reflect the sum of all line items
+
+- [x] **Fix Invoice Price Formatting and Totals** ✅ **COMPLETED**
+  - [x] Remove incorrect division by 100 from price formatting functions
+  - [x] Fix invoice detail page currency formatting to show correct amounts
+  - [x] Fix invoice list page currency formatting in data table
+  - [x] Ensure invoice totals display correctly (subtotal, tax_amount, discount_amount, total_amount)
+  - [x] Maintain Belgium-specific currency formatting (€) throughout
+  - [x] **FINAL RESULT**: All invoice prices and totals now display correctly without incorrect division
+
+- [x] **Invoice Implementation Following Native Medusa Patterns** ✅ **COMPLETED**
+  - [x] Add proper model relationships between Invoice, InvoiceLineItem, and InvoiceStatusHistory
+  - [x] Implement hasMany/belongsTo relationships following native Medusa patterns
+  - [x] Fix API route to use Remote Query with proper relationship loading
+  - [x] Create comprehensive invoice detail page with customer information
+  - [x] Display customer details (name, email, phone, company)
+  - [x] Show billing and shipping addresses with proper Belgium formatting
+  - [x] List product variants with SKU, variant title, thumbnail, and pricing
+  - [x] Display line items in professional table format with quantities and totals
+  - [x] Add Belgium-specific currency formatting (€) and date formatting (nl-BE)
+  - [x] Include invoice totals with subtotal, discounts, tax (21%), and final amount
+  - [x] Add comprehensive sidebar with invoice details, status, and related information
+  - [x] Implement proper TypeScript interfaces for all data structures
+  - [x] Fix linter errors and follow native Medusa UI component patterns
+  - [x] **FINAL RESULT**: Professional invoice detail page showing customer, addresses, product variants, and complete pricing information
+
+- [x] **Fix Invoice Detail Page 404 Issue** ✅ **COMPLETED**
+  - [x] Identify missing invoice detail page component causing 404 errors
+  - [x] Create invoice detail page structure following native Medusa patterns
+  - [x] Implement proper data fetching with React Query
+  - [x] Add comprehensive invoice information display with status badges
+  - [x] Include line items, totals, and related information sections
+  - [x] Add navigation back to invoice list with proper breadcrumb
+  - [x] Follow native Medusa UI patterns with TwoColumnPage layout
+  - [x] **FINAL RESULT**: Invoice detail pages now work properly without 404 errors
+
+- [x] **Fix Manual Order Stock Reservation Issue** ✅ **COMPLETED**
+  - [x] Identify issue where manual order creation doesn't create stock reservations
+  - [x] Fix inventory reservation creation in `/admin/orders` endpoint
+  - [x] Properly query variants to get inventory item IDs from `inventory_items` relationship
+  - [x] Add proper variant inventory management checks (`manage_inventory` flag)
+  - [x] Handle required quantity calculations for inventory items
+  - [x] Add proper error handling and logging for reservation creation
+  - [x] **FINAL RESULT**: Manual orders now properly create stock reservations for fulfillment
+
+- [x] **Service Order Characteristics Widget Implementation** ✅ **COMPLETED**
+  - [x] Add boolean fields to ServiceOrder model: has_appointment, needs_replacement_vehicle, includes_minor_maintenance, includes_major_maintenance, is_repeated_repair, includes_cleaning, est_used, ca_used
+  - [x] Create database migration for new boolean fields
+  - [x] Create ServiceOrderCharacteristicsWidget component with two-column checkbox layout
+  - [x] Add widget to service order detail page below status actions
+  - [x] Implement direct checkbox interaction (no edit mode required)
+  - [x] Update ServiceOrder DTOs to include new fields
+  - [x] Test widget functionality and data persistence
+  - [x] **FINAL RESULT**: Streamlined service characteristics widget with directly clickable checkboxes
+
+- [x] **Service Order Types Update** ✅ **COMPLETED**
+  - [x] Update ServiceOrderType enum to include only: Insurance, Warranty, Internal, Standard, Sales Prep, Quote
+  - [x] Update all TypeScript types and DTOs to use new service order types
+  - [x] Update translations to include new service type labels
+  - [x] Update all UI components with new service type color variants
+  - [x] Create database migration to update service_type enum constraint
+  - [x] Map existing service types to new types (normal/setup/emergency/preventive → standard)
+  - [x] Update color assignments: Standard (green), Warranty (purple), Sales prep (orange), Internal (red), Insurance (blue), Quote (orange)
+  - [x] **FINAL RESULT**: Streamlined service order types with consistent color coding throughout the application
+
 - [x] **Time Entry Table Column Simplification** ✅ **COMPLETED**
   - [x] Remove Description and Category columns from time entries table
   - [x] Reorder columns to: Date, Hours & Minutes, Rate, Total
   - [x] Simplify table structure for cleaner, more focused view
   - [x] Maintain Belgium-focused currency display (€) throughout
   - [x] **FINAL RESULT**: Streamlined time entry table showing only essential time tracking information
+
+- [x] **Time Entry Table Format and Edit/Delete Improvements** ✅ **COMPLETED**
+  - [x] Update column title from "Hours & Minutes" to "Time"
+  - [x] Implement "X hours X minutes" display format (e.g., "2 hours 30 minutes")
+  - [x] Add Actions column with edit/delete dropdown menu
+  - [x] Add edit modal with pre-filled form data for time entry modification
+  - [x] Add delete functionality with confirmation dialog
+  - [x] Maintain European date format (DD/MM/YYYY) throughout
+  - [x] **FINAL RESULT**: Full CRUD functionality with user-friendly time display format
 
 - [x] **Service Order Timer Implementation** ✅ **COMPLETED**
   - [x] Add start/stop timer mechanism with real-time display
@@ -69,6 +166,14 @@ This file serves as a progress tracker and memory system for development tasks o
   - [x] Ensure consistent native Medusa UI Label component usage throughout service order screens
   - [x] Follow [Medusa UI Label documentation](https://docs.medusajs.com/ui/components/label) patterns
   - [x] Achieve consistent typography and visual hierarchy across all form elements
+
+- [x] **Fix Invoice Creation on Fulfillment Creation** ✅ **COMPLETED**
+  - [x] Identify issue: subscriber listens for non-existent "order.shipment_created" event
+  - [x] Determine correct event: "order.fulfillment_created" for fulfillments
+  - [x] Update subscriber to listen for "order.fulfillment_created" event
+  - [x] Fix event data structure to use data.order_id instead of data.id
+  - [x] Update TypeScript types for proper event payload structure
+  - [x] **FINAL RESULT**: Invoice creation now properly triggers when fulfillments are created
 
 - [x] **Service Type & Priority StatusBadge Implementation** ✅ **COMPLETED**
   - [x] Replace regular `Badge` components with native `StatusBadge` components in service-order-overview.tsx
@@ -177,7 +282,48 @@ This file serves as a progress tracker and memory system for development tasks o
   - [x] Removed all debugging console.log statements
   - [x] **FINAL RESULT**: Correct EUR price display without unnecessary conversion
 
+### ✅ Completed
+
+- [x] **Fix Machine Details Page Issue** ✅ **COMPLETED**
+  - [x] Identify the issue: missing machine detail page (`/machines/[id]/page.tsx`)
+  - [x] Analyze patterns from native Medusa detail pages and existing service order detail
+  - [x] Create machine detail page with TwoColumnPage layout
+  - [x] Add machine overview, specifications, and service history sections
+  - [x] Implement proper data fetching with React Query
+  - [x] Add navigation back to machines list with proper breadcrumb
+  - [x] Follow native Medusa UI patterns and Belgium-focused formatting
+  - [x] **FINAL RESULT**: Professional machine detail page with comprehensive information display, status badges, and proper navigation
+
+- [x] **Warranties Module Implementation** ✅ **COMPLETED**
+  - [x] Plan warranties module architecture following native MedusaJS patterns
+  - [x] Create warranty models (Warranty, WarrantyLineItem, WarrantyStatusHistory)
+  - [x] Implement WarrantiesService with CRUD operations
+  - [x] Create workflow for converting completed warranty service orders to warranties
+  - [x] Build admin UI for warranty management
+  - [x] Integrate with service orders workflow for automatic warranty creation
+  - [x] Create database migration and run it successfully
+  - [x] **FINAL RESULT**: Complete warranties module with proper database schema, service layer, and workflow integration for handling warranty service orders separately from invoices
+
+- [x] **Warranties Admin UI Implementation** ✅ **COMPLETED**
+  - [x] Create warranties list page with DataTable following Medusa UI patterns
+  - [x] Implement comprehensive warranty detail page with TwoColumnPage layout
+  - [x] Add proper TypeScript interfaces for all warranty data structures
+  - [x] Create StatusBadge components for warranty status and type with color coding
+  - [x] Implement Belgium-focused currency formatting (€) and date formatting (nl-BE)
+  - [x] Add customer, machine, and service order information display
+  - [x] Include line items display with reimbursement tracking
+  - [x] Add status history with audit trail
+  - [x] Create financial summary with labor costs, parts costs, and reimbursement amounts
+  - [x] Add comprehensive translations for warranties module
+  - [x] **FINAL RESULT**: Professional admin UI with full CRUD functionality, filtering, search, and detailed warranty management interface
+
 ### 🔄 In Progress
+- [ ] **Deployment Planning and Setup**
+  - [ ] Research and document deployment options (Vercel, Railway, Render, etc.)
+  - [ ] Prepare environment variables and configuration for production
+  - [ ] Set up database for production deployment
+  - [ ] Configure CORS settings for production domains
+  - [ ] Test deployment process locally
 - [ ] **Fix load-parts-with-prices.ts script compilation and runtime errors**
   - [x] Fixed duplicate variable declarations (partsMap)
   - [x] Added missing helper functions (createRecordFromValues, processRecord)

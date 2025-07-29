@@ -379,15 +379,6 @@
           "nullable": false,
           "mappedType": "text"
         },
-        "invoice_id": {
-          "name": "invoice_id",
-          "type": "text",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "text"
-        },
         "item_type": {
           "name": "item_type",
           "type": "text",
@@ -561,6 +552,15 @@
           "nullable": true,
           "mappedType": "json"
         },
+        "invoice_id": {
+          "name": "invoice_id",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "text"
+        },
         "raw_quantity": {
           "name": "raw_quantity",
           "type": "jsonb",
@@ -670,6 +670,15 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "IDX_invoice_line_item_invoice_id",
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_invoice_line_item_invoice_id\" ON \"invoice_line_item\" (invoice_id) WHERE deleted_at IS NULL"
+        },
+        {
           "keyName": "IDX_invoice_line_item_deleted_at",
           "columnNames": [],
           "composite": false,
@@ -690,22 +699,26 @@
         }
       ],
       "checks": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "invoice_line_item_invoice_id_foreign": {
+          "constraintName": "invoice_line_item_invoice_id_foreign",
+          "columnNames": [
+            "invoice_id"
+          ],
+          "localTableName": "public.invoice_line_item",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.invoice",
+          "updateRule": "cascade"
+        }
+      },
       "nativeEnums": {}
     },
     {
       "columns": {
         "id": {
           "name": "id",
-          "type": "text",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "text"
-        },
-        "invoice_id": {
-          "name": "invoice_id",
           "type": "text",
           "unsigned": false,
           "autoincrement": false,
@@ -777,6 +790,15 @@
           "nullable": true,
           "mappedType": "json"
         },
+        "invoice_id": {
+          "name": "invoice_id",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "text"
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamptz",
@@ -814,6 +836,15 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "IDX_invoice_status_history_invoice_id",
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_invoice_status_history_invoice_id\" ON \"invoice_status_history\" (invoice_id) WHERE deleted_at IS NULL"
+        },
+        {
           "keyName": "IDX_invoice_status_history_deleted_at",
           "columnNames": [],
           "composite": false,
@@ -834,7 +865,20 @@
         }
       ],
       "checks": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "invoice_status_history_invoice_id_foreign": {
+          "constraintName": "invoice_status_history_invoice_id_foreign",
+          "columnNames": [
+            "invoice_id"
+          ],
+          "localTableName": "public.invoice_status_history",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.invoice",
+          "updateRule": "cascade"
+        }
+      },
       "nativeEnums": {}
     }
   ],

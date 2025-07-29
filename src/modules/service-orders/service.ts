@@ -9,7 +9,7 @@ import { ServiceOrderEventLogger } from "./helpers/event-logger"
 
 type CreateServiceOrderInput = {
   description: string
-  service_type?: "normal" | "warranty" | "setup" | "emergency" | "preventive"
+  service_type?: "insurance" | "warranty" | "internal" | "standard" | "sales_prep" | "quote"
   priority?: "low" | "normal" | "high" | "urgent"
   customer_complaint?: string
   scheduled_start_date?: Date

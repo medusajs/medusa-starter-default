@@ -28,6 +28,7 @@ import { useCustomTranslation } from "../../hooks/use-custom-translation"
 
 import { KanbanView } from "./components/kanban-view"
 import { EditServiceOrderForm } from "../../components/edit-service-order-form"
+import { ServiceTypeLabel } from "../../components/common/service-type-label"
 
 // Types for service order data
 interface ServiceOrder {
@@ -281,20 +282,8 @@ const BacklogDataTable = () => {
   }
 
   const getServiceTypeBadge = (serviceType: string) => {
-    const typeConfig = {
-      normal: { color: "blue" as const, label: t("custom.serviceOrders.types.normal") },
-      warranty: { color: "green" as const, label: t("custom.serviceOrders.types.warranty") },
-      setup: { color: "purple" as const, label: t("custom.serviceOrders.types.setup") },
-      emergency: { color: "red" as const, label: t("custom.serviceOrders.types.emergency") },
-      preventive: { color: "orange" as const, label: t("custom.serviceOrders.types.preventive") },
-    } as const
-
-    const config = typeConfig[serviceType as keyof typeof typeConfig] || { color: "grey" as const, label: serviceType }
-    
     return (
-      <StatusBadge color={config.color}>
-        {config.label}
-      </StatusBadge>
+      <ServiceTypeLabel serviceType={serviceType} />
     )
   }
 
@@ -510,20 +499,8 @@ const ActiveOrdersDataTable = () => {
   }
 
   const getServiceTypeBadge = (serviceType: string) => {
-    const typeConfig = {
-      normal: { color: "blue" as const, label: t("custom.serviceOrders.types.normal") },
-      warranty: { color: "green" as const, label: t("custom.serviceOrders.types.warranty") },
-      setup: { color: "purple" as const, label: t("custom.serviceOrders.types.setup") },
-      emergency: { color: "red" as const, label: t("custom.serviceOrders.types.emergency") },
-      preventive: { color: "orange" as const, label: t("custom.serviceOrders.types.preventive") },
-    } as const
-
-    const config = typeConfig[serviceType as keyof typeof typeConfig] || { color: "grey" as const, label: serviceType }
-    
     return (
-      <StatusBadge color={config.color}>
-        {config.label}
-      </StatusBadge>
+      <ServiceTypeLabel serviceType={serviceType} />
     )
   }
 

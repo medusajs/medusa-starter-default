@@ -10,6 +10,8 @@ import ServiceOrderItemsWidget from "../../../widgets/service-order-items"
 import ServiceOrderTimeEntriesWidget from "../../../widgets/service-order-time-entries"
 import ServiceOrderStatusActionsWidget from "../../../widgets/service-order-status-actions"
 import ServiceOrderCommentsWidget from "../../../widgets/service-order-comments"
+import ServiceOrderCharacteristicsWidget from "../../../widgets/service-order-characteristics"
+import { ServiceTypeLabel } from "../../../components/common/service-type-label"
 
 const ServiceOrderDetails = () => {
   const { id } = useParams()
@@ -47,12 +49,12 @@ const ServiceOrderDetails = () => {
   } as const
 
   const serviceTypeVariants = {
-    maintenance: "blue",
-    repair: "orange",
-    inspection: "green", 
-    installation: "purple",
-    warranty: "grey",
-    emergency: "red",
+    standard: "green",
+    warranty: "purple",
+    sales_prep: "orange",
+    internal: "red", 
+    insurance: "blue",
+    quote: "orange",
   } as const
 
   return (
@@ -71,9 +73,7 @@ const ServiceOrderDetails = () => {
               <StatusBadge color={statusVariants[so.status as keyof typeof statusVariants]}>
                 {so.status.replace('_', ' ')}
               </StatusBadge>
-              <StatusBadge color={serviceTypeVariants[so.service_type as keyof typeof serviceTypeVariants]}>
-                {so.service_type}
-              </StatusBadge>
+              <ServiceTypeLabel serviceType={so.service_type} />
             </div>
             <Text className="text-ui-fg-subtle">
               {so.description}
@@ -104,6 +104,7 @@ const ServiceOrderDetails = () => {
         <TwoColumnPage.Sidebar>
           <ServiceOrderOverviewWidget data={so} />
           <ServiceOrderStatusActionsWidget data={so} />
+          <ServiceOrderCharacteristicsWidget data={so} />
         </TwoColumnPage.Sidebar>
       </TwoColumnPage>
     </div>

@@ -1,4 +1,5 @@
 import { model } from "@medusajs/framework/utils"
+import Invoice from "./invoice"
 
 export const InvoiceLineItemType = {
   PRODUCT: "product",
@@ -10,7 +11,6 @@ export const InvoiceLineItemType = {
 
 const InvoiceLineItem = model.define("invoice_line_item", {
   id: model.id().primaryKey(),
-  invoice_id: model.text(),
   
   // Item Type and Source
   item_type: model.enum(InvoiceLineItemType).default(InvoiceLineItemType.PRODUCT),
@@ -45,6 +45,11 @@ const InvoiceLineItem = model.define("invoice_line_item", {
   // Additional information
   notes: model.text().nullable(),
   metadata: model.json().nullable(),
+
+  // Relationships
+  invoice: model.belongsTo(() => Invoice, {
+    mappedBy: "line_items",
+  }),
 })
 
 export default InvoiceLineItem 

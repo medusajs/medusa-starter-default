@@ -1,8 +1,8 @@
 import { model } from "@medusajs/framework/utils"
+import Invoice from "./invoice"
 
 const InvoiceStatusHistory = model.define("invoice_status_history", {
   id: model.id().primaryKey(),
-  invoice_id: model.text(),
   
   // Status Change Details
   from_status: model.text().nullable(),
@@ -16,6 +16,11 @@ const InvoiceStatusHistory = model.define("invoice_status_history", {
   
   // Additional context
   metadata: model.json().nullable(),
+
+  // Relationships
+  invoice: model.belongsTo(() => Invoice, {
+    mappedBy: "status_history",
+  }),
 })
 
 export default InvoiceStatusHistory 

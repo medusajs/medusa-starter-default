@@ -4,7 +4,7 @@ export type ServiceOrderDTO = {
   customer_id?: string | null
   machine_id?: string | null
   technician_id?: string | null
-  service_type: "normal" | "warranty" | "setup" | "emergency" | "preventive"
+  service_type: "insurance" | "warranty" | "internal" | "standard" | "sales_prep" | "quote"
   status: "draft" | "ready_for_pickup" | "in_progress" | "done" | "returned_for_review"
   priority: "low" | "normal" | "high" | "urgent"
   service_location: "workshop" | "customer_location"
@@ -33,6 +33,14 @@ export type ServiceOrderDTO = {
   service_country?: string | null
   internal_notes?: string | null
   customer_notes?: string | null
+  has_appointment: boolean
+  needs_replacement_vehicle: boolean
+  includes_minor_maintenance: boolean
+  includes_major_maintenance: boolean
+  is_repeated_repair: boolean
+  includes_cleaning: boolean
+  est_used: boolean
+  ca_used: boolean
   created_by?: string | null
   updated_by?: string | null
   metadata?: Record<string, any> | null
@@ -46,7 +54,7 @@ export type CreateServiceOrderDTO = {
   customer_id?: string | null
   machine_id?: string | null
   technician_id?: string | null
-  service_type?: "normal" | "warranty" | "setup" | "emergency" | "preventive"
+  service_type?: "insurance" | "warranty" | "internal" | "standard" | "sales_prep" | "quote"
   status?: "draft" | "ready_for_pickup" | "in_progress" | "done" | "returned_for_review"
   priority?: "low" | "normal" | "high" | "urgent"
   service_location?: "workshop" | "customer_location"
@@ -75,6 +83,14 @@ export type CreateServiceOrderDTO = {
   service_country?: string | null
   internal_notes?: string | null
   customer_notes?: string | null
+  has_appointment?: boolean
+  needs_replacement_vehicle?: boolean
+  includes_minor_maintenance?: boolean
+  includes_major_maintenance?: boolean
+  is_repeated_repair?: boolean
+  includes_cleaning?: boolean
+  est_used?: boolean
+  ca_used?: boolean
   created_by?: string | null
   updated_by?: string | null
   metadata?: Record<string, any> | null
@@ -86,7 +102,7 @@ export type UpdateServiceOrderDTO = {
   customer_id?: string | null
   machine_id?: string | null
   technician_id?: string | null
-  service_type?: "normal" | "warranty" | "setup" | "emergency" | "preventive"
+  service_type?: "insurance" | "warranty" | "internal" | "standard" | "sales_prep" | "quote"
   status?: "draft" | "ready_for_pickup" | "in_progress" | "done" | "returned_for_review"
   priority?: "low" | "normal" | "high" | "urgent"
   service_location?: "workshop" | "customer_location"
@@ -115,6 +131,14 @@ export type UpdateServiceOrderDTO = {
   service_country?: string | null
   internal_notes?: string | null
   customer_notes?: string | null
+  has_appointment?: boolean
+  needs_replacement_vehicle?: boolean
+  includes_minor_maintenance?: boolean
+  includes_major_maintenance?: boolean
+  is_repeated_repair?: boolean
+  includes_cleaning?: boolean
+  est_used?: boolean
+  ca_used?: boolean
   created_by?: string | null
   updated_by?: string | null
   metadata?: Record<string, any> | null
@@ -167,7 +191,7 @@ export type FilterableServiceOrderProps = {
   customer_id?: string | string[]
   machine_id?: string | string[]
   technician_id?: string | string[]
-  service_type?: "normal" | "warranty" | "setup" | "emergency" | "preventive" | string[]
+  service_type?: "insurance" | "warranty" | "internal" | "standard" | "sales_prep" | "quote" | string[]
   status?: "draft" | "ready_for_pickup" | "in_progress" | "done" | "returned_for_review" | string[]
   priority?: "low" | "normal" | "high" | "urgent" | string[]
   service_location?: "workshop" | "customer_location" | string[]

@@ -2,9 +2,23 @@ import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
+// Function to get database URL with fallback
+function getDatabaseUrl() {
+  const directUrl = process.env.DATABASE_URL
+  const supabaseUrl = process.env.SUPABASE_DATABASE_URL || process.env.SUPABASE_URL
+  
+  // If FALLBACK_TO_SUPABASE is set, use Supabase URL instead
+  if (process.env.FALLBACK_TO_SUPABASE === 'true' && supabaseUrl) {
+    console.log('Using Supabase database connection')
+    return supabaseUrl
+  }
+  
+  return directUrl
+}
+
 module.exports = defineConfig({
   projectConfig: {
-    databaseUrl: process.env.DATABASE_URL,
+    databaseUrl: getDatabaseUrl(),
     http: {
       storeCors: process.env.STORE_CORS!,
       adminCors: process.env.ADMIN_CORS!,
@@ -37,6 +51,12 @@ module.exports = defineConfig({
     },
     {
       resolve: "./src/modules/invoicing",
+    },
+    {
+      resolve: "./src/modules/warranties",
+    },
+    {
+      resolve: "./src/modules/rentals",
     },
     {
       resolve: "@medusajs/index",
