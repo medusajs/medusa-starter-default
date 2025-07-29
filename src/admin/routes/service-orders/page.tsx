@@ -20,10 +20,10 @@ import {
   DropdownMenu,
   IconButton,
 } from "@medusajs/ui"
-import type { DataTableFilteringState } from "@medusajs/ui"
+import type { DataTableFilteringState, DataTablePaginationState } from "@medusajs/ui"
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useCustomTranslation } from "../../hooks/use-custom-translation"
 
 import { KanbanView } from "./components/kanban-view"
@@ -63,12 +63,10 @@ const useServiceOrderFilters = () => {
       type: "select",
       options: [
         { label: t("custom.serviceOrders.status.draft"), value: "draft" },
-        { label: t("custom.serviceOrders.status.scheduled"), value: "scheduled" },
+        { label: t("custom.serviceOrders.status.ready_for_pickup"), value: "ready_for_pickup" },
         { label: t("custom.serviceOrders.status.in_progress"), value: "in_progress" },
-        { label: t("custom.serviceOrders.status.waiting_parts"), value: "waiting_parts" },
-        { label: t("custom.serviceOrders.status.customer_approval"), value: "customer_approval" },
-        { label: t("custom.serviceOrders.status.completed"), value: "completed" },
-        { label: t("custom.serviceOrders.status.cancelled"), value: "cancelled" },
+        { label: t("custom.serviceOrders.status.done"), value: "done" },
+        { label: t("custom.serviceOrders.status.returned_for_review"), value: "returned_for_review" },
       ],
     }),
     filterHelper.accessor("priority", {
@@ -96,12 +94,23 @@ const useServiceOrderFilters = () => {
   ]
 }
 
-// Data fetching hooks
-const useServiceOrders = () => {
+// Data fetching hooks with proper pagination support
+const useServiceOrders = (query?: any) => {
   return useQuery({
-    queryKey: ["service-orders"],
+    queryKey: ["service-orders", query],
     queryFn: async () => {
-      const response = await fetch(`/admin/service-orders`)
+      const searchParams = new URLSearchParams()
+      if (query?.limit) searchParams.set('limit', query.limit.toString())
+      if (query?.offset) searchParams.set('offset', query.offset.toString())
+      if (query?.q) searchParams.set('q', query.q)
+      if (query?.status) searchParams.set('status', query.status)
+      if (query?.priority) searchParams.set('priority', query.priority)
+      if (query?.service_type) searchParams.set('service_type', query.service_type)
+      if (query?.customer_id) searchParams.set('customer_id', query.customer_id)
+      if (query?.technician_id) searchParams.set('technician_id', query.technician_id)
+      if (query?.tab) searchParams.set('tab', query.tab) // Add tab parameter
+      
+      const response = await fetch(`/admin/service-orders?${searchParams.toString()}`)
       if (!response.ok) {
         throw new Error("Failed to fetch service orders")
       }
@@ -111,7 +120,7 @@ const useServiceOrders = () => {
         count: data.count || 0
       }
     },
-    staleTime: 30000,
+    staleTime: 0, // Always consider data stale to ensure fresh data
     gcTime: 5 * 60 * 1000,
   })
 }
@@ -148,6 +157,68 @@ const useTechnicians = () => {
     },
     staleTime: 5 * 60 * 1000,
   })
+}
+
+// Service order table query hook following native Medusa pattern
+const useServiceOrderTableQuery = ({
+  prefix,
+  pageSize = 20,
+}: {
+  prefix?: string
+  pageSize?: number
+}) => {
+  const [searchParams, setSearchParams] = useSearchParams()
+  
+  const offsetKey = prefix ? `${prefix}_offset` : "offset"
+  const qKey = prefix ? `${prefix}_q` : "q"
+  const statusKey = prefix ? `${prefix}_status` : "status"
+  const priorityKey = prefix ? `${prefix}_priority` : "priority"
+  const serviceTypeKey = prefix ? `${prefix}_service_type` : "service_type"
+  const customerIdKey = prefix ? `${prefix}_customer_id` : "customer_id"
+  const technicianIdKey = prefix ? `${prefix}_technician_id` : "technician_id"
+
+  const offset = searchParams.get(offsetKey)
+  const q = searchParams.get(qKey)
+  const status = searchParams.get(statusKey)
+  const priority = searchParams.get(priorityKey)
+  const service_type = searchParams.get(serviceTypeKey)
+  const customer_id = searchParams.get(customerIdKey)
+  const technician_id = searchParams.get(technicianIdKey)
+
+  const queryParams = {
+    limit: pageSize,
+    offset: offset ? Number(offset) : 0,
+    q: q || undefined,
+    status: status || undefined,
+    priority: priority || undefined,
+    service_type: service_type || undefined,
+    customer_id: customer_id || undefined,
+    technician_id: technician_id || undefined,
+  }
+
+  // Function to update URL parameters
+  const updateParams = (updates: Record<string, string | number | null>) => {
+    setSearchParams((prevParams) => {
+      const newParams = new URLSearchParams(prevParams)
+      
+      Object.entries(updates).forEach(([key, value]) => {
+        const paramKey = prefix ? `${prefix}_${key}` : key
+        if (value !== null && value !== undefined && value !== '') {
+          newParams.set(paramKey, value.toString())
+        } else {
+          newParams.delete(paramKey)
+        }
+      })
+      
+      return newParams
+    })
+  }
+
+  return {
+    searchParams: queryParams,
+    updateParams,
+    raw: Object.fromEntries(searchParams.entries()),
+  }
 }
 
 // Service order actions component
@@ -203,18 +274,44 @@ export const config = defineRouteConfig({
 const BacklogDataTable = () => {
   const { t } = useCustomTranslation()
   const navigate = useNavigate()
-  const { data, isLoading, error } = useServiceOrders()
+  const { searchParams, updateParams } = useServiceOrderTableQuery({
+    pageSize: PAGE_SIZE,
+    prefix: "backlog"
+  })
+  
+  // Add tab parameter for server-side filtering
+  const backlogParams = { ...searchParams, tab: "backlog" }
+  
+  console.log('BacklogDataTable params:', backlogParams)
+  
+  const { data, isLoading, error } = useServiceOrders(backlogParams)
   const { data: customersData } = useCustomers()
   const { data: techniciansData } = useTechnicians()
   const filters = useServiceOrderFilters()
-  
-  // Filter state management
+
+  // State management for search, filtering, and pagination
   const [search, setSearch] = React.useState("")
   const [filtering, setFiltering] = React.useState<DataTableFilteringState>({})
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: PAGE_SIZE,
-  })
+
+  // Sync search with URL parameters
+  React.useEffect(() => {
+    if (searchParams.q !== search) {
+      setSearch(searchParams.q || "")
+    }
+  }, [searchParams.q])
+
+  // Handle search changes with URL sync
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
+    updateParams({ q: value || null, offset: 0 }) // Reset to first page when searching
+  }
+
+  // Handle filtering changes with URL sync
+  const handleFilteringChange = (filters: DataTableFilteringState) => {
+    setFiltering(filters)
+    // You can add URL sync for filters here if needed
+    updateParams({ offset: 0 }) // Reset to first page when filtering
+  }
 
   // Extract arrays from data - following MedusaJS native patterns
   const customers = customersData?.customers || []
@@ -241,50 +338,45 @@ const BacklogDataTable = () => {
     return map
   }, [technicians])
 
-  // Data processing - only draft orders
+  // Data processing - server-side filtered, no client-side filtering needed
   const serviceOrders = data?.service_orders || []
-  const backlogOrders = serviceOrders.filter((order: any) => order.status === "draft")
+  const count = data?.count || 0
 
   // Status and priority badge functions
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      draft: { color: "orange" as const, label: t("custom.serviceOrders.status.draft") },
-      ready_for_pickup: { color: "blue" as const, label: t("custom.serviceOrders.status.ready_for_pickup") },
-      in_progress: { color: "purple" as const, label: t("custom.serviceOrders.status.in_progress") },
-      done: { color: "green" as const, label: t("custom.serviceOrders.status.done") },
-      returned_for_review: { color: "orange" as const, label: t("custom.serviceOrders.status.returned_for_review") },
-    } as const
-
-    const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey" as const, label: status }
-    
-    return (
-      <StatusBadge color={config.color}>
-        {config.label}
-      </StatusBadge>
-    )
+    const statusConfig: Record<string, { label: string; color: any }> = {
+      draft: { label: t("custom.serviceOrders.status.draft"), color: "grey" },
+      ready_for_pickup: { label: t("custom.serviceOrders.status.ready_for_pickup"), color: "blue" },
+      in_progress: { label: t("custom.serviceOrders.status.in_progress"), color: "orange" },
+      done: { label: t("custom.serviceOrders.status.done"), color: "green" },
+      returned_for_review: { label: t("custom.serviceOrders.status.returned_for_review"), color: "red" },
+    }
+    const config = statusConfig[status] || { label: status, color: "grey" }
+    return <StatusBadge color={config.color}>{config.label}</StatusBadge>
   }
 
   const getPriorityBadge = (priority: string) => {
-    const priorityConfig = {
-      low: { color: "grey" as const, label: t("custom.serviceOrders.priorities.low") },
-      normal: { color: "blue" as const, label: t("custom.serviceOrders.priorities.normal") },
-      high: { color: "orange" as const, label: t("custom.serviceOrders.priorities.high") },
-      urgent: { color: "red" as const, label: t("custom.serviceOrders.priorities.urgent") },
-    } as const
-
-    const config = priorityConfig[priority as keyof typeof priorityConfig] || { color: "grey" as const, label: priority }
-    
-    return (
-      <StatusBadge color={config.color}>
-        {config.label}
-      </StatusBadge>
-    )
+    const priorityConfig: Record<string, { label: string; color: any }> = {
+      low: { label: t("custom.serviceOrders.priorities.low"), color: "green" },
+      normal: { label: t("custom.serviceOrders.priorities.normal"), color: "blue" },
+      high: { label: t("custom.serviceOrders.priorities.high"), color: "orange" },
+      urgent: { label: t("custom.serviceOrders.priorities.urgent"), color: "red" },
+    }
+    const config = priorityConfig[priority] || { label: priority, color: "grey" }
+    return <StatusBadge color={config.color}>{config.label}</StatusBadge>
   }
 
   const getServiceTypeBadge = (serviceType: string) => {
-    return (
-      <ServiceTypeLabel serviceType={serviceType} />
-    )
+    const typeConfig: Record<string, { label: string; color: any }> = {
+      standard: { label: t("custom.serviceOrders.service_types.standard"), color: "green" },
+      warranty: { label: t("custom.serviceOrders.service_types.warranty"), color: "purple" },
+      internal: { label: t("custom.serviceOrders.service_types.internal"), color: "red" },
+      insurance: { label: t("custom.serviceOrders.service_types.insurance"), color: "blue" },
+      sales_prep: { label: t("custom.serviceOrders.service_types.sales_prep"), color: "orange" },
+      quote: { label: t("custom.serviceOrders.service_types.quote"), color: "orange" },
+    }
+    const config = typeConfig[serviceType] || { label: serviceType, color: "grey" }
+    return <Badge color={config.color}>{config.label}</Badge>
   }
 
   // Column helper and columns definition
@@ -360,25 +452,36 @@ const BacklogDataTable = () => {
     }),
   ]
 
-  // DataTable setup
+  // Current pagination state from URL
+  const currentPage = Math.floor((searchParams.offset || 0) / PAGE_SIZE)
+
+  // DataTable setup using the correct API for this project
   const table = useDataTable({
-    data: backlogOrders,
+    data: serviceOrders ?? [],
     columns,
-    filters,
-    rowCount: backlogOrders.length,
+    rowCount: count,
     getRowId: (row) => row.id,
+    pagination: {
+      state: {
+        pageIndex: currentPage,
+        pageSize: PAGE_SIZE,
+      },
+      onPaginationChange: (pagination: any) => {
+        const pageIndex = typeof pagination === 'function' 
+          ? pagination({ pageIndex: currentPage, pageSize: PAGE_SIZE }).pageIndex
+          : pagination.pageIndex
+        updateParams({ offset: pageIndex * PAGE_SIZE })
+      },
+    },
     search: {
       state: search,
-      onSearchChange: setSearch,
+      onSearchChange: handleSearchChange,
     },
     filtering: {
       state: filtering,
-      onFilteringChange: setFiltering,
+      onFilteringChange: handleFilteringChange,
     },
-    pagination: {
-      state: pagination,
-      onPaginationChange: setPagination,
-    },
+    filters,
     onRowClick: (event, row) => {
       navigate(`/service-orders/${row.id}`)
     },
@@ -420,18 +523,44 @@ const BacklogDataTable = () => {
 const ActiveOrdersDataTable = () => {
   const { t } = useCustomTranslation()
   const navigate = useNavigate()
-  const { data, isLoading, error } = useServiceOrders()
+  const { searchParams, updateParams } = useServiceOrderTableQuery({
+    pageSize: PAGE_SIZE,
+    prefix: "active"
+  })
+  
+  // Add tab parameter for server-side filtering
+  const activeParams = { ...searchParams, tab: "active" }
+  
+  console.log('ActiveOrdersDataTable params:', activeParams)
+  
+  const { data, isLoading, error } = useServiceOrders(activeParams)
   const { data: customersData } = useCustomers()
   const { data: techniciansData } = useTechnicians()
   const filters = useServiceOrderFilters()
-  
-  // Filter state management
+
+  // State management for search, filtering, and pagination
   const [search, setSearch] = React.useState("")
   const [filtering, setFiltering] = React.useState<DataTableFilteringState>({})
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: PAGE_SIZE,
-  })
+
+  // Sync search with URL parameters
+  React.useEffect(() => {
+    if (searchParams.q !== search) {
+      setSearch(searchParams.q || "")
+    }
+  }, [searchParams.q])
+
+  // Handle search changes with URL sync
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
+    updateParams({ q: value || null, offset: 0 }) // Reset to first page when searching
+  }
+
+  // Handle filtering changes with URL sync
+  const handleFilteringChange = (filters: DataTableFilteringState) => {
+    setFiltering(filters)
+    // You can add URL sync for filters here if needed
+    updateParams({ offset: 0 }) // Reset to first page when filtering
+  }
 
   // Extract arrays from data
   const customers = customersData?.customers || []
@@ -458,53 +587,48 @@ const ActiveOrdersDataTable = () => {
     return map
   }, [technicians])
 
-  // Data processing - only active orders (not draft)
+  // Data processing - server-side filtered, no client-side filtering needed
   const serviceOrders = data?.service_orders || []
-  const activeOrders = serviceOrders.filter((order: any) => order.status !== "draft")
+  const count = data?.count || 0
 
-  // Badge functions (same as backlog)
+  // Status and priority badge functions
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      draft: { color: "orange" as const, label: t("custom.serviceOrders.status.draft") },
-      ready_for_pickup: { color: "blue" as const, label: t("custom.serviceOrders.status.ready_for_pickup") },
-      in_progress: { color: "purple" as const, label: t("custom.serviceOrders.status.in_progress") },
-      done: { color: "green" as const, label: t("custom.serviceOrders.status.done") },
-      returned_for_review: { color: "orange" as const, label: t("custom.serviceOrders.status.returned_for_review") },
-    } as const
-
-    const config = statusConfig[status as keyof typeof statusConfig] || { color: "grey" as const, label: status }
-    
-    return (
-      <StatusBadge color={config.color}>
-        {config.label}
-      </StatusBadge>
-    )
+    const statusConfig: Record<string, { label: string; color: any }> = {
+      draft: { label: t("custom.serviceOrders.status.draft"), color: "grey" },
+      ready_for_pickup: { label: t("custom.serviceOrders.status.ready_for_pickup"), color: "blue" },
+      in_progress: { label: t("custom.serviceOrders.status.in_progress"), color: "orange" },
+      done: { label: t("custom.serviceOrders.status.done"), color: "green" },
+      returned_for_review: { label: t("custom.serviceOrders.status.returned_for_review"), color: "red" },
+    }
+    const config = statusConfig[status] || { label: status, color: "grey" }
+    return <StatusBadge color={config.color}>{config.label}</StatusBadge>
   }
 
   const getPriorityBadge = (priority: string) => {
-    const priorityConfig = {
-      low: { color: "grey" as const, label: t("custom.serviceOrders.priorities.low") },
-      normal: { color: "blue" as const, label: t("custom.serviceOrders.priorities.normal") },
-      high: { color: "orange" as const, label: t("custom.serviceOrders.priorities.high") },
-      urgent: { color: "red" as const, label: t("custom.serviceOrders.priorities.urgent") },
-    } as const
-
-    const config = priorityConfig[priority as keyof typeof priorityConfig] || { color: "grey" as const, label: priority }
-    
-    return (
-      <StatusBadge color={config.color}>
-        {config.label}
-      </StatusBadge>
-    )
+    const priorityConfig: Record<string, { label: string; color: any }> = {
+      low: { label: t("custom.serviceOrders.priorities.low"), color: "green" },
+      normal: { label: t("custom.serviceOrders.priorities.normal"), color: "blue" },
+      high: { label: t("custom.serviceOrders.priorities.high"), color: "orange" },
+      urgent: { label: t("custom.serviceOrders.priorities.urgent"), color: "red" },
+    }
+    const config = priorityConfig[priority] || { label: priority, color: "grey" }
+    return <StatusBadge color={config.color}>{config.label}</StatusBadge>
   }
 
   const getServiceTypeBadge = (serviceType: string) => {
-    return (
-      <ServiceTypeLabel serviceType={serviceType} />
-    )
+    const typeConfig: Record<string, { label: string; color: any }> = {
+      standard: { label: t("custom.serviceOrders.service_types.standard"), color: "green" },
+      warranty: { label: t("custom.serviceOrders.service_types.warranty"), color: "purple" },
+      internal: { label: t("custom.serviceOrders.service_types.internal"), color: "red" },
+      insurance: { label: t("custom.serviceOrders.service_types.insurance"), color: "blue" },
+      sales_prep: { label: t("custom.serviceOrders.service_types.sales_prep"), color: "orange" },
+      quote: { label: t("custom.serviceOrders.service_types.quote"), color: "orange" },
+    }
+    const config = typeConfig[serviceType] || { label: serviceType, color: "grey" }
+    return <Badge color={config.color}>{config.label}</Badge>
   }
 
-  // Column definitions
+  // Column helper and columns definition
   const columnHelper = createDataTableColumnHelper<ServiceOrder>()
 
   const columns = [
@@ -577,25 +701,36 @@ const ActiveOrdersDataTable = () => {
     }),
   ]
 
-  // DataTable setup
+  // Current pagination state from URL
+  const currentPage = Math.floor((searchParams.offset || 0) / PAGE_SIZE)
+
+  // DataTable setup using the correct API for this project
   const table = useDataTable({
-    data: activeOrders,
+    data: serviceOrders ?? [],
     columns,
-    filters,
-    rowCount: activeOrders.length,
+    rowCount: count,
     getRowId: (row) => row.id,
+    pagination: {
+      state: {
+        pageIndex: currentPage,
+        pageSize: PAGE_SIZE,
+      },
+      onPaginationChange: (pagination: any) => {
+        const pageIndex = typeof pagination === 'function' 
+          ? pagination({ pageIndex: currentPage, pageSize: PAGE_SIZE }).pageIndex
+          : pagination.pageIndex
+        updateParams({ offset: pageIndex * PAGE_SIZE })
+      },
+    },
     search: {
       state: search,
-      onSearchChange: setSearch,
+      onSearchChange: handleSearchChange,
     },
     filtering: {
       state: filtering,
-      onFilteringChange: setFiltering,
+      onFilteringChange: handleFilteringChange,
     },
-    pagination: {
-      state: pagination,
-      onPaginationChange: setPagination,
-    },
+    filters,
     onRowClick: (event, row) => {
       navigate(`/service-orders/${row.id}`)
     },

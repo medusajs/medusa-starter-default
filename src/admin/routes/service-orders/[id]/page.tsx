@@ -40,12 +40,10 @@ const ServiceOrderDetails = () => {
 
   const statusVariants = {
     draft: "orange",
-    scheduled: "blue",
+    ready_for_pickup: "blue",
     in_progress: "purple", 
-    waiting_parts: "orange",
-    customer_approval: "orange",
-    completed: "green",
-    cancelled: "red",
+    done: "green",
+    returned_for_review: "red",
   } as const
 
   const serviceTypeVariants = {
@@ -75,9 +73,29 @@ const ServiceOrderDetails = () => {
               </StatusBadge>
               <ServiceTypeLabel serviceType={so.service_type} />
             </div>
-            <Text className="text-ui-fg-subtle">
+            <Text className="text-ui-fg-subtle mb-2">
               {so.description}
             </Text>
+            <div className="flex items-center gap-4 text-sm text-ui-fg-subtle mb-2">
+              <span>Created: {new Date(so.created_at).toLocaleDateString()}</span>
+              <span>Updated: {new Date(so.updated_at).toLocaleDateString()}</span>
+            </div>
+            {(so.internal_notes || so.customer_notes) && (
+              <div className="space-y-1">
+                {so.internal_notes && (
+                  <div className="text-sm">
+                    <span className="text-ui-fg-subtle font-medium">Internal Notes:</span>
+                    <span className="text-ui-fg-subtle ml-2">{so.internal_notes}</span>
+                  </div>
+                )}
+                {so.customer_notes && (
+                  <div className="text-sm">
+                    <span className="text-ui-fg-subtle font-medium">Customer Notes:</span>
+                    <span className="text-ui-fg-subtle ml-2">{so.customer_notes}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </Container>

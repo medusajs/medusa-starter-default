@@ -35,12 +35,10 @@ const ServiceOrderStatusHistoryWidget = ({ data: serviceOrder }: ServiceOrderSta
   const getStatusColor = (status: string): "red" | "orange" | "blue" | "green" | "purple" | "grey" => {
     const statusColors = {
       draft: "orange",
-      scheduled: "blue",
+      ready_for_pickup: "blue",
       in_progress: "purple",
-      waiting_parts: "orange",
-      customer_approval: "orange",
-      completed: "green",
-      cancelled: "red",
+      done: "green",
+      returned_for_review: "red",
     } as const
 
     return statusColors[status as keyof typeof statusColors] || "grey"

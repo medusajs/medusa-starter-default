@@ -304,9 +304,9 @@ export default async function loadServiceOrders({ container }: ExecArgs) {
                 service_order_id: serviceOrder.id,
                 title: partRow.part_description || `Part ${partRow.part_number || itemIndex + 1}`,
                 description: partRow.part_number ? `Part Number: ${partRow.part_number}` : null,
-                quantity: parseNumber(partRow.part_quantity) || 1,
+                quantity_needed: parseNumber(partRow.part_quantity) || 1,
                 unit_price: parseNumber(partRow.part_price) || 0,
-                total_amount: (parseNumber(partRow.part_quantity) || 1) * (parseNumber(partRow.part_price) || 0),
+                total_price: (parseNumber(partRow.part_quantity) || 1) * (parseNumber(partRow.part_price) || 0),
                 status: "pending" as const,
                 metadata: {
                   legacy_part_number: partRow.part_number,

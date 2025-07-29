@@ -50,8 +50,11 @@ const ServiceOrderStatusActionsWidget = ({ data: serviceOrder }: ServiceOrderSta
     },
     onSuccess: () => {
       toast.success("Service order status updated successfully!")
+      // Invalidate all service order related queries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ["service-order", serviceOrder.id] })
       queryClient.invalidateQueries({ queryKey: ["service-orders"] })
+      queryClient.invalidateQueries({ queryKey: ["service-orders-customers"] })
+      queryClient.invalidateQueries({ queryKey: ["service-orders-technicians"] })
       setShowUpdateModal(false)
       setNewStatus('')
       setReason('')
@@ -73,22 +76,18 @@ const ServiceOrderStatusActionsWidget = ({ data: serviceOrder }: ServiceOrderSta
 
   const statuses = [
     { value: 'draft', label: 'Draft' },
-    { value: 'scheduled', label: 'Scheduled' }, 
+    { value: 'ready_for_pickup', label: 'Ready for Pickup' },
     { value: 'in_progress', label: 'In Progress' },
-    { value: 'waiting_parts', label: 'Waiting for Parts' },
-    { value: 'customer_approval', label: 'Customer Approval' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'cancelled', label: 'Cancelled' }
+    { value: 'done', label: 'Done' },
+    { value: 'returned_for_review', label: 'Returned for Review' }
   ]
 
   const statusVariants = {
     draft: "orange",
-    scheduled: "blue",
+    ready_for_pickup: "blue",
     in_progress: "purple", 
-    waiting_parts: "orange",
-    customer_approval: "orange",
-    completed: "green",
-    cancelled: "red",
+    done: "green",
+    returned_for_review: "red",
   } as const
 
   const priorityVariants = {

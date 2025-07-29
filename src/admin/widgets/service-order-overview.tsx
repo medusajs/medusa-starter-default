@@ -1,6 +1,6 @@
 import { Container, Heading, Text, Badge, Skeleton, Button, Input, Select, Textarea, Label, StatusBadge } from "@medusajs/ui"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { PencilSquare, User, CogSixTooth, Buildings } from "@medusajs/icons"
+import { PencilSquare, User, CogSixTooth, Buildings, Calendar, DocumentText } from "@medusajs/icons"
 import { useState } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { ServiceTypeLabel } from "../components/common/service-type-label"
@@ -28,6 +28,8 @@ interface ServiceOrder {
   includes_cleaning: boolean
   est_used: boolean
   ca_used: boolean
+  internal_notes?: string
+  customer_notes?: string
   created_at: string
   updated_at: string
 }
@@ -448,6 +450,38 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
                     {serviceOrder.priority}
                   </StatusBadge>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Notes Section */}
+          <div className="px-6 py-4">
+            <div className="grid grid-cols-[28px_1fr] items-start gap-x-3">
+              <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
+                <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
+                  <DocumentText className="text-ui-fg-subtle" />
+                </div>
+              </div>
+              <div className="min-w-0">
+                <Label size="small" weight="plus" className="mb-2">
+                  Notes
+                </Label>
+                {serviceOrder.internal_notes && (
+                  <div className="flex items-start gap-2 mb-2">
+                    <Label size="small" weight="plus" className="text-ui-fg-subtle">
+                      Internal:
+                    </Label>
+                    <Text size="small">{serviceOrder.internal_notes}</Text>
+                  </div>
+                )}
+                {serviceOrder.customer_notes && (
+                  <div className="flex items-start gap-2">
+                    <Label size="small" weight="plus" className="text-ui-fg-subtle">
+                      Customer:
+                    </Label>
+                    <Text size="small">{serviceOrder.customer_notes}</Text>
+                  </div>
+                )}
               </div>
             </div>
           </div>

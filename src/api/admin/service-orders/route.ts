@@ -15,12 +15,32 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       technician_id,
       q,
       limit = 50, 
-      offset = 0 
+      offset = 0,
+      tab // Add tab parameter for backlog vs active filtering
     } = req.query
+    
+    // Debug logging
+    console.log('Service Orders API called with:', { tab, status, limit, offset })
     
     // Build filters
     const filters: any = {}
-    if (status) filters.status = status
+    
+    // Handle tab-based filtering (backlog vs active)
+    if (tab === "backlog") {
+      filters.status = "draft"
+      console.log('Applying backlog filter: status = draft')
+    } else if (tab === "active") {
+      // For active tab, exclude draft orders
+      filters.status = { $ne: "draft" }
+      console.log('Applying active filter: status != draft')
+    } else if (status) {
+      // If specific status is provided, use it
+      filters.status = status
+      console.log('Applying specific status filter:', status)
+    }
+    
+    console.log('Final filters applied:', filters)
+    
     if (priority) filters.priority = priority
     if (service_type) filters.service_type = service_type
     if (customer_id) filters.customer_id = customer_id
@@ -43,6 +63,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
     // Use the service method for consistency with detail view
     const serviceOrders = await serviceOrdersService.listServiceOrdersWithLinks(filters)
+    
+    console.log('Fetched orders:', {
+      totalCount: serviceOrders.length,
+      statuses: serviceOrders.map(o => ({ id: o.id, status: o.status })).slice(0, 10)
+    })
     
     // Apply pagination manually since we're using the service method
     const paginatedOrders = serviceOrders.slice(Number(offset), Number(offset) + Number(limit))
