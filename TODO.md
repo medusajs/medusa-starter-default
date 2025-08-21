@@ -6,6 +6,35 @@ This file serves as a progress tracker and memory system for development tasks o
 
 ### ✅ Completed
 
+- [x] **Align Service Order Status Dropdown with Updated Statuses** ✅ **COMPLETED**
+  - [x] Identify issue: Status dropdown in service order detail screen using old status values
+  - [x] Update status actions widget to use correct statuses: draft, ready_for_pickup, in_progress, done, returned_for_review
+  - [x] Update service order detail page statusVariants object
+  - [x] Update service order status history widget statusColors object
+  - [x] Update service orders list page filter options and status badge configurations
+  - [x] Verify translation files already contain correct status labels for both English and Dutch
+  - [x] **FINAL RESULT**: Service order status dropdown now correctly aligned with updated status workflow throughout the application
+
+- [x] **Fix Service Type Status Badge Translation Issue** ✅ **COMPLETED**
+  - [x] Identify issue: Service type badges showing translation keys instead of translated text
+  - [x] Add missing `service_types` section to English translation file (en.json)
+  - [x] Add missing `service_types` section to Dutch translation file (nl.json)
+  - [x] Ensure all service types have proper translations: standard, warranty, internal, insurance, sales_prep, quote
+  - [x] **FINAL RESULT**: Service type status badges now display proper translated text instead of translation keys
+
+- [x] **Fix Service Order DataTable Pagination Implementation** ✅ **COMPLETED**
+  - [x] Identify issues: Current implementation doesn't sync pagination state with URL parameters properly
+  - [x] The pagination state in the DataTable is local and doesn't trigger API refetches
+  - [x] Missing URL parameter synchronization following native Medusa patterns
+  - [x] Update useServiceOrderTableQuery to properly handle URL-based pagination with useSearchParams
+  - [x] Remove local pagination state and use URL-based pagination following native patterns
+  - [x] Ensure pagination changes trigger proper API refetches with updated offset/limit
+  - [x] Test pagination functionality to confirm proper data fetching and URL updates
+  - [x] **SEARCH FUNCTIONALITY**: Implement proper search state management and URL synchronization
+  - [x] Add search configuration to useDataTable calls following official Medusa documentation
+  - [x] Connect search changes to API refetches with search query parameter
+  - [x] **FINAL RESULT**: Service order data table pagination and search now work correctly with URL-based state management, automatic API refetches, and proper offset/limit/search handling following native Medusa patterns
+
 - [x] **Fix Card Import Error in Rental Detail Page** ✅ **COMPLETED**
   - [x] Identify issue: rental detail page importing non-existent `Card` component from `@medusajs/ui`
   - [x] Remove `Card` import from `@medusajs/ui` imports
@@ -284,6 +313,15 @@ This file serves as a progress tracker and memory system for development tasks o
 
 ### ✅ Completed
 
+- [x] **Fix Service Order Pagination After Date Column Addition** ✅ **COMPLETED**
+  - [x] Restore server-side filtering with tab parameter in API endpoint
+  - [x] Add tab parameter back to BacklogDataTable component (tab="backlog")
+  - [x] Add tab parameter back to ActiveOrdersDataTable component (tab="active")
+  - [x] Remove client-side filtering that was causing pagination count issues
+  - [x] Remove debugging console.log statements
+  - [x] Ensure proper server-side filtering: backlog shows only draft orders, active shows non-draft orders
+  - [x] Fix pagination to work with server-side filtered data
+
 - [x] **Fix Machine Details Page Issue** ✅ **COMPLETED**
   - [x] Identify the issue: missing machine detail page (`/machines/[id]/page.tsx`)
   - [x] Analyze patterns from native Medusa detail pages and existing service order detail
@@ -317,7 +355,54 @@ This file serves as a progress tracker and memory system for development tasks o
   - [x] Add comprehensive translations for warranties module
   - [x] **FINAL RESULT**: Professional admin UI with full CRUD functionality, filtering, search, and detailed warranty management interface
 
+- [x] **Update Service Type Badges to Use Regular Badge Component** ✅ **COMPLETED**
+  - [x] Replace StatusBadge with regular Badge component for service types
+  - [x] Use background colors for better visual distinction: green (standard), purple (warranty), red (internal), blue (insurance), orange (sales_prep, quote)
+  - [x] Apply changes to both BacklogDataTable and ActiveOrdersDataTable components
+  - [x] Maintain proper translation support for all service type labels
+  - [x] **FINAL RESULT**: Service type badges now use prominent background colors for better visual hierarchy and distinction
+
+- [x] **Display Imported Service Order Notes Data** ✅ **COMPLETED**
+  - [x] Add internal_notes and customer_notes fields to ServiceOrder interface
+  - [x] Add notes section to service order overview widget with DocumentText icon
+  - [x] Display internal notes and customer notes separately in overview widget
+  - [x] Add notes information to service order detail page header
+  - [x] Show notes below dates in header for immediate visibility
+  - [x] Support notes data imported from load-service-orders.ts script
+  - [x] Handle cases where notes may be null or empty
+
+- [x] **Add Service Order Date Visualization** ✅ **COMPLETED**
+
 ### 🔄 In Progress
+- [x] **Fix Technician Details Screen 404 Error** ✅ **COMPLETED**
+  - [x] Identify issue: Missing technician detail page route structure (`/technicians/[id]/page.tsx`)
+  - [x] Confirm API endpoint exists and works correctly
+  - [x] Analyze existing machine detail page pattern for reference
+  - [x] Create technician detail page following native Medusa patterns
+  - [x] Fix all icon import issues (replace non-existent icons with available Medusa UI icons)
+  - [x] Fix API endpoint method names (retrieveTechnician, updateTechnician, deleteTechnician)
+  - [x] Refactor to use native TwoColumnPage layout with proper widget structure
+  - [x] Implement native drawer pattern for edit action using EditTechnicianForm component
+  - [x] Fix form initialization issues and add debugging for drawer functionality
+  - [x] Add View action to technician list page actions dropdown
+  - [x] Test navigation from technician list to detail page
+  - [x] Ensure proper data fetching and display
+- [ ] **Fix Service Order Kanban View Card Visibility Issue** 
+  - [x] Identify root cause: Data source mismatch between kanban view and list view
+  - [x] Kanban view uses useServiceOrders() without tab parameter (fetches ALL orders, filters client-side)
+  - [x] List view uses useServiceOrders() with tab:"active" parameter (filters server-side)
+  - [x] Kanban view only shows orders with statuses in statusConfig array (ready_for_pickup, in_progress, done, returned_for_review)
+  - [x] Orders with unknown/undefined statuses are filtered out by kanban statusConfig logic
+  - [ ] Fix kanban view to use consistent server-side filtered data source
+  - [ ] Add debugging to identify any service orders with unexpected statuses
+  - [ ] Test to ensure all cards visible in list view also appear in kanban view
+- [ ] **Fix Service Order Status Update Visibility Issue**
+  - [x] Identify issue: Orders moving from draft to ready_for_pickup disappear from backlog but don't appear in active tab
+  - [x] Add comprehensive query invalidation to ensure all related queries are refreshed
+  - [x] Add debugging logs to track data flow between backlog and active tabs
+  - [x] Set staleTime to 0 to ensure fresh data is always fetched
+  - [ ] Test status updates to verify orders properly move between tabs
+  - [ ] Remove debugging logs once issue is resolved
 - [ ] **Deployment Planning and Setup**
   - [ ] Research and document deployment options (Vercel, Railway, Render, etc.)
   - [ ] Prepare environment variables and configuration for production
@@ -331,6 +416,12 @@ This file serves as a progress tracker and memory system for development tasks o
   - [x] Removed unused code and simplified structure
   - [ ] Test script execution to ensure it runs without errors
   - [ ] Verify CSV processing and product creation works correctly
+- [ ] **Fix Service Orders Import Script Quantity Field Issue** ✅ **COMPLETED**
+  - [x] Identified issue: script using 'quantity' instead of 'quantity_needed' field name
+  - [x] Fixed field name to match ServiceOrderItem model requirements
+  - [x] Fixed 'total_amount' to 'total_price' to match model schema
+  - [x] Updated script to correctly use part_quantity from CSV for item quantities
+  - [ ] Test script execution to ensure service order items are created properly
 
 ### 📋 Pending Tasks
 - [ ] Ready for new tasks and feature development
@@ -352,4 +443,4 @@ This file serves as a progress tracker and memory system for development tasks o
 - Timer feature simplified to focus only on time logging, work details handled elsewhere
 - Belgium-focused currency (€) used throughout the interface
 
-*Last updated: Current session - Simplified timer to focus purely on time logging without work details*
+*Last updated: Current session - Fixed Service Order DataTable pagination implementation with proper URL-based state management, automatic API refetches when changing pages, and native Medusa pattern compliance*

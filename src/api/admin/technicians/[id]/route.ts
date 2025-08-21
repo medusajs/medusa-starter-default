@@ -6,7 +6,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     const techniciansService = req.scope.resolve(TECHNICIANS_MODULE)
     
-    const technician = await techniciansService.retrieveTechnicians(id)
+    const technician = await techniciansService.retrieveTechnician(id)
     
     res.json({
       technician: technician
@@ -25,7 +25,7 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     const techniciansService = req.scope.resolve(TECHNICIANS_MODULE)
     
-    const technician = await techniciansService.updateTechnicians(id, req.body)
+    const technician = await techniciansService.updateTechnician(id, req.body)
     
     res.json({
       technician: technician
@@ -44,7 +44,7 @@ export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     const techniciansService = req.scope.resolve(TECHNICIANS_MODULE)
     
-    await techniciansService.deleteTechnicians(id)
+    await techniciansService.deleteTechnician(id)
     
     res.status(204).send()
   } catch (error) {

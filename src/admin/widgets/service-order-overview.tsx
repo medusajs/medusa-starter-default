@@ -1,6 +1,6 @@
 import { Container, Heading, Text, Badge, Skeleton, Button, Input, Select, Textarea, Label, StatusBadge } from "@medusajs/ui"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { PencilSquare, User, CogSixTooth, Buildings, Calendar, DocumentText } from "@medusajs/icons"
+import { PencilSquare } from "@medusajs/icons"
 import { useState } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { ServiceTypeLabel } from "../components/common/service-type-label"
@@ -15,6 +15,7 @@ interface ServiceOrder {
   status: string
   customer_id?: string
   machine_id?: string
+  technician_id?: string
   total_labor_cost?: number
   total_parts_cost?: number
   total_cost?: number
@@ -92,10 +93,36 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
     enabled: isEditing,
   })
 
+  // Fetch technicians for dropdown
+  const { data: technicians } = useQuery({
+    queryKey: ['service-order-overview-technicians'],
+    queryFn: async () => {
+      const response = await fetch('/admin/technicians')
+      if (!response.ok) throw new Error('Failed to fetch technicians')
+      const data = await response.json()
+      return data.technicians
+    },
+    enabled: isEditing,
+  })
+
+  // Fetch technician data
+  const { data: technician, isLoading: technicianLoading } = useQuery({
+    queryKey: ['technician', serviceOrder?.technician_id],
+    queryFn: async () => {
+      if (!serviceOrder?.technician_id) return null
+      const response = await fetch(`/admin/technicians/${serviceOrder.technician_id}`)
+      if (!response.ok) throw new Error('Failed to fetch technician')
+      const data = await response.json()
+      return data.technician
+    },
+    enabled: !!serviceOrder?.technician_id,
+  })
+
   const form = useForm({
     defaultValues: {
       customer_id: serviceOrder?.customer_id || '',
       machine_id: serviceOrder?.machine_id || '',
+      technician_id: serviceOrder?.technician_id || 'unassigned',
       description: serviceOrder?.description || '',
       service_type: serviceOrder?.service_type || '',
       priority: serviceOrder?.priority || '',
@@ -119,7 +146,12 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
   })
 
   const handleSubmit = form.handleSubmit((data) => {
-    updateMutation.mutate(data)
+    // Convert "unassigned" to null for technician_id
+    const processedData = {
+      ...data,
+      technician_id: data.technician_id === "unassigned" ? null : data.technician_id
+    }
+    updateMutation.mutate(processedData)
   })
 
   const handleCancel = () => {
@@ -138,14 +170,14 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
     urgent: "red",
   } as const
 
-  const serviceTypeVariants = {
-    standard: "green",
-    warranty: "purple", 
-    sales_prep: "orange",
-    internal: "red",
-    insurance: "blue",
-    quote: "orange",
+  const statusVariants = {
+    draft: "orange",
+    ready_for_pickup: "blue",
+    in_progress: "purple", 
+    done: "green",
+    returned_for_review: "red",
   } as const
+
 
   const serviceTypes = [
     'insurance',
@@ -166,7 +198,13 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
-        <Heading level="h2">Service Details</Heading>
+        <div className="flex items-center gap-3">
+          <Heading level="h2">{serviceOrder.service_order_number}</Heading>
+          <StatusBadge color={statusVariants[serviceOrder.status as keyof typeof statusVariants]}>
+            {serviceOrder.status.replace('_', ' ')}
+          </StatusBadge>
+          <ServiceTypeLabel serviceType={serviceOrder.service_type} />
+        </div>
         {!isEditing && (
           <Button 
             size="small" 
@@ -287,6 +325,32 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
               />
             </div>
 
+            {/* Technician Field */}
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="technician" size="small" weight="plus">Assigned Technician</Label>
+              <Controller
+                control={form.control}
+                name="technician_id"
+                render={({ field }) => (
+                  <Select {...field} onValueChange={field.onChange}>
+                    <Select.Trigger>
+                      <Select.Value placeholder="Select technician" />
+                    </Select.Trigger>
+                    <Select.Content>
+                      <Select.Item value="unassigned">No technician assigned</Select.Item>
+                      {technicians?.map((tech: any) => (
+                        <Select.Item key={tech.id} value={tech.id}>
+                          {tech.first_name && tech.last_name 
+                            ? `${tech.first_name} ${tech.last_name}` 
+                            : tech.email}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select>
+                )}
+              />
+            </div>
+
             {/* Action Buttons */}
             <div className="flex items-center justify-end gap-x-2 pt-4">
               <Button 
@@ -309,14 +373,20 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
         </form>
       ) : (
         <>
-          {/* Customer Section */}
+          {/* Description Section - Most Important */}
           <div className="px-6 py-4">
-            <div className="grid grid-cols-[28px_1fr] items-start gap-x-3">
-              <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
-                <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
-                  <User className="text-ui-fg-subtle" />
-                </div>
-              </div>
+            <div className="min-w-0">
+              <Label size="small" weight="plus" className="mb-2">
+                Description
+              </Label>
+              <Text size="small">{serviceOrder.description}</Text>
+            </div>
+          </div>
+
+          {/* Key Relationships Section */}
+          <div className="px-6 py-4">
+            <div className="grid grid-cols-1 gap-4">
+              {/* Customer */}
               <div className="min-w-0">
                 <Label size="small" weight="plus" className="mb-2">
                   Customer
@@ -340,17 +410,8 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
                   <Text size="small" className="text-ui-fg-muted">No customer assigned</Text>
                 )}
               </div>
-            </div>
-          </div>
 
-          {/* Machine Section */}
-          <div className="px-6 py-4">
-            <div className="grid grid-cols-[28px_1fr] items-start gap-x-3">
-              <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
-                <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
-                  <CogSixTooth className="text-ui-fg-subtle" />
-                </div>
-              </div>
+              {/* Machine */}
               <div className="min-w-0">
                 <Label size="small" weight="plus" className="mb-2">
                   Machine
@@ -400,68 +461,64 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
                   <Text size="small" className="text-ui-fg-muted">No machine assigned</Text>
                 )}
               </div>
-            </div>
-          </div>
 
-          {/* Description Section */}
-          <div className="px-6 py-4">
-            <div className="grid grid-cols-[28px_1fr] items-start gap-x-3">
-              <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
-                <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
-                  <Buildings className="text-ui-fg-subtle" />
-                </div>
-              </div>
+              {/* Technician */}
               <div className="min-w-0">
                 <Label size="small" weight="plus" className="mb-2">
-                  Description
+                  Assigned Technician
                 </Label>
-                <Text size="small">{serviceOrder.description}</Text>
+                {technicianLoading ? (
+                  <Skeleton className="h-5 w-48" />
+                ) : technician ? (
+                  <div className="space-y-1">
+                    <Text size="small">
+                      {technician.first_name && technician.last_name 
+                        ? `${technician.first_name} ${technician.last_name}` 
+                        : technician.email}
+                    </Text>
+                    {technician.employee_id && (
+                      <div className="flex items-center gap-2">
+                        <Label size="small" weight="plus" className="text-ui-fg-subtle">
+                          Employee ID:
+                        </Label>
+                        <Text size="small">
+                          {technician.employee_id}
+                        </Text>
+                      </div>
+                    )}
+                    {technician.department && (
+                      <div className="flex items-center gap-2">
+                        <Label size="small" weight="plus" className="text-ui-fg-subtle">
+                          Department:
+                        </Label>
+                        <Text size="small">
+                          {technician.department}
+                        </Text>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Text size="small" className="text-ui-fg-muted">No technician assigned</Text>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Service Type & Priority Section */}
+          {/* Priority Section - Status and Service Type now in header */}
           <div className="px-6 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid grid-cols-[28px_1fr] items-start gap-x-3">
-                <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
-                  <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
-                    <CogSixTooth className="text-ui-fg-subtle" />
-                  </div>
-                </div>
-                <div className="min-w-0 flex flex-col">
-                  <Label size="small" weight="plus" className="mb-2">
-                    Service Type
-                  </Label>
-                  <ServiceTypeLabel serviceType={serviceOrder.service_type} />
-                </div>
-              </div>
-              <div className="grid grid-cols-[28px_1fr] items-start gap-x-3">
-                <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
-                  <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
-                    <User className="text-ui-fg-subtle" />
-                  </div>
-                </div>
-                <div className="min-w-0 flex flex-col">
-                  <Label size="small" weight="plus" className="mb-2">
-                    Priority
-                  </Label>
-                  <StatusBadge color={priorityVariants[serviceOrder.priority as keyof typeof priorityVariants]}>
-                    {serviceOrder.priority}
-                  </StatusBadge>
-                </div>
-              </div>
+            <div className="min-w-0 flex flex-col">
+              <Label size="small" weight="plus" className="mb-2">
+                Priority
+              </Label>
+              <StatusBadge color={priorityVariants[serviceOrder.priority as keyof typeof priorityVariants]}>
+                {serviceOrder.priority}
+              </StatusBadge>
             </div>
           </div>
 
           {/* Notes Section */}
-          <div className="px-6 py-4">
-            <div className="grid grid-cols-[28px_1fr] items-start gap-x-3">
-              <div className="bg-ui-bg-base shadow-borders-base flex size-7 items-center justify-center rounded-md">
-                <div className="bg-ui-bg-component flex size-6 items-center justify-center rounded-[4px]">
-                  <DocumentText className="text-ui-fg-subtle" />
-                </div>
-              </div>
+          {(serviceOrder.internal_notes || serviceOrder.customer_notes) && (
+            <div className="px-6 py-4">
               <div className="min-w-0">
                 <Label size="small" weight="plus" className="mb-2">
                   Notes
@@ -482,6 +539,28 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
                     <Text size="small">{serviceOrder.customer_notes}</Text>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Metadata Section */}
+          <div className="px-6 py-4 bg-ui-bg-subtle">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label size="small" weight="plus" className="text-ui-fg-subtle mb-1 block">
+                  Created
+                </Label>
+                <Text size="small" className="text-ui-fg-muted">
+                  {new Date(serviceOrder.created_at).toLocaleDateString()}
+                </Text>
+              </div>
+              <div>
+                <Label size="small" weight="plus" className="text-ui-fg-subtle mb-1 block">
+                  Updated
+                </Label>
+                <Text size="small" className="text-ui-fg-muted">
+                  {new Date(serviceOrder.updated_at).toLocaleDateString()}
+                </Text>
               </div>
             </div>
           </div>

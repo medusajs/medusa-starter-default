@@ -29,6 +29,7 @@ const ServiceOrderTimeEntry = model.define("service_order_time_entry", {
   is_billable: model.boolean().default(true),
   
   // Status
+  is_active: model.boolean().default(false), // For real-time timer tracking
   is_approved: model.boolean().default(false),
   approved_by: model.text().nullable(),
   approved_at: model.dateTime().nullable(),

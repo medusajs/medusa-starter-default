@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { useForm, Controller } from "react-hook-form"
+import { useState, useEffect, useMemo } from "react"
+import { useForm, Controller, FieldPath, useWatch } from "react-hook-form"
 import { 
   Container, 
   Heading, 
@@ -7,22 +7,27 @@ import {
   Badge,
   Text,
   toast,
-  FocusModal,
   Input,
   Textarea,
   Label,
-  Select,
   Drawer,
   DropdownMenu,
   IconButton,
   DataTable,
   useDataTable,
   createDataTableColumnHelper,
+  Checkbox,
+  ProgressTabs,
+  ProgressStatus,
+  FocusModal,
 } from "@medusajs/ui"
-import { Plus, DocumentText, ArrowUpTray, PencilSquare, Trash, ArrowDownTray, MagnifyingGlass, EllipsisHorizontal } from "@medusajs/icons"
+import { Plus, DocumentText, ArrowUpTray, PencilSquare, Trash, ArrowDownTray, EllipsisHorizontal, MagnifyingGlass } from "@medusajs/icons"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as zod from "zod"
+import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
+import { ProductSearchModal } from "./modals/product-search-modal"
 
 interface PriceList {
   id: string
@@ -46,8 +51,11 @@ interface PriceListItem {
   product_variant_id: string
   supplier_sku?: string
   variant_sku?: string
+  product?: {
+    id: string
+    title: string
+  }
   gross_price?: number
-  discount_amount?: number
   discount_percentage?: number
   net_price: number
   quantity?: number
@@ -80,31 +88,25 @@ interface ProductSearchResult {
   variants: ProductVariant[]
 }
 
+interface SelectedVariantForPricing {
+  id: string
+  product_id: string
+  title: string
+  sku?: string
+  product?: {
+    id: string
+    title: string
+  }
+}
+
 const addItemSchema = zod.object({
-  product_variant_id: zod.string().min(1, "Please select a product variant"),
-  product_id: zod.string().min(1, "Product ID is required"),
   supplier_sku: zod.string().optional(),
-  variant_sku: zod.string().optional(),
   gross_price: zod.number().min(0, "Gross price must be 0 or greater").optional(),
-  discount_amount: zod.number().min(0, "Discount amount must be 0 or greater").optional(),
   discount_percentage: zod.number().min(0, "Discount percentage must be 0 or greater").max(100, "Discount percentage cannot exceed 100").optional(),
   net_price: zod.number().min(0, "Net price must be 0 or greater").refine(val => val > 0, "Net price is required"),
   quantity: zod.number().min(1, "Quantity must be at least 1").default(1),
   lead_time_days: zod.number().min(0).optional(),
   notes: zod.string().optional()
-}).refine((data) => {
-  return data.product_variant_id && data.product_id
-}, {
-  message: "Valid product variant must be selected",
-  path: ["product_variant_id"]
-}).refine((data) => {
-  // Ensure only one discount type is used
-  const hasDiscountAmount = data.discount_amount !== undefined && data.discount_amount > 0
-  const hasDiscountPercentage = data.discount_percentage !== undefined && data.discount_percentage > 0
-  return !hasDiscountAmount || !hasDiscountPercentage
-}, {
-  message: "Please use either discount amount or discount percentage, not both",
-  path: ["discount_amount"]
 })
 
 type AddItemFormData = zod.infer<typeof addItemSchema>
@@ -115,17 +117,32 @@ interface SupplierPriceListsProps {
 
 export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) => {
   const queryClient = useQueryClient()
-  const [showAddItemModal, setShowAddItemModal] = useState(false)
+  const navigate = useNavigate()
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [showEditDrawer, setShowEditDrawer] = useState(false)
+  const [showAddModal, setShowAddModal] = useState(false)
   const [editingItem, setEditingItem] = useState<PriceListItem | null>(null)
+  const [selectedVariantForAdd, setSelectedVariantForAdd] = useState<SelectedVariantForPricing | null>(null)
+  const [productSearchOpen, setProductSearchOpen] = useState(false)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
-  const [productSearch, setProductSearch] = useState("")
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [tableSearch, setTableSearch] = useState("")
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
+  })
+
+  const editItemForm = useForm<AddItemFormData>({
+    resolver: zodResolver(addItemSchema),
+    defaultValues: {
+      variant_id: "",
+      supplier_sku: "",
+      gross_price: undefined,
+      discount_percentage: undefined,
+      net_price: 0,
+      quantity: 1,
+      lead_time_days: 0,
+      notes: ""
+    }
   })
 
   const { data: priceListData, isLoading, error } = useQuery({
@@ -140,86 +157,10 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     enabled: !!supplier?.id,
   })
 
-  const { data: productSearchResults, isLoading: isSearching } = useQuery({
-    queryKey: ["product-search", productSearch],
-    queryFn: async () => {
-      if (!productSearch.trim()) return { products: [] }
-      const response = await fetch(`/admin/products?q=${encodeURIComponent(productSearch)}&limit=20`)
-      if (!response.ok) {
-        throw new Error(`Failed to search products: ${response.statusText}`)
-      }
-      return response.json()
-    },
-    enabled: productSearch.trim().length > 0,
-    staleTime: 300000, // 5 minutes
-  })
 
-  const addItemForm = useForm<AddItemFormData>({
-    resolver: zodResolver(addItemSchema),
-    defaultValues: {
-      product_variant_id: "",
-      product_id: "",
-      supplier_sku: "",
-      variant_sku: "",
-      gross_price: 0,
-      discount_amount: 0,
-      discount_percentage: 0,
-      net_price: 0,
-      quantity: 1,
-      lead_time_days: 0,
-      notes: ""
-    }
-  })
 
-  const editItemForm = useForm<AddItemFormData>({
-    resolver: zodResolver(addItemSchema),
-    defaultValues: {
-      product_variant_id: "",
-      product_id: "",
-      supplier_sku: "",
-      variant_sku: "",
-      gross_price: 0,
-      discount_amount: 0,
-      discount_percentage: 0,
-      net_price: 0,
-      quantity: 1,
-      lead_time_days: 0,
-      notes: ""
-    }
-  })
 
-  // Update form when variant is selected
-  useEffect(() => {
-    if (selectedVariant) {
-      addItemForm.setValue("product_variant_id", selectedVariant.id)
-      addItemForm.setValue("product_id", selectedVariant.product_id)
-      addItemForm.setValue("variant_sku", selectedVariant.sku || "")
-      addItemForm.trigger(["product_variant_id", "product_id"])
-    }
-  }, [selectedVariant, addItemForm])
 
-  const addItemMutation = useMutation({
-    mutationFn: async (data: AddItemFormData) => {
-      const response = await fetch(`/admin/suppliers/${supplier.id}/price-lists/items`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || `Request failed: ${response.statusText}`)
-      }
-      return response.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["supplier-price-list", supplier.id] })
-      handleModalClose()
-      toast.success("Item added successfully")
-    },
-    onError: (error) => {
-      toast.error(`Failed to add item: ${error.message}`)
-    }
-  })
 
   const uploadCSVMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -298,41 +239,78 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     }
   })
 
-  const handleAddItem = addItemForm.handleSubmit(async (data) => {
-    // Additional validation
-    if (!selectedVariant) {
+  // Simple form for adding items manually
+  const addItemForm = useForm<AddItemFormData>({
+    resolver: zodResolver(addItemSchema),
+    defaultValues: {
+      supplier_sku: "",
+      gross_price: undefined,
+      discount_percentage: undefined,
+      net_price: 0,
+      quantity: 1,
+      lead_time_days: 0,
+      notes: ""
+    }
+  })
+
+  const addItemMutation = useMutation({
+    mutationFn: async (data: AddItemFormData) => {
+      if (!selectedVariantForAdd) {
+        throw new Error("Please select a product variant")
+      }
+      const priceList = priceListData?.price_list
+      if (!priceList) {
+        throw new Error("No active price list found")
+      }
+      const response = await fetch(`/admin/suppliers/${supplier.id}/price-lists/${priceList.id}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...data,
+          product_variant_id: selectedVariantForAdd.id,
+          product_id: selectedVariantForAdd.product_id,
+          // gross_price not persisted in current schema; keep client-side only
+          net_price: data.net_price && !isNaN(data.net_price) ? Math.round(data.net_price * 100) : 0
+        }),
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `Request failed: ${response.statusText}`)
+      }
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["supplier-price-list", supplier.id] })
+      setShowAddModal(false)
+      addItemForm.reset()
+      toast.success("Item added successfully")
+    },
+    onError: (error) => {
+      toast.error(`Failed to add item: ${error.message}`)
+    }
+  })
+
+  const handleAddItem = () => {
+    setShowAddModal(true)
+  }
+
+  const handleAddModalClose = () => {
+    setShowAddModal(false)
+    addItemForm.reset()
+    setSelectedVariantForAdd(null)
+  }
+
+  const handleProductSelect = (variant: SelectedVariantForPricing) => {
+    setSelectedVariantForAdd(variant)
+  }
+
+  const handleSubmitAddItem = addItemForm.handleSubmit(async (data) => {
+    if (!selectedVariantForAdd) {
       toast.error("Please select a product variant")
       return
     }
-    
-    // Check if item already exists
-    const existingItems = priceListData?.items || []
-    const existingItem = existingItems.find(item => 
-      item.product_variant_id === data.product_variant_id
-    )
-    
-    if (existingItem) {
-      toast.error("This product variant is already in the price list")
-      return
-    }
-    
-    // Convert prices to cents for storage
-    const processedData = {
-      ...data,
-      gross_price: data.gross_price ? Math.round(data.gross_price * 100) : undefined,
-      discount_amount: data.discount_amount ? Math.round(data.discount_amount * 100) : undefined,
-      net_price: Math.round(data.net_price * 100)
-    }
-    
-    addItemMutation.mutate(processedData)
+    addItemMutation.mutate(data)
   })
-
-  const handleModalClose = () => {
-    setShowAddItemModal(false)
-    setSelectedVariant(null)
-    setProductSearch("")
-    addItemForm.reset()
-  }
 
   const handleEditDrawerClose = () => {
     setShowEditDrawer(false)
@@ -343,13 +321,10 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
   const handleEditItem = (item: PriceListItem) => {
     setEditingItem(item)
     editItemForm.reset({
-      product_variant_id: item.product_variant_id,
-      product_id: item.product_id,
+      variant_id: item.product_variant_id,
       supplier_sku: item.supplier_sku || "",
-      variant_sku: item.variant_sku || "",
-      gross_price: item.gross_price ? item.gross_price / 100 : 0,
-      discount_amount: item.discount_amount ? item.discount_amount / 100 : 0,
-      discount_percentage: item.discount_percentage || 0,
+      gross_price: item.gross_price ? item.gross_price / 100 : undefined,
+      discount_percentage: item.discount_percentage || undefined,
       net_price: item.net_price / 100,
       quantity: item.quantity || 1,
       lead_time_days: item.lead_time_days || 0,
@@ -365,8 +340,8 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     const processedData = {
       ...data,
       itemId: editingItem.id,
+      product_variant_id: data.variant_id,
       gross_price: data.gross_price ? Math.round(data.gross_price * 100) : undefined,
-      discount_amount: data.discount_amount ? Math.round(data.discount_amount * 100) : undefined,
       net_price: Math.round(data.net_price * 100)
     }
 
@@ -415,20 +390,33 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     if (!tableSearch) return true
     const search = tableSearch.toLowerCase()
     return (
-      item.variant_sku?.toLowerCase().includes(search) ||
       item.supplier_sku?.toLowerCase().includes(search) ||
-      item.notes?.toLowerCase().includes(search)
+      item.notes?.toLowerCase().includes(search) ||
+      item.product?.title?.toLowerCase().includes(search)
     )
   })
 
   const columnHelper = createDataTableColumnHelper<PriceListItem>()
 
   const columns = [
-    columnHelper.accessor("variant_sku", {
-      header: "Product SKU",
-      cell: ({ getValue }) => (
-        <Text className="font-mono text-sm">{getValue() || "—"}</Text>
-      ),
+    columnHelper.display({
+      id: "variant_info",
+      header: "Product",
+      cell: ({ row }) => {
+        const item = row.original
+        return (
+          <div className="flex flex-col gap-1">
+            <Text className="font-medium text-sm">
+              {item.product?.title || "Product"}
+            </Text>
+            {item.variant_sku && (
+              <Text className="font-mono text-xs text-ui-fg-subtle">
+                SKU: {item.variant_sku}
+              </Text>
+            )}
+          </div>
+        )
+      },
     }),
     columnHelper.accessor("supplier_sku", {
       header: "Supplier SKU", 
@@ -444,19 +432,13 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
         </Text>
       ),
     }),
-    columnHelper.display({
-      id: "discount",
+    columnHelper.accessor("discount_percentage", {
       header: "Discount",
-      cell: ({ row }) => {
-        const { discount_amount, discount_percentage } = row.original
-        if (discount_amount) {
-          return <Text>{`${priceList?.currency_code || "USD"} ${(discount_amount / 100).toFixed(2)}`}</Text>
-        }
-        if (discount_percentage) {
-          return <Text>{discount_percentage}%</Text>
-        }
-        return <Text>—</Text>
-      },
+      cell: ({ getValue }) => (
+        <Text>
+          {getValue() ? `${getValue()}%` : "—"}
+        </Text>
+      ),
     }),
     columnHelper.accessor("net_price", {
       header: "Net Price",
@@ -569,7 +551,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                 <ArrowUpTray />
                 Upload CSV
               </Button>
-              <Button variant="primary" size="small" onClick={() => setShowAddItemModal(true)}>
+              <Button variant="primary" size="small" onClick={handleAddItem}>
                 <Plus />
                 Add Item
               </Button>
@@ -585,7 +567,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
               Add items manually or upload a CSV file to get started
             </Text>
             <div className="flex gap-2 justify-center">
-              <Button onClick={() => setShowAddItemModal(true)}>
+              <Button onClick={handleAddItem}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add Item
               </Button>
@@ -605,344 +587,24 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
         )}
       </DataTable>
 
-      {/* Single Add Item Modal */}
-      <FocusModal open={showAddItemModal} onOpenChange={handleModalClose}>
-        <FocusModal.Content>
-          <FocusModal.Header>
-            <Button 
-              variant="primary" 
-              size="small"
-              onClick={handleAddItem}
-              disabled={addItemMutation.isPending}
-            >
-              {addItemMutation.isPending ? "Adding..." : "Add Item"}
-            </Button>
-          </FocusModal.Header>
-          <FocusModal.Body className="flex flex-col items-center p-16">
-            <div className="w-full max-w-lg">
-              <div className="mb-8 text-center">
-                <Heading level="h2" className="mb-2">Add Price List Item</Heading>
-                <Text className="text-ui-fg-subtle">
-                  Add a new item to the price list
-                </Text>
-              </div>
-              
-              <form className="space-y-4">
-                {/* Product Variant Selection */}
-                <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="product_search">Search Products *</Label>
-                  <div className="relative">
-                    <Input
-                      id="product_search"
-                      placeholder="Search for products..."
-                      value={productSearch}
-                      onChange={(e) => setProductSearch(e.target.value)}
-                      className="pl-10"
-                    />
-                    <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-ui-fg-subtle w-4 h-4" />
-                  </div>
-                  
-                  {/* Product Search Results */}
-                  {productSearch.trim() && (
-                    <div className="mt-2 border rounded-lg max-h-60 overflow-y-auto">
-                      {isSearching ? (
-                        <div className="p-4 text-center">
-                          <Text size="small" className="text-ui-fg-subtle">Searching...</Text>
-                        </div>
-                      ) : (
-                        <div className="divide-y">
-                          {productSearchResults?.products?.map((product: any) => (
-                            <div key={product.id} className="p-3">
-                              <Text className="font-medium mb-2">{product.title}</Text>
-                              <div className="space-y-1">
-                                {product.variants?.map((variant: ProductVariant) => (
-                                  <div 
-                                    key={variant.id} 
-                                    className={`p-2 rounded cursor-pointer transition-colors ${
-                                      selectedVariant?.id === variant.id 
-                                        ? 'bg-ui-bg-interactive text-ui-fg-on-color' 
-                                        : 'hover:bg-ui-bg-subtle'
-                                    }`}
-                                    onClick={() => setSelectedVariant(variant)}
-                                  >
-                                    <div className="flex justify-between items-center">
-                                      <div>
-                                        <Text size="small" className="font-medium">
-                                          {variant.title}
-                                        </Text>
-                                        {variant.sku && (
-                                          <Text size="xsmall" className="text-ui-fg-subtle">
-                                            SKU: {variant.sku}
-                                          </Text>
-                                        )}
-                                      </div>
-                                      {selectedVariant?.id === variant.id && (
-                                        <Badge color="green" size="small">Selected</Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                          {productSearchResults?.products?.length === 0 && (
-                            <div className="p-4 text-center">
-                              <Text size="small" className="text-ui-fg-subtle">No products found</Text>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* Selected Variant Display */}
-                  {selectedVariant && (
-                    <div className="mt-2 p-3 bg-ui-bg-subtle rounded-lg">
-                      <Text size="small" className="text-ui-fg-subtle mb-1">Selected Product Variant:</Text>
-                      <Text className="font-medium">{selectedVariant.product?.title || 'Unknown Product'}</Text>
-                      <Text size="small">{selectedVariant.title}</Text>
-                      {selectedVariant.sku && (
-                        <Text size="xsmall" className="text-ui-fg-subtle">SKU: {selectedVariant.sku}</Text>
-                      )}
-                    </div>
-                  )}
-                  
-                  <Controller
-                    name="product_variant_id"
-                    control={addItemForm.control}
-                    render={({ fieldState }) => (
-                      <>
-                        {fieldState.error && (
-                          <Text size="xsmall" className="text-ui-fg-error">
-                            {fieldState.error.message}
-                          </Text>
-                        )}
-                      </>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex flex-col gap-y-2">
-                    <Label htmlFor="supplier_sku">Supplier SKU</Label>
-                    <Controller
-                      name="supplier_sku"
-                      control={addItemForm.control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          id="supplier_sku"
-                          placeholder="Enter supplier SKU"
-                        />
-                      )}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-y-2">
-                    <Label htmlFor="variant_sku">Variant SKU</Label>
-                    <Controller
-                      name="variant_sku"
-                      control={addItemForm.control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          id="variant_sku"
-                          placeholder="Enter variant SKU"
-                        />
-                      )}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-y-2">
-                    <Label htmlFor="gross_price">Gross Price (RRP)</Label>
-                    <Controller
-                      name="gross_price"
-                      control={addItemForm.control}
-                      render={({ field, fieldState }) => (
-                        <div className="flex flex-col gap-y-1">
-                          <Input
-                            {...field}
-                            id="gross_price"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="0.00"
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
-                          {fieldState.error && (
-                            <Text size="xsmall" className="text-ui-fg-error">
-                              {fieldState.error.message}
-                            </Text>
-                          )}
-                        </div>
-                      )}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-y-2">
-                    <Label htmlFor="discount_amount">Discount Amount</Label>
-                    <Controller
-                      name="discount_amount"
-                      control={addItemForm.control}
-                      render={({ field, fieldState }) => (
-                        <div className="flex flex-col gap-y-1">
-                          <Input
-                            {...field}
-                            id="discount_amount"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="0.00"
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
-                          {fieldState.error && (
-                            <Text size="xsmall" className="text-ui-fg-error">
-                              {fieldState.error.message}
-                            </Text>
-                          )}
-                        </div>
-                      )}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-y-2">
-                    <Label htmlFor="discount_percentage">Discount %</Label>
-                    <Controller
-                      name="discount_percentage"
-                      control={addItemForm.control}
-                      render={({ field, fieldState }) => (
-                        <div className="flex flex-col gap-y-1">
-                          <Input
-                            {...field}
-                            id="discount_percentage"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            max="100"
-                            placeholder="0.00"
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
-                          {fieldState.error && (
-                            <Text size="xsmall" className="text-ui-fg-error">
-                              {fieldState.error.message}
-                            </Text>
-                          )}
-                        </div>
-                      )}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-y-2">
-                    <Label htmlFor="net_price">Net Price (What You Pay) *</Label>
-                    <Controller
-                      name="net_price"
-                      control={addItemForm.control}
-                      render={({ field, fieldState }) => (
-                        <div className="flex flex-col gap-y-1">
-                          <Input
-                            {...field}
-                            id="net_price"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="0.00"
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
-                          {fieldState.error && (
-                            <Text size="xsmall" className="text-ui-fg-error">
-                              {fieldState.error.message}
-                            </Text>
-                          )}
-                        </div>
-                      )}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-y-2">
-                    <Label htmlFor="quantity">Quantity</Label>
-                    <Controller
-                      name="quantity"
-                      control={addItemForm.control}
-                      render={({ field, fieldState }) => (
-                        <div className="flex flex-col gap-y-1">
-                          <Input
-                            {...field}
-                            id="quantity"
-                            type="number"
-                            min="1"
-                            placeholder="1"
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                          />
-                          {fieldState.error && (
-                            <Text size="xsmall" className="text-ui-fg-error">
-                              {fieldState.error.message}
-                            </Text>
-                          )}
-                        </div>
-                      )}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-y-2">
-                    <Label htmlFor="lead_time_days">Lead Time (Days)</Label>
-                    <Controller
-                      name="lead_time_days"
-                      control={addItemForm.control}
-                      render={({ field, fieldState }) => (
-                        <div className="flex flex-col gap-y-1">
-                          <Input
-                            {...field}
-                            id="lead_time_days"
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                          />
-                          {fieldState.error && (
-                            <Text size="xsmall" className="text-ui-fg-error">
-                              {fieldState.error.message}
-                            </Text>
-                          )}
-                        </div>
-                      )}
-                    />
-                  </div>
-                  <div className="md:col-span-3 flex flex-col gap-y-2">
-                    <Label htmlFor="notes">Notes</Label>
-                    <Controller
-                      name="notes"
-                      control={addItemForm.control}
-                      render={({ field }) => (
-                        <Textarea
-                          {...field}
-                          id="notes"
-                          rows={3}
-                          placeholder="Additional notes..."
-                        />
-                      )}
-                    />
-                  </div>
-                </div>
-              </form>
-            </div>
-          </FocusModal.Body>
-        </FocusModal.Content>
-      </FocusModal>
 
       {/* Single Upload CSV Modal */}
-      <FocusModal open={showUploadModal} onOpenChange={setShowUploadModal}>
-        <FocusModal.Content>
-          <FocusModal.Header>
-            <Button 
-              variant="primary" 
-              size="small"
-              onClick={handleUploadCSV} 
-              disabled={!uploadFile || uploadCSVMutation.isPending}
-            >
-              {uploadCSVMutation.isPending ? "Uploading..." : "Upload & Replace"}
-            </Button>
-          </FocusModal.Header>
-          <FocusModal.Body className="flex flex-col items-center p-16">
-            <div className="w-full max-w-lg">
-              <div className="mb-8 text-center">
-                <Heading level="h2" className="mb-2">Upload Price List CSV</Heading>
-                <Text className="text-ui-fg-subtle">
-                  Upload a CSV file to overwrite existing prices. This will replace all current price list items.
-                </Text>
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-semibold">Upload Price List CSV</h2>
+                <Button variant="secondary" size="small" onClick={() => setShowUploadModal(false)}>
+                  Cancel
+                </Button>
               </div>
+            </div>
+            
+            <div className="p-6">
+              <Text className="text-ui-fg-subtle mb-4">
+                Upload a CSV file to overwrite existing prices. This will replace all current price list items.
+              </Text>
               
               <div className="space-y-4">
                 <div>
@@ -961,7 +623,256 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                 )}
               </div>
             </div>
+            
+            <div className="p-6 border-t flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setShowUploadModal(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleUploadCSV} 
+                disabled={!uploadFile || uploadCSVMutation.isPending}
+                isLoading={uploadCSVMutation.isPending}
+              >
+                Upload & Replace
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Item Modal */}
+      <FocusModal open={showAddModal} onOpenChange={setShowAddModal}>
+        <FocusModal.Trigger asChild>
+          <div />
+        </FocusModal.Trigger>
+        <FocusModal.Content>
+          <FocusModal.Header>
+            <FocusModal.Title>Add Price List Item</FocusModal.Title>
+            <FocusModal.Description>
+              Add a new item to the price list with pricing information
+            </FocusModal.Description>
+          </FocusModal.Header>
+          <FocusModal.Body className="p-6">
+            <form onSubmit={handleSubmitAddItem} className="space-y-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Product Search *</Label>
+                  <div className="relative">
+                    <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-fg-muted" />
+                    <Input
+                      placeholder="Search for a product to add..."
+                      value={selectedVariantForAdd ? `${selectedVariantForAdd.product?.title} - ${selectedVariantForAdd.title}` : ""}
+                      onClick={() => setProductSearchOpen(true)}
+                      readOnly
+                      className="pl-9 cursor-pointer"
+                    />
+                  </div>
+                  <Text size="small" className="text-ui-fg-subtle">
+                    Click to search and select a product variant
+                  </Text>
+                </div>
+                
+                {selectedVariantForAdd && (
+                  <div className="p-4 bg-ui-bg-subtle rounded-lg">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <Text className="font-medium">{selectedVariantForAdd.product?.title}</Text>
+                        <Text size="small" className="text-ui-fg-subtle">{selectedVariantForAdd.title}</Text>
+                        {selectedVariantForAdd.sku && (
+                          <Text size="xsmall" className="text-ui-fg-muted">SKU: {selectedVariantForAdd.sku}</Text>
+                        )}
+                      </div>
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        type="button"
+                        onClick={() => setSelectedVariantForAdd(null)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-y-2">
+                  <Label htmlFor="add_supplier_sku">Supplier SKU</Label>
+                  <Controller
+                    name="supplier_sku"
+                    control={addItemForm.control}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        id="add_supplier_sku"
+                        placeholder="Enter supplier SKU (optional)"
+                      />
+                    )}
+                  />
+                </div>
+                <div className="flex flex-col gap-y-2">
+                  <Label htmlFor="add_gross_price">Gross Price (RRP)</Label>
+                  <Controller
+                    name="gross_price"
+                    control={addItemForm.control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex flex-col gap-y-1">
+                        <Input
+                          {...field}
+                          id="add_gross_price"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
+                        />
+                        {fieldState.error && (
+                          <Text size="xsmall" className="text-ui-fg-error">
+                            {fieldState.error.message}
+                          </Text>
+                        )}
+                      </div>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-y-2">
+                  <Label htmlFor="add_discount_percentage">Discount %</Label>
+                  <Controller
+                    name="discount_percentage"
+                    control={addItemForm.control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex flex-col gap-y-1">
+                        <Input
+                          {...field}
+                          id="add_discount_percentage"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          placeholder="0.00"
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
+                        />
+                        {fieldState.error && (
+                          <Text size="xsmall" className="text-ui-fg-error">
+                            {fieldState.error.message}
+                          </Text>
+                        )}
+                      </div>
+                    )}
+                  />
+                </div>
+                <div className="flex flex-col gap-y-2">
+                  <Label htmlFor="add_net_price">Net Price (What You Pay) *</Label>
+                  <Controller
+                    name="net_price"
+                    control={addItemForm.control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex flex-col gap-y-1">
+                        <Input
+                          {...field}
+                          id="add_net_price"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                        {fieldState.error && (
+                          <Text size="xsmall" className="text-ui-fg-error">
+                            {fieldState.error.message}
+                          </Text>
+                        )}
+                      </div>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-y-2">
+                  <Label htmlFor="add_quantity">Minimum Order Quantity</Label>
+                  <Controller
+                    name="quantity"
+                    control={addItemForm.control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex flex-col gap-y-1">
+                        <Input
+                          {...field}
+                          id="add_quantity"
+                          type="number"
+                          min="1"
+                          placeholder="1"
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        />
+                        {fieldState.error && (
+                          <Text size="xsmall" className="text-ui-fg-error">
+                            {fieldState.error.message}
+                          </Text>
+                        )}
+                      </div>
+                    )}
+                  />
+                </div>
+                <div className="flex flex-col gap-y-2">
+                  <Label htmlFor="add_lead_time_days">Lead Time (Days)</Label>
+                  <Controller
+                    name="lead_time_days"
+                    control={addItemForm.control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex flex-col gap-y-1">
+                        <Input
+                          {...field}
+                          id="add_lead_time_days"
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        />
+                        {fieldState.error && (
+                          <Text size="xsmall" className="text-ui-fg-error">
+                            {fieldState.error.message}
+                          </Text>
+                        )}
+                      </div>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-y-2">
+                <Label htmlFor="add_notes">Notes</Label>
+                <Controller
+                  name="notes"
+                  control={addItemForm.control}
+                  render={({ field }) => (
+                    <Textarea
+                      {...field}
+                      id="add_notes"
+                      rows={3}
+                      placeholder="Additional notes about this item..."
+                    />
+                  )}
+                />
+              </div>
+            </form>
           </FocusModal.Body>
+          <FocusModal.Footer>
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={handleAddModalClose}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSubmitAddItem}
+                disabled={addItemMutation.isPending || !selectedVariantForAdd}
+                isLoading={addItemMutation.isPending}
+              >
+                Add Item
+              </Button>
+            </div>
+          </FocusModal.Footer>
         </FocusModal.Content>
       </FocusModal>
 
@@ -976,7 +887,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
           </Drawer.Header>
           <Drawer.Body className="p-6">
             <form onSubmit={handleUpdateItem} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-y-2">
                   <Label htmlFor="edit_supplier_sku">Supplier SKU</Label>
                   <Controller
@@ -986,21 +897,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                       <Input
                         {...field}
                         id="edit_supplier_sku"
-                        placeholder="Enter supplier SKU"
-                      />
-                    )}
-                  />
-                </div>
-                <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="edit_variant_sku">Variant SKU</Label>
-                  <Controller
-                    name="variant_sku"
-                    control={editItemForm.control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="edit_variant_sku"
-                        placeholder="Enter variant SKU"
+                        placeholder="Enter supplier SKU (optional)"
                       />
                     )}
                   />
@@ -1019,7 +916,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                           step="0.01"
                           min="0"
                           placeholder="0.00"
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
                         />
                         {fieldState.error && (
                           <Text size="xsmall" className="text-ui-fg-error">
@@ -1030,31 +927,9 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                     )}
                   />
                 </div>
-                <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="edit_discount_amount">Discount Amount</Label>
-                  <Controller
-                    name="discount_amount"
-                    control={editItemForm.control}
-                    render={({ field, fieldState }) => (
-                      <div className="flex flex-col gap-y-1">
-                        <Input
-                          {...field}
-                          id="edit_discount_amount"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                        {fieldState.error && (
-                          <Text size="xsmall" className="text-ui-fg-error">
-                            {fieldState.error.message}
-                          </Text>
-                        )}
-                      </div>
-                    )}
-                  />
-                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-y-2">
                   <Label htmlFor="edit_discount_percentage">Discount %</Label>
                   <Controller
@@ -1070,7 +945,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                           min="0"
                           max="100"
                           placeholder="0.00"
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
                         />
                         {fieldState.error && (
                           <Text size="xsmall" className="text-ui-fg-error">
@@ -1106,8 +981,11 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                     )}
                   />
                 </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="edit_quantity">Quantity</Label>
+                  <Label htmlFor="edit_quantity">Minimum Order Quantity</Label>
                   <Controller
                     name="quantity"
                     control={editItemForm.control}
@@ -1154,21 +1032,22 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                     )}
                   />
                 </div>
-                <div className="md:col-span-3 flex flex-col gap-y-2">
-                  <Label htmlFor="edit_notes">Notes</Label>
-                  <Controller
-                    name="notes"
-                    control={editItemForm.control}
-                    render={({ field }) => (
-                      <Textarea
-                        {...field}
-                        id="edit_notes"
-                        rows={3}
-                        placeholder="Additional notes..."
-                      />
-                    )}
-                  />
-                </div>
+              </div>
+              
+              <div className="flex flex-col gap-y-2">
+                <Label htmlFor="edit_notes">Notes</Label>
+                <Controller
+                  name="notes"
+                  control={editItemForm.control}
+                  render={({ field }) => (
+                    <Textarea
+                      {...field}
+                      id="edit_notes"
+                      rows={3}
+                      placeholder="Additional notes about this item..."
+                    />
+                  )}
+                />
               </div>
             </form>
           </Drawer.Body>
@@ -1180,7 +1059,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
               <Button 
                 onClick={handleUpdateItem}
                 disabled={editItemMutation.isPending}
-                loading={editItemMutation.isPending}
+                isLoading={editItemMutation.isPending}
               >
                 Update Item
               </Button>
@@ -1188,6 +1067,13 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
           </Drawer.Footer>
         </Drawer.Content>
       </Drawer>
+      
+      <ProductSearchModal
+        open={productSearchOpen}
+        onOpenChange={setProductSearchOpen}
+        onSelect={handleProductSelect}
+        selectedVariant={selectedVariantForAdd}
+      />
     </Container>
   )
 }

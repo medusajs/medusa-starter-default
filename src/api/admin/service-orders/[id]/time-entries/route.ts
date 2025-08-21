@@ -39,6 +39,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       ...body,
       start_time: new Date(start_time),
       end_time: body.end_time ? new Date(body.end_time) : undefined,
+      // Handle is_active field for timer functionality
+      is_active: body.is_active ?? false,
     }
     
     const timeEntry = await serviceOrdersService.addTimeEntry(id, timeEntryData)

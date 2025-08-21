@@ -41,6 +41,7 @@ type CreateTimeEntryInput = {
   billable_hours: number
   hourly_rate: number
   is_billable?: boolean
+  is_active?: boolean
   notes?: string
 }
 
@@ -208,12 +209,14 @@ class ServiceOrdersService extends MedusaService({
       ? Math.round((timeEntryData.end_time.getTime() - timeEntryData.start_time.getTime()) / (1000 * 60))
       : timeEntryData.duration_minutes || 0
     
+    // Use the pattern from existing working methods  
     const timeEntry = await this.createServiceOrderTimeEntries({
       ...timeEntryData,
       service_order_id: serviceOrderId,
       duration_minutes: calculatedDuration,
       total_cost: timeEntryData.billable_hours * timeEntryData.hourly_rate,
       is_billable: timeEntryData.is_billable ?? true,
+      is_active: timeEntryData.is_active ?? false,
       work_category: timeEntryData.work_category || "repair",
     })
     
@@ -233,6 +236,92 @@ class ServiceOrdersService extends MedusaService({
     }
     
     return timeEntry
+  }
+
+  async updateServiceOrderTimeEntry(timeEntryId: string, updateData: Partial<CreateTimeEntryInput>) {
+    // Retrieve existing entry to fill in missing values and compute derived fields
+    const existingList = await this.listServiceOrderTimeEntries({ id: timeEntryId })
+    if (!existingList.length) {
+      throw new Error("Time entry not found")
+    }
+    const existing = existingList[0]
+
+    // Prepare update data
+    const processedData: Record<string, any> = { ...updateData }
+
+    // If end_time is provided and is_active wasn't explicitly set, force deactivate
+    if (processedData.end_time && typeof processedData.is_active === "undefined") {
+      processedData.is_active = false
+    }
+
+    // Determine start/end for calculations
+    const startForCalc = processedData.start_time ?? existing.start_time
+    const endForCalc = processedData.end_time ?? existing.end_time
+
+    // Calculate duration if we have both times
+    if (startForCalc && endForCalc) {
+      const minutes = Math.round((endForCalc.getTime() - startForCalc.getTime()) / (1000 * 60))
+      processedData.duration_minutes = minutes
+
+      // If billable_hours not provided, derive from duration
+      if (typeof processedData.billable_hours === "undefined") {
+        processedData.billable_hours = Math.round((minutes / 60) * 100) / 100
+      }
+    }
+
+    // Calculate total cost if possible (use provided hourly_rate or existing)
+    const hourlyRateForCalc = processedData.hourly_rate ?? existing.hourly_rate
+    if (typeof processedData.billable_hours !== "undefined" && typeof hourlyRateForCalc !== "undefined") {
+      processedData.total_cost = processedData.billable_hours * hourlyRateForCalc
+    }
+
+    // Update using selector signature to return a single updated entity
+    const timeEntry = await this.updateServiceOrderTimeEntries({ id: timeEntryId }, processedData)
+    
+    // Log time entry updated event
+    try {
+      const eventTemplate = ServiceOrderEventLogger.EventTemplates.timeEntryAdded(timeEntry)
+      await ServiceOrderEventLogger.logEvent({
+        serviceOrderId: timeEntry.service_order_id,
+        eventType: 'time_entry_updated',
+        message: `Time entry updated: ${timeEntry.work_description}`,
+        eventData: eventTemplate.eventData,
+      }, this, ServiceOrderEventLogger.GroupConfigs.timeEntries)
+    } catch (eventError) {
+      console.error("Failed to log time entry updated event:", eventError)
+      // Don't fail the main operation if event logging fails
+    }
+    
+    return timeEntry
+  }
+
+  async deleteServiceOrderTimeEntry(timeEntryId: string) {
+    // Get the time entry first to get service_order_id for logging
+    const timeEntries = await this.listServiceOrderTimeEntries({ id: timeEntryId })
+    if (timeEntries.length === 0) {
+      throw new Error("Time entry not found")
+    }
+    const timeEntry = timeEntries[0]
+    const serviceOrderId = timeEntry.service_order_id
+    
+    // Delete the time entry using the same pattern as existing methods
+    await this.deleteServiceOrderTimeEntries([timeEntryId])
+    
+    // Log time entry deleted event
+    try {
+      const eventTemplate = ServiceOrderEventLogger.EventTemplates.timeEntryAdded(timeEntry)
+      await ServiceOrderEventLogger.logEvent({
+        serviceOrderId,
+        eventType: 'time_entry_deleted',
+        message: `Time entry deleted: ${timeEntry.work_description}`,
+        eventData: eventTemplate.eventData,
+      }, this, ServiceOrderEventLogger.GroupConfigs.timeEntries)
+    } catch (eventError) {
+      console.error("Failed to log time entry deleted event:", eventError)
+      // Don't fail the main operation if event logging fails
+    }
+    
+    return { deleted: true, id: timeEntryId }
   }
   
   async updateServiceOrderTotals(serviceOrderId: string) {

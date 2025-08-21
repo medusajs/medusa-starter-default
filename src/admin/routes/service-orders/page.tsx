@@ -774,7 +774,13 @@ const ServiceOrdersList = () => {
   const [activeTab, setActiveTab] = useState("active")
   const [activeView, setActiveView] = useState("list") // "list" or "kanban"
   
-  const { data, isLoading, error } = useServiceOrders()
+  // Use different data sources for different tabs to ensure consistency
+  const backlogQuery = useServiceOrders({ tab: "backlog" })
+  const activeQuery = useServiceOrders({ tab: "active" })
+
+  // Use the appropriate query based on active tab
+  const currentQuery = activeTab === "backlog" ? backlogQuery : activeQuery
+  const { data, isLoading, error } = currentQuery
 
   if (error) {
     throw error
@@ -782,8 +788,10 @@ const ServiceOrdersList = () => {
 
   const serviceOrders = data?.service_orders || []
   const count = data?.count || 0
-  const activeOrders = serviceOrders.filter((order: any) => order.status !== "draft")
-  const backlogCount = serviceOrders.filter((order: any) => order.status === "draft").length
+  
+  // For display purposes, get counts from both queries
+  const backlogData = backlogQuery.data?.service_orders || []
+  const backlogCount = backlogData.length
 
   return (
     <Container className="divide-y p-0">
@@ -805,28 +813,22 @@ const ServiceOrdersList = () => {
       {/* Tab Navigation */}
       <div>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="px-6 py-3 border-b border-ui-border-base">
+          <div className="px-6 py-4 border-b">
             <div className="flex items-center justify-between">
-              <Tabs.List className="bg-ui-bg-subtle">
+              <Tabs.List>
                 <Tabs.Trigger value="backlog" className="flex items-center gap-2">
-                  <DocumentText className="w-4 h-4" />
                   Backlog
                   {backlogCount > 0 && (
-                    <Badge size="2xsmall" className="ml-1">
+                    <Badge size="2xsmall" color="grey">
                       {backlogCount}
                     </Badge>
                   )}
                 </Tabs.Trigger>
-                <Tabs.Trigger value="active" className="flex items-center gap-2">
-                  <Tools className="w-4 h-4" />
+                <Tabs.Trigger value="active">
                   Active
-                  {activeOrders.length > 0 && (
-                    <Badge size="2xsmall" className="ml-1">
-                      {activeOrders.length}
-                    </Badge>
-                  )}
                 </Tabs.Trigger>
               </Tabs.List>
+
               
               {/* View Toggle - only show when Active tab is selected */}
               {activeTab === "active" && (
@@ -864,9 +866,12 @@ const ServiceOrdersList = () => {
             ) : (
               <div className="p-6">
                 <KanbanView 
-                  serviceOrders={activeOrders}
+                  serviceOrders={serviceOrders}
                   isLoading={isLoading}
-                  onRefetch={() => {}}
+                  onRefetch={() => {
+                    backlogQuery.refetch()
+                    activeQuery.refetch()
+                  }}
                 />
               </div>
             )}

@@ -209,6 +209,9 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
       grouped[status.id] = []
     })
     
+    // Debug: Track orders that don't match any status
+    const unmatchedOrders: ServiceOrder[] = []
+    
     // Group orders by their status, applying optimistic updates
     enhancedServiceOrders.forEach(order => {
       const effectiveStatus = optimisticUpdates[order.id] || order.status
@@ -217,8 +220,25 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
           ...order,
           status: effectiveStatus,
         })
+      } else {
+        // Log orders with unexpected statuses
+        unmatchedOrders.push(order)
       }
     })
+    
+    // Debug logging for troubleshooting
+    if (unmatchedOrders.length > 0) {
+      console.warn('⚠️ Kanban View: Found service orders with statuses not in statusConfig:', {
+        unmatchedOrders: unmatchedOrders.map(o => ({ 
+          id: o.id, 
+          status: o.status, 
+          service_order_number: o.service_order_number 
+        })),
+        availableStatuses: statusConfig.map(s => s.id),
+        totalOrders: enhancedServiceOrders.length,
+        groupedOrders: Object.entries(grouped).map(([status, orders]) => ({ status, count: orders.length }))
+      })
+    }
     
     return grouped
   }, [enhancedServiceOrders, optimisticUpdates])

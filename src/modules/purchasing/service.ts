@@ -214,7 +214,8 @@ class PurchasingService extends MedusaService({
       product_id: item.product_id,
       supplier_sku: item.supplier_sku,
       variant_sku: item.variant_sku,
-      cost_price: item.cost_price,
+      // Map legacy cost_price input to net_price field on the model
+      net_price: item.cost_price,
       quantity: item.quantity || 1,
       lead_time_days: item.lead_time_days,
       notes: item.notes
@@ -237,7 +238,7 @@ class PurchasingService extends MedusaService({
       return await this.updateSupplierProducts([{
         id: existing.id,
         supplier_sku: priceListItem.supplier_sku || existing.supplier_sku,
-        cost_price: priceListItem.cost_price,
+        cost_price: priceListItem.net_price,
         currency_code: priceList.currency_code,
         minimum_order_quantity: priceListItem.quantity || existing.minimum_order_quantity,
         lead_time_days: priceListItem.lead_time_days || existing.lead_time_days,
@@ -250,7 +251,7 @@ class PurchasingService extends MedusaService({
         supplier_id: priceList.supplier_id,
         product_variant_id: priceListItem.product_variant_id,
         supplier_sku: priceListItem.supplier_sku,
-        cost_price: priceListItem.cost_price,
+        cost_price: priceListItem.net_price,
         currency_code: priceList.currency_code,
         minimum_order_quantity: priceListItem.quantity || 1,
         lead_time_days: priceListItem.lead_time_days,
@@ -415,7 +416,7 @@ class PurchasingService extends MedusaService({
       allOptions.push({
         type: 'price_list',
         supplier_id: item.price_list.supplier_id,
-        cost_price: item.cost_price,
+        cost_price: item.net_price,
         is_preferred_supplier: false, // Price lists don't have preferred status
         supplier_sku: item.supplier_sku,
         minimum_order_quantity: item.quantity,

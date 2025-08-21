@@ -30,7 +30,8 @@ export const processPriceListItemsStep = createStep(
       product_id: item.product_id,
       supplier_sku: item.supplier_sku,
       variant_sku: item.variant_sku,
-      cost_price: item.cost_price,
+      // Map legacy CSV field cost_price to model field net_price
+      net_price: item.cost_price,
       quantity: item.quantity || 1,
       lead_time_days: item.lead_time_days,
       notes: item.notes,

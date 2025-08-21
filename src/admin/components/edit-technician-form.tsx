@@ -16,7 +16,7 @@ import {
 } from "react-hook-form"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "@medusajs/ui"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 const schema = zod.object({
   first_name: zod.string().min(1, "First name is required"),
@@ -72,34 +72,39 @@ interface EditTechnicianFormProps {
 
 export const EditTechnicianForm = ({ technician, trigger }: EditTechnicianFormProps) => {
   const queryClient = useQueryClient()
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  
+  console.log("EditTechnicianForm rendered with technician:", technician)
+  console.log("Drawer open state:", isDrawerOpen)
   
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      first_name: "",
-      last_name: "",
-      email: "",
-      phone: "",
-      employee_id: "",
-      department: "",
-      position: "",
-      hire_date: "",
-      certification_level: "",
-      certifications: "",
-      specializations: "",
-      hourly_rate: "",
-      salary: "",
-      address: "",
-      emergency_contact_name: "",
-      emergency_contact_phone: "",
-      status: "active",
-      notes: "",
+      first_name: technician?.first_name || "",
+      last_name: technician?.last_name || "",
+      email: technician?.email || "",
+      phone: technician?.phone || "",
+      employee_id: technician?.employee_id || "",
+      department: technician?.department || "",
+      position: technician?.position || "",
+      hire_date: technician?.hire_date || "",
+      certification_level: technician?.certification_level || "",
+      certifications: technician?.certifications || "",
+      specializations: technician?.specializations || "",
+      hourly_rate: technician?.hourly_rate || "",
+      salary: technician?.salary || "",
+      address: technician?.address || "",
+      emergency_contact_name: technician?.emergency_contact_name || "",
+      emergency_contact_phone: technician?.emergency_contact_phone || "",
+      status: technician?.status || "active",
+      notes: technician?.notes || "",
     },
   })
 
   // Update form values when technician data changes
   useEffect(() => {
     if (technician) {
+      console.log("Populating form with technician data:", technician)
       form.reset({
         first_name: technician.first_name || "",
         last_name: technician.last_name || "",
@@ -123,6 +128,33 @@ export const EditTechnicianForm = ({ technician, trigger }: EditTechnicianFormPr
     }
   }, [technician, form])
 
+  // Also populate form when drawer opens
+  useEffect(() => {
+    if (isDrawerOpen && technician) {
+      console.log("Drawer opened, populating form with technician data:", technician)
+      form.reset({
+        first_name: technician.first_name || "",
+        last_name: technician.last_name || "",
+        email: technician.email || "",
+        phone: technician.phone || "",
+        employee_id: technician.employee_id || "",
+        department: technician.department || "",
+        position: technician.position || "",
+        hire_date: technician.hire_date || "",
+        certification_level: technician.certification_level || "",
+        certifications: technician.certifications || "",
+        specializations: technician.specializations || "",
+        hourly_rate: technician.hourly_rate || "",
+        salary: technician.salary || "",
+        address: technician.address || "",
+        emergency_contact_name: technician.emergency_contact_name || "",
+        emergency_contact_phone: technician.emergency_contact_phone || "",
+        status: technician.status || "active",
+        notes: technician.notes || "",
+      })
+    }
+  }, [isDrawerOpen, technician, form])
+
   const updateTechnicianMutation = useMutation({
     mutationFn: async (data: FormData) => {
       const response = await fetch(`/admin/technicians/${technician.id}`, {
@@ -143,6 +175,7 @@ export const EditTechnicianForm = ({ technician, trigger }: EditTechnicianFormPr
       toast.success("Technician updated successfully!")
       queryClient.invalidateQueries({ queryKey: ["technicians"] })
       queryClient.invalidateQueries({ queryKey: ["technician", technician.id] })
+      setIsDrawerOpen(false)
     },
     onError: (error) => {
       toast.error("Failed to update technician. Please try again.")
@@ -155,7 +188,7 @@ export const EditTechnicianForm = ({ technician, trigger }: EditTechnicianFormPr
   })
 
   return (
-    <Drawer>
+    <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
       <Drawer.Trigger asChild>
         {trigger || <Button>Edit Technician</Button>}
       </Drawer.Trigger>

@@ -1063,8 +1063,35 @@
           "nullable": true,
           "mappedType": "text"
         },
-        "cost_price": {
-          "name": "cost_price",
+        "gross_price": {
+          "name": "gross_price",
+          "type": "numeric",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "decimal"
+        },
+        "discount_amount": {
+          "name": "discount_amount",
+          "type": "numeric",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "decimal"
+        },
+        "discount_percentage": {
+          "name": "discount_percentage",
+          "type": "integer",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        },
+        "net_price": {
+          "name": "net_price",
           "type": "numeric",
           "unsigned": false,
           "autoincrement": false,
@@ -1109,8 +1136,26 @@
           "nullable": true,
           "mappedType": "json"
         },
-        "raw_cost_price": {
-          "name": "raw_cost_price",
+        "raw_gross_price": {
+          "name": "raw_gross_price",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
+        },
+        "raw_discount_amount": {
+          "name": "raw_discount_amount",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
+        },
+        "raw_net_price": {
+          "name": "raw_net_price",
           "type": "jsonb",
           "unsigned": false,
           "autoincrement": false,

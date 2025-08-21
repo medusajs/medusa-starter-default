@@ -172,6 +172,12 @@ const TechnicianActions = ({ technician }: { technician: Technician }) => {
     }
   }
 
+  const handleView = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    navigate(`/technicians/${technician.id}`)
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenu.Trigger asChild>
@@ -180,6 +186,13 @@ const TechnicianActions = ({ technician }: { technician: Technician }) => {
         </IconButton>
       </DropdownMenu.Trigger>
       <DropdownMenu.Content side="bottom">
+        <DropdownMenu.Item
+          onClick={handleView}
+          className="[&>svg]:text-ui-fg-subtle flex items-center gap-2"
+        >
+          <Eye className="h-4 w-4" />
+          {t("custom.general.view")}
+        </DropdownMenu.Item>
         <EditTechnicianForm 
           technician={technician} 
           trigger={
