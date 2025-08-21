@@ -11,6 +11,8 @@ import {
   Badge
 } from "@medusajs/ui"
 import { ArrowUpTray, ArrowDownTray, DocumentText, ExclamationCircle } from "@medusajs/icons"
+import BrandSelect from "./common/brand-select"
+import SupplierBrandSelect from "./common/supplier-brand-select"
 
 type PriceListUploadProps = {
   supplierId: string
@@ -36,6 +38,7 @@ export const PriceListUpload = ({ supplierId, onSuccess }: PriceListUploadProps)
     effective_date: "",
     expiry_date: "",
     currency_code: "USD",
+    brand_id: "",
   })
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,6 +100,7 @@ export const PriceListUpload = ({ supplierId, onSuccess }: PriceListUploadProps)
         effective_date: formData.effective_date || undefined,
         expiry_date: formData.expiry_date || undefined,
         currency_code: formData.currency_code,
+        brand_id: formData.brand_id || undefined,
         csv_content: csvContent,
         upload_filename: file.name,
       }
@@ -133,6 +137,7 @@ export const PriceListUpload = ({ supplierId, onSuccess }: PriceListUploadProps)
         effective_date: "",
         expiry_date: "",
         currency_code: "USD",
+        brand_id: "",
       })
       
     } catch (error) {
@@ -199,6 +204,16 @@ export const PriceListUpload = ({ supplierId, onSuccess }: PriceListUploadProps)
                 <option value="EUR">EUR</option>
                 <option value="GBP">GBP</option>
               </select>
+            </div>
+
+            <div>
+              <SupplierBrandSelect
+                supplierId={supplierId}
+                value={formData.brand_id || null}
+                onChange={(val) => setFormData(prev => ({ ...prev, brand_id: val || "" }))}
+                includeNoneOption
+                label="Scope to Supplier Brand (optional)"
+              />
             </div>
           </div>
 

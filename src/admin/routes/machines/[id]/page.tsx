@@ -274,8 +274,31 @@ const MachineDetails = () => {
   )
 }
 
+export default MachineDetails
+
+// Loader function to fetch machine data for breadcrumbs
+export const loader = async ({ params }: { params: { id: string } }) => {
+  try {
+    const response = await fetch(`/admin/machines/${params.id}`)
+    if (!response.ok) throw new Error("Failed to fetch machine")
+    const data = await response.json()
+    return data.machine
+  } catch (error) {
+    console.error("Error loading machine:", error)
+    return null
+  }
+}
+
 export const config = defineRouteConfig({
   label: "Machine Details",
 })
 
-export default MachineDetails 
+// Breadcrumb configuration
+export const handle = {
+  breadcrumb: ({ data }: { data: any }) => {
+    if (data && data.serial_number) {
+      return data.serial_number
+    }
+    return "Machine Details"
+  },
+} 

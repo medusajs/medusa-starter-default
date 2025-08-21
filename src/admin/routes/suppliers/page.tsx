@@ -275,4 +275,9 @@ export const config = defineRouteConfig({
   icon: Buildings,
 })
 
+// Breadcrumb configuration
+export const handle = {
+  breadcrumb: () => "Suppliers",
+}
+
 export default SuppliersPage 

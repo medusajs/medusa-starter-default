@@ -61,8 +61,31 @@ const ServiceOrderDetails = () => {
   )
 }
 
+export default ServiceOrderDetails
+
+// Loader function to fetch service order data for breadcrumbs
+export const loader = async ({ params }: { params: { id: string } }) => {
+  try {
+    const response = await fetch(`/admin/service-orders/${params.id}`)
+    if (!response.ok) throw new Error("Failed to fetch service order")
+    const data = await response.json()
+    return data.service_order
+  } catch (error) {
+    console.error("Error loading service order:", error)
+    return null
+  }
+}
+
 export const config = defineRouteConfig({
   label: "Service Order Details",
 })
 
-export default ServiceOrderDetails
+// Breadcrumb configuration
+export const handle = {
+  breadcrumb: ({ data }: { data: any }) => {
+    if (data && data.service_order_number) {
+      return data.service_order_number
+    }
+    return "Service Order Details"
+  },
+}

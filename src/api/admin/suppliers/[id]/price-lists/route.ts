@@ -2,6 +2,7 @@ import {
   MedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework/http"
+import { ContainerRegistrationKeys, remoteQueryObjectFromString } from "@medusajs/framework/utils"
 import { PURCHASING_MODULE } from "../../../../../modules/purchasing"
 import PurchasingService from "../../../../../modules/purchasing/service"
 import { importPriceListWorkflow } from "../../../../../modules/purchasing/workflows/import-price-list"
@@ -15,6 +16,7 @@ type GetAdminSupplierPriceListsQuery = {
   offset?: number
   is_active?: boolean
   include_items?: boolean
+  brand_id?: string
 }
 
 type PostAdminCreatePriceListType = {
@@ -45,13 +47,23 @@ export const GET = async (
   const purchasingService = req.scope.resolve(
     PURCHASING_MODULE
   ) as PurchasingService
+  const query = req.scope.resolve(ContainerRegistrationKeys.REMOTE_QUERY)
 
   const { id: supplier_id } = req.params
-  const { include_items = false } = req.query
+  const { include_items = false, brand_id } = req.query
 
   try {
     // Get active price list for supplier
     const activePriceList = await purchasingService.getActivePriceListForSupplier(supplier_id)
+    
+    // If brand_id filter is provided but price list doesn't match, return empty
+    if (brand_id && activePriceList && activePriceList.brand_id !== brand_id) {
+      return res.json({
+        price_list: null,
+        items: [],
+        items_count: 0
+      })
+    }
     
     if (!activePriceList) {
       return res.json({
@@ -64,19 +76,39 @@ export const GET = async (
     let enrichedPriceList = activePriceList
     let items = []
     
+    // Get brand information if brand_id exists
+    if (activePriceList.brand_id) {
+      try {
+        const brandQueryObj = remoteQueryObjectFromString({
+          entryPoint: "brand",
+          fields: ["id", "name", "code"],
+          variables: {
+            filters: { id: activePriceList.brand_id },
+            limit: 1,
+          },
+        })
+        const [brand] = await query(brandQueryObj)
+        enrichedPriceList = { ...activePriceList, brand }
+      } catch (brandError) {
+        console.error('Error fetching brand for price list:', brandError)
+        // Continue without brand info
+      }
+    }
+    
     if (include_items) {
       items = await purchasingService.listSupplierPriceListItems({
         price_list_id: activePriceList.id
       })
-      enrichedPriceList = {
-        ...activePriceList,
-        items,
-        items_count: items.length
-      }
+    }
+
+    const finalPriceList = {
+      ...enrichedPriceList,
+      items,
+      items_count: items.length
     }
 
     res.json({
-      price_list: enrichedPriceList,
+      price_list: finalPriceList,
       items: items,
       items_count: items.length
     })

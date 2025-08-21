@@ -355,4 +355,9 @@ export const config = defineRouteConfig({
   icon: Tools,
 })
 
+// Breadcrumb configuration
+export const handle = {
+  breadcrumb: () => "Machines",
+}
+
 export default MachinesPageWithConfig

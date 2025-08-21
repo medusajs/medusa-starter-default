@@ -437,6 +437,11 @@ export const config = defineRouteConfig({
   icon: DocumentText,
 })
 
+// Breadcrumb configuration
+export const handle = {
+  breadcrumb: () => "Invoices",
+}
+
 // Main invoices page component
 const InvoicesPage = () => {
   return <InvoicesListTable />

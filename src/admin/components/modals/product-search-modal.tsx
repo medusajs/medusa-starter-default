@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { 
   FocusModal, 
   Button, 
@@ -9,6 +9,7 @@ import {
 import { keepPreviousData } from "@tanstack/react-query"
 import { MagnifyingGlass } from "@medusajs/icons"
 import { useProducts } from "../../hooks/api/products"
+import { BrandSelect } from "../common/brand-select"
 
 interface SelectedVariantForPricing {
   id: string
@@ -19,6 +20,11 @@ interface SelectedVariantForPricing {
     id: string
     title: string
   }
+  brand?: {
+    id: string
+    name: string
+    code: string
+  } | null
 }
 
 interface ProductSearchModalProps {
@@ -35,11 +41,13 @@ export const ProductSearchModal = ({
   selectedVariant
 }: ProductSearchModalProps) => {
   const [searchQuery, setSearchQuery] = useState("")
+  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null)
   
   const { products, isLoading, isError, error } = useProducts(
     { 
       q: searchQuery,
-      fields: "id,title,status,thumbnail,*variants",
+      // Include variant brand fields so we can filter and display
+      fields: "id,title,status,thumbnail,*variants,variants.brand.*",
       limit: 50
     },
     {
@@ -57,16 +65,27 @@ export const ProductSearchModal = ({
       product: {
         id: product.id,
         title: product.title
-      }
+      },
+      brand: variant.brand
     }
     
     onSelect(selectedVariantData)
     onOpenChange(false)
   }
 
-  const filteredProducts = products?.filter(product => 
-    product.variants && product.variants.length > 0
-  ) || []
+  const filteredProducts = useMemo(() => {
+    const withVariants = (products || []).filter((p: any) => Array.isArray(p.variants) && p.variants.length > 0)
+    if (!selectedBrandId) {
+      return withVariants
+    }
+    // Filter variants by selected brand id; drop products with no remaining variants
+    return withVariants
+      .map((p: any) => ({
+        ...p,
+        variants: p.variants.filter((v: any) => v?.brand?.id === selectedBrandId)
+      }))
+      .filter((p: any) => p.variants.length > 0)
+  }, [products, selectedBrandId])
 
   if (isError) {
     console.error("Error loading products:", error)
@@ -83,7 +102,7 @@ export const ProductSearchModal = ({
         </FocusModal.Header>
         
         <FocusModal.Body className="flex h-full flex-col gap-y-4">
-          <div className="flex items-center gap-x-2">
+          <div className="flex items-center gap-x-3">
             <div className="relative flex-1">
               <MagnifyingGlass className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-fg-muted" />
               <Input
@@ -92,6 +111,14 @@ export const ProductSearchModal = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8"
                 autoFocus
+              />
+            </div>
+            <div className="w-64">
+              <BrandSelect
+                value={selectedBrandId}
+                onChange={setSelectedBrandId}
+                includeNoneOption
+                label="Filter by brand"
               />
             </div>
           </div>
@@ -143,6 +170,11 @@ export const ProductSearchModal = ({
                               {variant.sku && (
                                 <Text size="xsmall" className="text-ui-fg-muted">
                                   SKU: {variant.sku}
+                                </Text>
+                              )}
+                              {variant.brand && (
+                                <Text size="xsmall" className="text-ui-fg-muted">
+                                  Brand: {variant.brand.name} ({variant.brand.code})
                                 </Text>
                               )}
                             </div>

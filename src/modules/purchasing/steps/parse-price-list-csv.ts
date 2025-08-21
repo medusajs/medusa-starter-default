@@ -4,6 +4,7 @@ import { Modules } from "@medusajs/framework/utils"
 type ParsePriceListCsvStepInput = {
   csv_content: string
   supplier_id: string
+  brand_id?: string
 }
 
 type ParsedPriceListItem = {
@@ -71,10 +72,41 @@ export const parsePriceListCsvStep = createStep(
   "parse-price-list-csv-step",
   async (input: ParsePriceListCsvStepInput, { container }) => {
     const productModuleService = container.resolve(Modules.PRODUCT)
+    const remoteQuery = container.resolve("REMOTE_QUERY") as any
+    const featureFlag = process.env.MEDUSA_FF_BRAND_AWARE_PURCHASING === "true"
     
     const csvRows = parseCSV(input.csv_content)
     const processedItems: ParsedPriceListItem[] = []
     const errors: string[] = []
+
+    // Determine allowed brand ids for the supplier if feature enabled
+    let allowedBrandIds: string[] | null = null
+    if (featureFlag) {
+      try {
+        const supplierWithBrands = await remoteQuery(
+          {
+            entryPoint: "supplier",
+            fields: ["id", "brands.id", "brands.code"],
+            variables: { filters: { id: input.supplier_id } },
+          },
+          {}
+        )
+        const supplier = Array.isArray(supplierWithBrands) ? supplierWithBrands[0] : supplierWithBrands
+        const supplierBrandIds: string[] = (supplier?.brands || []).map((b: any) => b.id)
+        if (input.brand_id) {
+          // Intersect with provided brand scope
+          allowedBrandIds = supplierBrandIds.includes(input.brand_id) ? [input.brand_id] : []
+        } else {
+          allowedBrandIds = supplierBrandIds
+        }
+      } catch (e: any) {
+        errors.push(`Failed to load supplier brands: ${e.message || e}`)
+        // If we cannot determine allowed brands, bail early if brand scoping was requested
+        if (input.brand_id) {
+          return new StepResponse({ items: [], errors, total_rows: csvRows.length, processed_rows: 0 })
+        }
+      }
+    }
     
     for (let i = 0; i < csvRows.length; i++) {
       const row = csvRows[i]
@@ -105,23 +137,41 @@ export const parsePriceListCsvStep = createStep(
         
         if (row.variant_sku) {
           // Find by variant SKU
+          const variantFilters: any = { sku: row.variant_sku }
+          const variantConfig: any = { select: ["id", "product_id", "sku"], relations: ["product"] }
+          if (featureFlag && allowedBrandIds && allowedBrandIds.length > 0) {
+            variantFilters["brand.id"] = allowedBrandIds
+            variantConfig.relations = ["product", "brand"]
+          }
           const variants = await productModuleService.listProductVariants(
-            { sku: row.variant_sku },
-            { select: ["id", "product_id", "sku"], relations: ["product"] }
+            variantFilters,
+            variantConfig
           )
           
           if (variants.length === 0) {
-            errors.push(`Row ${rowNum}: Product variant with SKU "${row.variant_sku}" not found`)
+            const brandMsg = featureFlag ? " for supplier’s allowed brands" : ""
+            errors.push(`Row ${rowNum}: Product variant with SKU "${row.variant_sku}" not found${brandMsg}`)
             continue
           }
           
+          if (featureFlag && allowedBrandIds) {
+            if (variants.length > 1) {
+              errors.push(`Row ${rowNum}: Variant SKU "${row.variant_sku}" is ambiguous across allowed brands`)
+              continue
+            }
+          }
           productVariant = variants[0]
           product = productVariant.product
         } else if (row.product_id) {
           // Find by product ID
+          const productFilters: any = { id: row.product_id }
+          const productConfig: any = { select: ["id"], relations: ["variants"] }
+          if (featureFlag && allowedBrandIds && allowedBrandIds.length > 0) {
+            productConfig.relations = ["variants", "variants.brand"]
+          }
           const products = await productModuleService.listProducts(
-            { id: row.product_id },
-            { select: ["id"], relations: ["variants"] }
+            productFilters,
+            productConfig
           )
           
           if (products.length === 0) {
@@ -131,10 +181,18 @@ export const parsePriceListCsvStep = createStep(
           
           product = products[0]
           // Use first variant if no specific variant specified
-          if (product.variants && product.variants.length > 0) {
-            productVariant = product.variants[0]
+          const candidateVariants = (product.variants || [])
+          const filteredByBrand = featureFlag && allowedBrandIds && allowedBrandIds.length > 0
+            ? candidateVariants.filter((v: any) => v?.brand?.id && allowedBrandIds!.includes(v.brand.id))
+            : candidateVariants
+          if (filteredByBrand.length > 1 && featureFlag) {
+            errors.push(`Row ${rowNum}: Multiple variants found for product within allowed brands—SKU required`)
+            continue
+          }
+          if (filteredByBrand.length > 0) {
+            productVariant = filteredByBrand[0]
           } else {
-            errors.push(`Row ${rowNum}: Product "${row.product_id}" has no variants`)
+            errors.push(`Row ${rowNum}: Product "${row.product_id}" has no variants${featureFlag ? " within allowed brands" : ""}`)
             continue
           }
         }

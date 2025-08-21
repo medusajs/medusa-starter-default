@@ -8,6 +8,7 @@ const importPriceListSchema = z.object({
   effective_date: z.string().optional(),
   expiry_date: z.string().optional(),
   currency_code: z.string().default("USD"),
+  brand_id: z.string().optional(),
   csv_content: z.string().min(1, "CSV content is required"),
   upload_filename: z.string().min(1, "Upload filename is required"),
 })
@@ -46,6 +47,7 @@ export async function POST(
         effective_date: effectiveDate,
         expiry_date: expiryDate,
         currency_code: validatedData.currency_code,
+        brand_id: validatedData.brand_id,
         csv_content: validatedData.csv_content,
         upload_filename: validatedData.upload_filename,
       },

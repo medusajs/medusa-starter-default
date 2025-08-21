@@ -4,6 +4,7 @@ import PurchasingService from "../service"
 
 type CreatePriceListStepInput = {
   supplier_id: string
+  brand_id?: string
   name: string
   description?: string
   effective_date?: Date

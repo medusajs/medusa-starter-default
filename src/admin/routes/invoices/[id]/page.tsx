@@ -484,6 +484,29 @@ const InvoiceDetails = () => {
 
 export default InvoiceDetails
 
+// Loader function to fetch invoice data for breadcrumbs
+export const loader = async ({ params }: { params: { id: string } }) => {
+  try {
+    const response = await fetch(`/admin/invoices/${params.id}`)
+    if (!response.ok) throw new Error("Failed to fetch invoice")
+    const data = await response.json()
+    return data.invoice
+  } catch (error) {
+    console.error("Error loading invoice:", error)
+    return null
+  }
+}
+
 export const config = defineRouteConfig({
   // Invoice detail page configuration
-}) 
+})
+
+// Breadcrumb configuration
+export const handle = {
+  breadcrumb: ({ data }: { data: any }) => {
+    if (data && data.invoice_number) {
+      return data.invoice_number
+    }
+    return "Invoice Details"
+  },
+} 

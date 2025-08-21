@@ -226,6 +226,11 @@ export const config = defineRouteConfig({
   icon: Users,
 })
 
+// Breadcrumb configuration
+export const handle = {
+  breadcrumb: () => "Technicians",
+}
+
 // Technicians list table component - following official DataTable pattern
 const TechniciansListTable = () => {
   const { t } = useCustomTranslation()

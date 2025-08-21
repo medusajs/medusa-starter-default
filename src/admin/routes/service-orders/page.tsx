@@ -270,6 +270,11 @@ export const config = defineRouteConfig({
   icon: Tools,
 })
 
+// Breadcrumb configuration
+export const handle = {
+  breadcrumb: () => "Service Orders",
+}
+
 // Service Orders list table component for backlog - following official DataTable pattern
 const BacklogDataTable = () => {
   const { t } = useCustomTranslation()

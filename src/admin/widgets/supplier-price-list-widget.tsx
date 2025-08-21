@@ -28,6 +28,12 @@ type PriceList = {
   currency_code: string
   items_count: number
   upload_filename?: string
+  brand_id?: string
+  brand?: {
+    id: string
+    name: string
+    code: string
+  }
   created_at: string
   updated_at: string
 }
@@ -140,9 +146,16 @@ const SupplierPriceListWidget = ({
         <div className="flex items-center gap-3">
           <Heading level="h2">Price List</Heading>
           {priceList && (
-            <Badge variant="blue">
-              Version {priceList.version} • {priceList.items_count} items
-            </Badge>
+            <>
+              <Badge variant="blue">
+                Version {priceList.version} • {priceList.items_count} items
+              </Badge>
+              {priceList.brand && (
+                <Badge variant="grey">
+                  {priceList.brand.name} ({priceList.brand.code})
+                </Badge>
+              )}
+            </>
           )}
         </div>
         <div className="flex gap-2">
@@ -172,6 +185,12 @@ const SupplierPriceListWidget = ({
               <Text className="font-medium text-gray-600 mb-1">Last Updated</Text>
               <Text>{new Date(priceList.updated_at).toLocaleDateString()}</Text>
             </div>
+            {priceList.brand && (
+              <div>
+                <Text className="font-medium text-gray-600 mb-1">Brand</Text>
+                <Text>{priceList.brand.name} ({priceList.brand.code})</Text>
+              </div>
+            )}
             {priceList.upload_filename && (
               <div>
                 <Text className="font-medium text-gray-600 mb-1">Last Upload</Text>

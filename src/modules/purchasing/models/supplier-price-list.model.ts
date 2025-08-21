@@ -3,6 +3,7 @@ import { model } from "@medusajs/framework/utils"
 const SupplierPriceList = model.define("supplier_price_list", {
   id: model.id().primaryKey(),
   supplier_id: model.text(),
+  brand_id: model.text().nullable(),
   name: model.text().searchable(),
   description: model.text().nullable(),
   effective_date: model.dateTime().nullable(),
@@ -19,8 +20,8 @@ const SupplierPriceList = model.define("supplier_price_list", {
 })
 .indexes([
   {
-    name: "supplier_active_price_list_idx",
-    on: ["supplier_id", "is_active"],
+    name: "supplier_active_price_list_brand_idx",
+    on: ["supplier_id", "brand_id", "is_active"],
     unique: true,
     where: "is_active = true"
   }

@@ -10,6 +10,7 @@ type WorkflowInput = {
   effective_date?: Date
   expiry_date?: Date
   currency_code?: string
+  brand_id?: string
   csv_content: string
   upload_filename: string
 }
@@ -20,7 +21,8 @@ export const uploadPriceListCsvWorkflow = createWorkflow(
     // Parse CSV content
     const { items, errors, total_rows, processed_rows } = parsePriceListCsvStep({
       csv_content: input.csv_content,
-      supplier_id: input.supplier_id
+      supplier_id: input.supplier_id,
+      brand_id: input.brand_id,
     })
     
     // Create price list
@@ -31,6 +33,7 @@ export const uploadPriceListCsvWorkflow = createWorkflow(
       effective_date: input.effective_date,
       expiry_date: input.expiry_date,
       currency_code: input.currency_code,
+      brand_id: input.brand_id,
       upload_filename: input.upload_filename,
       upload_metadata: {
         total_rows,

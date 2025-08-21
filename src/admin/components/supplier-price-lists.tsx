@@ -28,18 +28,25 @@ import * as zod from "zod"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { ProductSearchModal } from "./modals/product-search-modal"
+import SupplierBrandSelect from "./common/supplier-brand-select"
 
 interface PriceList {
   id: string
   name: string
   description?: string
   supplier_id: string
+  brand_id?: string
   effective_date?: Date
   expiry_date?: Date
   currency_code?: string
   is_active: boolean
   upload_filename?: string
   items_count?: number
+  brand?: {
+    id: string
+    name: string
+    code: string
+  }
   created_at: Date
   updated_at: Date
 }
@@ -126,6 +133,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
   const [productSearchOpen, setProductSearchOpen] = useState(false)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [tableSearch, setTableSearch] = useState("")
+  const [brandFilter, setBrandFilter] = useState<string | null>(null)
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -146,9 +154,13 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
   })
 
   const { data: priceListData, isLoading, error } = useQuery({
-    queryKey: ["supplier-price-list", supplier?.id],
+    queryKey: ["supplier-price-list", supplier?.id, brandFilter],
     queryFn: async () => {
-      const response = await fetch(`/admin/suppliers/${supplier.id}/price-lists?include_items=true`)
+      const queryParams = new URLSearchParams({
+        include_items: "true",
+        ...(brandFilter && { brand_id: brandFilter })
+      })
+      const response = await fetch(`/admin/suppliers/${supplier.id}/price-lists?${queryParams}`)
       if (!response.ok) {
         throw new Error(`Failed to fetch price list: ${response.statusText}`)
       }
@@ -535,6 +547,11 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                   <Badge variant={priceList.is_active ? "green" : "red"}>
                     {priceList.is_active ? "Active" : "Inactive"}
                   </Badge>
+                  {priceList.brand && (
+                    <Badge variant="grey">
+                      {priceList.brand.name} ({priceList.brand.code})
+                    </Badge>
+                  )}
                   <Text size="small" className="text-ui-fg-subtle">
                     Version {priceList.version || 1} • {filteredItems.length} items
                   </Text>
@@ -542,6 +559,15 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
               )}
             </div>
             <div className="flex items-center gap-2">
+              <div className="w-48">
+                <SupplierBrandSelect
+                  supplierId={supplier.id}
+                  value={brandFilter}
+                  onChange={setBrandFilter}
+                  includeNoneOption
+                  placeholder="Filter by brand..."
+                />
+              </div>
               <DataTable.Search placeholder="Search price list items..." />
               <Button variant="secondary" size="small" onClick={handleDownloadTemplate}>
                 <ArrowDownTray />

@@ -368,10 +368,34 @@ const TechnicianDetails = () => {
   )
 }
 
+// Loader function to fetch technician data for breadcrumbs
+export const loader = async ({ params }: { params: { id: string } }) => {
+  try {
+    const response = await fetch(`/admin/technicians/${params.id}`)
+    if (!response.ok) throw new Error("Failed to fetch technician")
+    const data = await response.json()
+    return data.technician
+  } catch (error) {
+    console.error("Error loading technician:", error)
+    return null
+  }
+}
+
 // Route config
 export const config = defineRouteConfig({
   label: "Technician Details",
   icon: User,
 })
+
+// Breadcrumb configuration
+export const handle = {
+  breadcrumb: ({ data }: { data: any }) => {
+    if (data && data.first_name && data.last_name) {
+      const fullName = [data.first_name, data.last_name].filter(Boolean).join(" ")
+      return fullName
+    }
+    return "Technician Details"
+  },
+}
 
 export default TechnicianDetails

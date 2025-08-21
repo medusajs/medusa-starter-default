@@ -1,6 +1,11 @@
 import { useMemo } from "react"
+import { useBrands } from "../../api/brands"
 
 export const useProductTableFilters = () => {
+  const { brands } = useBrands({ limit: 200, order: "name" })
+
+  const brandOptions = (brands || []).map((b) => ({ label: `${b.name} (${b.code})`, value: b.id }))
+
   return useMemo(() => [
     {
       key: "status",
@@ -11,5 +16,11 @@ export const useProductTableFilters = () => {
         { label: "Draft", value: "draft" },
       ],
     },
-  ], [])
+    {
+      key: "brand_id",
+      label: "Brand",
+      type: "select" as const,
+      options: [{ label: "All brands", value: "" }, ...brandOptions],
+    },
+  ], [brandOptions])
 }

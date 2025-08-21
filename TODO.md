@@ -1,446 +1,296 @@
-# TODO - Medusa E-commerce Project
+# TODO - Brand-aware Variants and Supplier Price Lists
 
-This file serves as a progress tracker and memory system for development tasks on this Medusa starter project.
+This plan defines modular, incremental changes to support brand-specific product variants and ensure supplier price list uploads only affect variants of brands supplied by that supplier. It is structured to enable multiple developers/agents to work in parallel with minimal coupling, following native MedusaJS patterns (modules, links, workflows, Remote Query).
 
-## Current Session Tasks
+## Objectives
+- Model brands as first-class entities and associate them at the variant level.
+- Keep optional product-level brand(s) for convenience (OEM + aftermarket) without ambiguity.
+- Enable suppliers to declare which brands they supply and constrain price list imports accordingly.
+- Support optional brand scoping at the price list level (price list explicitly for one brand) in addition to supplier-level brand links.
+- Preserve compatibility with existing purchasing flows and variant↔supplier mapping.
 
-### ✅ Completed
+## Assumptions
+- `Brand` model already exists in `src/modules/brands/models/brand.ts` and is exposed via `BrandsModule`.
+- Existing link: product↔brand (`src/links/product-brand.ts`).
+- Existing purchasing models: `Supplier`, `SupplierProduct`, `SupplierPriceList`, `SupplierPriceListItem`.
+- Existing supplier↔variant mapping via `SupplierProduct` and price list processing workflows.
 
-- [x] **Align Service Order Status Dropdown with Updated Statuses** ✅ **COMPLETED**
-  - [x] Identify issue: Status dropdown in service order detail screen using old status values
-  - [x] Update status actions widget to use correct statuses: draft, ready_for_pickup, in_progress, done, returned_for_review
-  - [x] Update service order detail page statusVariants object
-  - [x] Update service order status history widget statusColors object
-  - [x] Update service orders list page filter options and status badge configurations
-  - [x] Verify translation files already contain correct status labels for both English and Dutch
-  - [x] **FINAL RESULT**: Service order status dropdown now correctly aligned with updated status workflow throughout the application
+---
 
-- [x] **Fix Service Type Status Badge Translation Issue** ✅ **COMPLETED**
-  - [x] Identify issue: Service type badges showing translation keys instead of translated text
-  - [x] Add missing `service_types` section to English translation file (en.json)
-  - [x] Add missing `service_types` section to Dutch translation file (nl.json)
-  - [x] Ensure all service types have proper translations: standard, warranty, internal, insurance, sales_prep, quote
-  - [x] **FINAL RESULT**: Service type status badges now display proper translated text instead of translation keys
+## Phase 0 — Foundations and Design Guards
+- [x] Define acceptance criteria (see bottom) and add feature flag toggle
+  - Acceptance criteria are finalized in the "Acceptance Criteria" section below.
+  - Feature flag: `MEDUSA_FF_BRAND_AWARE_PURCHASING` (default: false)
+    - Scope: brand-constrained CSV parsing/matching, optional price list `brand_id` input, supplier↔brand admin management UI, and new brand filters in admin.
+    - Disabled behavior: link definitions can exist harmlessly, but enforcement and UI are hidden; imports behave as current (no brand constraints).
+    - Implementation notes (native Medusa): read flag via environment (`process.env.MEDUSA_FF_BRAND_AWARE_PURCHASING`) and, where available, expose through project config feature flags; guard API route handlers, workflows/steps, and admin visibility accordingly following patterns in `.medusa-source`.
+- [x] Confirm `.medusa-source` patterns for link definitions and remote queries to keep consistency.
+- [x] Confirm `.medusa-source` patterns for link definitions and remote queries to keep consistency.
+- [x] Establish CSV template spec for suppliers (columns and validation rules).
+  - Added `src/modules/purchasing/docs/price-list-csv.md` documenting required/optional columns, validation, and Medusa feature-flag behavior.
+  - Added `src/modules/purchasing/docs/price-list-template.sample.csv` with a ready-to-use header and example rows.
 
-- [x] **Fix Service Order DataTable Pagination Implementation** ✅ **COMPLETED**
-  - [x] Identify issues: Current implementation doesn't sync pagination state with URL parameters properly
-  - [x] The pagination state in the DataTable is local and doesn't trigger API refetches
-  - [x] Missing URL parameter synchronization following native Medusa patterns
-  - [x] Update useServiceOrderTableQuery to properly handle URL-based pagination with useSearchParams
-  - [x] Remove local pagination state and use URL-based pagination following native patterns
-  - [x] Ensure pagination changes trigger proper API refetches with updated offset/limit
-  - [x] Test pagination functionality to confirm proper data fetching and URL updates
-  - [x] **SEARCH FUNCTIONALITY**: Implement proper search state management and URL synchronization
-  - [x] Add search configuration to useDataTable calls following official Medusa documentation
-  - [x] Connect search changes to API refetches with search query parameter
-  - [x] **FINAL RESULT**: Service order data table pagination and search now work correctly with URL-based state management, automatic API refetches, and proper offset/limit/search handling following native Medusa patterns
+Deliverables:
+- Acceptance criteria doc (short README section).
+- CSV template and sample file committed to `src/modules/purchasing/docs/`.
 
-- [x] **Fix Card Import Error in Rental Detail Page** ✅ **COMPLETED**
-  - [x] Identify issue: rental detail page importing non-existent `Card` component from `@medusajs/ui`
-  - [x] Remove `Card` import from `@medusajs/ui` imports
-  - [x] Replace all `Card` components with `Container` components using appropriate styling
-  - [x] Add `rounded-lg shadow-sm` classes to maintain card-like appearance
-  - [x] Fix icon imports: replace `Truck` with `TruckFast`, `ExclamationTriangle` with `ExclamationCircle`, remove `MapPin`
-  - [x] Fix Badge variant prop: replace `variant="outline"` with `color="grey"`
-  - [x] **FINAL RESULT**: Rental detail page now uses native Medusa UI components without import errors
+Owners: Architecture
 
-- [x] **App Description for User Value Proposition** ✅ **COMPLETED**
-  - [x] Create compelling description focusing on user value, not technical details
-  - [x] Emphasize modern solution vs legacy system replacement
-  - [x] Highlight Belgium market focus and business benefits
-  - [x] Target users with existing systems that need replacement due to support ending
-  - [x] **FINAL RESULT**: Comprehensive business-focused description highlighting equipment service management, modern technology, Belgium market focus, and migration benefits
+---
 
-- [x] **Fix Invoice Totals Calculation** ✅ **COMPLETED**
-  - [x] Fix `listInvoiceLineItems` method call to properly fetch line items by invoice_id
-  - [x] Fix `updateInvoices` method calls to use correct MedusaService signature (data, selector)
-  - [x] Fix `recalculateInvoiceTotals` to properly sum line item totals without division by 100
-  - [x] Fix `changeInvoiceStatus` to use correct method signature
-  - [x] Ensure invoice totals are calculated correctly from line items
-  - [x] Cast status enum properly to avoid TypeScript errors
-  - [x] **FINAL RESULT**: Invoice totals now correctly reflect the sum of all line items
+## Phase 1 — Variant-level Brand Support (Product Module)
+Goal: Each `product_variant` can be linked to exactly one `brand`.
 
-- [x] **Fix Invoice Price Formatting and Totals** ✅ **COMPLETED**
-  - [x] Remove incorrect division by 100 from price formatting functions
-  - [x] Fix invoice detail page currency formatting to show correct amounts
-  - [x] Fix invoice list page currency formatting in data table
-  - [x] Ensure invoice totals display correctly (subtotal, tax_amount, discount_amount, total_amount)
-  - [x] Maintain Belgium-specific currency formatting (€) throughout
-  - [x] **FINAL RESULT**: All invoice prices and totals now display correctly without incorrect division
+- [x] Add variant↔brand link
+  - Create `src/links/variant-brand.ts` using `defineLink`:
+    - Left: `@medusajs/medusa/product`.linkable.productVariant
+    - Right: `BrandsModule`.linkable.brand
+    - `isList: false` (one brand per variant)
+    - `filterable` on brand: `id`, `name`, `code`, `is_oem`, `authorized_dealer`
+- [x] Expose brand via Remote Query
+  - Ensure queries like `variants.brand.*` are retrievable.
+  - Verify we can filter by `"brand.id"` and `"brand.code"` in Remote Query.
+- [x] Admin UI (Product Variant form)
+  - Add a “Brand” selector on variant create/edit pages.
+  - If product-level brand(s) exist, use as default suggestion; allow overriding.
+  - Add validation: prevent saving without a brand if required by business rules.
+- [x] Product listing/search enhancements
+  - Add filters for `brand` at product and variant grids (admin).
 
-- [x] **Invoice Implementation Following Native Medusa Patterns** ✅ **COMPLETED**
-  - [x] Add proper model relationships between Invoice, InvoiceLineItem, and InvoiceStatusHistory
-  - [x] Implement hasMany/belongsTo relationships following native Medusa patterns
-  - [x] Fix API route to use Remote Query with proper relationship loading
-  - [x] Create comprehensive invoice detail page with customer information
-  - [x] Display customer details (name, email, phone, company)
-  - [x] Show billing and shipping addresses with proper Belgium formatting
-  - [x] List product variants with SKU, variant title, thumbnail, and pricing
-  - [x] Display line items in professional table format with quantities and totals
-  - [x] Add Belgium-specific currency formatting (€) and date formatting (nl-BE)
-  - [x] Include invoice totals with subtotal, discounts, tax (21%), and final amount
-  - [x] Add comprehensive sidebar with invoice details, status, and related information
-  - [x] Implement proper TypeScript interfaces for all data structures
-  - [x] Fix linter errors and follow native Medusa UI component patterns
-  - [x] **FINAL RESULT**: Professional invoice detail page showing customer, addresses, product variants, and complete pricing information
+Deliverables:
+- `src/links/variant-brand.ts`
+- Admin: brand field on variant forms; brand filters on lists
 
-- [x] **Fix Invoice Detail Page 404 Issue** ✅ **COMPLETED**
-  - [x] Identify missing invoice detail page component causing 404 errors
-  - [x] Create invoice detail page structure following native Medusa patterns
-  - [x] Implement proper data fetching with React Query
-  - [x] Add comprehensive invoice information display with status badges
-  - [x] Include line items, totals, and related information sections
-  - [x] Add navigation back to invoice list with proper breadcrumb
-  - [x] Follow native Medusa UI patterns with TwoColumnPage layout
-  - [x] **FINAL RESULT**: Invoice detail pages now work properly without 404 errors
+Owners: Product Backend, Admin Frontend
 
-- [x] **Fix Manual Order Stock Reservation Issue** ✅ **COMPLETED**
-  - [x] Identify issue where manual order creation doesn't create stock reservations
-  - [x] Fix inventory reservation creation in `/admin/orders` endpoint
-  - [x] Properly query variants to get inventory item IDs from `inventory_items` relationship
-  - [x] Add proper variant inventory management checks (`manage_inventory` flag)
-  - [x] Handle required quantity calculations for inventory items
-  - [x] Add proper error handling and logging for reservation creation
-  - [x] **FINAL RESULT**: Manual orders now properly create stock reservations for fulfillment
+---
 
-- [x] **Service Order Characteristics Widget Implementation** ✅ **COMPLETED**
-  - [x] Add boolean fields to ServiceOrder model: has_appointment, needs_replacement_vehicle, includes_minor_maintenance, includes_major_maintenance, is_repeated_repair, includes_cleaning, est_used, ca_used
-  - [x] Create database migration for new boolean fields
-  - [x] Create ServiceOrderCharacteristicsWidget component with two-column checkbox layout
-  - [x] Add widget to service order detail page below status actions
-  - [x] Implement direct checkbox interaction (no edit mode required)
-  - [x] Update ServiceOrder DTOs to include new fields
-  - [x] Test widget functionality and data persistence
-  - [x] **FINAL RESULT**: Streamlined service characteristics widget with directly clickable checkboxes
+## Phase 2 — Supplier-level Brand Capability
+Goal: Suppliers declare which brands they supply; these links drive import constraints and purchasing rules.
 
-- [x] **Service Order Types Update** ✅ **COMPLETED**
-  - [x] Update ServiceOrderType enum to include only: Insurance, Warranty, Internal, Standard, Sales Prep, Quote
-  - [x] Update all TypeScript types and DTOs to use new service order types
-  - [x] Update translations to include new service type labels
-  - [x] Update all UI components with new service type color variants
-  - [x] Create database migration to update service_type enum constraint
-  - [x] Map existing service types to new types (normal/setup/emergency/preventive → standard)
-  - [x] Update color assignments: Standard (green), Warranty (purple), Sales prep (orange), Internal (red), Insurance (blue), Quote (orange)
-  - [x] **FINAL RESULT**: Streamlined service order types with consistent color coding throughout the application
+- [x] Expose `supplier` as linkable
+  - Update `src/modules/purchasing/index.ts` to export `linkable: { supplier: Supplier }` and include `models: [...]` for full registration.
+- [x] Add supplier↔brand link
+  - Create `src/links/supplier-brand.ts` using `defineLink`:
+    - Left: Purchasing module linkable `supplier`
+    - Right: Brands module linkable `brand`
+    - `isList: true` (supplier can supply multiple brands)
+    - `filterable` on brand same as above
+- [x] Admin UI (Supplier page)
+  - [x] Add “Brands” tab/section to manage linked brands (add/remove).
+  - [x] Display read-only summary in supplier header (badges for brands).
+- [x] API routes (optional, if not managed purely through Link UI)
+  - [x] `GET /admin/suppliers/:id/brands` (Remote Query read)
+  - [x] `POST/DELETE /admin/suppliers/:id/brands` to link/unlink (or use Link service directly from admin UI)
 
-- [x] **Time Entry Table Column Simplification** ✅ **COMPLETED**
-  - [x] Remove Description and Category columns from time entries table
-  - [x] Reorder columns to: Date, Hours & Minutes, Rate, Total
-  - [x] Simplify table structure for cleaner, more focused view
-  - [x] Maintain Belgium-focused currency display (€) throughout
-  - [x] **FINAL RESULT**: Streamlined time entry table showing only essential time tracking information
+Deliverables:
+- `src/links/supplier-brand.ts`
+- Admin supplier brand management UI
+- Optional admin routes (thin wrappers around Link)
 
-- [x] **Time Entry Table Format and Edit/Delete Improvements** ✅ **COMPLETED**
-  - [x] Update column title from "Hours & Minutes" to "Time"
-  - [x] Implement "X hours X minutes" display format (e.g., "2 hours 30 minutes")
-  - [x] Add Actions column with edit/delete dropdown menu
-  - [x] Add edit modal with pre-filled form data for time entry modification
-  - [x] Add delete functionality with confirmation dialog
-  - [x] Maintain European date format (DD/MM/YYYY) throughout
-  - [x] **FINAL RESULT**: Full CRUD functionality with user-friendly time display format
+Owners: Purchasing Backend, Admin Frontend
 
-- [x] **Service Order Timer Implementation** ✅ **COMPLETED**
-  - [x] Add start/stop timer mechanism with real-time display
-  - [x] Simplified timer to focus only on time logging (removed work description, category, notes)
-  - [x] Use native Medusa UI components: Button, Text, Label, Input
-  - [x] Use native Medusa icons: PlaySolid, PauseSolid, Stopwatch
-  - [x] Automatic time entry creation when timer is stopped with minimal required data
-  - [x] Real-time timer display with HH:MM:SS format
-  - [x] Inline hourly rate setting with compact design
-  - [x] Proper state management and cleanup with useEffect and useRef
-  - [x] Integration with existing time entries API and query invalidation
-  - [x] Belgium-focused currency display (€) throughout the interface
-  - [x] **FINAL RESULT**: Streamlined timer interface focused purely on time tracking
+---
 
-- [x] **Service Order Backlog Implementation** ✅ **COMPLETED**
-  - [x] Update service order status workflow: Draft → Ready for Pickup → In Progress → Done → Returned for Review
-  - [x] Modify kanban board to show only "Ready for Pickup" and beyond (exclude Draft status)
-  - [x] Create separate backlog view for Draft service orders
-  - [x] Update model status enum and migrations (Migration20250727094542.ts generated)
-  - [x] Update all UI components with new status workflow
-  - [x] Update translations for new statuses (English and Dutch)
-  - [x] Applied to: Service Order model, types, edit forms, kanban view, list table, translations
-  - [x] **FINAL STRUCTURE**: Optimal two-tab layout with view toggle
-    - [x] **Backlog Tab**: Shows draft orders in dedicated datatable with badge count
-    - [x] **Active Tab**: Shows non-draft orders with List/Kanban view toggle
-    - [x] Clean separation between planning (backlog) and execution (active work)
-    - [x] Native MedusaJS DataTable styling and functionality throughout
-    - [x] Consistent UX with filtering, search, and pagination on all views
+## Phase 3 — Price List Brand Scope (Model + Workflow)
+Goal: Price lists may optionally target a single brand to hard-constrain imported rows.
 
-- [x] **Service Order Detail Screen Layout Improvements** ✅ **COMPLETED**
-  - [x] Remove custom padding from Parts & Items widget table content
-  - [x] Remove custom padding from Time Entries widget table content
-  - [x] Restructure widgets to follow native Medusa DataTable patterns
-  - [x] Fix Badge component props to use `color` instead of `variant`
-  - [x] Achieve consistent native Medusa UI styling without extra padding
-  - [x] Maintain proper table structure with native padding handling
-  - [x] **Button Improvements** ✅ **COMPLETED**
-    - [x] Update header action buttons to use `size="small" variant="secondary"`
-    - [x] Update table action buttons to use `size="small" variant="transparent"`
-    - [x] Update modal buttons to use `size="small"` consistently
-    - [x] Update form action buttons to use `size="small"` consistently
-    - [x] Achieve native Medusa button patterns throughout all widgets
- 
-- [x] **Service Order Header Improvements** ✅ **COMPLETED**
-  - [x] Replace custom Badge with native StatusBadge for service type
-  - [x] Replace priority badge with service type in header
-  - [x] Use consistent native Medusa StatusBadge components
-  - [x] Add proper color variants for service types
-  - [x] Achieve consistent native Medusa UI patterns in header
+- [x] Model change: `supplier_price_list`
+  - Add nullable `brand_id` column to `src/modules/purchasing/models/supplier-price-list.model.ts`.
+  - Migration added: `src/modules/purchasing/migrations/Migration20250822090000.ts` creating `brand_id` and a unique index `(supplier_id, brand_id, is_active)`.
+- [x] API/Workflow inputs
+  - Extended import route to accept optional `brand_id` and pass it to the workflow.
+  - Persist `brand_id` on created price lists in `createPriceListStep`/`PurchasingService.createSupplierPriceList`.
+  - Admin import UI updated to include optional brand selector.
+- [x] Display
+  - Show associated brand on price list detail/admin listing; add filter by brand.
 
-- [x] **Service Order Label Components Standardization** ✅ **COMPLETED**
-  - [x] Replace HTML `<label>` tag with native Medusa `<Label>` component in service-order-comments.tsx
-  - [x] Add proper `size="small" weight="plus"` props to all form Label components in service-order-overview.tsx
-  - [x] Add proper `size="small" weight="plus"` props to all form Label components in edit-service-order-form.tsx
-  - [x] Ensure consistent native Medusa UI Label component usage throughout service order screens
-  - [x] Follow [Medusa UI Label documentation](https://docs.medusajs.com/ui/components/label) patterns
-  - [x] Achieve consistent typography and visual hierarchy across all form elements
+Deliverables:
+- DB migration (safe, additive)
+- Route input validation update + UI change
 
-- [x] **Fix Invoice Creation on Fulfillment Creation** ✅ **COMPLETED**
-  - [x] Identify issue: subscriber listens for non-existent "order.shipment_created" event
-  - [x] Determine correct event: "order.fulfillment_created" for fulfillments
-  - [x] Update subscriber to listen for "order.fulfillment_created" event
-  - [x] Fix event data structure to use data.order_id instead of data.id
-  - [x] Update TypeScript types for proper event payload structure
-  - [x] **FINAL RESULT**: Invoice creation now properly triggers when fulfillments are created
+Owners: Purchasing Backend, Admin Frontend
 
-- [x] **Service Type & Priority StatusBadge Implementation** ✅ **COMPLETED**
-  - [x] Replace regular `Badge` components with native `StatusBadge` components in service-order-overview.tsx
-  - [x] Replace regular `Badge` component with native `StatusBadge` component in service-order-status-actions.tsx
-  - [x] Add service type color variants mapping for proper visual distinction
-  - [x] Implement colored squares on grey background pattern for service type and priority
-  - [x] Achieve native Medusa UI StatusBadge appearance throughout service order detail screen
-  - [x] Ensure consistent visual hierarchy with proper color coding for different service types and priorities
+---
 
-- [x] **Service Order DataTable Header Label Standardization** ✅ **COMPLETED**
-  - [x] Replace plain text table headers with native `Label` components in service-order-items.tsx
-  - [x] Replace plain text table headers with native `Label` components in service-order-time-entries.tsx  
-  - [x] Replace plain text table headers with native `Label` components in service-order-status-history.tsx
-  - [x] Add proper `size="small" weight="plus"` props to all table header Label components
-  - [x] Ensure consistent native Medusa UI Label usage in all datatable headers
-  - [x] Follow [Medusa UI Label documentation](https://docs.medusajs.com/ui/components/label) patterns for table headers
-  - [x] Achieve consistent typography and visual hierarchy in all service order datatables
+## Phase 4 — Brand-Constrained CSV Parsing and Matching
+Goal: Ensure that imported rows resolve to variants only if they belong to allowed brands.
 
-- [x] **Update All Datatables to Use Native StatusBadge Components** ✅ **COMPLETED**
-  - [x] Replace Badge components with StatusBadge in machines datatable
-  - [x] Replace Badge components with StatusBadge in technicians datatable  
-  - [x] Replace Badge components with StatusBadge in purchase orders datatable
-  - [x] Replace Badge components with StatusBadge in invoices datatable
-  - [x] Replace Badge components with StatusBadge in suppliers datatable
-  - [x] Update service orders datatable to use StatusBadge consistently
-  - [x] Follow [Medusa UI StatusBadge documentation](https://docs.medusajs.com/ui/components/status-badge) patterns
-  - [x] Ensure consistent native Medusa UI patterns across all datatables
-  - [x] **FINAL RESULT**: All datatables now use native StatusBadge with proper color variants and consistent styling
+- [x] Update parsing step `src/modules/purchasing/steps/parse-price-list-csv.ts`
+  - Resolve supplier’s allowed brand IDs via Remote Query on start; intersect with optional `brand_id`.
+  - Filter variant lookup by `brand.id` when the feature flag is enabled; handle 0/ambiguous matches with clear errors.
+  - Fallback to product-level selection filters variants to allowed brands and enforces disambiguation.
+  - Populate `product_variant_id`, `product_id`, and preserve `variant_sku`.
+- [x] Workflow wiring `src/modules/purchasing/workflows/upload-price-list-csv.ts`
+  - Pass `supplier_id` and optional `brand_id` into the parse step context.
+  - Parse errors are included in `upload_metadata` via the create step input.
+- [x] Service upsert behavior
+  - `PurchasingService.upsertSupplierProductFromPriceList` remains variant-id driven; no change needed.
+  - Ensure no row proceeds without a resolved `product_variant_id`.
 
-- [x] **Activity & Comments Section UI Improvements** ✅ **COMPLETED**
-  - [x] Change widget title from "Activity & Comments" to "Activity"
-  - [x] Remove "All" tab from the tab navigation
-  - [x] Keep only "Comments" and "Events" tabs for separate views
-  - [x] Change default active tab from "all" to "comments"
-  - [x] Update filtering logic to remove "all" case
-  - [x] Update empty state messages to remove "all" references
-  - [x] **FINAL RESULT**: Clean separation between comments and events with simplified navigation
+Deliverables:
+- Updated parse step with Remote Query brand constraints
+- Updated upload workflow
+- CSV template/docs updated (optional `brand_code` column)
 
-- [x] **Remove Internal Comment Switch** ✅ **COMPLETED**
-  - [x] Remove internal comment switch from CommentForm component
-  - [x] Remove isInternal state and related logic
-  - [x] Set is_internal to false by default in comment creation
-  - [x] Remove unused Switch and Label imports
-  - [x] Simplify form layout to only show action buttons
-  - [x] **FINAL RESULT**: Cleaner comment form without unnecessary internal comment toggle
+Owners: Purchasing Backend
 
-- [x] **Service Order Items Product Variant Integration** ✅ **COMPLETED**
-  - [x] Replace manual item entry with product variant selection
-  - [x] Add product search and selection modal with search functionality
-  - [x] Auto-fill description and price from selected variant
-  - [x] Only require quantity input from user
-  - [x] Update datatable to show proper product variant information
-  - [x] Update API endpoint to handle variant_id and product_id
-  - [x] Ensure Belgium-focused currency display (€) throughout
-  - [x] **FINAL RESULT**: Streamlined item addition with product variant integration
+---
 
-- [x] **Product Search DataTable Refactoring** ✅ **COMPLETED**
-  - [x] Replace custom product search layout with native Medusa DataTable
-  - [x] Implement proper column structure using createDataTableColumnHelper
-  - [x] Add client-side filtering for products and variants
-  - [x] Integrate search input with DataTable toolbar
-  - [x] Maintain variant selection functionality within DataTable cells
-  - [x] **FINAL RESULT**: Clean, native Medusa UI product search interface
+## Phase 5 — Admin UX Improvements ✅ **COMPLETED**
+Goal: Make brand context visible and manageable during daily operations.
 
-- [x] **Product Search DataTable Row Structure Improvement** ✅ **COMPLETED**
-  - [x] Refactor to show one row per variant instead of nested structure
-  - [x] Implement columns: Product, Description, Variant Type, Price
-  - [x] Add clickable rows with hover effects for variant selection
-  - [x] Maintain search functionality across all variant data
-  - [x] **FINAL RESULT**: Clean, clickable datatable with one row per variant
+- [x] Variant forms: add brand selector and validation; show current brand in variant tables.
+  - ✅ Variant brand manager widget with edit functionality (`src/admin/widgets/variant-brand-manager.tsx`)
+  - ✅ Product table brand filters (`src/admin/hooks/table/filters/use-product-table-filters.tsx`)
+  - ✅ API routes for variant brand management (`src/api/admin/products/variants/[id]/brand/route.ts`)
+- [x] Supplier page: Brands tab + counts of linked variants and price lists per brand. (basic linking UI added; counts TBD)
+- [x] Price list import wizard: optional brand selector (pre-filtered by supplier brands) and CSV template hint.
+- [x] Product detail: display variant-brand chips for clarity.
+  - ✅ Brand overview widget with card layout (`src/admin/widgets/product-brand-overview.tsx`)
+  - ✅ Compact brand chips widget (`src/admin/widgets/variant-brand-chips.tsx`)
 
-- [x] **Fix Variant Price Integration Issue** ✅ **COMPLETED**
-  - [x] Identify issue where variants without prices were causing unit_price to be 0
-  - [x] Add validation to prevent adding variants without prices
-  - [x] Update UI to show "No price set" for variants without prices
-  - [x] Add error message when trying to add variants without prices
-  - [x] **FINAL RESULT**: Proper price validation and user feedback for missing variant prices
+Deliverables:
+- Admin components updated with Medusa Admin patterns.
 
-- [x] **EUR Price Specific Integration** ✅ **COMPLETED**
-  - [x] Update price calculation to specifically look for EUR prices from variant price array
-  - [x] Update ProductSearchDataTable to show EUR prices specifically
-  - [x] Update selected variant preview to display EUR price
-  - [x] Update error messages to mention EUR price specifically
-  - [x] **FINAL RESULT**: Proper EUR price handling for multi-currency variants
+Owners: Admin Frontend
 
-- [x] **Query API Integration for Calculated Prices** ✅ **COMPLETED**
-  - [x] Update product fetching to use Query API with proper context
-  - [x] Use calculated_price instead of raw prices array
-  - [x] Add EUR currency context for price calculation
-  - [x] Update ProductVariant interface to reflect calculated_price structure
-  - [x] Update all price display logic to use calculated prices
-  - [x] **FINAL RESULT**: Proper calculated EUR prices using Medusa Query API
+---
 
-- [x] **Fix Product Search and Add Customer Context** ✅ **COMPLETED**
-  - [x] Revert to GET request for admin products API (POST was incorrect)
-  - [x] Add customer data fetching for pricing context
-  - [x] Update ServiceOrder interface to include customer_id
-  - [x] Revert to using prices array since admin API doesn't support calculated_price directly
-  - [x] Maintain EUR price filtering from prices array
-  - [x] **FINAL RESULT**: Working product search with customer context for future pricing enhancements
+## Phase 6 — API/Remote Query Helpers and Routes ✅ **COMPLETED**
+Goal: Thin endpoints to power admin screens and debug tools.
 
-- [x] **Debug and Fix Price Display** ✅ **COMPLETED**
-  - [x] Added comprehensive debugging with variants.* and variants.prices.* fields
-  - [x] Identified that prices are already in correct format (not in cents)
-  - [x] Removed division by 100 from all price calculations and displays
-  - [x] Removed all debugging console.log statements
-  - [x] **FINAL RESULT**: Correct EUR price display without unnecessary conversion
+- [x] Query helpers
+  - ✅ Reusable Remote Query snippets (`src/admin/hooks/api/remote-query-helpers.ts`)
+  - ✅ React hooks for brand-related queries (`src/admin/hooks/api/brand-queries.ts`)
+  - ✅ Helper functions for: variants by brand, supplier brands, price lists by brand, brand statistics
+- [x] Optional routes
+  - ✅ `GET /admin/brands/:id/variants` (paginated) (`src/api/admin/brands/[id]/variants/route.ts`)
+  - ✅ `GET /admin/suppliers/:id/variants?brand_id=...` (from current graph or via link traversal) (`src/api/admin/suppliers/[id]/variants/route.ts`)
+  - ✅ Handlers kept thin; delegated to Remote Query
 
-### ✅ Completed
+Deliverables:
+- Helper functions or hooks for remote query usage.
 
-- [x] **Fix Service Order Pagination After Date Column Addition** ✅ **COMPLETED**
-  - [x] Restore server-side filtering with tab parameter in API endpoint
-  - [x] Add tab parameter back to BacklogDataTable component (tab="backlog")
-  - [x] Add tab parameter back to ActiveOrdersDataTable component (tab="active")
-  - [x] Remove client-side filtering that was causing pagination count issues
-  - [x] Remove debugging console.log statements
-  - [x] Ensure proper server-side filtering: backlog shows only draft orders, active shows non-draft orders
-  - [x] Fix pagination to work with server-side filtered data
+Owners: Backend
 
-- [x] **Fix Machine Details Page Issue** ✅ **COMPLETED**
-  - [x] Identify the issue: missing machine detail page (`/machines/[id]/page.tsx`)
-  - [x] Analyze patterns from native Medusa detail pages and existing service order detail
-  - [x] Create machine detail page with TwoColumnPage layout
-  - [x] Add machine overview, specifications, and service history sections
-  - [x] Implement proper data fetching with React Query
-  - [x] Add navigation back to machines list with proper breadcrumb
-  - [x] Follow native Medusa UI patterns and Belgium-focused formatting
-  - [x] **FINAL RESULT**: Professional machine detail page with comprehensive information display, status badges, and proper navigation
+---
 
-- [x] **Warranties Module Implementation** ✅ **COMPLETED**
-  - [x] Plan warranties module architecture following native MedusaJS patterns
-  - [x] Create warranty models (Warranty, WarrantyLineItem, WarrantyStatusHistory)
-  - [x] Implement WarrantiesService with CRUD operations
-  - [x] Create workflow for converting completed warranty service orders to warranties
-  - [x] Build admin UI for warranty management
-  - [x] Integrate with service orders workflow for automatic warranty creation
-  - [x] Create database migration and run it successfully
-  - [x] **FINAL RESULT**: Complete warranties module with proper database schema, service layer, and workflow integration for handling warranty service orders separately from invoices
+## Phase 7 — Data Migration & Backfill ✅ **COMPLETED**
+Goal: Transition without breaking existing data.
 
-- [x] **Warranties Admin UI Implementation** ✅ **COMPLETED**
-  - [x] Create warranties list page with DataTable following Medusa UI patterns
-  - [x] Implement comprehensive warranty detail page with TwoColumnPage layout
-  - [x] Add proper TypeScript interfaces for all warranty data structures
-  - [x] Create StatusBadge components for warranty status and type with color coding
-  - [x] Implement Belgium-focused currency formatting (€) and date formatting (nl-BE)
-  - [x] Add customer, machine, and service order information display
-  - [x] Include line items display with reimbursement tracking
-  - [x] Add status history with audit trail
-  - [x] Create financial summary with labor costs, parts costs, and reimbursement amounts
-  - [x] Add comprehensive translations for warranties module
-  - [x] **FINAL RESULT**: Professional admin UI with full CRUD functionality, filtering, search, and detailed warranty management interface
+- [x] Backfill variant brands
+  - ✅ Smart assignment script with single-brand product logic (`src/scripts/backfill-variant-brands.ts`)
+  - ✅ Handles edge cases: multiple brands, no brands, existing assignments
+  - ✅ Batch processing with comprehensive logging and dry-run mode
+- [x] Backfill supplier brands
+  - ✅ Intelligent inference from SupplierProduct relationships (`src/scripts/backfill-supplier-brands.ts`)
+  - ✅ Configurable thresholds and validation rules
+  - ✅ Avoids duplicate links and handles edge cases
+- [x] Write reversible scripts and log changes
+  - ✅ Combined migration runner with safety features (`src/scripts/migrate-brand-data.ts`)
+  - ✅ Comprehensive documentation and usage guide (`src/scripts/README-migration.md`)
+  - ✅ Dry-run by default, detailed logging, error handling, and result reporting
 
-- [x] **Update Service Type Badges to Use Regular Badge Component** ✅ **COMPLETED**
-  - [x] Replace StatusBadge with regular Badge component for service types
-  - [x] Use background colors for better visual distinction: green (standard), purple (warranty), red (internal), blue (insurance), orange (sales_prep, quote)
-  - [x] Apply changes to both BacklogDataTable and ActiveOrdersDataTable components
-  - [x] Maintain proper translation support for all service type labels
-  - [x] **FINAL RESULT**: Service type badges now use prominent background colors for better visual hierarchy and distinction
+Deliverables:
+- Safe scripts for backfill with dry-run option.
 
-- [x] **Display Imported Service Order Notes Data** ✅ **COMPLETED**
-  - [x] Add internal_notes and customer_notes fields to ServiceOrder interface
-  - [x] Add notes section to service order overview widget with DocumentText icon
-  - [x] Display internal notes and customer notes separately in overview widget
-  - [x] Add notes information to service order detail page header
-  - [x] Show notes below dates in header for immediate visibility
-  - [x] Support notes data imported from load-service-orders.ts script
-  - [x] Handle cases where notes may be null or empty
+Owners: Data Eng / Backend
 
-- [x] **Add Service Order Date Visualization** ✅ **COMPLETED**
+---
 
-### 🔄 In Progress
-- [x] **Fix Technician Details Screen 404 Error** ✅ **COMPLETED**
-  - [x] Identify issue: Missing technician detail page route structure (`/technicians/[id]/page.tsx`)
-  - [x] Confirm API endpoint exists and works correctly
-  - [x] Analyze existing machine detail page pattern for reference
-  - [x] Create technician detail page following native Medusa patterns
-  - [x] Fix all icon import issues (replace non-existent icons with available Medusa UI icons)
-  - [x] Fix API endpoint method names (retrieveTechnician, updateTechnician, deleteTechnician)
-  - [x] Refactor to use native TwoColumnPage layout with proper widget structure
-  - [x] Implement native drawer pattern for edit action using EditTechnicianForm component
-  - [x] Fix form initialization issues and add debugging for drawer functionality
-  - [x] Add View action to technician list page actions dropdown
-  - [x] Test navigation from technician list to detail page
-  - [x] Ensure proper data fetching and display
-- [ ] **Fix Service Order Kanban View Card Visibility Issue** 
-  - [x] Identify root cause: Data source mismatch between kanban view and list view
-  - [x] Kanban view uses useServiceOrders() without tab parameter (fetches ALL orders, filters client-side)
-  - [x] List view uses useServiceOrders() with tab:"active" parameter (filters server-side)
-  - [x] Kanban view only shows orders with statuses in statusConfig array (ready_for_pickup, in_progress, done, returned_for_review)
-  - [x] Orders with unknown/undefined statuses are filtered out by kanban statusConfig logic
-  - [ ] Fix kanban view to use consistent server-side filtered data source
-  - [ ] Add debugging to identify any service orders with unexpected statuses
-  - [ ] Test to ensure all cards visible in list view also appear in kanban view
-- [ ] **Fix Service Order Status Update Visibility Issue**
-  - [x] Identify issue: Orders moving from draft to ready_for_pickup disappear from backlog but don't appear in active tab
-  - [x] Add comprehensive query invalidation to ensure all related queries are refreshed
-  - [x] Add debugging logs to track data flow between backlog and active tabs
-  - [x] Set staleTime to 0 to ensure fresh data is always fetched
-  - [ ] Test status updates to verify orders properly move between tabs
-  - [ ] Remove debugging logs once issue is resolved
-- [ ] **Deployment Planning and Setup**
-  - [ ] Research and document deployment options (Vercel, Railway, Render, etc.)
-  - [ ] Prepare environment variables and configuration for production
-  - [ ] Set up database for production deployment
-  - [ ] Configure CORS settings for production domains
-  - [ ] Test deployment process locally
-- [ ] **Fix load-parts-with-prices.ts script compilation and runtime errors**
-  - [x] Fixed duplicate variable declarations (partsMap)
-  - [x] Added missing helper functions (createRecordFromValues, processRecord)
-  - [x] Fixed undefined variable references (logger, container, MEMORY_LIMIT)
-  - [x] Removed unused code and simplified structure
-  - [ ] Test script execution to ensure it runs without errors
-  - [ ] Verify CSV processing and product creation works correctly
-- [ ] **Fix Service Orders Import Script Quantity Field Issue** ✅ **COMPLETED**
-  - [x] Identified issue: script using 'quantity' instead of 'quantity_needed' field name
-  - [x] Fixed field name to match ServiceOrderItem model requirements
-  - [x] Fixed 'total_amount' to 'total_price' to match model schema
-  - [x] Updated script to correctly use part_quantity from CSV for item quantities
-  - [ ] Test script execution to ensure service order items are created properly
+## Phase 8 — Testing Strategy
+Goal: Ensure reliability across parsing and linking.
 
-### 📋 Pending Tasks
-- [ ] Ready for new tasks and feature development
+- [ ] Unit tests
+  - Variant↔brand link creation and retrieval.
+  - Supplier↔brand link management.
+  - CSV parse logic with allowed brand constraints (0/1/ambiguous cases).
+- [ ] Integration tests
+  - Price list upload end-to-end with supplier brand constraints.
+  - Admin routes (if added): supplier brands get/add/remove.
+- [ ] E2E/cypress (optional)
+  - Admin flows for supplier-brand assignment and price list import.
 
-## Project Overview
-- **Type**: Medusa e-commerce starter project
-- **Tech Stack**: TypeScript, Node.js, Medusa.js
-- **Location**: Belgium-focused market
-- **Key Files**: 
-  - `src/scripts/load-parts-with-prices.ts` - Large CSV import script for parts with price history
-  - `src/admin/widgets/service-order-time-entries.tsx` - Time entries widget with simplified timer functionality
-  - `TODO.md` - Project progress tracking and memory system
+Deliverables:
+- Tests under `integration-tests/` and module-specific test dirs.
 
-## Notes
-- Script is configured to start from line 71000 for resuming large imports
-- Uses streaming CSV processing to handle 1.5M+ records efficiently
-- Implements memory monitoring and batch processing for optimal performance
-- Follows MedusaJS native patterns for product creation and database operations
-- Timer feature simplified to focus only on time logging, work details handled elsewhere
-- Belgium-focused currency (€) used throughout the interface
+Owners: QA / Backend / Frontend
 
-*Last updated: Current session - Fixed Service Order DataTable pagination implementation with proper URL-based state management, automatic API refetches when changing pages, and native Medusa pattern compliance*
+---
+
+## Phase 9 — Documentation & Operationalization
+Goal: Smooth handover and maintenance.
+
+- [ ] Update README in `src/modules/brands/` and `src/modules/purchasing/`.
+- [ ] Add CSV format doc with examples and edge-case guidance.
+- [ ] Add troubleshooting guide for ambiguous SKU/brand matches.
+
+Deliverables:
+- Docs committed and linked from admin.
+
+Owners: Tech Writing / Backend
+
+---
+
+## Phase 10 — Monitoring & Performance
+Goal: Ensure import runs are observable and efficient.
+
+- [ ] Add logging around parse/match decisions and summary metrics.
+- [ ] Consider batching Remote Query calls in parse step and caching brand lists per run.
+- [ ] Add basic dashboards or logs parsing script.
+
+Deliverables:
+- Logging improvements and optional dashboards.
+
+Owners: Platform / Backend
+
+---
+
+## Workstream Breakdown (Parallelizable)
+Use these work items to distribute across developers/agents.
+
+1) Backend — Product/Variant Brand
+- [ ] Implement `src/links/variant-brand.ts` and verify Remote Query filters
+- [ ] Add seed/backfill script for variant brands
+
+2) Backend — Supplier Brands & Index
+- [ ] Update `src/modules/purchasing/index.ts` linkable export for `supplier`
+- [ ] Implement `src/links/supplier-brand.ts`
+- [ ] Optional admin routes for supplier brand CRUD
+
+3) Backend — Price List Brand Scope
+- [ ] Add `brand_id` to `supplier_price_list` + migration
+- [ ] Update import route to accept `brand_id` and persist
+- [ ] Update parse step to enforce supplier/price-list brand constraints
+- [ ] Update upload workflow metadata and error reporting
+
+4) Admin Frontend
+- [ ] Variant brand selector + list filter
+- [ ] Supplier brands management UI
+- [ ] Price list import wizard brand selector + CSV hints
+- [ ] Product detail brand chips
+
+5) QA & Docs
+- [ ] Tests for linking and parsing constraints
+- [ ] CSV template and troubleshooting docs
+
+---
+
+## Acceptance Criteria
+- Brand can be assigned per variant and queried via Remote Query; product-level brand link remains optional.
+- Suppliers can be linked to brands; UI to manage the links exists.
+- Price list import only updates variants whose brand is supplied by the supplier; if `brand_id` is specified on the price list, import is limited to that brand.
+- CSV imports produce clear error messages for missing and ambiguous brand matches; summary is stored on the price list upload metadata.
+- Existing purchasing flows (supplier products, PO) remain functional.
+
+---
+
+## Notes & Risks
+- Variant SKU collisions across brands are expected; enforced disambiguation is required.
+- Consider requiring either `brand_id` on the price list or `brand_code` per row for high-collision suppliers.
+- Large imports should batch Remote Query calls and use caching to avoid timeouts.
+
+---
+
+Last updated: This session — Added detailed plan for brand-aware variants and supplier brand-scoped price list uploads.

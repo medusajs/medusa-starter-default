@@ -23,12 +23,19 @@ export const useProductTableQuery = ({ pageSize, prefix }: UseProductTableQueryP
       params.status = queryParams[`${prefix}_status`]
     }
 
+    if (queryParams[`${prefix}_brand_id`]) {
+      params["variants.brand.id"] = queryParams[`${prefix}_brand_id`]
+      // ensure variants are expanded to make filters effective in list handlers
+      params.fields = `${params.fields ? params.fields + "," : ""}*variants,variants.brand.*`
+    }
+
     return params
   }, [queryParams, pageSize, prefix])
 
   const raw = useMemo(() => ({
     q: queryParams[`${prefix}_q`] as string,
     status: queryParams[`${prefix}_status`] as string,
+    brand_id: queryParams[`${prefix}_brand_id`] as string,
     page: queryParams[`${prefix}_page`] as number,
   }), [queryParams, prefix])
 

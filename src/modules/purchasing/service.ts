@@ -145,6 +145,7 @@ class PurchasingService extends MedusaService({
   
   async createSupplierPriceList(data: {
     supplier_id: string
+    brand_id?: string
     name: string
     description?: string
     effective_date?: Date
@@ -156,7 +157,7 @@ class PurchasingService extends MedusaService({
     const supplier = await this.retrieveSupplier(data.supplier_id)
     
     // Get current active price list for version incrementing
-    const currentActive = await this.getActivePriceListForSupplier(data.supplier_id)
+    const currentActive = await this.getActivePriceListForSupplier(data.supplier_id, data.brand_id)
     const nextVersion = currentActive ? currentActive.version + 1 : 1
     
     // Deactivate existing active price lists for this supplier
@@ -169,6 +170,7 @@ class PurchasingService extends MedusaService({
     
     const priceList = await this.createSupplierPriceLists([{
       supplier_id: data.supplier_id,
+      brand_id: data.brand_id,
       name: data.name,
       description: data.description,
       effective_date: data.effective_date,
@@ -267,16 +269,20 @@ class PurchasingService extends MedusaService({
     })
   }
 
-  async getActivePriceListForSupplier(supplierId: string) {
+  async getActivePriceListForSupplier(supplierId: string, brandId?: string) {
     const now = new Date()
-    const [activeList] = await this.listSupplierPriceLists({
+    const filters: any = {
       supplier_id: supplierId,
       is_active: true,
       $and: [
         { $or: [{ effective_date: null }, { effective_date: { $lte: now } }] },
         { $or: [{ expiry_date: null }, { expiry_date: { $gte: now } }] }
       ]
-    })
+    }
+    if (brandId !== undefined) {
+      filters.brand_id = brandId ?? null
+    }
+    const [activeList] = await this.listSupplierPriceLists(filters)
     return activeList
   }
 

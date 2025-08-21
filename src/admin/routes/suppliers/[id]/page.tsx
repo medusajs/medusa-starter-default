@@ -7,6 +7,7 @@ import { SupplierAddressSection } from "./components/supplier-address-section"
 import { SupplierFinancialSection } from "./components/supplier-financial-section"
 import { SingleColumnPageSkeleton } from "../../../components/common/skeleton"
 import { SupplierPriceLists } from "../../../components/supplier-price-lists"
+import { SupplierBrandsSection } from "./components/supplier-brands-section"
 
 const SupplierDetailPage = () => {
   const { id } = useParams()
@@ -37,6 +38,7 @@ const SupplierDetailPage = () => {
       <SupplierContactSection supplier={supplier} />
       <SupplierAddressSection supplier={supplier} />
       <SupplierFinancialSection supplier={supplier} />
+      <SupplierBrandsSection supplierId={supplier.id} />
       <SupplierPriceLists data={supplier} />
     </div>
   )
@@ -44,4 +46,27 @@ const SupplierDetailPage = () => {
 
 export default SupplierDetailPage
 
-export const config = defineRouteConfig({}) 
+// Loader function to fetch supplier data for breadcrumbs
+export const loader = async ({ params }: { params: { id: string } }) => {
+  try {
+    const response = await fetch(`/admin/suppliers/${params.id}`)
+    if (!response.ok) throw new Error("Failed to fetch supplier")
+    const data = await response.json()
+    return data.supplier
+  } catch (error) {
+    console.error("Error loading supplier:", error)
+    return null
+  }
+}
+
+export const config = defineRouteConfig({})
+
+// Breadcrumb configuration
+export const handle = {
+  breadcrumb: ({ data }: { data: any }) => {
+    if (data && data.name) {
+      return data.name
+    }
+    return "Supplier Details"
+  },
+} 
