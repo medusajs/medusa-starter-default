@@ -1,4 +1,4 @@
-import { loadEnv, defineConfig } from '@medusajs/framework/utils'
+import { loadEnv, defineConfig, Modules } from '@medusajs/framework/utils'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
@@ -28,6 +28,31 @@ module.exports = defineConfig({
     }
   },
   modules: [
+    // Production Redis modules for caching, events, and workflows
+    {
+      resolve: "@medusajs/cache-redis",
+      key: Modules.CACHE,
+      options: {
+        redisUrl: process.env.REDIS_URL || "redis://localhost:6379"
+      }
+    },
+    {
+      resolve: "@medusajs/event-bus-redis", 
+      key: Modules.EVENT_BUS,
+      options: {
+        redisUrl: process.env.REDIS_URL || "redis://localhost:6379"
+      }
+    },
+    {
+      resolve: "@medusajs/workflow-engine-redis",
+      key: Modules.WORKFLOW_ENGINE,
+      options: {
+        redis: {
+          url: process.env.REDIS_URL || "redis://localhost:6379"
+        }
+      }
+    },
+    // Custom business modules
     {
       resolve: "./src/modules/purchasing",
     },

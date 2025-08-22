@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # Database service removed - now using Supabase
+  # postgres service and pgdata volume removed
+
+  redis:
+    image: redis:7-alpine
+    container_name: medusa-redis-prod
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - medusa-network
+
+  medusa:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: medusa-app-prod
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      NODE_ENV: production
+      # DATABASE_URL removed - now using Supabase
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      COOKIE_SECRET: ${COOKIE_SECRET}
+      STORE_CORS: ${STORE_CORS}
+      ADMIN_CORS: ${ADMIN_CORS}
+      AUTH_CORS: ${AUTH_CORS}
+      FALLBACK_TO_SUPABASE: ${FALLBACK_TO_SUPABASE:-true}
+      SUPABASE_DATABASE_URL: ${SUPABASE_DATABASE_URL}
+    depends_on:
+      - redis
+    networks:
+      - medusa-network
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+
+volumes:
+  # pgdata volume removed
+  redis_data:
+
+networks:
+  medusa-network:
+    driver: bridge
