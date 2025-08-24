@@ -30,8 +30,9 @@ const checkBrandCodeUniquenessStep = createStep(
   async (input: any, { container }) => {
     const brandsService = container.resolve(BRANDS_MODULE)
     
-    const isUnique = await brandsService.isBrandCodeUnique(input.code)
-    if (!isUnique) {
+    // Check for duplicate brand codes
+    const existingBrands = await brandsService.listBrands({ code: input.code })
+    if (existingBrands.length > 0) {
       throw new Error(`Brand with code "${input.code}" already exists`)
     }
     
@@ -53,12 +54,12 @@ const createBrandStep = createStep(
       authorized_dealer: input.authorized_dealer !== undefined ? input.authorized_dealer : false,
     }
     
-    return await brandsService.createBrand(brandData)
+    return await brandsService.createBrands(brandData)
   },
   async (brand: any, { container }) => {
     // Compensation: delete the created brand if workflow fails
     const brandsService = container.resolve(BRANDS_MODULE)
-    await brandsService.deleteBrand(brand.id)
+    await brandsService.deleteBrands(brand.id)
   }
 )
 

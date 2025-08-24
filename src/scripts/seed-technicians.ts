@@ -106,7 +106,7 @@ export default async function seedTechnicians({ container }: ExecArgs) {
   
   for (const technicianData of sampleTechnicians) {
     try {
-      await techniciansService.createTechnician(technicianData)
+      await techniciansService.createTechnicians(technicianData)
       console.log(`Created technician: ${technicianData.first_name} ${technicianData.last_name}`)
     } catch (error) {
       console.error(`Failed to create technician ${technicianData.first_name} ${technicianData.last_name}:`, error)

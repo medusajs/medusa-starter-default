@@ -6,58 +6,43 @@ export default async function seedMachines({ container }: ExecArgs) {
   
   const sampleMachines = [
     {
-      model: "320D2",
+      model_number: "320D2",
       serial_number: "CAT0320D2001",
       year: 2020,
-      hours: 1250,
-      location: "Construction Site A",
-      status: "operational",
-      last_service_date: new Date("2023-01-15"),
-      next_service_due: new Date("2023-07-15"),
+      engine_hours: 1250,
+      status: "active",
       notes: "Regular maintenance completed",
     },
     {
-      model: "PC200-8",
+      model_number: "PC200-8",
       serial_number: "KOM0200001",
       year: 2019,
-      hours: 2100,
-      location: "Warehouse B",
+      engine_hours: 2100,
       status: "maintenance",
-      last_service_date: new Date("2022-12-10"),
-      next_service_due: new Date("2023-06-10"),
       notes: "Hydraulic system repair needed",
     },
     {
-      model: "EC220E",
+      model_number: "EC220E",
       serial_number: "VOL0220001",
       year: 2021,
-      hours: 800,
-      location: "Site C",
-      status: "operational",
-      last_service_date: new Date("2023-02-20"),
-      next_service_due: new Date("2023-08-20"),
+      engine_hours: 800,
+      status: "active",
       notes: "New machine, minimal wear",
     },
     {
-      model: "JS220",
+      model_number: "JS220",
       serial_number: "JCB0220001",
       year: 2018,
-      hours: 3200,
-      location: "Depot D",
-      status: "out_of_service",
-      last_service_date: new Date("2022-11-05"),
-      next_service_due: new Date("2023-05-05"),
+      engine_hours: 3200,
+      status: "inactive",
       notes: "Engine overhaul required",
     },
     {
-      model: "R924",
+      model_number: "R924",
       serial_number: "LIE0924001",
       year: 2022,
-      hours: 450,
-      location: "Project Site E",
-      status: "operational",
-      last_service_date: new Date("2023-03-01"),
-      next_service_due: new Date("2023-09-01"),
+      engine_hours: 450,
+      status: "active",
       notes: "Under warranty, excellent condition",
     }
   ]
@@ -68,7 +53,7 @@ export default async function seedMachines({ container }: ExecArgs) {
     try {
       // Use the generated method from MedusaService
       const machine = await machinesService.createMachines(machineData)
-      console.log(`Created machine: ${machine.model} (${machine.serial_number})`)
+      console.log(`Created machine: ${machine.model_number} (${machine.serial_number})`)
     } catch (error) {
       if (error.message && error.message.includes('unique')) {
         console.log(`Machine ${machineData.serial_number} already exists, skipping...`)

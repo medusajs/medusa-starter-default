@@ -22,7 +22,7 @@ export default async function testTechniciansApi({ container }: ExecArgs) {
     }
 
     console.log("Creating test technician...")
-    const createdTechnician = await techniciansService.createTechnician(testTechnician)
+    const createdTechnician = await techniciansService.createTechnicians(testTechnician)
     console.log("✅ Technician created successfully:", createdTechnician.id)
 
     // Test retrieving the technician
@@ -32,7 +32,7 @@ export default async function testTechniciansApi({ container }: ExecArgs) {
 
     // Test updating the technician
     console.log("Updating technician...")
-    const updatedTechnician = await techniciansService.updateTechnician(createdTechnician.id, {
+    const updatedTechnician = await techniciansService.updateTechnicians(createdTechnician.id, {
       notes: "Updated test technician notes"
     })
     console.log("✅ Technician updated successfully")
@@ -51,7 +51,7 @@ export default async function testTechniciansApi({ container }: ExecArgs) {
 
     // Clean up - delete the test technician
     console.log("Cleaning up test technician...")
-    await techniciansService.deleteTechnician(createdTechnician.id)
+    await techniciansService.deleteTechnicians(createdTechnician.id)
     console.log("✅ Test technician deleted successfully")
 
     console.log("🎉 All tests passed! Technicians API is working correctly.")
