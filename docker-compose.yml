@@ -1,16 +1,39 @@
 version: '3.8'
 
 services:
+  # Redis
   redis:
     image: redis:7-alpine
-    container_name: medusa-redis
+    container_name: medusa_redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
-    volumes:
-      - ./redis/redis.conf:/etc/redis/redis.conf
-      - redis_data:/data
-    command: redis-server /etc/redis/redis.conf
-    restart: unless-stopped
+    networks:
+      - medusa_network
 
-volumes:
-  redis_data:
+  # Medusa Server
+  # This service runs the Medusa backend application
+  # and the admin dashboard.
+  medusa:
+    build: .
+    container_name: medusa_backend
+    restart: unless-stopped
+    depends_on:
+      - redis
+    ports:
+      - "9000:9000"
+    environment:
+      NODE_ENV: development
+      REDIS_URL: redis://redis:6379
+      FALLBACK_TO_SUPABASE: true
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - medusa_network
+
+networks:
+  medusa_network:
+    driver: bridge
