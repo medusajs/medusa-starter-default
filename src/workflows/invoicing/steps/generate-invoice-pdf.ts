@@ -94,8 +94,7 @@ export const generateInvoicePdfStep = createStep(
       const file = await fileService.createFiles({
         filename,
         mimeType: "application/pdf",
-        content: pdfBuffer,
-        access: "private",
+        content: pdfBuffer.toString('base64'),
       })
       
       await browser.close()
@@ -105,7 +104,7 @@ export const generateInvoicePdfStep = createStep(
     }
     
     // Update invoice with PDF file ID
-    await invoicingService.updateInvoices(input.invoice_id, {
+    await invoicingService.updateInvoices({ id: input.invoice_id }, {
       pdf_file_id: file.id,
     })
     

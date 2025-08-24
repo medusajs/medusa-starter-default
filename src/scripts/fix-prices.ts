@@ -20,20 +20,7 @@ export default async function fixPrices({ container }: ExecArgs) {
       fields: [
         "id",
         "title",
-        {
-          variants: [
-            "id",
-            "title",
-            "sku",
-            {
-              prices: [
-                "id",
-                "currency_code",
-                "amount",
-              ],
-            },
-          ],
-        },
+        "variants.*"
       ],
     });
 
@@ -44,13 +31,13 @@ export default async function fixPrices({ container }: ExecArgs) {
 
     for (const product of products) {
       let productNeedsUpdate = false;
-      const updatedVariants = [];
+      const updatedVariants: any[] = [];
 
       for (const variant of product.variants) {
         let variantNeedsUpdate = false;
-        const updatedPrices = [];
+        const updatedPrices: any[] = [];
 
-        for (const price of variant.prices) {
+        for (const price of (variant as any).prices || []) {
           // Check if this is a EUR price that's too high (likely 100x too high)
           if (price.currency_code === 'eur' && price.amount > 1000) {
             const originalAmount = price.amount;
@@ -77,7 +64,7 @@ export default async function fixPrices({ container }: ExecArgs) {
           updatedVariants.push({
             id: variant.id,
             title: variant.title,
-            sku: variant.sku,
+            sku: (variant as any).sku,
             prices: updatedPrices,
           });
         } else {

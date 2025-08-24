@@ -24,10 +24,8 @@ export const convertServiceOrderToInvoiceStep = createStep(
     const serviceOrdersService = container.resolve(SERVICE_ORDERS_MODULE)
     const query = container.resolve(ContainerRegistrationKeys.QUERY)
     
-    // Fetch service order with full details
-    const serviceOrder = await serviceOrdersService.retrieveServiceOrder(input.service_order_id, {
-      relations: ["items", "time_entries"]
-    })
+    // Fetch service order with full details including items and time_entries
+    const serviceOrder = await serviceOrdersService.getServiceOrdersWithItems(input.service_order_id)
     
     if (!serviceOrder) {
       throw new Error(`Service Order ${input.service_order_id} not found`)
@@ -45,7 +43,7 @@ export const convertServiceOrderToInvoiceStep = createStep(
         "addresses.*",
       ],
       filters: {
-        id: serviceOrder.customer_id,
+        id: serviceOrder.customer_id!,
       },
     })
     
@@ -64,6 +62,11 @@ export const convertServiceOrderToInvoiceStep = createStep(
       country_code: "BE", // Belgium default
     }
     
+    // Validate required fields
+    if (!serviceOrder.customer_id) {
+      throw new Error("Service order must have a customer_id to create invoice")
+    }
+    
     // Create the invoice
     const invoice = await invoicingService.createInvoiceWithNumber({
       customer_id: serviceOrder.customer_id,
@@ -72,8 +75,8 @@ export const convertServiceOrderToInvoiceStep = createStep(
       due_date: input.due_date,
       currency_code: "EUR",
       billing_address: billingAddress,
-      customer_email: customer.email,
-      customer_phone: customer.phone,
+      customer_email: customer.email || '',
+      customer_phone: customer.phone || undefined,
       notes: input.notes || `Service Order: ${serviceOrder.service_order_number}`,
       payment_terms: input.payment_terms,
       created_by: input.created_by,
@@ -100,17 +103,17 @@ export const convertServiceOrderToInvoiceStep = createStep(
           })
         }
       }
-    } else if (serviceOrder.actual_hours > 0 && serviceOrder.labor_rate > 0) {
+    } else if (serviceOrder.actual_hours > 0 && serviceOrder.labor_rate && serviceOrder.labor_rate > 0) {
       // Fallback to service order level labor costs
       await invoicingService.addLineItemToInvoice({
         invoice_id: invoice.id,
         item_type: "labor",
-        title: `Labor - ${serviceOrder.description}`,
-        description: serviceOrder.work_performed || serviceOrder.diagnosis,
+        title: `Labor - ${serviceOrder.description || 'Service Work'}`,
+        description: serviceOrder.work_performed || serviceOrder.diagnosis || undefined,
         quantity: 1,
         unit_price: serviceOrder.total_labor_cost,
         hours_worked: serviceOrder.actual_hours,
-        hourly_rate: serviceOrder.labor_rate,
+        hourly_rate: serviceOrder.labor_rate || undefined,
         tax_rate: 0.21,
       })
     }

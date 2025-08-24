@@ -53,6 +53,11 @@ export const convertOrderToInvoiceStep = createStep(
       throw new Error(`Order ${input.order_id} not found`)
     }
     
+    // Validate required fields
+    if (!order.customer_id) {
+      throw new Error("Order must have a customer_id to create invoice")
+    }
+    
     // Create the invoice
     const invoice = await invoicingService.createInvoiceWithNumber({
       customer_id: order.customer_id,
@@ -62,8 +67,8 @@ export const convertOrderToInvoiceStep = createStep(
       currency_code: order.currency_code,
       billing_address: order.billing_address,
       shipping_address: order.shipping_address,
-      customer_email: order.customer?.email || order.email,
-      customer_phone: order.customer?.phone,
+      customer_email: order.customer?.email || order.email || '',
+      customer_phone: order.customer?.phone || undefined,
       notes: input.notes,
       payment_terms: input.payment_terms,
       created_by: input.created_by,
@@ -71,31 +76,33 @@ export const convertOrderToInvoiceStep = createStep(
     
     // Add line items for products
     for (const item of order.items || []) {
-      await invoicingService.addLineItemToInvoice({
-        invoice_id: invoice.id,
-        item_type: "product",
-        product_id: item.product_id,
-        variant_id: item.variant_id,
-        title: item.title,
-        description: item.subtitle,
-        sku: item.variant_sku,
-        quantity: Number(item.quantity),
-        unit_price: Number(item.unit_price),
-        tax_rate: Number(item.tax_total) / Number(item.subtotal) || 0,
-      })
+      if (item) {
+        await invoicingService.addLineItemToInvoice({
+          invoice_id: invoice.id,
+          item_type: "product",
+          product_id: item.product_id || undefined,
+          variant_id: item.variant_id || undefined,
+          title: item.title,
+          description: item.subtitle || undefined,
+          sku: item.variant_sku || undefined,
+          quantity: Number(item.quantity),
+          unit_price: Number(item.unit_price),
+          tax_rate: Number(item.tax_total || 0) / Number(item.subtotal || 1) || 0,
+        })
+      }
     }
     
     // Add shipping as line item if present
     for (const shippingMethod of order.shipping_methods || []) {
-      if (Number(shippingMethod.amount) > 0) {
+      if (shippingMethod && Number(shippingMethod.amount || 0) > 0) {
         await invoicingService.addLineItemToInvoice({
           invoice_id: invoice.id,
           item_type: "shipping",
           title: shippingMethod.name,
-          description: shippingMethod.description,
+          description: shippingMethod.description || undefined,
           quantity: 1,
           unit_price: Number(shippingMethod.amount),
-          tax_rate: Number(shippingMethod.tax_total) / Number(shippingMethod.subtotal) || 0,
+          tax_rate: Number(shippingMethod.tax_total || 0) / Number(shippingMethod.subtotal || 1) || 0,
         })
       }
     }
