@@ -1,4 +1,4 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { PURCHASING_MODULE } from "../../../modules/purchasing"
 import PurchasingService from "../../../modules/purchasing/service"
 import { createPurchaseOrderWorkflow } from "../../../modules/purchasing/workflows/create-purchase-order"

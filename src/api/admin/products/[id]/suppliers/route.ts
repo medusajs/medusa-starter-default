@@ -1,6 +1,6 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { PURCHASING_MODULE } from "../../../../../modules/purchasing"
-import PurchasingService from "../../../../../modules/purchasing/services/purchasing.service"
+import PurchasingService from "../../../../../modules/purchasing/service"
 import { ModuleRegistrationName } from "@medusajs/utils"
 
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {

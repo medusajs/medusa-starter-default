@@ -20,7 +20,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       {
         ...returnData,
         actual_return_date: returnData.actual_return_date ? new Date(returnData.actual_return_date) : new Date(),
-        returned_by: req.auth?.actor_id
+        returned_by: (req as any).user?.id
       }
     )
     

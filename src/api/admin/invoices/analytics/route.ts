@@ -1,4 +1,4 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { INVOICING_MODULE } from "../../../../modules/invoicing"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 

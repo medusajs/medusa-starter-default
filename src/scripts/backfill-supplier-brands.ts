@@ -208,7 +208,7 @@ export async function backfillSupplierBrands(
               try {
                 await link.create({
                   [PURCHASING_MODULE]: supplier.id,
-                  [BrandsModule.linkable.brand.serviceName]: brandId
+                  [BrandsModule.linkable.brand]: brandId
                 })
               } catch (linkError) {
                 // Try alternative approach if first fails

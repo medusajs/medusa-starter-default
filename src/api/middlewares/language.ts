@@ -1,4 +1,4 @@
-import { MedusaRequest, MedusaResponse, NextFunction } from "@medusajs/framework/http"
+import { MedusaRequest, MedusaResponse, MedusaNextFunction } from "@medusajs/framework/http"
 import { normalizeLanguage } from "../../utils/i18n-helper"
 
 /**
@@ -12,7 +12,7 @@ import { normalizeLanguage } from "../../utils/i18n-helper"
 export async function languageMiddleware(
   req: MedusaRequest,
   res: MedusaResponse,
-  next: NextFunction
+  next: MedusaNextFunction
 ) {
   try {
     let language = "en" // default
@@ -37,20 +37,20 @@ export async function languageMiddleware(
       language = normalizeLanguage(languages[0] || "en")
     }
     // 4. Try to get user preferences if user is authenticated
-    else if (req.user?.id) {
+    else if ((req as any).user?.id) {
       try {
         // This would work if you have user preferences stored
         // For now, we'll use a simple approach with user metadata
-        const userService = req.scope.resolve("user")
-        if (userService) {
-          const user = await userService.retrieve(req.user.id)
+        const userService = req.scope.resolve("user") as any
+        if (userService && (req as any).user?.id) {
+          const user = await userService.retrieve((req as any).user.id)
           if (user?.metadata?.language) {
             language = normalizeLanguage(user.metadata.language as string)
           }
         }
       } catch (error) {
         // Silently fail and use default language
-        console.warn("Could not retrieve user language preference:", error.message)
+        console.warn("Could not retrieve user language preference:", (error as any)?.message)
       }
     }
 

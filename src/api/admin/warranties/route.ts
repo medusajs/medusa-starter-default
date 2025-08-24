@@ -1,4 +1,4 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { WARRANTIES_MODULE } from "../../../modules/warranties"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 

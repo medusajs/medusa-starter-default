@@ -1,4 +1,4 @@
-import { createStep } from "@medusajs/framework/workflows-sdk"
+import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { MedusaError } from "@medusajs/framework/utils"
 import { CreateRentalOrderDTO, RentalOrderStatus } from "../types"
 import { RENTALS_MODULE } from "../index"
@@ -35,6 +35,6 @@ export const checkMachineAvailabilityStep = createStep(
       )
     }
 
-    return { available: true }
+    return new StepResponse({ available: true })
   }
 )

@@ -1,4 +1,4 @@
-import { medusaIntegrationTestRunner } from "medusa-test-utils"
+import { medusaIntegrationTestRunner } from "@medusajs/test-utils"
 import {
   ContainerRegistrationKeys,
   remoteQueryObjectFromString,
@@ -58,9 +58,16 @@ medusaIntegrationTestRunner({
       it("should create a variant-brand link", async () => {
         // Create the link
         await linkService.create({
-          [ProductModule.linkable.productVariant.serviceName]: variantId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
-        })
+          linkDefinition: {
+            left: {
+              linkable: ProductModule.linkable.productVariant,
+            },
+            right: {
+              linkable: BrandsModule.linkable.brand,
+            },
+          },
+          data: [{ product_variant_id: variantId, brand_id: brandId } as any],
+        } as any)
 
         // Verify the link was created
         const queryObj = remoteQueryObjectFromString({
@@ -84,9 +91,16 @@ medusaIntegrationTestRunner({
       it("should retrieve variants by brand", async () => {
         // Create the link
         await linkService.create({
-          [ProductModule.linkable.productVariant.serviceName]: variantId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
-        })
+          linkDefinition: {
+            left: {
+              linkable: ProductModule.linkable.productVariant,
+            },
+            right: {
+              linkable: BrandsModule.linkable.brand,
+            },
+          },
+          data: [{ product_variant_id: variantId, brand_id: brandId } as any],
+        } as any)
 
         // Query variants by brand
         const queryObj = remoteQueryObjectFromString({
@@ -112,9 +126,16 @@ medusaIntegrationTestRunner({
       it("should update a variant's brand by dismissing old link and creating new one", async () => {
         // Create initial link
         await linkService.create({
-          [ProductModule.linkable.productVariant.serviceName]: variantId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
-        })
+          linkDefinition: {
+            left: {
+              linkable: ProductModule.linkable.productVariant,
+            },
+            right: {
+              linkable: BrandsModule.linkable.brand,
+            },
+          },
+          data: [{ product_variant_id: variantId, brand_id: brandId } as any],
+        } as any)
 
         // Create another brand
         const brandsService = container.resolve("BrandsModuleService")
@@ -127,14 +148,14 @@ medusaIntegrationTestRunner({
 
         // Remove old link
         await linkService.dismiss({
-          [ProductModule.linkable.productVariant.serviceName]: variantId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
+          [ProductModule.linkable.productVariant]: variantId,
+          [BrandsModule.linkable.brand]: brandId,
         })
 
         // Create new link
         await linkService.create({
-          [ProductModule.linkable.productVariant.serviceName]: variantId,
-          [BrandsModule.linkable.brand.serviceName]: newBrand.id,
+          [ProductModule.linkable.productVariant]: variantId,
+          [BrandsModule.linkable.brand]: newBrand.id,
         })
 
         // Verify the new link
@@ -157,9 +178,16 @@ medusaIntegrationTestRunner({
       it("should remove a variant-brand link", async () => {
         // Create the link
         await linkService.create({
-          [ProductModule.linkable.productVariant.serviceName]: variantId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
-        })
+          linkDefinition: {
+            left: {
+              linkable: ProductModule.linkable.productVariant,
+            },
+            right: {
+              linkable: BrandsModule.linkable.brand,
+            },
+          },
+          data: [{ product_variant_id: variantId, brand_id: brandId } as any],
+        } as any)
 
         // Verify link exists
         let queryObj = remoteQueryObjectFromString({
@@ -176,12 +204,12 @@ medusaIntegrationTestRunner({
 
         // Remove the link
         await linkService.dismiss({
-          [ProductModule.linkable.productVariant.serviceName]: variantId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
+          [ProductModule.linkable.productVariant]: variantId,
+          [BrandsModule.linkable.brand]: brandId,
         })
 
         // Verify link is removed
-        [variant] = await remoteQuery(queryObj)
+        const [variant] = await remoteQuery(queryObj)
         expect(variant.brand).toBeUndefined()
       })
 
@@ -196,13 +224,20 @@ medusaIntegrationTestRunner({
 
         // Link both variants to the same brand
         await linkService.create({
-          [ProductModule.linkable.productVariant.serviceName]: variantId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
-        })
+          linkDefinition: {
+            left: {
+              linkable: ProductModule.linkable.productVariant,
+            },
+            right: {
+              linkable: BrandsModule.linkable.brand,
+            },
+          },
+          data: [{ product_variant_id: variantId, brand_id: brandId } as any],
+        } as any)
 
         await linkService.create({
-          [ProductModule.linkable.productVariant.serviceName]: variant2.id,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
+          [ProductModule.linkable.productVariant]: variant2.id,
+          [BrandsModule.linkable.brand]: brandId,
         })
 
         // Query all variants for this brand
@@ -237,19 +272,26 @@ medusaIntegrationTestRunner({
 
         // Link variant to first brand
         await linkService.create({
-          [ProductModule.linkable.productVariant.serviceName]: variantId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
-        })
+          linkDefinition: {
+            left: {
+              linkable: ProductModule.linkable.productVariant,
+            },
+            right: {
+              linkable: BrandsModule.linkable.brand,
+            },
+          },
+          data: [{ product_variant_id: variantId, brand_id: brandId } as any],
+        } as any)
 
         // Try to link to second brand (should replace the first)
         await linkService.dismiss({
-          [ProductModule.linkable.productVariant.serviceName]: variantId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
+          [ProductModule.linkable.productVariant]: variantId,
+          [BrandsModule.linkable.brand]: brandId,
         })
 
         await linkService.create({
-          [ProductModule.linkable.productVariant.serviceName]: variantId,
-          [BrandsModule.linkable.brand.serviceName]: brand2.id,
+          [ProductModule.linkable.productVariant]: variantId,
+          [BrandsModule.linkable.brand]: brand2.id,
         })
 
         // Verify only the second brand is linked
@@ -330,18 +372,18 @@ medusaIntegrationTestRunner({
 
         // Link variants to brands
         await linkService.create({
-          [ProductModule.linkable.productVariant.serviceName]: variant1.id,
-          [BrandsModule.linkable.brand.serviceName]: brand1.id,
+          [ProductModule.linkable.productVariant]: variant1.id,
+          [BrandsModule.linkable.brand]: brand1.id,
         })
 
         await linkService.create({
-          [ProductModule.linkable.productVariant.serviceName]: variant2.id,
-          [BrandsModule.linkable.brand.serviceName]: brand1.id,
+          [ProductModule.linkable.productVariant]: variant2.id,
+          [BrandsModule.linkable.brand]: brand1.id,
         })
 
         await linkService.create({
-          [ProductModule.linkable.productVariant.serviceName]: variant3.id,
-          [BrandsModule.linkable.brand.serviceName]: brand2.id,
+          [ProductModule.linkable.productVariant]: variant3.id,
+          [BrandsModule.linkable.brand]: brand2.id,
         })
       })
 

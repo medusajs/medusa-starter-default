@@ -1,4 +1,4 @@
-import { createWorkflow, WorkflowResponse } from "@medusajs/framework/workflows-sdk"
+import { createWorkflow, WorkflowResponse, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { createStep } from "@medusajs/framework/workflows-sdk"
 import { BRANDS_MODULE } from "../../modules/brands"
 
@@ -17,10 +17,10 @@ const validateBrandDataStep = createStep(
     }
     
     // Convert code to uppercase for consistency
-    return {
+    return new StepResponse({
       ...input,
       code: code.toUpperCase()
-    }
+    })
   }
 )
 
@@ -36,7 +36,7 @@ const checkBrandCodeUniquenessStep = createStep(
       throw new Error(`Brand with code "${input.code}" already exists`)
     }
     
-    return input
+    return new StepResponse(input)
   }
 )
 
@@ -54,12 +54,15 @@ const createBrandStep = createStep(
       authorized_dealer: input.authorized_dealer !== undefined ? input.authorized_dealer : false,
     }
     
-    return await brandsService.createBrands(brandData)
+    const brand = await brandsService.createBrands(brandData)
+    return new StepResponse(brand, brand.id)
   },
-  async (brand: any, { container }) => {
+  async (brandId: string, { container }) => {
     // Compensation: delete the created brand if workflow fails
     const brandsService = container.resolve(BRANDS_MODULE)
-    await brandsService.deleteBrands(brand.id)
+    if (brandId) {
+      await brandsService.deleteBrands(brandId)
+    }
   }
 )
 

@@ -1,12 +1,23 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { STOCK_LOCATION_DETAILS_MODULE } from "../../../../modules/stock-location-details"
 
+interface UpdateStockLocationDetailRequest {
+  stock_location_id?: string
+  location_code?: string
+  zone?: string | null
+  aisle?: string | null
+  shelf?: string | null
+  bin?: string | null
+  is_active?: boolean
+  metadata?: Record<string, unknown> | null
+}
+
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
     const { id } = req.params
     const stockLocationDetailsService = req.scope.resolve(STOCK_LOCATION_DETAILS_MODULE)
     
-    const stockLocationDetail = await stockLocationDetailsService.retrieveStockLocationDetail(id)
+    const stockLocationDetail = await stockLocationDetailsService.retrieve(id)
     
     res.json({
       stock_location_detail: stockLocationDetail
@@ -25,7 +36,8 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     const stockLocationDetailsService = req.scope.resolve(STOCK_LOCATION_DETAILS_MODULE)
     
-    const stockLocationDetail = await stockLocationDetailsService.updateStockLocationDetails(id, req.body)
+    const updateData = req.body as UpdateStockLocationDetailRequest
+    const stockLocationDetail = await stockLocationDetailsService.update(id, updateData)
     
     res.json({
       stock_location_detail: stockLocationDetail
@@ -44,7 +56,7 @@ export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     const stockLocationDetailsService = req.scope.resolve(STOCK_LOCATION_DETAILS_MODULE)
     
-    await stockLocationDetailsService.deleteStockLocationDetails(id)
+    await stockLocationDetailsService.delete([id])
     
     res.status(204).send()
   } catch (error) {

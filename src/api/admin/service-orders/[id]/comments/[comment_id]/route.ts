@@ -1,4 +1,4 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { SERVICE_ORDERS_MODULE } from "../../../../../../modules/service-orders"
 import { UpdateServiceOrderCommentDTO } from "../../../../../../modules/service-orders/types"
 

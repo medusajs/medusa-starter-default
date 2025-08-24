@@ -30,7 +30,7 @@ export default defineLink(
         },
         is_active: {
           type: "boolean",
-          default: true
+          nullable: false
         }
       }
     }

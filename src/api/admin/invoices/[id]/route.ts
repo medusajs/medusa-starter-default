@@ -1,6 +1,13 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { INVOICING_MODULE } from "../../../../modules/invoicing"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+
+interface UpdateInvoiceRequest {
+  status?: string
+  status_reason?: string
+  line_items?: any[]
+  [key: string]: any
+}
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
@@ -43,14 +50,14 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
   try {
     const invoicingService: any = req.scope.resolve(INVOICING_MODULE)
     const invoiceId = req.params.id
-    const updateData = req.body as any
+    const updateData = req.body as UpdateInvoiceRequest
     
     // Handle status changes separately to maintain history
     if (updateData.status) {
       const invoice = await invoicingService.changeInvoiceStatus(
         invoiceId,
         updateData.status,
-        (req as any).auth_context?.actor_id || "system",
+        (req as any).user?.id || "system",
         updateData.status_reason
       )
       

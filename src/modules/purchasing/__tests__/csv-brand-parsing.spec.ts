@@ -1,9 +1,9 @@
-import { medusaIntegrationTestRunner } from "medusa-test-utils"
+import { medusaIntegrationTestRunner } from "@medusajs/test-utils"
 import {
   ContainerRegistrationKeys,
   remoteQueryObjectFromString,
 } from "@medusajs/framework/utils"
-import { parsePriceListCSVStep } from "../steps/parse-price-list-csv"
+import { parsePriceListCsvStep } from "../steps/parse-price-list-csv"
 import BrandsModule from "../../brands"
 import ProductModule from "@medusajs/medusa/product"
 import { PURCHASING_MODULE } from "../index"
@@ -62,12 +62,12 @@ medusaIntegrationTestRunner({
       // Link supplier to brands
       await linkService.create({
         [PURCHASING_MODULE]: supplierId,
-        [BrandsModule.linkable.brand.serviceName]: brandAId,
+        [BrandsModule.linkable.brand]: brandAId,
       })
 
       await linkService.create({
         [PURCHASING_MODULE]: supplierId,
-        [BrandsModule.linkable.brand.serviceName]: brandBId,
+        [BrandsModule.linkable.brand]: brandBId,
       })
 
       // Create product and variants
@@ -97,12 +97,12 @@ medusaIntegrationTestRunner({
       // Link variants to brands
       await linkService.create({
         [ProductModule.linkable.productVariant.serviceName]: variantAId,
-        [BrandsModule.linkable.brand.serviceName]: brandAId,
+        [BrandsModule.linkable.brand]: brandAId,
       })
 
       await linkService.create({
         [ProductModule.linkable.productVariant.serviceName]: variantBId,
-        [BrandsModule.linkable.brand.serviceName]: brandBId,
+        [BrandsModule.linkable.brand]: brandBId,
       })
     })
 
@@ -119,7 +119,7 @@ TEST-BLUE-001,SUPP-BLUE-001,BRND_B,1200,2`
           upload_filename: "test.csv",
         }
 
-        const result = await parsePriceListCSVStep(input, { container })
+        const result = await parsePriceListCsvStep(input, { container })
 
         expect(result.success).toBe(true)
         expect(result.parsed_items.length).toBe(2)
@@ -150,7 +150,7 @@ TEST-BLUE-001,SUPP-BLUE-001,BRND_B,1200,2`
           upload_filename: "test.csv",
         }
 
-        const result = await parsePriceListCSVStep(input, { container })
+        const result = await parsePriceListCsvStep(input, { container })
 
         expect(result.success).toBe(true)
         expect(result.parsed_items.length).toBe(1)
@@ -182,7 +182,7 @@ TEST-BLUE-001,SUPP-BLUE-001,BRND_B,1200,2`
 
         await linkService.create({
           [ProductModule.linkable.productVariant.serviceName]: variantC.id,
-          [BrandsModule.linkable.brand.serviceName]: brandC.id,
+          [BrandsModule.linkable.brand]: brandC.id,
         })
 
         const csvContent = `variant_sku,supplier_sku,brand_code,net_price,quantity
@@ -196,7 +196,7 @@ TEST-GREEN-001,SUPP-GREEN-001,BRND_C,1500,1`
           upload_filename: "test.csv",
         }
 
-        const result = await parsePriceListCSVStep(input, { container })
+        const result = await parsePriceListCsvStep(input, { container })
 
         expect(result.success).toBe(false)
         expect(result.parsed_items.length).toBe(1) // Only Brand A item
@@ -222,7 +222,7 @@ TEST-BLUE-001,SUPP-BLUE-001,1200,2`
           upload_filename: "test.csv",
         }
 
-        const result = await parsePriceListCSVStep(input, { container })
+        const result = await parsePriceListCsvStep(input, { container })
 
         expect(result.success).toBe(true)
         expect(result.parsed_items.length).toBe(2)
@@ -254,7 +254,7 @@ TEST-BLUE-001,SUPP-BLUE-001,1200,2`
         // Link to Brand B (different from variantA which is Brand A)
         await linkService.create({
           [ProductModule.linkable.productVariant.serviceName]: variantDuplicate.id,
-          [BrandsModule.linkable.brand.serviceName]: brandBId,
+          [BrandsModule.linkable.brand]: brandBId,
         })
 
         const csvContent = `variant_sku,supplier_sku,brand_code,net_price,quantity
@@ -268,7 +268,7 @@ TEST-RED-001,SUPP-RED-002,BRND_B,1100,1`
           upload_filename: "test.csv",
         }
 
-        const result = await parsePriceListCSVStep(input, { container })
+        const result = await parsePriceListCsvStep(input, { container })
 
         expect(result.success).toBe(true)
         expect(result.parsed_items.length).toBe(2)
@@ -296,7 +296,7 @@ TEST-RED-001,SUPP-RED-001,INVALID_BRAND,1000,1`
           upload_filename: "test.csv",
         }
 
-        const result = await parsePriceListCSVStep(input, { container })
+        const result = await parsePriceListCsvStep(input, { container })
 
         expect(result.success).toBe(false)
         expect(result.parsed_items.length).toBe(0)
@@ -319,7 +319,7 @@ TEST-BLUE-001,SUPP-BLUE-001,BRND_B,1200,2`
           upload_filename: "test.csv",
         }
 
-        const result = await parsePriceListCSVStep(input, { container })
+        const result = await parsePriceListCsvStep(input, { container })
 
         expect(result.success).toBe(true)
         expect(result.parsed_items.length).toBe(2)
@@ -346,7 +346,7 @@ TEST-BLUE-001,SUPP-BLUE-001,BRND_B,1200,2,extra_column`
           upload_filename: "test.csv",
         }
 
-        const result = await parsePriceListCSVStep(input, { container })
+        const result = await parsePriceListCsvStep(input, { container })
 
         expect(result.success).toBe(false)
         expect(result.errors.length).toBeGreaterThan(0)
@@ -362,7 +362,7 @@ TEST-BLUE-001,SUPP-BLUE-001,BRND_B,1200,2,extra_column`
           upload_filename: "test.csv",
         }
 
-        const result = await parsePriceListCSVStep(input, { container })
+        const result = await parsePriceListCsvStep(input, { container })
 
         expect(result.success).toBe(true)
         expect(result.parsed_items.length).toBe(0)
@@ -380,7 +380,7 @@ TEST-RED-001,BRND_A`
           upload_filename: "test.csv",
         }
 
-        const result = await parsePriceListCSVStep(input, { container })
+        const result = await parsePriceListCsvStep(input, { container })
 
         expect(result.success).toBe(false)
         expect(result.errors).toContain("Missing required column: net_price")
@@ -397,7 +397,7 @@ TEST-RED-001,SUPP-RED-001,BRND_A,invalid_price,invalid_quantity`
           upload_filename: "test.csv",
         }
 
-        const result = await parsePriceListCSVStep(input, { container })
+        const result = await parsePriceListCsvStep(input, { container })
 
         expect(result.success).toBe(false)
         expect(result.errors.some(error => error.includes("Invalid net_price"))).toBe(true)

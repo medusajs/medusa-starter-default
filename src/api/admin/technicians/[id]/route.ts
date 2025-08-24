@@ -1,12 +1,28 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { TECHNICIANS_MODULE } from "../../../../modules/technicians"
 
+interface UpdateTechnicianRequest {
+  name?: string
+  email?: string
+  phone?: string
+  address?: string
+  date_of_birth?: Date
+  hire_date?: Date
+  status?: string
+  hourly_rate?: number
+  specialties?: string[]
+  certifications?: string[]
+  emergency_contact_name?: string
+  emergency_contact_phone?: string
+  metadata?: Record<string, unknown>
+}
+
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
     const { id } = req.params
     const techniciansService = req.scope.resolve(TECHNICIANS_MODULE)
     
-    const technician = await techniciansService.retrieveTechnician(id)
+    const technician = await techniciansService.retrieve(id)
     
     res.json({
       technician: technician
@@ -25,7 +41,8 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     const techniciansService = req.scope.resolve(TECHNICIANS_MODULE)
     
-    const technician = await techniciansService.updateTechnician(id, req.body)
+    const updateData = req.body as UpdateTechnicianRequest
+    const technician = await techniciansService.update(id, updateData)
     
     res.json({
       technician: technician
@@ -44,7 +61,7 @@ export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     const techniciansService = req.scope.resolve(TECHNICIANS_MODULE)
     
-    await techniciansService.deleteTechnician(id)
+    await techniciansService.delete([id])
     
     res.status(204).send()
   } catch (error) {

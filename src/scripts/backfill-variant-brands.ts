@@ -159,7 +159,7 @@ export async function backfillVariantBrands(
                 // Create the brand-variant link
                 await link.create({
                   [ProductModule.linkable.productVariant.serviceName]: variant.id,
-                  [BrandsModule.linkable.brand.serviceName]: brand.id
+                  [BrandsModule.linkable.brand]: brand.id
                 })
               }
 

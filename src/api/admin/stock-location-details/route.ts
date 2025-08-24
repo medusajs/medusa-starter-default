@@ -1,17 +1,28 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { STOCK_LOCATION_DETAILS_MODULE } from "../../../modules/stock-location-details"
 
+interface CreateStockLocationDetailRequest {
+  stock_location_id: string
+  location_code: string
+  zone?: string | null
+  aisle?: string | null
+  shelf?: string | null
+  bin?: string | null
+  is_active?: boolean
+  metadata?: Record<string, unknown> | null
+}
+
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
     const stockLocationDetailsService = req.scope.resolve(STOCK_LOCATION_DETAILS_MODULE)
     
     const { limit = 50, offset = 0, ...filters } = req.query
     
-    const [data, count] = await stockLocationDetailsService.listAndCountStockLocationDetails(
+    const [data, count] = await stockLocationDetailsService.listAndCount(
       filters,
       {
-        limit: Number(limit),
-        offset: Number(offset),
+        skip: Number(offset),
+        take: Number(limit),
       }
     )
     
@@ -34,7 +45,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     const stockLocationDetailsService = req.scope.resolve(STOCK_LOCATION_DETAILS_MODULE)
     
-    const stockLocationDetail = await stockLocationDetailsService.createStockLocationDetails(req.body)
+    const createData = req.body as CreateStockLocationDetailRequest
+    const stockLocationDetail = await stockLocationDetailsService.create(createData)
     
     res.status(201).json({
       stock_location_detail: stockLocationDetail

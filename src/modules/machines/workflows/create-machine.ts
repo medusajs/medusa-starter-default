@@ -3,6 +3,7 @@ import {
   WorkflowResponse,
   createWorkflow,
   createStep,
+  StepResponse,
 } from "@medusajs/framework/workflows-sdk"
 import { CreateMachineDTO } from "../types"
 import { MACHINES_MODULE } from "../index"
@@ -54,7 +55,7 @@ export const validateMachineInputStep = createStep(
       }
     }
 
-    return { validated: true }
+    return new StepResponse({ validated: true })
   }
 )
 
@@ -79,7 +80,7 @@ export const checkDuplicateSerialNumberStep = createStep(
       }
     }
 
-    return { checked: true }
+    return new StepResponse({ checked: true })
   }
 )
 
@@ -93,17 +94,16 @@ export const createMachinesStep = createStep(
     
     const created = await machinesService.createMachines(data.machines)
     
-    return created
+    const machineIds = created.map(machine => machine.id)
+    return new StepResponse(created, { machineIds })
   },
-  async (createdMachines, { container }) => {
-    if (!createdMachines?.length) {
+  async (compensationData, { container }) => {
+    if (!compensationData?.machineIds?.length) {
       return
     }
 
     const machinesService = container.resolve<MachinesModuleService>(MACHINES_MODULE)
-    const machineIds = createdMachines.map(machine => machine.id)
-    
-    await machinesService.deleteMachines(machineIds)
+    await machinesService.deleteMachines(compensationData.machineIds)
   }
 )
 

@@ -1,4 +1,4 @@
-import { createStep } from "@medusajs/framework/workflows-sdk"
+import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { CreateRentalOrderDTO } from "../types"
 import { RENTALS_MODULE } from "../index"
 import { RentalsModuleService } from "../service"
@@ -11,15 +11,15 @@ export const createRentalOrderStep = createStep(
     
     const createdRental = await rentalsService.createRentalOrder(rental)
     
-    return createdRental
+    return new StepResponse(createdRental, createdRental.id)
   },
-  async (createdRental, { container }) => {
-    if (!createdRental?.id) {
+  async (createdRentalId: string, { container }) => {
+    if (!createdRentalId) {
       return
     }
 
     const rentalsService = container.resolve<RentalsModuleService>(RENTALS_MODULE)
     
-    await rentalsService.deleteRentalOrders([createdRental.id])
+    await rentalsService.deleteRentalOrders([createdRentalId])
   }
 )

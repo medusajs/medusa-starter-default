@@ -18,7 +18,7 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
       id,
       status,
       reason,
-      req.auth?.actor_id
+      (req as any).user?.id
     )
     
     res.json({

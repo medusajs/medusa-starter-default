@@ -3,10 +3,14 @@ import { ContainerRegistrationKeys, remoteQueryObjectFromString } from "@medusaj
 import BrandsModule, { BRANDS_MODULE } from "../../../../../../modules/brands"
 import ProductModule from "@medusajs/medusa/product"
 
+interface SetVariantBrandRequest {
+  brand_id: string | null
+}
+
 export async function PUT(req: MedusaRequest, res: MedusaResponse) {
   try {
     const { id: variantId } = req.params
-    const { brand_id } = req.body as { brand_id: string | null }
+    const { brand_id } = req.body as SetVariantBrandRequest
 
     console.log(`PUT /admin/products/variants/${variantId}/brand`, { brand_id })
 
@@ -19,11 +23,7 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     
     console.log("Link service resolved successfully")
     
-    // Debug: Let's see what the actual service names are
-    console.log("ProductModule.linkable.productVariant:", ProductModule.linkable.productVariant)
-    console.log("BrandsModule.linkable.brand:", BrandsModule.linkable.brand)
-    console.log("ProductModule.linkable.productVariant.serviceName:", ProductModule.linkable.productVariant?.serviceName)
-    console.log("BrandsModule.linkable.brand.serviceName:", BrandsModule.linkable.brand?.serviceName)
+    // Use proper MedusaJS v2 linkage pattern with linkDefinition
     
     // Let's try the correct approach using the link service directly
     // Based on MedusaJS docs, we should be able to use dismiss and create methods
@@ -32,10 +32,17 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     
     // Remove existing brand link for this variant (if any)
     try {
-      await link.dismiss({
-        [ProductModule.linkable.productVariant.serviceName]: variantId,
-        [BrandsModule.linkable.brand.serviceName]: "*" // Remove all brand links for this variant
-      })
+      await link.delete({
+        linkDefinition: {
+          left: {
+            linkable: ProductModule.linkable.productVariant,
+          },
+          right: {
+            linkable: BrandsModule.linkable.brand,
+          },
+        },
+        data: [{ product_variant_id: variantId } as any],
+      } as any)
       console.log(`Successfully removed existing brand links for variant ${variantId}`)
     } catch (deleteError) {
       console.log(`No existing brand link to remove for variant ${variantId}:`, deleteError.message)
@@ -47,9 +54,16 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
       console.log(`Creating new brand link: variant ${variantId} -> brand ${brand_id}`)
       try {
         await link.create({
-          [ProductModule.linkable.productVariant.serviceName]: variantId,
-          [BrandsModule.linkable.brand.serviceName]: brand_id
-        })
+          linkDefinition: {
+            left: {
+              linkable: ProductModule.linkable.productVariant,
+            },
+            right: {
+              linkable: BrandsModule.linkable.brand,
+            },
+          },
+          data: [{ product_variant_id: variantId, brand_id } as any],
+        } as any)
         console.log(`Successfully created brand link: variant ${variantId} -> brand ${brand_id}`)
       } catch (createError) {
         console.error("Failed to create brand link:", createError)

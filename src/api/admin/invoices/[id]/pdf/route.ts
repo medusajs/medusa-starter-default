@@ -1,7 +1,11 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { INVOICING_MODULE } from "../../../../../modules/invoicing"
 import { generateInvoicePdfStep } from "../../../../../workflows/invoicing/steps/generate-invoice-pdf"
 import { Modules } from "@medusajs/framework/utils"
+
+interface RegenerateInvoicePdfRequest {
+  regenerate?: boolean
+}
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
@@ -53,7 +57,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     const invoiceId = req.params.id
-    const { regenerate = false } = req.body
+    const { regenerate = false } = req.body as RegenerateInvoicePdfRequest
     
     // Always regenerate if specifically requested
     if (regenerate) {

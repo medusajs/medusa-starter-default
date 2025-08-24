@@ -1,4 +1,4 @@
-import { createStep } from "@medusajs/framework/workflows-sdk"
+import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { MedusaError } from "@medusajs/framework/utils"
 import { CreateRentalOrderDTO } from "../types"
 
@@ -77,6 +77,6 @@ export const validateRentalInputStep = createStep(
       )
     }
 
-    return { validated: true }
+    return new StepResponse({ validated: true })
   }
 )

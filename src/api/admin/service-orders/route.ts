@@ -1,4 +1,4 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { createServiceOrderWorkflow } from "../../../workflows/service-orders/create-service-order-workflow"
 import { SERVICE_ORDERS_MODULE } from "../../../modules/service-orders"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"

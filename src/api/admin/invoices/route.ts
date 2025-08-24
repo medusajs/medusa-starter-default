@@ -1,8 +1,18 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
+import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { INVOICING_MODULE } from "../../../modules/invoicing"
 import { createInvoiceFromOrderWorkflow } from "../../../workflows/invoicing/create-invoice-from-order"
 import { createInvoiceFromServiceOrderWorkflow } from "../../../workflows/invoicing/create-invoice-from-service-order"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+
+interface CreateInvoiceRequest {
+  source_type: "order" | "service_order"
+  source_id: string
+  invoice_type?: string
+  due_date?: string | Date
+  payment_terms?: string
+  notes?: string
+  [key: string]: any
+}
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
@@ -85,7 +95,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       payment_terms,
       notes,
       ...rest 
-    } = req.body as any
+    } = req.body as CreateInvoiceRequest
     
     // Validate required fields
     if (!source_type || !source_id) {
@@ -108,7 +118,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       due_date: due_date ? new Date(due_date) : undefined,
       payment_terms,
       notes,
-      created_by: req.auth_context?.actor_id || "system",
+      created_by: (req as any).user?.id || "system",
       ...rest
     }
 

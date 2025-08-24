@@ -66,7 +66,7 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     
     const updatedRental = await rentalsService.updateRentalOrders(
       { id },
-      { ...updateData, updated_by: req.auth?.actor_id },
+      { ...updateData, updated_by: (req as any).user?.id },
     )
     
     res.json({

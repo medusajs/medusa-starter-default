@@ -1,4 +1,4 @@
-import { medusaIntegrationTestRunner } from "medusa-test-utils"
+import { medusaIntegrationTestRunner } from "@medusajs/test-utils"
 import {
   ContainerRegistrationKeys,
   remoteQueryObjectFromString,
@@ -62,7 +62,7 @@ medusaIntegrationTestRunner({
         // Create the link
         await linkService.create({
           [PURCHASING_MODULE]: supplierId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
+          [BrandsModule.linkable.brand]: brandId,
         })
 
         // Verify the link was created by querying supplier brands
@@ -79,12 +79,12 @@ medusaIntegrationTestRunner({
         // Create links to both brands
         await linkService.create({
           [PURCHASING_MODULE]: supplierId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
+          [BrandsModule.linkable.brand]: brandId,
         })
 
         await linkService.create({
           [PURCHASING_MODULE]: supplierId,
-          [BrandsModule.linkable.brand.serviceName]: brand2Id,
+          [BrandsModule.linkable.brand]: brand2Id,
         })
 
         // Verify both links exist
@@ -102,7 +102,7 @@ medusaIntegrationTestRunner({
         // Create the link
         await linkService.create({
           [PURCHASING_MODULE]: supplierId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
+          [BrandsModule.linkable.brand]: brandId,
         })
 
         // Verify link exists
@@ -112,7 +112,7 @@ medusaIntegrationTestRunner({
         // Remove the link
         await linkService.dismiss({
           [PURCHASING_MODULE]: supplierId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
+          [BrandsModule.linkable.brand]: brandId,
         })
 
         // Verify link is removed
@@ -145,13 +145,13 @@ medusaIntegrationTestRunner({
         // Create the link
         await linkService.create({
           [PURCHASING_MODULE]: supplierId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
+          [BrandsModule.linkable.brand]: brandId,
         })
 
         // Try to create the same link again
         await linkService.create({
           [PURCHASING_MODULE]: supplierId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
+          [BrandsModule.linkable.brand]: brandId,
         })
 
         // Should still have only one link
@@ -175,12 +175,12 @@ medusaIntegrationTestRunner({
         // Link both suppliers to the same brand
         await linkService.create({
           [PURCHASING_MODULE]: supplierId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
+          [BrandsModule.linkable.brand]: brandId,
         })
 
         await linkService.create({
           [PURCHASING_MODULE]: supplier2.id,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
+          [BrandsModule.linkable.brand]: brandId,
         })
 
         // Verify both suppliers have the brand
@@ -218,23 +218,23 @@ medusaIntegrationTestRunner({
         // Supplier 1 -> Brand 1, Brand 2
         await linkService.create({
           [PURCHASING_MODULE]: supplierId,
-          [BrandsModule.linkable.brand.serviceName]: brandId,
+          [BrandsModule.linkable.brand]: brandId,
         })
         
         await linkService.create({
           [PURCHASING_MODULE]: supplierId,
-          [BrandsModule.linkable.brand.serviceName]: brand2Id,
+          [BrandsModule.linkable.brand]: brand2Id,
         })
 
         // Supplier 2 -> Brand 2, Brand 3
         await linkService.create({
           [PURCHASING_MODULE]: supplier2Id,
-          [BrandsModule.linkable.brand.serviceName]: brand2Id,
+          [BrandsModule.linkable.brand]: brand2Id,
         })
         
         await linkService.create({
           [PURCHASING_MODULE]: supplier2Id,
-          [BrandsModule.linkable.brand.serviceName]: brand3Id,
+          [BrandsModule.linkable.brand]: brand3Id,
         })
       })
 
