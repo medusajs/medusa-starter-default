@@ -26,7 +26,7 @@ export const createWarrantyFromServiceOrderStep = createStep(
     }
     
     // Get customer details via Remote Query if customer_id exists
-    let customer = null
+    let customer: any | undefined = undefined
     if (serviceOrder.customer_id) {
       const { data: [customerData] } = await query.graph({
         entity: "customer", 
@@ -64,20 +64,20 @@ export const createWarrantyFromServiceOrderStep = createStep(
       warranty_type: input.warranty_type || "manufacturer",
       warranty_claim_number: input.warranty_claim_number || serviceOrder.warranty_claim_number,
       warranty_provider: input.warranty_provider,
-      description: serviceOrder.description,
-      failure_description: serviceOrder.customer_complaint,
-      repair_description: serviceOrder.work_performed,
-      notes: input.notes,
+      description: serviceOrder.description ?? undefined,
+      failure_description: serviceOrder.customer_complaint ?? undefined,
+      repair_description: serviceOrder.work_performed ?? undefined,
+      notes: input.notes ?? undefined,
       labor_cost: serviceOrder.total_labor_cost,
       parts_cost: serviceOrder.total_parts_cost,
       total_cost: serviceOrder.total_cost,
       billing_address_line_1: billingAddress.address_1,
-      billing_address_line_2: billingAddress.address_2,
+      billing_address_line_2: billingAddress.address_2 ?? undefined,
       billing_city: billingAddress.city,
       billing_postal_code: billingAddress.postal_code,
       billing_country: billingAddress.country_code,
       service_address_line_1: serviceOrder.service_address_line_1,
-      service_address_line_2: serviceOrder.service_address_line_2,
+      service_address_line_2: serviceOrder.service_address_line_2 ?? undefined,
       service_city: serviceOrder.service_city,
       service_postal_code: serviceOrder.service_postal_code,
       service_country: serviceOrder.service_country,

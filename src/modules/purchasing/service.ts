@@ -214,13 +214,13 @@ class PurchasingService extends MedusaService({
       price_list_id: priceListId,
       product_variant_id: item.product_variant_id,
       product_id: item.product_id,
-      supplier_sku: item.supplier_sku,
-      variant_sku: item.variant_sku,
+      supplier_sku: item.supplier_sku ?? undefined,
+      variant_sku: item.variant_sku ?? undefined,
       // Map legacy cost_price input to net_price field on the model
       net_price: item.cost_price,
-      quantity: item.quantity || 1,
-      lead_time_days: item.lead_time_days,
-      notes: item.notes
+      quantity: item.quantity ?? 1,
+      lead_time_days: item.lead_time_days ?? undefined,
+      notes: item.notes ?? undefined
     }))
     
     return await this.createSupplierPriceListItems(processedItems)

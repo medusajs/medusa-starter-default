@@ -159,4 +159,5 @@ const ServiceOrderCharacteristicsWidget = ({ data: serviceOrder }: ServiceOrderC
   )
 }
 
-export default ServiceOrderCharacteristicsWidget 
+export default ServiceOrderCharacteristicsWidget
+

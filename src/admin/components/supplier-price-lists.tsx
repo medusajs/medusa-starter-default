@@ -28,7 +28,6 @@ import * as zod from "zod"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { ProductSearchModal } from "./modals/product-search-modal"
-import SupplierBrandSelect from "./common/supplier-brand-select"
 
 interface PriceList {
   id: string
@@ -133,7 +132,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
   const [productSearchOpen, setProductSearchOpen] = useState(false)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [tableSearch, setTableSearch] = useState("")
-  const [brandFilter, setBrandFilter] = useState<string | null>(null)
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -154,11 +152,10 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
   })
 
   const { data: priceListData, isLoading, error } = useQuery({
-    queryKey: ["supplier-price-list", supplier?.id, brandFilter],
+    queryKey: ["supplier-price-list", supplier?.id],
     queryFn: async () => {
       const queryParams = new URLSearchParams({
-        include_items: "true",
-        ...(brandFilter && { brand_id: brandFilter })
+        include_items: "true"
       })
       const response = await fetch(`/admin/suppliers/${supplier.id}/price-lists?${queryParams}`)
       if (!response.ok) {
@@ -559,15 +556,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
               )}
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-48">
-                <SupplierBrandSelect
-                  supplierId={supplier.id}
-                  value={brandFilter}
-                  onChange={setBrandFilter}
-                  includeNoneOption
-                  placeholder="Filter by brand..."
-                />
-              </div>
               <DataTable.Search placeholder="Search price list items..." />
               <Button variant="secondary" size="small" onClick={handleDownloadTemplate}>
                 <ArrowDownTray />

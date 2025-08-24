@@ -1,10 +1,11 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys, remoteQueryObjectFromString } from "@medusajs/framework/utils"
+import { toStringOrUndefined } from "../../../../../utils/query-params"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
     const { id: productId } = req.params
-    const { expand } = req.query
+    const expand = toStringOrUndefined((req as any).query?.expand)
 
     if (!productId) {
       return res.status(400).json({ message: "product id is required" })

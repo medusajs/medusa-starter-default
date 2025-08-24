@@ -271,7 +271,7 @@ const SupplierDetailsWidget = ({ supplier, onUpdate, onDelete }: SupplierDetails
                             render={({ field }) => (
                               <Select value={field.value} onValueChange={field.onChange}>
                                 <Select.Trigger>
-                                  <Select.Value />
+                                  <Select.Value placeholder="Select currency" />
                                 </Select.Trigger>
                                 <Select.Content>
                                   <Select.Item value="USD">USD - US Dollar</Select.Item>
@@ -291,7 +291,7 @@ const SupplierDetailsWidget = ({ supplier, onUpdate, onDelete }: SupplierDetails
                             render={({ field }) => (
                               <Select value={field.value ? "true" : "false"} onValueChange={(value) => field.onChange(value === "true")}>
                                 <Select.Trigger>
-                                  <Select.Value />
+                                  <Select.Value placeholder="Select status" />
                                 </Select.Trigger>
                                 <Select.Content>
                                   <Select.Item value="true">Active</Select.Item>

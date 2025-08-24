@@ -163,7 +163,7 @@ export const CreatePurchaseOrderModal = ({ onSuccess }: CreatePurchaseOrderModal
                           </Select.Trigger>
                           <Select.Content>
                             {suppliersLoading ? (
-                              <Select.Item value="" disabled>
+                              <Select.Item value="__loading__" disabled>
                                 Loading suppliers...
                               </Select.Item>
                             ) : suppliersData?.suppliers?.length > 0 ? (
@@ -173,7 +173,7 @@ export const CreatePurchaseOrderModal = ({ onSuccess }: CreatePurchaseOrderModal
                                 </Select.Item>
                               ))
                             ) : (
-                              <Select.Item value="" disabled>
+                              <Select.Item value="__no_suppliers__" disabled>
                                 No active suppliers found
                               </Select.Item>
                             )}

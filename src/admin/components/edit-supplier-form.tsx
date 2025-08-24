@@ -47,26 +47,30 @@ type EditSupplierFormProps = {
 export const EditSupplierForm = ({ supplier, trigger }: EditSupplierFormProps) => {
   const queryClient = useQueryClient()
   
+  if (!supplier) {
+    return null
+  }
+  
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: supplier.name,
-      code: supplier.code || "",
-      email: supplier.email || "",
-      phone: supplier.phone || "",
-      website: supplier.website || "",
-      contact_person: supplier.contact_person || "",
-      address_line_1: supplier.address_line_1 || "",
-      address_line_2: supplier.address_line_2 || "",
-      city: supplier.city || "",
-      state: supplier.state || "",
-      postal_code: supplier.postal_code || "",
-      country: supplier.country || "",
-      tax_id: supplier.tax_id || "",
-      payment_terms: supplier.payment_terms || "",
-      currency_code: (supplier.currency_code as "EUR" | "USD" | "GBP" | "CAD" | "AUD" | "JPY" | "CHF" | "SEK" | "NOK" | "DKK") || "EUR",
-      is_active: supplier.is_active ?? true,
-      notes: supplier.notes || "",
+      name: supplier?.name || "",
+      code: supplier?.code || "",
+      email: supplier?.email || "",
+      phone: supplier?.phone || "",
+      website: supplier?.website || "",
+      contact_person: supplier?.contact_person || "",
+      address_line_1: supplier?.address_line_1 || "",
+      address_line_2: supplier?.address_line_2 || "",
+      city: supplier?.city || "",
+      state: supplier?.state || "",
+      postal_code: supplier?.postal_code || "",
+      country: supplier?.country || "",
+      tax_id: supplier?.tax_id || "",
+      payment_terms: supplier?.payment_terms || "",
+      currency_code: (supplier?.currency_code as "EUR" | "USD" | "GBP" | "CAD" | "AUD" | "JPY" | "CHF" | "SEK" | "NOK" | "DKK") || "EUR",
+      is_active: supplier?.is_active ?? true,
+      notes: supplier?.notes || "",
     },
   })
 
@@ -296,7 +300,7 @@ export const EditSupplierForm = ({ supplier, trigger }: EditSupplierFormProps) =
                             </Label>
                             <Select value={field.value} onValueChange={field.onChange}>
                               <Select.Trigger>
-                                <Select.Value />
+                                <Select.Value placeholder="Select currency" />
                               </Select.Trigger>
                               <Select.Content>
                                 <Select.Item value="EUR">EUR (Euro)</Select.Item>
@@ -524,7 +528,7 @@ export const EditSupplierForm = ({ supplier, trigger }: EditSupplierFormProps) =
                           </Label>
                           <Select value={field.value ? "true" : "false"} onValueChange={(value) => field.onChange(value === "true")}>
                             <Select.Trigger>
-                              <Select.Value />
+                              <Select.Value placeholder="Select status" />
                             </Select.Trigger>
                             <Select.Content>
                               <Select.Item value="true">Active</Select.Item>

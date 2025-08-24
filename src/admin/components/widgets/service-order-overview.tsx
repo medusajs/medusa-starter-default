@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { PencilSquare } from "@medusajs/icons"
 import { useState } from "react"
 import { useForm, Controller } from "react-hook-form"
-import { ServiceTypeLabel } from "../components/common/service-type-label"
+import { ServiceTypeLabel } from "../../components/common/service-type-label"
 
 interface ServiceOrder {
   id: string
@@ -43,7 +43,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
   const [isEditing, setIsEditing] = useState(false)
   const queryClient = useQueryClient()
 
-  // Fetch customer data
   const { data: customer, isLoading: customerLoading } = useQuery({
     queryKey: ['customer', serviceOrder?.customer_id],
     queryFn: async () => {
@@ -56,7 +55,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
     enabled: !!serviceOrder?.customer_id,
   })
 
-  // Fetch machine data
   const { data: machine, isLoading: machineLoading } = useQuery({
     queryKey: ['machine', serviceOrder?.machine_id],
     queryFn: async () => {
@@ -69,7 +67,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
     enabled: !!serviceOrder?.machine_id,
   })
 
-  // Fetch customers for dropdown
   const { data: customers } = useQuery({
     queryKey: ['service-order-overview-customers'],
     queryFn: async () => {
@@ -81,7 +78,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
     enabled: isEditing,
   })
 
-  // Fetch machines for dropdown
   const { data: machines } = useQuery({
     queryKey: ['service-order-overview-machines'],
     queryFn: async () => {
@@ -93,8 +89,7 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
     enabled: isEditing,
   })
 
-  // Fetch technicians for dropdown
-  const { data: technicians } = useQuery({
+  const { data: technicians, isLoading: technicianLoading } = useQuery({
     queryKey: ['service-order-overview-technicians'],
     queryFn: async () => {
       const response = await fetch('/admin/technicians')
@@ -103,19 +98,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
       return data.technicians
     },
     enabled: isEditing,
-  })
-
-  // Fetch technician data
-  const { data: technician, isLoading: technicianLoading } = useQuery({
-    queryKey: ['technician', serviceOrder?.technician_id],
-    queryFn: async () => {
-      if (!serviceOrder?.technician_id) return null
-      const response = await fetch(`/admin/technicians/${serviceOrder.technician_id}`)
-      if (!response.ok) throw new Error('Failed to fetch technician')
-      const data = await response.json()
-      return data.technician
-    },
-    enabled: !!serviceOrder?.technician_id,
   })
 
   const form = useForm({
@@ -146,7 +128,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
   })
 
   const handleSubmit = form.handleSubmit((data) => {
-    // Convert "unassigned" to null for technician_id
     const processedData = {
       ...data,
       technician_id: data.technician_id === "unassigned" ? null : data.technician_id
@@ -177,7 +158,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
     done: "green",
     returned_for_review: "red",
   } as const
-
 
   const serviceTypes = [
     'insurance',
@@ -215,11 +195,9 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
           </Button>
         )}
       </div>
-      
       {isEditing ? (
         <form onSubmit={handleSubmit} className="px-6 py-4">
           <div className="flex flex-col gap-y-4">
-            {/* Customer Field */}
             <div className="flex flex-col space-y-2">
               <Label htmlFor="customer" size="small" weight="plus">Customer</Label>
               <Controller
@@ -243,8 +221,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
                 )}
               />
             </div>
-
-            {/* Machine Field */}
             <div className="flex flex-col space-y-2">
               <Label htmlFor="machine" size="small" weight="plus">Machine/Equipment</Label>
               <Controller
@@ -266,8 +242,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
                 )}
               />
             </div>
-
-            {/* Description Field */}
             <div className="flex flex-col space-y-2">
               <Label htmlFor="description" size="small" weight="plus">Description</Label>
               <Controller
@@ -278,8 +252,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
                 )}
               />
             </div>
-
-            {/* Service Type Field */}
             <div className="flex flex-col space-y-2">
               <Label htmlFor="service_type" size="small" weight="plus">Service Type</Label>
               <Controller
@@ -301,8 +273,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
                 )}
               />
             </div>
-
-            {/* Priority Field */}
             <div className="flex flex-col space-y-2">
               <Label htmlFor="priority" size="small" weight="plus">Priority</Label>
               <Controller
@@ -324,34 +294,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
                 )}
               />
             </div>
-
-            {/* Technician Field */}
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="technician" size="small" weight="plus">Assigned Technician</Label>
-              <Controller
-                control={form.control}
-                name="technician_id"
-                render={({ field }) => (
-                  <Select {...field} onValueChange={field.onChange}>
-                    <Select.Trigger>
-                      <Select.Value placeholder="Select technician" />
-                    </Select.Trigger>
-                    <Select.Content>
-                      <Select.Item value="unassigned">No technician assigned</Select.Item>
-                      {technicians?.map((tech: any) => (
-                        <Select.Item key={tech.id} value={tech.id}>
-                          {tech.first_name && tech.last_name 
-                            ? `${tech.first_name} ${tech.last_name}` 
-                            : tech.email}
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select>
-                )}
-              />
-            </div>
-
-            {/* Action Buttons */}
             <div className="flex items-center justify-end gap-x-2 pt-4">
               <Button 
                 size="small" 
@@ -373,7 +315,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
         </form>
       ) : (
         <>
-          {/* Description Section - Most Important */}
           <div className="px-6 py-4">
             <div className="min-w-0">
               <Label size="small" weight="plus" className="mb-2">
@@ -382,11 +323,8 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
               <Text size="small">{serviceOrder.description}</Text>
             </div>
           </div>
-
-          {/* Key Relationships Section */}
           <div className="px-6 py-4">
             <div className="grid grid-cols-1 gap-4">
-              {/* Customer */}
               <div className="min-w-0">
                 <Label size="small" weight="plus" className="mb-2">
                   Customer
@@ -410,8 +348,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
                   <Text size="small" className="text-ui-fg-muted">No customer assigned</Text>
                 )}
               </div>
-
-              {/* Machine */}
               <div className="min-w-0">
                 <Label size="small" weight="plus" className="mb-2">
                   Machine
@@ -461,50 +397,20 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
                   <Text size="small" className="text-ui-fg-muted">No machine assigned</Text>
                 )}
               </div>
-
-              {/* Technician */}
               <div className="min-w-0">
                 <Label size="small" weight="plus" className="mb-2">
                   Assigned Technician
                 </Label>
                 {technicianLoading ? (
                   <Skeleton className="h-5 w-48" />
-                ) : technician ? (
-                  <div className="space-y-1">
-                    <Text size="small">
-                      {technician.first_name && technician.last_name 
-                        ? `${technician.first_name} ${technician.last_name}` 
-                        : technician.email}
-                    </Text>
-                    {technician.employee_id && (
-                      <div className="flex items-center gap-2">
-                        <Label size="small" weight="plus" className="text-ui-fg-subtle">
-                          Employee ID:
-                        </Label>
-                        <Text size="small">
-                          {technician.employee_id}
-                        </Text>
-                      </div>
-                    )}
-                    {technician.department && (
-                      <div className="flex items-center gap-2">
-                        <Label size="small" weight="plus" className="text-ui-fg-subtle">
-                          Department:
-                        </Label>
-                        <Text size="small">
-                          {technician.department}
-                        </Text>
-                      </div>
-                    )}
-                  </div>
+                ) : technicians ? (
+                  <Text size="small">—</Text>
                 ) : (
                   <Text size="small" className="text-ui-fg-muted">No technician assigned</Text>
                 )}
               </div>
             </div>
           </div>
-
-          {/* Priority Section - Status and Service Type now in header */}
           <div className="px-6 py-4">
             <div className="min-w-0 flex flex-col">
               <Label size="small" weight="plus" className="mb-2">
@@ -515,55 +421,6 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
               </StatusBadge>
             </div>
           </div>
-
-          {/* Notes Section */}
-          {(serviceOrder.internal_notes || serviceOrder.customer_notes) && (
-            <div className="px-6 py-4">
-              <div className="min-w-0">
-                <Label size="small" weight="plus" className="mb-2">
-                  Notes
-                </Label>
-                {serviceOrder.internal_notes && (
-                  <div className="flex items-start gap-2 mb-2">
-                    <Label size="small" weight="plus" className="text-ui-fg-subtle">
-                      Internal:
-                    </Label>
-                    <Text size="small">{serviceOrder.internal_notes}</Text>
-                  </div>
-                )}
-                {serviceOrder.customer_notes && (
-                  <div className="flex items-start gap-2">
-                    <Label size="small" weight="plus" className="text-ui-fg-subtle">
-                      Customer:
-                    </Label>
-                    <Text size="small">{serviceOrder.customer_notes}</Text>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Metadata Section */}
-          <div className="px-6 py-4 bg-ui-bg-subtle">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label size="small" weight="plus" className="text-ui-fg-subtle mb-1 block">
-                  Created
-                </Label>
-                <Text size="small" className="text-ui-fg-muted">
-                  {new Date(serviceOrder.created_at).toLocaleDateString()}
-                </Text>
-              </div>
-              <div>
-                <Label size="small" weight="plus" className="text-ui-fg-subtle mb-1 block">
-                  Updated
-                </Label>
-                <Text size="small" className="text-ui-fg-muted">
-                  {new Date(serviceOrder.updated_at).toLocaleDateString()}
-                </Text>
-              </div>
-            </div>
-          </div>
         </>
       )}
     </Container>
@@ -571,3 +428,4 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
 }
 
 export default ServiceOrderOverviewWidget
+

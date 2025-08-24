@@ -36,7 +36,7 @@ export const updateInventoryStep = createStep(
           // Update inventory for the product variant
           // Note: This assumes you have inventory levels set up for the product variants
           const inventoryItems = await inventoryModule.listInventoryItems({
-            sku: purchaseOrderItem.product_sku
+            sku: purchaseOrderItem.product_sku ?? undefined,
           })
 
           if (inventoryItems.length > 0) {
@@ -44,14 +44,16 @@ export const updateInventoryStep = createStep(
             
             // Get current inventory levels
             const inventoryLevels = await inventoryModule.listInventoryLevels({
-              inventory_item_id: inventoryItem.id
+              inventory_item_id: inventoryItem.id,
             })
 
             for (const level of inventoryLevels) {
               // Increase the stocked quantity
               await inventoryModule.updateInventoryLevels([{
                 id: level.id,
-                stocked_quantity: level.stocked_quantity + item.quantity_received
+                inventory_item_id: inventoryItem.id,
+                location_id: (level as any).location_id,
+                stocked_quantity: level.stocked_quantity + item.quantity_received,
               }])
 
               inventoryUpdates.push({
@@ -59,7 +61,7 @@ export const updateInventoryStep = createStep(
                 inventory_level_id: level.id,
                 quantity_added: item.quantity_received,
                 product_variant_id: purchaseOrderItem.product_variant_id,
-                purchase_order_item_id: item.purchase_order_item_id
+                purchase_order_item_id: item.purchase_order_item_id,
               })
             }
           }
@@ -88,7 +90,9 @@ export const updateInventoryStep = createStep(
         const level = await inventoryModule.retrieveInventoryLevel(update.inventory_level_id)
         await inventoryModule.updateInventoryLevels([{
           id: update.inventory_level_id,
-          stocked_quantity: Math.max(0, level.stocked_quantity - update.quantity_added)
+          inventory_item_id: level.inventory_item_id,
+          location_id: (level as any).location_id,
+          stocked_quantity: Math.max(0, level.stocked_quantity - update.quantity_added),
         }])
       } catch (error) {
         console.error(`Failed to revert inventory update for level ${update.inventory_level_id}:`, error)

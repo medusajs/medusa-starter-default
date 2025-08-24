@@ -87,7 +87,7 @@ export const receivePurchaseOrderStep = createStep(
     await purchasingService.updatePurchaseOrders([{
       id: compensationInput.purchaseOrderId,
       status: PurchaseOrderStatus.CONFIRMED, // Revert to confirmed
-      actual_delivery_date: null,
+      actual_delivery_date: undefined,
     }])
   }
 ) 

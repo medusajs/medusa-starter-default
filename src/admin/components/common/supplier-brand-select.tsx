@@ -42,24 +42,31 @@ export const SupplierBrandSelect = ({
     }
   }, [supplierId])
 
+  const NONE_VALUE = "__none__"
+  
   const options = useMemo(() => {
     const base = brands.map((b) => ({ label: `${b.name} (${b.code})`, value: b.id }))
-    return includeNoneOption ? [{ label: "— None —", value: "" }, ...base] : base
+    return includeNoneOption ? [{ label: "— None —", value: NONE_VALUE }, ...base] : base
   }, [brands, includeNoneOption])
 
   return (
     <div className="space-y-1">
       <Label>{label}</Label>
       <Select
-        value={value ?? ""}
-        onValueChange={(val) => onChange?.(val || null)}
+        value={value ?? NONE_VALUE}
+        onValueChange={(val) => onChange?.(val === NONE_VALUE ? null : val)}
         disabled={disabled || loading}
       >
-        {options.map((opt) => (
-          <Select.Item key={opt.value} value={opt.value}>
-            {opt.label}
-          </Select.Item>
-        ))}
+        <Select.Trigger>
+          <Select.Value placeholder={`Select ${label.toLowerCase()}`} />
+        </Select.Trigger>
+        <Select.Content>
+          {options.map((opt) => (
+            <Select.Item key={opt.value} value={opt.value}>
+              {opt.label}
+            </Select.Item>
+          ))}
+        </Select.Content>
       </Select>
     </div>
   )

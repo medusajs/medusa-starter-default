@@ -3,6 +3,7 @@ import {
   MedusaResponse,
 } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys, remoteQueryObjectFromString } from "@medusajs/framework/utils"
+import { csvToArray, toNumberOrDefault, toStringOrUndefined } from "../../../../../utils/query-params"
 
 type GetSupplierVariantsParams = {
   id: string
@@ -25,7 +26,12 @@ export const GET = async (
   const query = req.scope.resolve(ContainerRegistrationKeys.REMOTE_QUERY)
   
   const { id: supplierId } = req.params
-  const { limit = 50, offset = 0, brand_id, q, product_id, fields } = req.query
+  const limit = toNumberOrDefault((req as any).query?.limit, 50)
+  const offset = toNumberOrDefault((req as any).query?.offset, 0)
+  const brand_id = toStringOrUndefined((req as any).query?.brand_id)
+  const q = toStringOrUndefined((req as any).query?.q)
+  const product_id = toStringOrUndefined((req as any).query?.product_id)
+  const fieldsArr = csvToArray((req as any).query?.fields, [])
 
   try {
     // First, get the brands supplied by this supplier
@@ -91,11 +97,11 @@ export const GET = async (
 
     const queryObj = remoteQueryObjectFromString({
       entryPoint: "product_variant",
-      fields: fields ? fields.split(",") : defaultFields,
+      fields: fieldsArr.length ? fieldsArr : defaultFields,
       variables: {
         filters,
-        limit: Number(limit),
-        offset: Number(offset),
+        limit: limit,
+        offset: offset,
         order: { variant_rank: "ASC" },
       },
     })
@@ -118,8 +124,8 @@ export const GET = async (
     res.json({
       variants: variants || [],
       count: total,
-      limit: Number(limit),
-      offset: Number(offset),
+      limit: limit,
+      offset: offset,
       supplier_brand_ids: supplierBrandIds,
       filtered_by_brand: !!brand_id,
     })

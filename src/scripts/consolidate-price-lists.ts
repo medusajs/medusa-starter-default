@@ -1,4 +1,5 @@
-import { MedusaApp } from "@medusajs/framework"
+// Using dynamic app bootstrap is deprecated in v2 scripts. If retained,
+// ensure imports match available APIs. For now, type-only import removed.
 import { PURCHASING_MODULE } from "../modules/purchasing"
 import PurchasingService from "../modules/purchasing/service"
 
@@ -7,9 +8,7 @@ import PurchasingService from "../modules/purchasing/service"
  * This script should be run after deploying the new price list model
  */
 async function consolidatePriceLists() {
-  const app = await MedusaApp.create({
-    // Add your configuration here
-  })
+  const app: any = await (await import("@medusajs/framework" as any)).MedusaApp.create({})
 
   const purchasingService = app.modules[PURCHASING_MODULE] as PurchasingService
 
@@ -40,7 +39,7 @@ async function consolidatePriceLists() {
           { id: priceList.id },
           { 
             is_active: true,
-            version: priceList.version || 1
+            version: priceList.version ?? 1
           }
         )
         console.log(`  Updated single price list for ${supplier.name}`)
@@ -84,8 +83,8 @@ async function consolidatePriceLists() {
         name: `Consolidated Price List - ${supplier.name}`,
         description: `Consolidated from ${priceLists.length} price lists on ${new Date().toISOString()}`,
         currency_code: activePriceList.currency_code,
-        effective_date: activePriceList.effective_date,
-        expiry_date: activePriceList.expiry_date
+        effective_date: activePriceList.effective_date ?? undefined,
+        expiry_date: activePriceList.expiry_date ?? undefined
       })
       
       // Add all items to the new price list
@@ -95,12 +94,12 @@ async function consolidatePriceLists() {
           allItems.map(item => ({
             product_variant_id: item.product_variant_id,
             product_id: item.product_id,
-            supplier_sku: item.supplier_sku,
-            variant_sku: item.variant_sku,
+            supplier_sku: item.supplier_sku ?? undefined,
+            variant_sku: item.variant_sku ?? undefined,
             cost_price: item.cost_price,
-            quantity: item.quantity,
-            lead_time_days: item.lead_time_days,
-            notes: item.notes
+            quantity: item.quantity ?? undefined,
+            lead_time_days: item.lead_time_days ?? undefined,
+            notes: item.notes ?? undefined
           }))
         )
       }

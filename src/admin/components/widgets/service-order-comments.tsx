@@ -12,7 +12,7 @@ import {
 import { ChatBubble, ArrowUturnLeft, PencilSquare, Trash, Clock, Tools, User } from "@medusajs/icons"
 import { useState, useRef, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { formatRelativeTime } from "../utils/format-time"
+import { formatRelativeTime } from "../../utils/format-time"
 
 interface ServiceOrderComment {
   id: string

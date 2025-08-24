@@ -767,6 +767,19 @@ const ServiceOrderTimeEntriesWidget = ({ data: serviceOrder }: ServiceOrderTimeE
                     
                     <div>
                       <Label size="small" weight="plus" className="mb-2 block">
+                        End Time
+                      </Label>
+                      <Input
+                        type="datetime-local"
+                        value={formData.end_time}
+                        onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <Label size="small" weight="plus" className="mb-2 block">
                         Hourly Rate (€)
                       </Label>
                       <Input
@@ -795,7 +808,10 @@ const ServiceOrderTimeEntriesWidget = ({ data: serviceOrder }: ServiceOrderTimeE
                     <Button
                       type="button"
                       variant="secondary"
-                      onClick={() => setShowEditModal(false)}
+                      onClick={() => {
+                        setShowEditModal(false)
+                        setEditingEntry(null)
+                      }}
                       disabled={updateTimeEntryMutation.isPending}
                     >
                       Cancel

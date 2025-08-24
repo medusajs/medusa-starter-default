@@ -1,10 +1,8 @@
-import { defineConfig } from "vite/config"
-
-export default defineConfig({
+export default {
   define: {
     global: "globalThis",
   },
   optimizeDeps: {
     exclude: ["@medusajs/framework"],
   },
-}) 
+}

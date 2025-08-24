@@ -3,11 +3,11 @@ import { useQuery } from "@tanstack/react-query"
 import { useParams } from "react-router-dom"
 import { TwoColumnPage } from "../../../components/layout/pages"
 import { SingleColumnPageSkeleton } from "../../../components/common/skeleton"
-import ServiceOrderOverviewWidget from "../../../widgets/service-order-overview"
-import ServiceOrderItemsWidget from "../../../widgets/service-order-items"
-import ServiceOrderTimeEntriesWidget from "../../../widgets/service-order-time-entries"
-import ServiceOrderCommentsWidget from "../../../widgets/service-order-comments"
-import ServiceOrderCharacteristicsWidget from "../../../widgets/service-order-characteristics"
+import ServiceOrderOverviewWidget from "../../../components/widgets/service-order-overview"
+import ServiceOrderItemsWidget from "../../../components/widgets/service-order-items"
+import ServiceOrderTimeEntriesWidget from "../../../components/widgets/service-order-time-entries"
+import ServiceOrderCommentsWidget from "../../../components/widgets/service-order-comments"
+import ServiceOrderCharacteristicsWidget from "../../../components/widgets/service-order-characteristics"
 
 const ServiceOrderDetails = () => {
   const { id } = useParams()
