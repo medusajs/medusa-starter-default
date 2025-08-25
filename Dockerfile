@@ -11,11 +11,7 @@ RUN apk add --no-cache python3 make g++
 # Enable Corepack for modern Yarn
 RUN corepack enable
 
-# Copy all necessary files for Yarn 4
-COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn/ .yarn/
-
-# Copy source code
+# Copy source code (includes all Yarn 4 files)
 COPY . .
 
 # Install all dependencies (including dev dependencies for building)
