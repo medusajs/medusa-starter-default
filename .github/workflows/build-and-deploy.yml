@@ -1,0 +1,111 @@
+name: Build and Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Manual trigger
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: medusa-app
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        target: production
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
+    - name: Deploy to VPS
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: 91.98.114.119
+        username: root
+        key: ${{ secrets.VPS_SSH_KEY }}
+        script: |
+          # Create app directory if it doesn't exist
+          mkdir -p /app
+          cd /app
+          
+          # Create docker-compose.yml if it doesn't exist
+          if [ ! -f docker-compose.yml ]; then
+            cat > docker-compose.yml << 'EOF'
+          version: '3.8'
+          services:
+            redis:
+              image: redis:7-alpine
+              container_name: medusa_redis
+              restart: unless-stopped
+              ports:
+                - "6379:6379"
+              networks:
+                - medusa_network
+            
+            medusa:
+              image: ${MEDUSA_IMAGE:-ghcr.io/pcoq/medusa-app:latest}
+              container_name: medusa_backend
+              restart: unless-stopped
+              depends_on:
+                - redis
+              ports:
+                - "9000:9000"
+              env_file:
+                - .env
+              environment:
+                NODE_ENV: production
+                REDIS_URL: redis://redis:6379
+              networks:
+                - medusa_network
+          
+          networks:
+            medusa_network:
+              driver: bridge
+          EOF
+          fi
+          
+          # Login to GitHub Container Registry
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          
+          # Pull latest image
+          docker pull ghcr.io/pcoq/medusa-app:latest
+          
+          # Update and restart
+          export MEDUSA_IMAGE="ghcr.io/pcoq/medusa-app:latest"
+          docker-compose pull medusa
+          docker-compose up -d
+          
+          # Cleanup old images
+          docker image prune -f
+          
+          # Show status
+          docker-compose ps
