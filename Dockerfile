@@ -9,11 +9,10 @@ WORKDIR /app
 RUN apk add --no-cache python3 make g++
 
 # Copy package files
-COPY package*.json ./
-COPY yarn.lock* ./
+COPY package.json yarn.lock ./
 
-# Install dependencies with optimizations
-RUN npm ci --only=production --no-audit --prefer-offline
+# Install all dependencies (including dev dependencies for building)
+RUN yarn install --frozen-lockfile
 
 # Copy source code
 COPY . .
@@ -21,7 +20,7 @@ COPY . .
 # Build the application
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN npm run build
+RUN yarn build
 
 # Production stage - runs on VPS
 FROM node:20-alpine AS production
@@ -56,4 +55,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
 ENTRYPOINT ["dumb-init", "--"]
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["yarn", "start"]
