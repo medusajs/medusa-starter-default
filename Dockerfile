@@ -23,8 +23,8 @@ RUN node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('.
 # Build the application using Medusa CLI
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-# Force build to succeed even with TypeScript errors (since we saw "Backend build completed with errors")
-RUN npx medusa build; exit 0
+
+RUN npx medusa build
 
 # Production stage - runs on VPS
 FROM node:20-alpine AS production
