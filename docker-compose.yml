@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Redis
   redis:
@@ -15,7 +13,7 @@ services:
   # This service runs the Medusa backend application
   # and the admin dashboard.
   medusa:
-    image: ${MEDUSA_IMAGE:-medusa-app:latest}
+    image: ${MEDUSA_IMAGE:-ghcr.io/tembo-solutions/medusa-app:latest}
     container_name: medusa_backend
     restart: unless-stopped
     depends_on:

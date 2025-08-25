@@ -44,6 +44,7 @@ COPY --from=builder --chown=medusa:nodejs /app/.medusa ./.medusa
 COPY --from=builder --chown=medusa:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=medusa:nodejs /app/package.json ./
 COPY --from=builder --chown=medusa:nodejs /app/medusa-config.ts ./
+COPY --from=builder --chown=medusa:nodejs /app/tsconfig.json ./
 COPY --from=builder --chown=medusa:nodejs /app/src ./src
 
 # Fix ownership of nested node_modules directories for Vite dependency optimization

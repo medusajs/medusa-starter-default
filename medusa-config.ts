@@ -1,4 +1,6 @@
-import { loadEnv, defineConfig, Modules } from '@medusajs/framework/utils'
+import { loadEnv, defineConfig } from '@medusajs/framework/utils'
+import { Modules } from '@medusajs/utils'
+// @ts-ignore
 import progress from 'rollup-plugin-progress'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
@@ -52,7 +54,7 @@ module.exports = defineConfig({
             ],
             // Optimize for low-memory environments
             output: {
-              manualChunks: (id) => {
+              manualChunks: (id: string) => {
                 if (id.includes('node_modules')) {
                   return 'vendor';
                 }
