@@ -24,7 +24,7 @@ RUN node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('.
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-RUN npx medusa build
+RUN npx medusa build --verbose 2>&1 | tee build.log || (cat build.log && exit 1)
 
 # Production stage - runs on VPS
 FROM node:20-alpine AS production
