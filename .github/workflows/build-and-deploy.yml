@@ -71,7 +71,7 @@ jobs:
                 - medusa_network
             
             medusa:
-              image: ${MEDUSA_IMAGE:-ghcr.io/pcoq/medusa-app:latest}
+              image: ${MEDUSA_IMAGE:-ghcr.io/tembo-solutions/medusa-app:latest}
               container_name: medusa_backend
               restart: unless-stopped
               depends_on:
@@ -96,15 +96,15 @@ jobs:
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           
           # Pull latest image
-          docker pull ghcr.io/pcoq/medusa-app:latest
+          docker pull ghcr.io/tembo-solutions/medusa-app:latest
           
           # Update and restart
-          export MEDUSA_IMAGE="ghcr.io/pcoq/medusa-app:latest"
-          docker-compose pull medusa
-          docker-compose up -d
+          export MEDUSA_IMAGE="ghcr.io/tembo-solutions/medusa-app:latest"
+          docker compose pull medusa || docker-compose pull medusa
+          docker compose up -d || docker-compose up -d
           
           # Cleanup old images
           docker image prune -f
           
           # Show status
-          docker-compose ps
+          docker compose ps || docker-compose ps
