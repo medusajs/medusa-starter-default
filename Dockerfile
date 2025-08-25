@@ -46,6 +46,9 @@ COPY --from=builder --chown=medusa:nodejs /app/package.json ./
 COPY --from=builder --chown=medusa:nodejs /app/medusa-config.ts ./
 COPY --from=builder --chown=medusa:nodejs /app/src ./src
 
+# Fix ownership of nested node_modules directories for Vite dependency optimization
+RUN chown -R medusa:nodejs /app/node_modules
+
 # Switch to non-root user
 USER medusa
 
