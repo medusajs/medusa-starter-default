@@ -36,6 +36,14 @@ module.exports = defineConfig({
           exclude: ["@medusajs/framework"],
         },
         logLevel: 'info',
+        server: {
+          host: '0.0.0.0',
+          hmr: {
+            port: 443,
+            host: '91.98.114.119',
+            protocol: 'wss'
+          }
+        },
         build: {
           rollupOptions: {
             preserveEntrySignatures: false,
