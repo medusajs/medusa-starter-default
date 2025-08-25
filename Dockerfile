@@ -11,19 +11,20 @@ RUN apk add --no-cache python3 make g++
 # Enable Corepack for modern Yarn
 RUN corepack enable
 
-# Copy package files
-COPY package.json yarn.lock ./
-
-# Install all dependencies (including dev dependencies for building)
-RUN yarn install --frozen-lockfile
+# Copy all necessary files for Yarn 4
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn/ .yarn/
 
 # Copy source code
 COPY . .
 
-# Build the application
+# Install all dependencies (including dev dependencies for building)
+RUN yarn install --immutable
+
+# Build the application using Medusa CLI
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN yarn build
+RUN npx medusa build
 
 # Production stage - runs on VPS
 FROM node:20-alpine AS production
@@ -41,8 +42,9 @@ WORKDIR /app
 # Copy built application from builder stage
 COPY --from=builder --chown=medusa:nodejs /app/dist ./dist
 COPY --from=builder --chown=medusa:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=medusa:nodejs /app/package*.json ./
+COPY --from=builder --chown=medusa:nodejs /app/package.json ./
 COPY --from=builder --chown=medusa:nodejs /app/medusa-config.ts ./
+COPY --from=builder --chown=medusa:nodejs /app/src ./src
 
 # Switch to non-root user
 USER medusa
@@ -57,5 +59,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application
-CMD ["yarn", "start"]
+# Start the application using Medusa CLI
+CMD ["npx", "medusa", "start"]
