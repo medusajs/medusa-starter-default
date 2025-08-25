@@ -18,19 +18,7 @@ COPY . .
 RUN yarn install --immutable
 
 # Fix zod package.json exports issue - add missing v3 export
-RUN node -e "
-const fs = require('fs');
-const pkg = JSON.parse(fs.readFileSync('./node_modules/zod/package.json', 'utf8'));
-if (pkg.exports && !pkg.exports['./v3']) {
-  pkg.exports['./v3'] = {
-    'types': './index.d.ts',
-    'require': './lib/index.js',
-    'import': './lib/index.mjs'
-  };
-  fs.writeFileSync('./node_modules/zod/package.json', JSON.stringify(pkg, null, 2));
-  console.log('Added ./v3 export to zod package.json');
-}
-"
+RUN node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('./node_modules/zod/package.json', 'utf8')); if (pkg.exports && !pkg.exports['./v3']) { pkg.exports['./v3'] = { types: './index.d.ts', require: './lib/index.js', import: './lib/index.mjs' }; fs.writeFileSync('./node_modules/zod/package.json', JSON.stringify(pkg, null, 2)); console.log('Added ./v3 export to zod package.json'); }"
 
 # Build the application using Medusa CLI
 ENV NODE_ENV=production
