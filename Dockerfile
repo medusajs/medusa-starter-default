@@ -26,6 +26,9 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 RUN npx medusa build --verbose 2>&1 | tee build.log || (cat build.log && exit 1)
 
+# Create public directory and copy admin files to expected location
+RUN mkdir -p public/admin && cp -r .medusa/server/public/admin/. public/admin/
+
 # Production stage - runs on VPS
 FROM node:20-alpine AS production
 
@@ -41,6 +44,7 @@ WORKDIR /app
 
 # Copy built application from builder stage (MedusaJS builds to .medusa folder)
 COPY --from=builder --chown=medusa:nodejs /app/.medusa ./.medusa
+COPY --from=builder --chown=medusa:nodejs /app/public ./public
 COPY --from=builder --chown=medusa:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=medusa:nodejs /app/package.json ./
 COPY --from=builder --chown=medusa:nodejs /app/medusa-config.ts ./
