@@ -52,10 +52,7 @@ const VariantBrandChips = ({ data }: WidgetProps) => {
   // Group variants by brand
   const variantsByBrand = variants.reduce((acc: Record<string, ProductVariant[]>, variant) => {
     const brandKey = variant.brand ? variant.brand.id : 'no-brand'
-    if (!acc[brandKey]) {
-      acc[brandKey] = []
-    }
-    acc[brandKey].push(variant)
+    acc[brandKey] = [...(acc[brandKey] || []), variant]
     return acc
   }, {})
 

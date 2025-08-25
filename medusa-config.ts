@@ -27,6 +27,24 @@ module.exports = defineConfig({
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     }
   },
+  admin: {
+    vite: () => {
+      return {
+        define: {
+          global: "globalThis",
+        },
+        optimizeDeps: {
+          exclude: ["@medusajs/framework"],
+        },
+        logLevel: 'info',
+        build: {
+          rollupOptions: {
+            preserveEntrySignatures: false,
+          },
+        },
+      }
+    },
+  },
   modules: [
     // Production Redis modules for caching, events, and workflows
     {

@@ -100,19 +100,40 @@ const ServiceOrderTimeEntriesWidget = ({ data: serviceOrder }: ServiceOrderTimeE
   // Update elapsed time for active entry
   useEffect(() => {
     if (!activeEntry) return
+    // Only run timers in browser environment, not during build
+    if (typeof window === 'undefined') return
 
-    const interval = setInterval(() => {
-      const startTime = new Date(activeEntry.start_time).getTime()
-      const currentTime = new Date().getTime()
-      const elapsed = Math.floor((currentTime - startTime) / 1000)
-      
-      setElapsedTime(prev => ({
-        ...prev,
-        [activeEntry.id]: elapsed
-      }))
-    }, 1000)
+    const updateElapsedTime = () => {
+      try {
+        const startTime = new Date(activeEntry.start_time).getTime()
+        const currentTime = new Date().getTime()
+        const elapsed = Math.floor((currentTime - startTime) / 1000)
+        
+        setElapsedTime(prev => ({
+          ...prev,
+          [activeEntry.id]: elapsed
+        }))
+      } catch (error) {
+        console.error('Error updating elapsed time:', error)
+      }
+    }
 
-    return () => clearInterval(interval)
+    // Initial update
+    updateElapsedTime()
+    
+    // Create interval with fallback
+    let intervalId: NodeJS.Timeout | null = null
+    try {
+      intervalId = setInterval(updateElapsedTime, 1000)
+    } catch (error) {
+      console.error('Error creating timer interval:', error)
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
   }, [activeEntry])
 
   const startTimerMutation = useMutation({
