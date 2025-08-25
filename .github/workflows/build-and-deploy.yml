@@ -69,37 +69,37 @@ jobs:
           # Create docker-compose.yml if it doesn't exist
           if [ ! -f docker-compose.yml ]; then
             cat > docker-compose.yml << 'EOF'
-version: '3.8'
-services:
-  redis:
-    image: redis:7-alpine
-    container_name: medusa_redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    networks:
-      - medusa_network
-  
-  medusa:
-    image: ${MEDUSA_IMAGE:-ghcr.io/tembo-solutions/medusa-app:latest}
-    container_name: medusa_backend
-    restart: unless-stopped
-    depends_on:
-      - redis
-    ports:
-      - "9000:9000"
-    env_file:
-      - .env
-    environment:
-      NODE_ENV: production
-      REDIS_URL: redis://redis:6379
-    networks:
-      - medusa_network
+          version: '3.8'
+          services:
+            redis:
+              image: redis:7-alpine
+              container_name: medusa_redis
+              restart: unless-stopped
+              ports:
+                - "6379:6379"
+              networks:
+                - medusa_network
+            
+            medusa:
+              image: ${MEDUSA_IMAGE:-ghcr.io/tembo-solutions/medusa-app:latest}
+              container_name: medusa_backend
+              restart: unless-stopped
+              depends_on:
+                - redis
+              ports:
+                - "9000:9000"
+              env_file:
+                - .env
+              environment:
+                NODE_ENV: production
+                REDIS_URL: redis://redis:6379
+              networks:
+                - medusa_network
 
-networks:
-  medusa_network:
-    driver: bridge
-EOF
+          networks:
+            medusa_network:
+              driver: bridge
+          EOF
           fi
           
           # Login to GitHub Container Registry
