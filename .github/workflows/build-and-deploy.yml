@@ -56,6 +56,16 @@ jobs:
           # Use your existing directory
           cd /var/www/WT-medusa
           
+          # Create .env file if it doesn't exist
+          if [ ! -f .env ]; then
+            cat > .env << 'EOF'
+NODE_ENV=production
+REDIS_URL=redis://redis:6379
+FALLBACK_TO_SUPABASE=false
+# Add your other environment variables here
+EOF
+          fi
+          
           # Create docker-compose.yml if it doesn't exist
           if [ ! -f docker-compose.yml ]; then
             cat > docker-compose.yml << 'EOF'

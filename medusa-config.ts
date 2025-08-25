@@ -60,29 +60,46 @@ module.exports = defineConfig({
     },
   },
   modules: [
-    {
-      resolve: "@medusajs/cache-redis",
-      key: Modules.CACHE,
-      options: {
-        redisUrl: process.env.REDIS_URL || "redis://localhost:6379"
-      }
-    },
-    {
-      resolve: "@medusajs/event-bus-redis",
-      key: Modules.EVENT_BUS,
-      options: {
-        redisUrl: process.env.REDIS_URL || "redis://localhost:6379"
-      }
-    },
-    {
-      resolve: "@medusajs/workflow-engine-redis",
-      key: Modules.WORKFLOW_ENGINE,
-      options: {
-        redis: {
-          url: process.env.REDIS_URL || "redis://localhost:6379"
+    // Use in-memory modules for development, Redis for production
+    ...(process.env.NODE_ENV === 'development' ? [
+      {
+        resolve: "@medusajs/cache-inmemory",
+        key: Modules.CACHE,
+        options: { ttl: 0 }
+      },
+      {
+        resolve: "@medusajs/event-bus-local",
+        key: Modules.EVENT_BUS
+      },
+      {
+        resolve: "@medusajs/workflow-engine-inmemory",
+        key: Modules.WORKFLOW_ENGINE
+      },
+    ] : [
+      {
+        resolve: "@medusajs/cache-redis",
+        key: Modules.CACHE,
+        options: {
+          redisUrl: process.env.REDIS_URL || "redis://localhost:6379"
         }
-      }
-    },
+      },
+      {
+        resolve: "@medusajs/event-bus-redis",
+        key: Modules.EVENT_BUS,
+        options: {
+          redisUrl: process.env.REDIS_URL || "redis://localhost:6379"
+        }
+      },
+      {
+        resolve: "@medusajs/workflow-engine-redis",
+        key: Modules.WORKFLOW_ENGINE,
+        options: {
+          redis: {
+            url: process.env.REDIS_URL || "redis://localhost:6379"
+          }
+        }
+      },
+    ]),
     // Custom modules
     {
       resolve: "./src/modules/brands",
