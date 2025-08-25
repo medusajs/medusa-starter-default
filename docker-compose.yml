@@ -15,7 +15,7 @@ services:
   # This service runs the Medusa backend application
   # and the admin dashboard.
   medusa:
-    build: .
+    image: ${MEDUSA_IMAGE:-medusa-app:latest}
     container_name: medusa_backend
     restart: unless-stopped
     depends_on:
@@ -23,14 +23,11 @@ services:
     ports:
       - "9000:9000"
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       REDIS_URL: redis://redis:6379
       FALLBACK_TO_SUPABASE: true
     env_file:
       - .env
-    volumes:
-      - .:/app
-      - /app/node_modules
     networks:
       - medusa_network
 

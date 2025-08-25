@@ -1,18 +1,17 @@
 import { loadEnv, defineConfig, Modules } from '@medusajs/framework/utils'
+import progress from 'rollup-plugin-progress'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
-// Function to get database URL with fallback
 function getDatabaseUrl() {
   const directUrl = process.env.DATABASE_URL
   const supabaseUrl = process.env.SUPABASE_DATABASE_URL || process.env.SUPABASE_URL
-  
-  // If FALLBACK_TO_SUPABASE is set, use Supabase URL instead
+
   if (process.env.FALLBACK_TO_SUPABASE === 'true' && supabaseUrl) {
     console.log('Using Supabase database connection')
     return supabaseUrl
   }
-  
+
   return directUrl
 }
 
@@ -40,13 +39,27 @@ module.exports = defineConfig({
         build: {
           rollupOptions: {
             preserveEntrySignatures: false,
+            plugins: [
+              progress()
+            ],
+            // Optimize for low-memory environments
+            output: {
+              manualChunks: (id) => {
+                if (id.includes('node_modules')) {
+                  return 'vendor';
+                }
+              },
+            },
           },
+          // Reduce memory usage during build
+          minify: false, // Disable minification to save memory
+          sourcemap: false, // Disable source maps
+          chunkSizeWarningLimit: 1000,
         },
       }
     },
   },
   modules: [
-    // Production Redis modules for caching, events, and workflows
     {
       resolve: "@medusajs/cache-redis",
       key: Modules.CACHE,
@@ -55,7 +68,7 @@ module.exports = defineConfig({
       }
     },
     {
-      resolve: "@medusajs/event-bus-redis", 
+      resolve: "@medusajs/event-bus-redis",
       key: Modules.EVENT_BUS,
       options: {
         redisUrl: process.env.REDIS_URL || "redis://localhost:6379"
@@ -70,37 +83,38 @@ module.exports = defineConfig({
         }
       }
     },
-    // Custom business modules
-    {
-      resolve: "./src/modules/purchasing",
-    },
-    {
-      resolve: "./src/modules/user-preferences",
-    },
-    {
-      resolve: "./src/modules/stock-location-details",
-    },
-    {
-      resolve: "./src/modules/machines",
-    },
-    {
-      resolve: "./src/modules/technicians",
-    },
+    // Custom modules
     {
       resolve: "./src/modules/brands",
-    },
-    {
-      resolve: "./src/modules/service-orders",
     },
     {
       resolve: "./src/modules/invoicing",
     },
     {
-      resolve: "./src/modules/warranties",
+      resolve: "./src/modules/machines",
+    },
+    {
+      resolve: "./src/modules/purchasing",
     },
     {
       resolve: "./src/modules/rentals",
     },
+    {
+      resolve: "./src/modules/service-orders",
+    },
+    {
+      resolve: "./src/modules/stock-location-details",
+    },
+    {
+      resolve: "./src/modules/technicians",
+    },
+    {
+      resolve: "./src/modules/user-preferences",
+    },
+    {
+      resolve: "./src/modules/warranties",
+    },
+    // … your custom modules …
     {
       resolve: "@medusajs/index",
     },

@@ -5,6 +5,9 @@ export const TECHNICIANS_MODULE = "technicians"
 
 const TechniciansModule = Module(TECHNICIANS_MODULE, {
   service: TechniciansService,
+  definition: {
+    isQueryable: true
+  }
 })
 
 export default TechniciansModule 

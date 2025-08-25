@@ -5,6 +5,9 @@ export const BRANDS_MODULE = "brands"
 
 const BrandsModule = Module(BRANDS_MODULE, {
   service: BrandsService,
+  definition: {
+    isQueryable: true
+  }
 })
 
 export default BrandsModule

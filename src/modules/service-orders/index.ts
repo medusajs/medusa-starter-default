@@ -9,6 +9,9 @@ export const SERVICE_ORDERS_MODULE = "serviceOrders"
 
 const ServiceOrdersModule = Module(SERVICE_ORDERS_MODULE, {
   service: ServiceOrdersService,
+  definition: {
+    isQueryable: true
+  }
 })
 
 export default ServiceOrdersModule

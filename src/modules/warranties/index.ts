@@ -8,6 +8,9 @@ export const WARRANTIES_MODULE = "warranties"
 
 const WarrantiesModule = Module(WARRANTIES_MODULE, {
   service: WarrantiesService,
+  definition: {
+    isQueryable: true
+  }
 })
 
 export default WarrantiesModule

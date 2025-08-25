@@ -5,6 +5,9 @@ export const MACHINES_MODULE = "machines"
 
 export default Module(MACHINES_MODULE, {
   service: MachinesModuleService,
+  definition: {
+    isQueryable: true
+  }
 })
 
 export * from "./types"

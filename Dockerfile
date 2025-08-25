@@ -1,28 +1,46 @@
-FROM node:20-alpine
+# Multi-stage Dockerfile optimized for Medusa build
+# Build stage - runs on powerful machine (local/CI)
+FROM node:20-alpine AS builder
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S medusa -u 1001
-
+# Set working directory
 WORKDIR /app
 
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
 # Copy package files
-COPY package.json yarn.lock .yarnrc.yml ./
+COPY package*.json ./
+COPY yarn.lock* ./
 
-# Enable Corepack for Yarn 4
-RUN corepack enable
-
-# Install dependencies
-RUN yarn install
+# Install dependencies with optimizations
+RUN npm ci --only=production --no-audit --prefer-offline
 
 # Copy source code
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p uploads logs && chown -R medusa:nodejs uploads logs
+# Build the application
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+RUN npm run build
+
+# Production stage - runs on VPS
+FROM node:20-alpine AS production
+
+# Install runtime dependencies
+RUN apk add --no-cache dumb-init
+
+# Create app user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S medusa -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Copy built application from builder stage
+COPY --from=builder --chown=medusa:nodejs /app/dist ./dist
+COPY --from=builder --chown=medusa:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=medusa:nodejs /app/package*.json ./
+COPY --from=builder --chown=medusa:nodejs /app/medusa-config.ts ./
 
 # Switch to non-root user
 USER medusa
@@ -30,6 +48,12 @@ USER medusa
 # Expose port
 EXPOSE 9000
 
-# Start the application
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:9000/health || exit 1
+
+# Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["yarn", "start"]
+
+# Start the application
+CMD ["npm", "start"]

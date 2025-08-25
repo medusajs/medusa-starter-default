@@ -5,6 +5,9 @@ export const STOCK_LOCATION_DETAILS_MODULE = "stockLocationDetails"
 
 const StockLocationDetailsModule = Module(STOCK_LOCATION_DETAILS_MODULE, {
   service: StockLocationDetailsService,
+  definition: {
+    isQueryable: true
+  }
 })
 
 export default StockLocationDetailsModule 
