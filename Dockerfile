@@ -36,8 +36,8 @@ RUN addgroup -g 1001 -S nodejs && \
 # Set working directory
 WORKDIR /app
 
-# Copy built application from builder stage
-COPY --from=builder --chown=medusa:nodejs /app/dist ./dist
+# Copy built application from builder stage (MedusaJS builds to .medusa folder)
+COPY --from=builder --chown=medusa:nodejs /app/.medusa ./.medusa
 COPY --from=builder --chown=medusa:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=medusa:nodejs /app/package.json ./
 COPY --from=builder --chown=medusa:nodejs /app/medusa-config.ts ./
