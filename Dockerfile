@@ -46,14 +46,6 @@ COPY --from=builder --chown=medusa:nodejs /app/.medusa ./.medusa
 # Switch to built server directory
 WORKDIR /app/.medusa/server
 
-# Install production dependencies
-RUN corepack enable
-
-RUN yarn install
-
-# Switch to non-root user
-USER medusa
-
 # Expose port
 EXPOSE 9000
 
