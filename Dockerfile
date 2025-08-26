@@ -42,14 +42,15 @@ RUN addgroup -g 1001 -S nodejs && \
 # Set working directory and copy built application
 WORKDIR /app
 COPY --from=builder --chown=medusa:nodejs /app/.medusa ./.medusa
-
-# Switch to built server directory
-WORKDIR /app/.medusa/server
+COPY --from=builder --chown=medusa:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=medusa:nodejs /app/yarn.lock ./yarn.lock
 
 # Install production dependencies
 RUN corepack enable
+RUN yarn install --immutable --production
 
-RUN yarn install --immutable
+# Switch to built server directory
+WORKDIR /app/.medusa/server
 
 # Expose port
 EXPOSE 9000
