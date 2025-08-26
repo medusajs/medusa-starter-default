@@ -27,7 +27,7 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npx medusa build --verbose 2>&1 | tee build.log || (cat build.log && exit 1)
 
 # Create public directory and copy admin files to expected location
-RUN mkdir -p public/admin && cp -r .medusa/server/public/admin/. public/admin/
+#RUN mkdir -p public/admin && cp -r .medusa/server/public/admin/. public/admin/
 
 # Production stage - runs on VPS
 FROM node:20-alpine AS production
