@@ -52,7 +52,7 @@ export function getSupportedLanguages(): string[] {
  */
 export function normalizeLanguage(lang: string): string {
   const supported = getSupportedLanguages()
-  const normalized = lang.toLowerCase().split("-")[0] // Extract language part only
+  const normalized = (lang || "en").toLowerCase().split("-")[0] // Extract language part only
   
   return supported.includes(normalized) ? normalized : "en"
 }
