@@ -47,7 +47,9 @@ COPY --from=builder --chown=medusa:nodejs /app/.medusa ./.medusa
 WORKDIR /app/.medusa/server
 
 # Install production dependencies
-RUN yarn install --production
+RUN corepack enable
+
+RUN yarn install
 
 # Switch to non-root user
 USER medusa
