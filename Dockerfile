@@ -42,6 +42,8 @@ RUN addgroup -g 1001 -S nodejs && \
 # Set working directory and copy built application
 WORKDIR /app
 COPY --from=builder --chown=medusa:nodejs /app/.medusa ./.medusa
+COPY --from=builder --chown=medusa:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=medusa:nodejs /app/yarn.lock ./yarn.lock
 
 # Switch to built server directory
 WORKDIR /app/.medusa/server
