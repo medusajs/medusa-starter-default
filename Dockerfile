@@ -39,11 +39,15 @@ RUN apk add --no-cache dumb-init curl
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S medusa -u 1001
 
-# Set working directory
+# Set working directory and copy built application
 WORKDIR /app
+COPY --from=builder --chown=medusa:nodejs /app/.medusa ./.medusa
 
-# Copy built application from builder stage
-COPY --from=builder --chown=medusa:nodejs /app/.medusa/server ./
+# Switch to built server directory
+WORKDIR /app/.medusa/server
+
+# Install production dependencies
+RUN yarn install --production
 
 # Switch to non-root user
 USER medusa
@@ -58,5 +62,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application using Medusa CLI
-CMD ["npx", "medusa", "start"]
+# Start the built application
+CMD ["yarn", "run", "start"]
