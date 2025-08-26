@@ -27,7 +27,7 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npx medusa build --verbose 2>&1 | tee build.log || (cat build.log && exit 1)
 
 # Create public directory and copy admin files to expected location
-#RUN mkdir -p public/admin && cp -r .medusa/server/public/admin/. public/admin/
+RUN mkdir -p public/admin && cp -r .medusa/server/public/admin/. public/admin/
 
 # Production stage - runs on VPS
 FROM node:20-alpine AS production
@@ -42,8 +42,6 @@ RUN addgroup -g 1001 -S nodejs && \
 # Set working directory and copy built application
 WORKDIR /app
 COPY --from=builder --chown=medusa:nodejs /app/.medusa ./.medusa
-COPY --from=builder --chown=medusa:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=medusa:nodejs /app/yarn.lock ./yarn.lock
 
 # Switch to built server directory
 WORKDIR /app/.medusa/server
@@ -51,7 +49,7 @@ WORKDIR /app/.medusa/server
 # Install production dependencies
 RUN corepack enable
 
-RUN yarn install
+RUN yarn install --immutable
 
 # Expose port
 EXPOSE 9000
