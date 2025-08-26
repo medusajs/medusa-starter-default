@@ -47,7 +47,7 @@ COPY --from=builder --chown=medusa:nodejs /app/yarn.lock ./yarn.lock
 
 # Install production dependencies
 RUN corepack enable
-RUN yarn install --immutable --production
+RUN yarn install --immutable
 
 # Switch to built server directory
 WORKDIR /app/.medusa/server
