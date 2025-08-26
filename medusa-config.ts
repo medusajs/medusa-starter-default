@@ -64,7 +64,7 @@ module.exports = defineConfig({
           },
           // Reduce memory usage during build
           minify: false, // Disable minification to save memory
-          sourcemap: false, // Disable source maps
+          sourcemap: true, // Enable source maps for debugging
           chunkSizeWarningLimit: 1000,
         },
       }
