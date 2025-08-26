@@ -33,12 +33,17 @@ RUN npx medusa build --verbose 2>&1 | tee build.log || (cat build.log && exit 1)
 FROM node:20-alpine AS production
 
 # Install runtime dependencies
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init curl
 
 # Create app user for security
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S medusa -u 1001
 
+# Set working directory
+WORKDIR /app
+
+# Copy built application from builder stage
+COPY --from=builder --chown=medusa:nodejs /app/.medusa/server ./
 
 # Switch to non-root user
 USER medusa
