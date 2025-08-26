@@ -39,20 +39,6 @@ RUN apk add --no-cache dumb-init
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S medusa -u 1001
 
-# Set working directory
-WORKDIR /app
-
-# Copy built application from builder stage (MedusaJS builds to .medusa folder)
-COPY --from=builder --chown=medusa:nodejs /app/.medusa ./.medusa
-COPY --from=builder --chown=medusa:nodejs /app/public ./public
-COPY --from=builder --chown=medusa:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=medusa:nodejs /app/package.json ./
-COPY --from=builder --chown=medusa:nodejs /app/medusa-config.ts ./
-COPY --from=builder --chown=medusa:nodejs /app/tsconfig.json ./
-COPY --from=builder --chown=medusa:nodejs /app/src ./src
-
-# Fix ownership of nested node_modules directories for Vite dependency optimization
-RUN chown -R medusa:nodejs /app/node_modules
 
 # Switch to non-root user
 USER medusa
