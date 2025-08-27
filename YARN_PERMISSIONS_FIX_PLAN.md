@@ -16,14 +16,20 @@ This indicates the process running Yarn cannot create the Yarn cache directory u
 
 ### Step-by-step fix (deterministic)
 
-1) Ensure user before any Yarn invocation
-   - Switch to the final user first in the Dockerfile:
-     - `USER medusa`
+1) Ensure correct user/context for ownership operations
+   - Any `chown` must be executed as `root`, not as `medusa`. If you need to set ownership, do it before switching to `USER medusa`.
+   - Recommended order in the Dockerfile builder stage:
      - `WORKDIR /app`
+     - `RUN chown medusa:nodejs /app` (as root)
+     - Option A (root sets up dirs/ownership, then switch):
+       - `RUN mkdir -p /app/.yarn/cache /app/.yarn/global && chown -R medusa:nodejs /app/.yarn`
+       - `USER medusa`
+     - Option B (no chown under medusa):
+       - `USER medusa`
+       - `RUN mkdir -p /app/.yarn/cache /app/.yarn/global` (do NOT chown here; medusa will own newly created dirs because `/app` is already owned by medusa)
 
-2) Pre-create Yarn directories with correct ownership
-   - Before running Yarn, add:
-     - `RUN mkdir -p /app/.yarn/cache /app/.yarn/global && chown -R medusa:nodejs /app/.yarn`
+2) Pre-create Yarn directories and point Yarn to them
+   - Use Option A or B above depending on where you switch to `USER medusa`.
    - Ensure environment variables point to these paths:
      - `ENV YARN_CACHE_FOLDER=/app/.yarn/cache`
      - `ENV YARN_GLOBAL_FOLDER=/app/.yarn/global`
@@ -42,12 +48,16 @@ This indicates the process running Yarn cannot create the Yarn cache directory u
 
 ### Extra checks
 
-- Confirm current user: `RUN id -u && id -g` prints `1001` and `1001`.
-- Confirm app dir ownership: `RUN ls -ld /app` shows `medusa nodejs`.
+- Confirm current user: `RUN id -u && id -g` prints `1001` and `1001` (after `USER medusa`).
+- Confirm app dir ownership: `RUN ls -ld /app` shows `medusa nodejs` (before creating `.yarn` as medusa) or verify after Option A chown.
 - Confirm Yarn resolves under `/app/.yarn`: `RUN corepack yarn config get cacheFolder` should print `/app/.yarn/cache`.
 
 ### If bind mounts are involved (runtime)
 
 - If `/app` is bind-mounted on the VPS, ensure the host path is writable by uid/gid 1001 or switch to a named volume. Otherwise, even a correct image will error at runtime.
+
+### Why you saw "Operation not permitted" with chown
+
+- You were already `USER medusa` when running `chown -R medusa:nodejs /app/.yarn`. Changing ownership requires root privileges, so it fails. Either move the chown before switching to `USER medusa` (Option A) or drop the chown entirely and let `medusa` create the directories (Option B).
 
 
