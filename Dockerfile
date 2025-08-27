@@ -80,8 +80,6 @@ USER medusa
 
 # Set Yarn environment variables to prevent PnP and use user directories
 ENV YARN_NODE_LINKER=node-modules
-ENV YARN_PNP_MODE=loose
-ENV YARN_ENABLE_PNP=false
 ENV YARN_CACHE_FOLDER=/app/.yarn/cache
 ENV YARN_INSTALL_STATE_PATH=/app/.yarn/install-state.gz
 ENV YARN_GLOBAL_FOLDER=/app/.yarn/global
