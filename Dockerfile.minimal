@@ -1,0 +1,39 @@
+FROM node:20-alpine AS production
+
+# Install runtime dependencies
+RUN apk add --no-cache python3 make g++ curl
+
+# Create app user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S medusa -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Enable Corepack for Yarn
+RUN corepack enable
+
+# Copy package files
+COPY package.json yarn.lock .yarnrc.yml ./
+
+# Install dependencies
+RUN yarn install
+
+# Copy source code
+COPY . .
+
+# Build the application
+ENV NODE_ENV=production
+RUN npx medusa build
+
+# Change ownership to medusa user
+RUN chown -R medusa:nodejs /app
+
+# Switch to non-root user
+USER medusa
+
+# Expose port
+EXPOSE 9000
+
+# Start the application
+CMD ["yarn", "run", "start"]
