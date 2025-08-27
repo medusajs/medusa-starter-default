@@ -27,6 +27,12 @@ ENV YARN_CACHE_FOLDER=/app/.yarn/cache
 ENV YARN_INSTALL_STATE_PATH=/app/.yarn/install-state.gz
 ENV YARN_GLOBAL_FOLDER=/app/.yarn/global
 
+# Pre-create Yarn directories with correct ownership to prevent EACCES errors
+RUN mkdir -p /app/.yarn/cache /app/.yarn/global && \
+    chown -R medusa:nodejs /app/.yarn && \
+    id -u && id -g && \
+    ls -ld /app
+
 # Verify Yarn 4.4.0 is available and install dependencies
 RUN corepack yarn -v && \
     corepack yarn install
