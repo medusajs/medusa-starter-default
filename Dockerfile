@@ -9,11 +9,14 @@ RUN apk add --no-cache python3 make g++ curl
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S medusa -u 1001
 
+# Enable corepack as root (needs permissions to create symlinks)
+RUN corepack enable
+
 # Set working directory and ownership
 WORKDIR /app
 RUN chown medusa:nodejs /app
 
-# Configure Yarn under $HOME to avoid /app/.yarn writes
+# Switch to medusa user and configure Yarn under $HOME
 USER medusa
 ENV HOME=/home/medusa
 ENV YARN_CACHE_FOLDER=$HOME/.yarn/cache
@@ -24,8 +27,7 @@ ENV YARN_INSTALL_STATE_PATH=$HOME/.yarn/install-state.gz
 COPY --chown=medusa:nodejs package.json yarn.lock .yarnrc.yml ./
 
 # Install dependencies via Corepack as medusa user
-RUN corepack enable && \
-    corepack yarn --version && \
+RUN corepack yarn --version && \
     corepack yarn install
 
 # Copy source code
