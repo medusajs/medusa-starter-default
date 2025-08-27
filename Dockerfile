@@ -31,7 +31,7 @@ ENV YARN_INSTALL_STATE_PATH=/app/.yarn/install-state.gz
 ENV YARN_GLOBAL_FOLDER=/app/.yarn/global
 
 # Install all dependencies (including dev dependencies for building)
-RUN yarn install --immutable
+RUN yarn install
 
 # Copy source code
 COPY --chown=medusa:nodejs . .
@@ -87,7 +87,7 @@ ENV YARN_INSTALL_STATE_PATH=/app/.yarn/install-state.gz
 ENV YARN_GLOBAL_FOLDER=/app/.yarn/global
 
 # Install production dependencies using node_modules
-RUN yarn install --immutable --production
+RUN yarn install
 
 # Final cleanup - ensure no PnP files exist in the production image
 RUN find /app -name "*.pnp.*" -type f -delete 2>/dev/null || true && \
