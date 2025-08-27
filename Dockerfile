@@ -11,11 +11,19 @@ RUN addgroup -g 1001 -S nodejs && \
 
 # Set working directory and change ownership
 WORKDIR /app
-RUN chown medusa:nodejs /app
 
-# Pre-create Yarn directories with correct ownership as root (Option A)
-RUN mkdir -p /app/.yarn/cache /app/.yarn/global && \
-    chown -R medusa:nodejs /app/.yarn
+# Hard reset any stale, root-owned Yarn dirs in build cache (step 1)
+RUN rm -rf /app/.yarn && mkdir -p /app && chown medusa:nodejs /app
+
+# Set HOME and relocate Yarn caches to $HOME (step 2)
+ENV HOME=/home/medusa
+ENV YARN_CACHE_FOLDER=/home/medusa/.yarn/cache
+ENV YARN_GLOBAL_FOLDER=/home/medusa/.yarn/global
+ENV YARN_INSTALL_STATE_PATH=/home/medusa/.yarn/install-state.gz
+
+# Pre-create Yarn directories in HOME with correct ownership
+RUN mkdir -p /home/medusa/.yarn/cache /home/medusa/.yarn/global && \
+    chown -R medusa:nodejs /home/medusa/.yarn
 
 # Switch to medusa user for all operations to avoid root paths
 USER medusa
@@ -26,18 +34,14 @@ COPY --chown=medusa:nodejs package.json yarn.lock .yarnrc.yml ./
 # Ensure Yarn uses node_modules linker
 ENV YARN_NODE_LINKER=node-modules
 
-# Set user-owned cache and install directories
-ENV YARN_CACHE_FOLDER=/app/.yarn/cache
-ENV YARN_INSTALL_STATE_PATH=/app/.yarn/install-state.gz
-ENV YARN_GLOBAL_FOLDER=/app/.yarn/global
-
-# Verify setup before running yarn
+# Verify setup and configure Yarn (step 3)
 RUN id -u && id -g && \
     ls -ld /app && \
-    ls -ld /app/.yarn
+    ls -ld $HOME/.yarn
 
-# Verify Yarn 4.4.0 is available and install dependencies
+# Verify Yarn 4.4.0 is available, configure cache, and install dependencies
 RUN corepack yarn -v && \
+    corepack yarn config set cacheFolder $YARN_CACHE_FOLDER && \
     corepack yarn install
 
 # Copy source code

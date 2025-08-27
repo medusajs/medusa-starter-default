@@ -60,4 +60,43 @@ This indicates the process running Yarn cannot create the Yarn cache directory u
 
 - You were already `USER medusa` when running `chown -R medusa:nodejs /app/.yarn`. Changing ownership requires root privileges, so it fails. Either move the chown before switching to `USER medusa` (Option A) or drop the chown entirely and let `medusa` create the directories (Option B).
 
+### Zoomed-out remediation plan (avoids loops)
+
+1) Hard reset any stale, root-owned Yarn dirs in build cache
+   - In the builder stage, before switching to `USER medusa`, add a root step to neutralize stale cache:
+     - `RUN rm -rf /app/.yarn && mkdir -p /app && chown medusa:nodejs /app`
+   - This ensures no leftover `/app/.yarn` directories with wrong owners survive cached layers.
+
+2) Relocate Yarn caches to $HOME to decouple from `/app`
+   - Set and rely on medusa’s home directory for Yarn:
+     - `ENV HOME=/home/medusa`
+     - `ENV YARN_CACHE_FOLDER=/home/medusa/.yarn/cache`
+     - `ENV YARN_GLOBAL_FOLDER=/home/medusa/.yarn/global`
+   - Pre-create as root, then hand ownership once (still before switching user):
+     - `RUN mkdir -p /home/medusa/.yarn/cache /home/medusa/.yarn/global && chown -R medusa:nodejs /home/medusa/.yarn`
+   - After switching to medusa, Yarn writes under `$HOME/.yarn`, avoiding `/app` entirely.
+
+3) Ensure Corepack/Yarn run only as medusa
+   - After `USER medusa`, run:
+     - `RUN corepack yarn -v`
+     - `RUN corepack yarn config set cacheFolder $YARN_CACHE_FOLDER`
+     - `RUN corepack yarn install`
+   - Do not run `corepack enable/prepare` as root. If activation is needed, perform `corepack prepare yarn@4.4.0 --activate` after switching to medusa.
+
+4) Eliminate runtime Yarn
+   - Do not run Yarn in the production stage. Copy `node_modules` from the builder and start with a binary or `node` script. This removes another write point that could target `/app`.
+
+5) If you absolutely must run Yarn in production
+   - Mirror the same `$HOME` and `YARN_*` env for medusa in the production stage and pre-create `$HOME/.yarn` as root with correct ownership before switching users.
+
+6) Clear CI builder cache if symptoms persist
+   - If older cached layers still contain root-owned `/app/.yarn`, force a cache bust (e.g., touch `yarn.lock`, change a preceding `ENV`, or run Action with `--no-cache`).
+
+### No-regression guardrails
+
+- Ensure all Yarn commands execute after the `ENV YARN_*` lines and after `USER medusa`.
+- Keep `nodeLinker: node-modules` in `.yarnrc.yml`; do not reintroduce PnP unintentionally.
+- Avoid any `chown` after switching to `USER medusa`.
+- In the Action’s remote script, do not bind-mount `/app` itself; if you mount subdirs (uploads/logs), ensure ownership is uid/gid 1001.
+
 
