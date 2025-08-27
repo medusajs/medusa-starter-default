@@ -13,7 +13,6 @@ RUN corepack enable
 
 # Copy package files first for better Docker layer caching
 COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn/ ./.yarn/
 
 # Install all dependencies (including dev dependencies for building)
 RUN yarn install --immutable
