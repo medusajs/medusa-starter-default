@@ -55,8 +55,13 @@ RUN ls -la .medusa/server/ && \
 # Production stage - runs the built application
 FROM node:20-alpine AS production
 
-# Install runtime dependencies
-RUN apk add --no-cache dumb-init curl
+# Install runtime dependencies including Chromium dependencies for Puppeteer
+RUN apk add --no-cache dumb-init curl \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
 
 # Create app user for security (same UID as builder)
 RUN addgroup -g 1001 -S nodejs && \
@@ -65,31 +70,20 @@ RUN addgroup -g 1001 -S nodejs && \
 # Set working directory
 WORKDIR /app
 
-# Enable Corepack for Yarn
-RUN corepack enable
-
 # Copy the built application from builder stage (already owned by medusa)
 COPY --from=builder --chown=medusa:nodejs /app/.medusa/server ./
 
+# Copy node_modules from builder to avoid runtime install
+COPY --from=builder --chown=medusa:nodejs /app/node_modules ./node_modules
+
 # Copy essential files with proper ownership
-COPY --from=builder --chown=medusa:nodejs /app/.yarnrc.yml ./
 COPY --from=builder --chown=medusa:nodejs /app/package.json ./
 
 # Switch to medusa user before any operations
 USER medusa
 
-# Set Yarn environment variables to prevent PnP and use user directories
-ENV YARN_NODE_LINKER=node-modules
-ENV YARN_CACHE_FOLDER=/app/.yarn/cache
-ENV YARN_INSTALL_STATE_PATH=/app/.yarn/install-state.gz
-ENV YARN_GLOBAL_FOLDER=/app/.yarn/global
-
-# Install production dependencies using node_modules
-RUN yarn install
-
-# Final cleanup - ensure no PnP files exist in the production image
-RUN find /app -name "*.pnp.*" -type f -delete 2>/dev/null || true && \
-    echo "Production dependencies installed successfully"
+# Set Node.js production environment
+ENV NODE_ENV=production
 
 # Expose port
 EXPOSE 9000
