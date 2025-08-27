@@ -1,0 +1,80 @@
+# Multi-stage Dockerfile optimized for MedusaJS v2 production
+# Build stage - runs on powerful machine (local/CI)
+FROM node:20-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
+# Enable Corepack for modern Yarn
+RUN corepack enable
+
+# Copy package files first for better caching
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn/ ./.yarn/
+
+# Install all dependencies (including dev dependencies for building)
+RUN yarn install --immutable
+
+# Copy source code
+COPY . .
+
+# Fix zod package.json exports issue - add missing v3 export
+RUN node -e "const fs = require('fs'); try { const pkg = JSON.parse(fs.readFileSync('./node_modules/zod/package.json', 'utf8')); if (pkg.exports && !pkg.exports['./v3']) { pkg.exports['./v3'] = { types: './index.d.ts', require: './lib/index.js', import: './lib/index.mjs' }; fs.writeFileSync('./node_modules/zod/package.json', JSON.stringify(pkg, null, 2)); console.log('Added ./v3 export to zod package.json'); } } catch(e) { console.log('Zod fix not needed or failed:', e.message); }"
+
+# Build the application using Medusa CLI
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+# Build with proper error handling
+RUN npx medusa build --verbose 2>&1 | tee build.log || (echo "Build failed, showing log:" && cat build.log && exit 1)
+
+# Verify build output exists
+RUN ls -la .medusa/ || (echo "Build directory not found" && exit 1)
+
+# Create package.json for production dependencies in build output
+RUN echo '{"name":"medusa-production","version":"1.0.0","dependencies":{"@medusajs/medusa":"*","@medusajs/framework":"*","@mikro-orm/core":"*","@mikro-orm/postgresql":"*","pg":"*","awilix":"*","zod":"*"}}' > .medusa/package.json
+
+# Production stage - runs on VPS
+FROM node:20-alpine AS production
+
+# Install runtime dependencies
+RUN apk add --no-cache dumb-init curl
+
+# Create app user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S medusa -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Enable Corepack
+RUN corepack enable
+
+# Copy built application
+COPY --from=builder --chown=medusa:nodejs /app/.medusa ./.medusa
+COPY --from=builder --chown=medusa:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=medusa:nodejs /app/yarn.lock ./yarn.lock
+COPY --from=builder --chown=medusa:nodejs /app/.yarnrc.yml ./.yarnrc.yml
+COPY --from=builder --chown=medusa:nodejs /app/.yarn ./.yarn
+
+# Install production dependencies
+RUN yarn workspaces focus --production
+
+# Switch user
+USER medusa
+
+# Expose port
+EXPOSE 9000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:9000/health || exit 1
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start the built application with correct path
+CMD ["node", ".medusa/server.js"]

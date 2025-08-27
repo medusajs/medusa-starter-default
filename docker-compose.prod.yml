@@ -25,22 +25,29 @@ services:
       - "9000:9000"
     environment:
       NODE_ENV: production
-      # DATABASE_URL removed - now using Supabase
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET}
-      COOKIE_SECRET: ${COOKIE_SECRET}
-      STORE_CORS: ${STORE_CORS}
-      ADMIN_CORS: ${ADMIN_CORS}
-      AUTH_CORS: ${AUTH_CORS}
+      JWT_SECRET: ${JWT_SECRET?err}
+      COOKIE_SECRET: ${COOKIE_SECRET?err}
+      STORE_CORS: ${STORE_CORS?err}
+      ADMIN_CORS: ${ADMIN_CORS?err}
+      AUTH_CORS: ${AUTH_CORS?err}
       FALLBACK_TO_SUPABASE: ${FALLBACK_TO_SUPABASE:-true}
-      SUPABASE_DATABASE_URL: ${SUPABASE_DATABASE_URL}
+      SUPABASE_DATABASE_URL: ${SUPABASE_DATABASE_URL?err}
+      NODE_OPTIONS: --max-old-space-size=2048
     depends_on:
-      - redis
+      redis:
+        condition: service_started
     networks:
       - medusa-network
     volumes:
       - ./uploads:/app/uploads
       - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   # pgdata volume removed

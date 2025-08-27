@@ -5,6 +5,16 @@ import progress from 'rollup-plugin-progress'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
+// Validate required environment variables in production
+if (process.env.NODE_ENV === 'production') {
+  const required = ['DATABASE_URL', 'JWT_SECRET', 'COOKIE_SECRET', 'STORE_CORS', 'ADMIN_CORS', 'AUTH_CORS']
+  for (const env of required) {
+    if (!process.env[env] && !process.env.SUPABASE_DATABASE_URL) {
+      throw new Error(`Missing required environment variable: ${env}`)
+    }
+  }
+}
+
 function getDatabaseUrl() {
   const directUrl = process.env.DATABASE_URL
   const supabaseUrl = process.env.SUPABASE_DATABASE_URL || process.env.SUPABASE_URL
