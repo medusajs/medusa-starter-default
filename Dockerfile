@@ -13,9 +13,6 @@ RUN addgroup -g 1001 -S nodejs && \
 WORKDIR /app
 RUN chown medusa:nodejs /app
 
-# Enable Corepack for modern Yarn
-RUN corepack enable
-
 # Switch to medusa user for all operations to avoid root paths
 USER medusa
 
@@ -30,8 +27,9 @@ ENV YARN_CACHE_FOLDER=/app/.yarn/cache
 ENV YARN_INSTALL_STATE_PATH=/app/.yarn/install-state.gz
 ENV YARN_GLOBAL_FOLDER=/app/.yarn/global
 
-# Install all dependencies (including dev dependencies for building)
-RUN yarn install
+# Verify Yarn 4.4.0 is available and install dependencies
+RUN corepack yarn -v && \
+    corepack yarn install
 
 # Copy source code
 COPY --chown=medusa:nodejs . .
@@ -95,5 +93,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application using the official start script
-CMD ["yarn", "run", "start"]
+# Start the application using the official start script with Corepack
+CMD ["corepack", "yarn", "run", "start"]
