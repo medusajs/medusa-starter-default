@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  # Development override for local building
+  medusa:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    environment:
+      NODE_ENV: development
+    volumes:
+      # Mount for development (optional)
+      - ./src:/app/src:ro
+    command: ["npm", "run", "dev"]

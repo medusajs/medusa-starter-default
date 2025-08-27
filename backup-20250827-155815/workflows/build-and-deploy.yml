@@ -1,24 +1,21 @@
-name: Build and Deploy Medusa to VPS
+name: Build and Deploy to VPS
 
 on:
   push:
     branches: [ master ]
-  workflow_dispatch:
+  workflow_dispatch: # Manual trigger
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: medusa-app
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    
-    outputs:
-      image: ${{ steps.image.outputs.image }}
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -39,7 +36,6 @@ jobs:
           type=ref,event=branch
           type=ref,event=pr
           type=raw,value=latest,enable={{is_default_branch}}
-          type=sha,prefix={{branch}}-
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
@@ -49,40 +45,28 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
 
-    - name: Output image
-      id: image
-      run: echo "image=${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_OUTPUT
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    
-    steps:
     - name: Deploy to VPS
       uses: appleboy/ssh-action@v0.1.7
       with:
-        host: ${{ secrets.VPS_HOST }}
+        host: 91.98.114.119
         username: root
         key: ${{ secrets.VPS_SSH_KEY }}
         script: |
-          # Navigate to app directory
+          # Use your existing directory
           cd /var/www/WT-medusa
           
-          # Ensure .env exists (do not overwrite if present)
+          # Create .env file if it doesn't exist
           if [ ! -f .env ]; then
             cat > .env << 'EOF'
           NODE_ENV=production
           REDIS_URL=redis://redis:6379
-          # Required: Add DATABASE_URL, JWT_SECRET, COOKIE_SECRET
-          # Add STORE_CORS, ADMIN_CORS, AUTH_CORS as needed
+          FALLBACK_TO_SUPABASE=false
+          # Add your other environment variables here
           EOF
-            echo "Created default .env - please configure with your secrets"
           fi
           
-          # Create hardened docker-compose.yml if missing
+          # Create docker-compose.yml if it doesn't exist
           if [ ! -f docker-compose.yml ]; then
             cat > docker-compose.yml << 'EOF'
           version: '3.8'
@@ -91,21 +75,17 @@ jobs:
               image: redis:7-alpine
               container_name: medusa_redis
               restart: unless-stopped
+              ports:
+                - "6379:6379"
               networks:
                 - medusa_network
-              healthcheck:
-                test: ["CMD", "redis-cli", "ping"]
-                interval: 30s
-                timeout: 10s
-                retries: 3
             
             medusa:
-              image: ${{ needs.build.outputs.image }}
+              image: ${MEDUSA_IMAGE:-ghcr.io/tembo-solutions/medusa-app:latest}
               container_name: medusa_backend
               restart: unless-stopped
               depends_on:
-                redis:
-                  condition: service_healthy
+                - redis
               ports:
                 - "9000:9000"
               env_file:
@@ -114,22 +94,10 @@ jobs:
                 NODE_ENV: production
                 REDIS_URL: redis://redis:6379
               volumes:
-                - uploads:/app/uploads
-                - logs:/app/logs
+                - ./uploads:/app/uploads
+                - ./logs:/app/logs
               networks:
                 - medusa_network
-              healthcheck:
-                test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
-                interval: 30s
-                timeout: 10s
-                retries: 3
-                start_period: 30s
-
-          volumes:
-            uploads:
-              driver: local
-            logs:
-              driver: local
 
           networks:
             medusa_network:
@@ -137,27 +105,23 @@ jobs:
           EOF
           fi
           
-          # Login to registry
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+          # Login to GitHub Container Registry
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           
-          # Pull the new image
-          docker pull ${{ needs.build.outputs.image }}
+          # Pull latest image
+          docker pull ghcr.io/tembo-solutions/medusa-app:latest
           
-          # Ensure host directories exist with correct ownership (uid 1001 = medusa user)
+          # Pre-create host directories with correct ownership for UID 1001 (medusa user in container)
           mkdir -p uploads logs
           chown -R 1001:1001 uploads logs
           
-          # Update environment with new image
-          export MEDUSA_IMAGE="${{ needs.build.outputs.image }}"
-          
-          # Deploy with compose
-          docker compose pull medusa
-          docker compose up -d
+          # Update and restart
+          export MEDUSA_IMAGE="ghcr.io/tembo-solutions/medusa-app:latest"
+          docker compose pull medusa || docker-compose pull medusa
+          docker compose up -d || docker-compose up -d
           
           # Cleanup old images
           docker image prune -f
           
-          # Show deployment status
-          echo "Deployment Status:"
-          docker compose ps
-          docker compose logs --tail=10 medusa
+          # Show status
+          docker compose ps || docker-compose ps
