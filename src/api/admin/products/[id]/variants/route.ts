@@ -1,6 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys, remoteQueryObjectFromString } from "@medusajs/framework/utils"
-import { toStringOrUndefined } from "../../../../../utils/query-params"
+import { ProductVariantDTO } from "@medusajs/framework/types"
+import { toStringOrUndefined } from "@/utils/query-params"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
@@ -34,7 +35,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     // If expand includes brand, try to enrich with brand data
     if (expand && expand.includes("brand") && variants && variants.length > 0) {
       try {
-        const enrichedVariants = []
+        const enrichedVariants: ProductVariantDTO[] = []
         
         for (const variant of variants) {
           let enrichedVariant = { ...variant }

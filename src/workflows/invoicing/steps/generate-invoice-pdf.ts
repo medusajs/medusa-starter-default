@@ -74,6 +74,9 @@ export const generateInvoicePdfStep = createStep(
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     })
     
+    let file: any
+    let updatedInvoice: any
+    
     try {
       const page = await browser.newPage()
       await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
@@ -91,10 +94,15 @@ export const generateInvoicePdfStep = createStep(
       
       const filename = `invoice-${invoiceData.invoice_number}.pdf`
       
-      const file = await fileService.createFiles({
+      file = await fileService.createFiles({
         filename,
         mimeType: "application/pdf",
-        content: pdfBuffer.toString('base64'),
+        content: Buffer.from(pdfBuffer).toString('base64'),
+      })
+      
+      // Update invoice with PDF file ID
+      updatedInvoice = await invoicingService.updateInvoices({ id: input.invoice_id }, {
+        pdf_file_id: file.id,
       })
       
       await browser.close()
@@ -103,12 +111,7 @@ export const generateInvoicePdfStep = createStep(
       throw error
     }
     
-    // Update invoice with PDF file ID
-    await invoicingService.updateInvoices({ id: input.invoice_id }, {
-      pdf_file_id: file.id,
-    })
-    
-    return new StepResponse({ file, invoice: invoiceData }, file.id)
+    return new StepResponse({ file, invoice: updatedInvoice || invoiceData }, file.id)
   },
   async (fileId: string, { container }) => {
     // Compensation: delete the created file if workflow fails

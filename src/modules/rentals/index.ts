@@ -4,10 +4,7 @@ import RentalsModuleService from "./service"
 export const RENTALS_MODULE = "rentals"
 
 export default Module(RENTALS_MODULE, {
-  service: RentalsModuleService,
-  definition: {
-    isQueryable: true
-  }
+  service: RentalsModuleService
 })
 
 export * from "./types"

@@ -8,10 +8,7 @@ import { Module } from "@medusajs/framework/utils"
 export const SERVICE_ORDERS_MODULE = "serviceOrders"
 
 const ServiceOrdersModule = Module(SERVICE_ORDERS_MODULE, {
-  service: ServiceOrdersService,
-  definition: {
-    isQueryable: true
-  }
+  service: ServiceOrdersService
 })
 
 export default ServiceOrdersModule

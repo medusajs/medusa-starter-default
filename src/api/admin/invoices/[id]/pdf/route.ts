@@ -1,6 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { INVOICING_MODULE } from "../../../../../modules/invoicing"
-import { generateInvoicePdfStep } from "../../../../../workflows/invoicing/steps/generate-invoice-pdf"
+import { generateInvoicePdfWorkflow } from "../../../../../workflows/invoicing/generate-invoice-pdf-workflow"
 import { Modules } from "@medusajs/framework/utils"
 
 interface RegenerateInvoicePdfRequest {
@@ -27,8 +27,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     
     // Generate PDF if it doesn't exist
     if (!fileId) {
-      const { result } = await generateInvoicePdfStep.invoke({
-        invoice_id: invoiceId
+      const { result } = await generateInvoicePdfWorkflow.run({
+        input: { invoice_id: invoiceId }
       }, { container: req.scope })
       
       fileId = result.file.id
@@ -42,7 +42,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       file: {
         id: file.id,
         url: file.url,
-        filename: `invoice-${invoice.invoice_number}.html`
+        filename: `invoice-${invoice.invoice_number}.pdf`
       }
     })
   } catch (error) {
@@ -61,15 +61,15 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     
     // Always regenerate if specifically requested
     if (regenerate) {
-      const { result } = await generateInvoicePdfStep.invoke({
-        invoice_id: invoiceId
+      const { result } = await generateInvoicePdfWorkflow.run({
+        input: { invoice_id: invoiceId }
       }, { container: req.scope })
       
       return res.json({ 
         file: {
           id: result.file.id,
           url: result.file.url,
-          filename: `invoice-${result.invoice.invoice_number}.html`
+          filename: `invoice-${result.invoice.invoice_number}.pdf`
         },
         regenerated: true
       })

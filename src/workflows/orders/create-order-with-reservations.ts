@@ -11,6 +11,10 @@ import {
   CreateOrderWorkflowInput,
 } from "@medusajs/medusa/core-flows"
 import { Modules } from "@medusajs/framework/utils"
+import { InventoryTypes } from "@medusajs/framework/types"
+
+// Use MedusaJS built-in reservation item type
+type ReservationItem = InventoryTypes.ReservationItemDTO
 
 type CreateOrderWithReservationsWorkflowInput = CreateOrderWorkflowInput
 
@@ -28,7 +32,7 @@ const createInventoryReservationsStep = createStep(
       return new StepResponse([], [])
     }
 
-    const reservations = []
+    const reservations: ReservationItem[] = []
 
     for (const orderItem of data.order.items) {
       if (!orderItem.variant_id) continue

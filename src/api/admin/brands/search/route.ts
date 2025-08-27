@@ -1,5 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { BRANDS_MODULE } from "../../../../modules/brands"
+import { BRANDS_MODULE, BrandDTO } from "@/modules/brands"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
@@ -14,7 +14,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       offset = 0
     } = req.query
     
-    let brands = []
+    let brands: BrandDTO[] = []
     
     if (q) {
       // Text search

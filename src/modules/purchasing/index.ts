@@ -4,10 +4,7 @@ import PurchasingService from "./service"
 export const PURCHASING_MODULE = "purchasing"
 
 export default Module(PURCHASING_MODULE, {
-  service: PurchasingService,
-  definition: {
-    isQueryable: true
-  }
+  service: PurchasingService
 })
 
 export { PurchasingService }

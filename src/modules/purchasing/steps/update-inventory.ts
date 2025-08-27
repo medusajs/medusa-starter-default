@@ -1,7 +1,16 @@
 import { createStep, StepResponse } from "@medusajs/workflows-sdk"
 import { ModuleRegistrationName } from "@medusajs/utils"
-import { PURCHASING_MODULE } from ".."
-import PurchasingService from "../service"
+import { PURCHASING_MODULE } from "@/modules/purchasing"
+import PurchasingService from "@/modules/purchasing/service"
+
+// Custom type for our inventory update tracking
+interface InventoryUpdateInput {
+  inventory_item_id: string
+  inventory_level_id: string
+  quantity_added: number
+  product_variant_id: string
+  purchase_order_item_id: string
+}
 
 type UpdateInventoryStepInput = {
   purchase_order_id: string
@@ -23,7 +32,7 @@ export const updateInventoryStep = createStep(
     const inventoryModule = container.resolve(ModuleRegistrationName.INVENTORY)
     
     const { purchase_order_id, items } = input
-    const inventoryUpdates = []
+    const inventoryUpdates: InventoryUpdateInput[] = []
 
     // Get purchase order items to get product variant IDs
     for (const item of items) {

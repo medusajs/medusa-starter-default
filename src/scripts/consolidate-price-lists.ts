@@ -1,7 +1,22 @@
 // Using dynamic app bootstrap is deprecated in v2 scripts. If retained,
 // ensure imports match available APIs. For now, type-only import removed.
-import { PURCHASING_MODULE } from "../modules/purchasing"
-import PurchasingService from "../modules/purchasing/service"
+import { PURCHASING_MODULE } from "@/modules/purchasing"
+import PurchasingService from "@/modules/purchasing/service"
+
+// Price list item interface - this could be moved to purchasing module types
+interface PriceListItem {
+  id: string
+  price_list_id: string
+  product_variant_id: string
+  product_id: string
+  supplier_sku?: string
+  variant_sku?: string
+  cost_price: number
+  quantity?: number
+  lead_time_days?: number
+  notes?: string
+  updated_at: string
+}
 
 /**
  * Migration script to consolidate multiple price lists per supplier into single active price lists
@@ -57,8 +72,8 @@ async function consolidatePriceLists() {
       }
       
       // Collect all items from all price lists
-      const allItems = []
-      const itemsByVariant = new Map()
+      const allItems: PriceListItem[] = []
+      const itemsByVariant = new Map<string, PriceListItem>()
       
       for (const priceList of priceLists) {
         const items = await purchasingService.listSupplierPriceListItems({

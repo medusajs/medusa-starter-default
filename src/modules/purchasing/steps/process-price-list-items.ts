@@ -1,6 +1,6 @@
 import { createStep, StepResponse } from "@medusajs/workflows-sdk"
-import { PURCHASING_MODULE } from ".."
-import PurchasingService from "../service"
+import { PURCHASING_MODULE, SupplierProductDTO } from "@/modules/purchasing"
+import PurchasingService from "@/modules/purchasing/service"
 
 type ProcessPriceListItemsStepInput = {
   price_list_id: string
@@ -41,7 +41,7 @@ export const processPriceListItemsStep = createStep(
     const priceListItems = await purchasingService.createSupplierPriceListItems(processedItems)
 
     // Update or create supplier-product relationships
-    const updatedSupplierProducts = []
+    const updatedSupplierProducts: SupplierProductDTO[] = []
     for (const item of priceListItems) {
       const supplierProduct = await purchasingService.upsertSupplierProductFromPriceList(item)
       updatedSupplierProducts.push(supplierProduct)
