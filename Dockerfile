@@ -46,17 +46,24 @@ RUN addgroup -g 1001 -S nodejs && \
 # Set working directory
 WORKDIR /app
 
+# Enable Corepack for Yarn before switching users
+RUN corepack enable
+
 # Copy the built application from builder stage
 COPY --from=builder --chown=medusa:nodejs /app/.medusa/server ./
 
-# Enable Corepack for Yarn
-RUN corepack enable
+# Copy yarn configuration to ensure consistent behavior
+COPY --from=builder --chown=medusa:nodejs /app/.yarnrc.yml ./
+
+# Switch to non-root user before yarn operations
+USER medusa
+
+# Set Yarn cache and install directories to be owned by medusa user
+ENV YARN_CACHE_FOLDER=/app/.yarn/cache
+ENV YARN_INSTALL_STATE_PATH=/app/.yarn/install-state.gz
 
 # Install production dependencies in the built server directory
-RUN yarn install --immutable 
-
-# Switch to non-root user
-USER medusa
+RUN yarn install --immutable
 
 # Expose port
 EXPOSE 9000
