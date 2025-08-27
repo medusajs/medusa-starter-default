@@ -22,10 +22,8 @@ USER medusa
 # Copy package files first for better Docker layer caching
 COPY --chown=medusa:nodejs package.json yarn.lock .yarnrc.yml ./
 
-# Ensure Yarn uses node_modules and disable PnP completely
+# Ensure Yarn uses node_modules linker
 ENV YARN_NODE_LINKER=node-modules
-ENV YARN_PNP_MODE=loose
-ENV YARN_ENABLE_PNP=false
 
 # Set user-owned cache and install directories
 ENV YARN_CACHE_FOLDER=/app/.yarn/cache
