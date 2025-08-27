@@ -15,9 +15,6 @@ const SupplierPriceList = model.define("supplier_price_list", {
   upload_metadata: model.json().nullable(),
   metadata: model.json().nullable(),
 })
-.cascades({
-  delete: ["supplier_price_list_items"]
-})
 .indexes([
   {
     name: "supplier_active_price_list_brand_idx",

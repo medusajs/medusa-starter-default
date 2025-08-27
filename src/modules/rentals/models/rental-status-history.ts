@@ -14,7 +14,7 @@ const RentalStatusHistory = model.define("rental_status_history", {
   
   // User Information
   changed_by: model.text().nullable(),
-  change_timestamp: model.dateTime().default("now"),
+  change_timestamp: model.dateTime().default(() => new Date()),
   
   // Additional tracking
   metadata: model.json().nullable(),

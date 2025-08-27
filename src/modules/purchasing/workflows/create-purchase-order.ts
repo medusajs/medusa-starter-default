@@ -14,6 +14,9 @@ type CreatePurchaseOrderWorkflowInput = {
   items: {
     product_variant_id: string
     supplier_product_id?: string
+    supplier_sku?: string
+    product_title?: string
+    product_variant_title?: string
     quantity_ordered: number
     unit_cost: number
   }[]

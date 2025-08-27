@@ -1,6 +1,6 @@
 import { createStep, StepResponse } from "@medusajs/workflows-sdk"
 import { PURCHASING_MODULE } from ".."
-import SupplierService from "../services/supplier.service"
+import PurchasingService from "../service"
 
 type ValidateSupplierStepInput = {
   supplier_id: string
@@ -9,11 +9,11 @@ type ValidateSupplierStepInput = {
 export const validateSupplierStep = createStep(
   "validate-supplier-step",
   async (input: ValidateSupplierStepInput, { container }) => {
-    const supplierService = container.resolve(
-      `${PURCHASING_MODULE}.supplier`
-    ) as SupplierService
+    const purchasingService = container.resolve(
+      PURCHASING_MODULE
+    ) as PurchasingService
 
-    const supplier = await supplierService.retrieveSupplier(input.supplier_id)
+    const supplier = await purchasingService.retrieveSupplier(input.supplier_id)
     
     if (!supplier) {
       throw new Error(`Supplier with id ${input.supplier_id} not found`)

@@ -27,6 +27,7 @@ const createInventoryReservationsStep = createStep(
   "create-inventory-reservations-step",
   async (data: { order: any; sales_channel_id: string }, { container }) => {
     const inventoryService = container.resolve(Modules.INVENTORY)
+    const stockLocationService = container.resolve(Modules.STOCK_LOCATION)
 
     if (!data.order?.items?.length) {
       return new StepResponse([], [])
@@ -44,10 +45,10 @@ const createInventoryReservationsStep = createStep(
         // Try to create a reservation - if the variant doesn't manage inventory,
         // the inventory service will handle this appropriately
         
-        // In MedusaJS v2, we need to use the Query API to list stock locations
+        // In MedusaJS v2, we need to use the Stock Location service to list stock locations
         // For now, we'll use a default stock location approach
         // TODO: Implement proper stock location resolution for sales channels
-        const stockLocations = await inventoryService.listStockLocations({})
+        const stockLocations = await stockLocationService.listStockLocations({})
         
         if (!stockLocations.length) {
           console.warn(`No stock locations found`)

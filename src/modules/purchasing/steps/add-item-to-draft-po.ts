@@ -1,6 +1,6 @@
 import { createStep, StepResponse } from "@medusajs/workflows-sdk"
 import { PURCHASING_MODULE } from ".."
-import PurchasingService from "../services/purchasing.service"
+import PurchasingService from "../service"
 
 type AddItemToDraftPurchaseOrderStepInput = {
   supplier_id: string
