@@ -1,7 +1,7 @@
 import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 import { Modules } from '@medusajs/utils'
 // @ts-ignore
-import progress from 'rollup-plugin-progress'
+// Removed rollup progress plugin to avoid requiring it at runtime
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
@@ -30,7 +30,7 @@ function getDatabaseUrl() {
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: getDatabaseUrl(),
-    redisUrl: process.env.REDIS_URL,
+    redisUrl: process.env.NODE_ENV === 'development' ? undefined : (process.env.REDIS_URL || "redis://localhost:6379"),
     http: {
       storeCors: process.env.STORE_CORS!,
       adminCors: process.env.ADMIN_CORS!,
@@ -52,17 +52,13 @@ module.exports = defineConfig({
         server: {
           host: '0.0.0.0',
           hmr: {
-            port: 443,
-            host: '91.98.114.119',
-            protocol: 'wss'
+            port: 3001,
+            host: 'localhost'
           }
         },
         build: {
           rollupOptions: {
             preserveEntrySignatures: false,
-            plugins: [
-              progress()
-            ],
             // Optimize for low-memory environments
             output: {
               manualChunks: (id: string) => {
@@ -74,7 +70,11 @@ module.exports = defineConfig({
           },
           // Reduce memory usage during build
           minify: false, // Disable minification to save memory
+<<<<<<< HEAD
           sourcemap: true, // Enable source maps for debugging
+=======
+          sourcemap: true, // Disable source maps
+>>>>>>> develop
           chunkSizeWarningLimit: 1000,
         },
       }
@@ -121,6 +121,33 @@ module.exports = defineConfig({
         }
       },
     ]),
+    // File storage module with S3 provider for Supabase
+    {
+      resolve: "@medusajs/medusa/file",
+      options: {
+        providers: [
+          {
+            resolve: "@medusajs/medusa/file-s3",
+            id: "s3",
+            options: {
+              file_url: process.env.S3_FILE_URL,
+              access_key_id: process.env.S3_ACCESS_KEY_ID,
+              secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
+              region: process.env.S3_REGION,
+              bucket: process.env.S3_BUCKET,
+              endpoint: process.env.S3_ENDPOINT,
+              // Add best practice configurations
+              prefix: "medusa-uploads/",
+              cache_control: "public, max-age=31536000",
+              download_file_duration: 3600,
+              additional_client_config: {
+                forcePathStyle: true, // Required for Supabase
+              },
+            },
+          },
+        ],
+      },
+    },
     // Custom modules
     {
       resolve: "./src/modules/brands",
