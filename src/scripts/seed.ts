@@ -1,5 +1,10 @@
+import { CreateInventoryLevelInput, ExecArgs } from "@medusajs/framework/types";
 import {
-  createApiKeysWorkflow,
+  ContainerRegistrationKeys,
+  Modules,
+  ProductStatus,
+} from "@medusajs/framework/utils";
+import {
   createInventoryLevelsWorkflow,
   createProductCategoriesWorkflow,
   createProductsWorkflow,
@@ -13,12 +18,37 @@ import {
   linkSalesChannelsToStockLocationWorkflow,
   updateStoresWorkflow,
 } from "@medusajs/medusa/core-flows";
-import { CreateInventoryLevelInput, ExecArgs } from "@medusajs/framework/types";
 import {
-  ContainerRegistrationKeys,
-  Modules,
-  ProductStatus,
-} from "@medusajs/framework/utils";
+  createStep,
+  createWorkflow,
+  StepResponse,
+  WorkflowResponse,
+} from "@medusajs/workflows-sdk";
+
+// This step and workflow are created solely for the CI to create a predictable publishable API key
+const createPubKeyStep = createStep(
+  "create-pub-key",
+  async (input, { container }) => {
+    const apiKeyModuleService = container.resolve(Modules.API_KEY);
+
+    // @ts-ignore
+    const result = apiKeyModuleService.apiKeyService_.create({
+      title: "Webshop",
+      type: "publishable",
+      token: "pk_123456789",
+      created_by: "",
+      salt: "1234567890",
+      redacted: "pk_1234",
+    });
+
+    return new StepResponse(result);
+  }
+);
+
+const createPubKeyWorkflow = createWorkflow("create-pub-key", function (input) {
+  const pubKey = createPubKeyStep();
+  return new WorkflowResponse(pubKey);
+});
 
 export default async function seedDemoData({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
@@ -74,6 +104,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
     input: {
       regions: [
         {
+          // @ts-ignore
+          id: "reg_europe",
           name: "Europe",
           currency_code: "eur",
           countries,
@@ -275,20 +307,9 @@ export default async function seedDemoData({ container }: ExecArgs) {
   logger.info("Finished seeding stock location data.");
 
   logger.info("Seeding publishable API key data...");
-  const { result: publishableApiKeyResult } = await createApiKeysWorkflow(
+  const { result: publishableApiKey } = await createPubKeyWorkflow(
     container
-  ).run({
-    input: {
-      api_keys: [
-        {
-          title: "Webshop",
-          type: "publishable",
-          created_by: "",
-        },
-      ],
-    },
-  });
-  const publishableApiKey = publishableApiKeyResult[0];
+  ).run();
 
   await linkSalesChannelsToApiKeyWorkflow(container).run({
     input: {
