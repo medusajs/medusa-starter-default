@@ -82,8 +82,8 @@ export const convertOrderToInvoiceStep = createStep(
     
     // Add line items for products
     for (const item of order.items || []) {
-<<<<<<< HEAD
       if (item) {
+        console.log('Adding line item with invoice_id:', invoice.id)
         await invoicingService.addLineItemToInvoice({
           invoice_id: invoice.id,
           item_type: "product",
@@ -97,21 +97,6 @@ export const convertOrderToInvoiceStep = createStep(
           tax_rate: Number(item.tax_total || 0) / Number(item.subtotal || 1) || 0,
         })
       }
-=======
-      console.log('Adding line item with invoice_id:', invoice.id)
-      await invoicingService.addLineItemToInvoice({
-        invoice_id: invoice.id,
-        item_type: "product",
-        product_id: item.product_id,
-        variant_id: item.variant_id,
-        title: item.title,
-        description: item.subtitle,
-        sku: item.variant_sku,
-        quantity: Number(item.quantity),
-        unit_price: Number(item.unit_price),
-        tax_rate: Number(item.tax_total) / Number(item.subtotal) || 0,
-      })
->>>>>>> 22e8989 (Improve Invoicing module)
     }
     
     // Add shipping as line item if present

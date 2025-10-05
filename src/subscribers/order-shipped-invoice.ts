@@ -11,11 +11,7 @@ import { createInvoiceFromOrderWorkflow } from "../workflows/invoicing/create-in
 export default async function orderShippedInvoiceHandler({
   event: { data },
   container,
-<<<<<<< HEAD
 }: SubscriberArgs<{ order_id: string; fulfillment_id: string; no_notification?: boolean }>) {
-  const orderId = data.order_id
-=======
-}: SubscriberArgs<any>) {
   console.log('Event data received:', JSON.stringify(data, null, 2))
   
   // The data already contains order_id directly
@@ -26,7 +22,6 @@ export default async function orderShippedInvoiceHandler({
     console.log(`No order_id found in event data`)
     return
   }
->>>>>>> 22e8989 (Improve Invoicing module)
 
   try {
     // Execute the workflow to create invoice (without PDF for now)

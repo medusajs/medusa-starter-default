@@ -125,15 +125,10 @@ class InvoicingService extends MedusaService({
     const taxAmount = lineItems.reduce((sum, item) => sum + Number(item.tax_amount), 0)
     const discountAmount = lineItems.reduce((sum, item) => sum + Number(item.discount_amount), 0)
     const totalAmount = subtotal + taxAmount
-<<<<<<< HEAD
-
-    return await this.updateInvoices({
-=======
     
     console.log('About to call updateInvoices with invoiceId:', invoiceId)
     return await this.updateInvoices({
       id: invoiceId,
->>>>>>> 22e8989 (Improve Invoicing module)
       subtotal,
       tax_amount: taxAmount,
       discount_amount: discountAmount,
@@ -147,10 +142,7 @@ class InvoicingService extends MedusaService({
     
     // Update invoice status
     const updatedInvoice = await this.updateInvoices({
-<<<<<<< HEAD
-=======
       id: invoiceId,
->>>>>>> 22e8989 (Improve Invoicing module)
       status: newStatus as any,
       sent_date: newStatus === InvoiceStatus.SENT ? new Date() : invoice.sent_date,
       paid_date: newStatus === InvoiceStatus.PAID ? new Date() : invoice.paid_date,

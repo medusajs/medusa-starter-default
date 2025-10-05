@@ -1,6 +1,6 @@
-import { Container, Heading, Text, Badge, Skeleton, Button, Input, Select, Textarea, Label, StatusBadge } from "@medusajs/ui"
+import { Container, Heading, Text, Badge, Skeleton, Button, Input, Select, Textarea, Label, StatusBadge, Tooltip, toast } from "@medusajs/ui"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { PencilSquare } from "@medusajs/icons"
+import { PencilSquare, ArrowLeft, ArrowRight } from "@medusajs/icons"
 import { useState } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { ServiceTypeLabel } from "../../components/common/service-type-label"
@@ -140,6 +140,62 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
     setIsEditing(false)
   }
 
+  // Status navigation logic
+  const statusFlow = ['draft', 'ready_for_pickup', 'in_progress', 'done']
+  const currentStatusIndex = statusFlow.indexOf(serviceOrder?.status)
+
+  const getPreviousStatus = () => {
+    if (currentStatusIndex > 0 && currentStatusIndex !== -1) {
+      return statusFlow[currentStatusIndex - 1]
+    }
+    return null
+  }
+
+  const getNextStatus = () => {
+    if (currentStatusIndex >= 0 && currentStatusIndex < statusFlow.length - 1) {
+      return statusFlow[currentStatusIndex + 1]
+    }
+    return null
+  }
+
+  const previousStatus = getPreviousStatus()
+  const nextStatus = getNextStatus()
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ status, reason }: { status: string; reason?: string }) => {
+      const response = await fetch(`/admin/service-orders/${serviceOrder.id}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, reason }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.details || "Failed to update status")
+      }
+
+      return response.json()
+    },
+    onSuccess: () => {
+      toast.success("Service order status updated successfully!")
+      queryClient.invalidateQueries({ queryKey: ["service-order", serviceOrder.id] })
+      queryClient.invalidateQueries({ queryKey: ["service-orders"] })
+      queryClient.invalidateQueries({ queryKey: ["service-orders-customers"] })
+      queryClient.invalidateQueries({ queryKey: ["service-orders-technicians"] })
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update status: ${error.message}`)
+    }
+  })
+
+  const handleStatusNavigation = (status: string) => {
+    updateStatusMutation.mutate({ status })
+  }
+
+  const formatStatusLabel = (status: string) => {
+    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+  }
+
   if (!serviceOrder) {
     return null
   }
@@ -183,17 +239,43 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
           <StatusBadge color={statusVariants[serviceOrder.status as keyof typeof statusVariants]}>
             {serviceOrder.status.replace('_', ' ')}
           </StatusBadge>
-          <ServiceTypeLabel serviceType={serviceOrder.service_type} />
         </div>
-        {!isEditing && (
-          <Button 
-            size="small" 
-            variant="transparent"
-            onClick={() => setIsEditing(true)}
-          >
-            <PencilSquare className="w-4 h-4" />
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Status Navigation Buttons */}
+          {!isEditing && (
+            <div className="flex items-center gap-1 mr-2">
+              <Tooltip content={previousStatus ? `Move to ${formatStatusLabel(previousStatus)}` : "No previous status"}>
+                <Button
+                  size="small"
+                  variant="secondary"
+                  onClick={() => previousStatus && handleStatusNavigation(previousStatus)}
+                  disabled={!previousStatus || updateStatusMutation.isPending}
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+              </Tooltip>
+              <Tooltip content={nextStatus ? `Move to ${formatStatusLabel(nextStatus)}` : "No next status"}>
+                <Button
+                  size="small"
+                  variant="secondary"
+                  onClick={() => nextStatus && handleStatusNavigation(nextStatus)}
+                  disabled={!nextStatus || updateStatusMutation.isPending}
+                >
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Tooltip>
+            </div>
+          )}
+          {!isEditing && (
+            <Button
+              size="small"
+              variant="transparent"
+              onClick={() => setIsEditing(true)}
+            >
+              <PencilSquare className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
       </div>
       {isEditing ? (
         <form onSubmit={handleSubmit} className="px-6 py-4">
@@ -316,11 +398,19 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
       ) : (
         <>
           <div className="px-6 py-4">
-            <div className="min-w-0">
-              <Label size="small" weight="plus" className="mb-2">
-                Description
-              </Label>
-              <Text size="small">{serviceOrder.description}</Text>
+            <div className="grid grid-cols-[1fr_auto] gap-4 items-start">
+              <div className="min-w-0">
+                <Label size="small" weight="plus" className="mb-2 block">
+                  Description
+                </Label>
+                <Text size="small">{serviceOrder.description}</Text>
+              </div>
+              <div className="min-w-0 flex flex-col">
+                <Label size="small" weight="plus" className="mb-2">
+                  Service Type
+                </Label>
+                <ServiceTypeLabel serviceType={serviceOrder.service_type} />
+              </div>
             </div>
           </div>
           <div className="px-6 py-4">

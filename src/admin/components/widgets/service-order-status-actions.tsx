@@ -14,7 +14,7 @@ import {
 import { PencilSquare, Clock, ExclamationCircle } from "@medusajs/icons"
 import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { ActionMenu } from "../components/common/action-menu"
+import { ActionMenu } from "../../components/common/action-menu"
 
 interface ServiceOrder {
   id: string

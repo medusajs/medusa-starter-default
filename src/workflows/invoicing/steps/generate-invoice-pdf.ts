@@ -76,54 +76,11 @@ export const generateInvoicePdfStep = createStep(
     let updatedInvoice: any
     
     try {
-<<<<<<< HEAD
-      const page = await browser.newPage()
-      await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
-      
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: {
-          top: '20mm',
-          bottom: '20mm',
-          left: '15mm',
-          right: '15mm'
-        }
-      })
-      
-      const filename = `invoice-${invoiceData.invoice_number}.pdf`
-      
-      file = await fileService.createFiles({
-        filename,
-        mimeType: "application/pdf",
-        content: Buffer.from(pdfBuffer).toString('base64'),
-      })
-      
-      // Update invoice with PDF file ID
-      updatedInvoice = await invoicingService.updateInvoices({ id: input.invoice_id }, {
-        pdf_file_id: file.id,
-      })
-      
-      await browser.close()
-=======
       const documentsService = container.resolve("documentsModuleService")
       await documentsService.deleteDocumentInvoice(documentId)
->>>>>>> 22e8989 (Improve Invoicing module)
     } catch (error) {
       console.warn("Failed to delete document during compensation:", error.message)
     }
-<<<<<<< HEAD
-    
-    return new StepResponse({ file, invoice: updatedInvoice || invoiceData }, file.id)
-  },
-  async (fileId: string, { container }) => {
-    // Compensation: delete the created file if workflow fails
-    if (!fileId) return
-    
-    const fileService = container.resolve(Modules.FILE)
-    await fileService.deleteFiles(fileId)
-=======
->>>>>>> 22e8989 (Improve Invoicing module)
   }
 )
 

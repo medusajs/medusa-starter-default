@@ -1,28 +1,23 @@
 import React, { useState } from "react"
-import { 
+import {
   FocusModal,
   Button,
   Heading,
   Text,
   Badge,
-  StatusBadge,
   IconButton,
   Container,
   toast
 } from "@medusajs/ui"
-import { 
+import {
   XMark,
   ArrowDownTray,
   DocumentText,
   Eye,
-  Clock,
-  CheckCircleSolid,
-  ExclamationCircleSolid,
-  XCircle,
-  PencilSquare,
   Spinner
 } from "@medusajs/icons"
 import { useQuery, useMutation } from "@tanstack/react-query"
+import { InvoiceStatusBadge } from "./common/invoice-status-badge"
 
 // Types
 interface Invoice {
@@ -73,27 +68,6 @@ const formatDate = (date: string) => {
     month: "2-digit",
     day: "2-digit",
   }).format(new Date(date))
-}
-
-// Status badge component
-const InvoiceStatusBadge = ({ status }: { status: Invoice["status"] }) => {
-  const statusConfig = {
-    draft: { color: "grey" as const, icon: PencilSquare, label: "Concept" },
-    sent: { color: "blue" as const, icon: Clock, label: "Verzonden" },
-    paid: { color: "green" as const, icon: CheckCircleSolid, label: "Betaald" },
-    overdue: { color: "red" as const, icon: ExclamationCircleSolid, label: "Vervallen" },
-    cancelled: { color: "grey" as const, icon: XCircle, label: "Geannuleerd" }
-  }
-
-  const config = statusConfig[status]
-  const Icon = config.icon
-
-  return (
-    <StatusBadge color={config.color} className="flex items-center gap-1">
-      <Icon className="w-3 h-3" />
-      {config.label}
-    </StatusBadge>
-  )
 }
 
 // Type badge component

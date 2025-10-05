@@ -1,10 +1,10 @@
 import React from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { 
-  Button, 
-  Badge, 
-  Container, 
-  Heading, 
+import {
+  Button,
+  Badge,
+  Container,
+  Heading,
   Text,
   DataTable,
   useDataTable,
@@ -16,29 +16,22 @@ import {
   StatusBadge
 } from "@medusajs/ui"
 import type { DataTableFilteringState } from "@medusajs/ui"
-import { 
-  Plus, 
-  Eye, 
-  PencilSquare, 
-  ArrowDownTray, 
+import {
+  Plus,
+  Eye,
+  PencilSquare,
+  ArrowDownTray,
   DocumentText,
   EllipsisHorizontal,
   Trash,
-  ArrowUpTray,
-  Clock,
-  CheckCircleSolid,
-  ExclamationCircleSolid,
-  XCircle,
   ReceiptPercent
 } from "@medusajs/icons"
 import { useNavigate, Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
-<<<<<<< HEAD
 import { useCustomTranslation } from "../../hooks/use-custom-translation"
-=======
 import { InvoiceViewModal } from "../../components/invoice-view-modal"
->>>>>>> 22e8989 (Improve Invoicing module)
+import { InvoiceStatusBadge } from "../../components/common/invoice-status-badge"
 
 // Types for invoice data
 interface Invoice {
@@ -85,28 +78,6 @@ const formatDate = (date: string) => {
   }).format(new Date(date))
 }
 
-// Status badge component
-const InvoiceStatusBadge = ({ status }: { status: Invoice["status"] }) => {
-  const { t } = useCustomTranslation()
-  
-  const statusConfig = {
-    draft: { color: "grey" as const, icon: PencilSquare, label: t("custom.invoices.status.draft") },
-    sent: { color: "blue" as const, icon: Clock, label: t("custom.invoices.status.sent") },
-    paid: { color: "green" as const, icon: CheckCircleSolid, label: t("custom.invoices.status.paid") },
-    overdue: { color: "red" as const, icon: ExclamationCircleSolid, label: t("custom.invoices.status.overdue") },
-    cancelled: { color: "grey" as const, icon: XCircle, label: t("custom.invoices.status.cancelled") }
-  }
-
-  const config = statusConfig[status]
-  const Icon = config.icon
-
-  return (
-    <StatusBadge color={config.color} className="flex items-center gap-1">
-      <Icon className="w-3 h-3" />
-      {config.label}
-    </StatusBadge>
-  )
-}
 
 // Type badge component
 const InvoiceTypeBadge = ({ type }: { type: Invoice["invoice_type"] }) => {
@@ -211,15 +182,6 @@ const useDownloadInvoice = () => {
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
       
-<<<<<<< HEAD
-      toast.success("PDF generated", {
-        description: "The invoice PDF has been successfully generated and downloaded.",
-      })
-    },
-    onError: () => {
-      toast.error("Error", {
-        description: "An error occurred while generating the PDF.",
-=======
       return { success: true }
     },
     onSuccess: () => {
@@ -230,7 +192,6 @@ const useDownloadInvoice = () => {
     onError: () => {
       toast.error("Fout", {
         description: "Er is een fout opgetreden bij het downloaden van de factuur.",
->>>>>>> 22e8989 (Improve Invoicing module)
       })
     },
   })
@@ -240,10 +201,6 @@ const useDownloadInvoice = () => {
 const PAGE_SIZE = 20
 
 // Invoice actions component
-<<<<<<< HEAD
-const InvoiceActions = ({ invoice }: { invoice: Invoice }) => {
-  const { t } = useCustomTranslation()
-=======
 const InvoiceActions = ({ 
   invoice, 
   onViewClick 
@@ -251,17 +208,11 @@ const InvoiceActions = ({
   invoice: Invoice
   onViewClick: (invoice: Invoice) => void 
 }) => {
->>>>>>> 22e8989 (Improve Invoicing module)
+  const { t } = useCustomTranslation()
   const navigate = useNavigate()
   const downloadInvoice = useDownloadInvoice()
 
   return (
-<<<<<<< HEAD
-    <DropdownMenu>
-      <DropdownMenu.Trigger asChild>
-        <IconButton size="small" variant="transparent">
-          <EllipsisHorizontal className="h-4 w-4" />
-=======
     <div className="flex items-center gap-2">
       <IconButton
         size="small"
@@ -290,37 +241,44 @@ const InvoiceActions = ({
           title="Bewerk factuur"
         >
           <PencilSquare className="w-4 h-4" />
->>>>>>> 22e8989 (Improve Invoicing module)
         </IconButton>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Content side="bottom">
-        {invoice.status === "draft" && (
-          <>
-            <DropdownMenu.Item
-              onClick={(e) => {
-                e.stopPropagation()
-                navigate(`/invoices/${invoice.id}/edit`)
-              }}
-              className="[&>svg]:text-ui-fg-subtle flex items-center gap-2"
-            >
-              <PencilSquare className="h-4 w-4" />
-              {t("custom.general.edit")}
-            </DropdownMenu.Item>
-            <DropdownMenu.Item
-              onClick={(e) => {
-                e.stopPropagation()
-                // TODO: Add delete invoice functionality
-                console.log('Delete invoice:', invoice.id)
-              }}
-              className="[&>svg]:text-ui-fg-subtle flex items-center gap-2 text-ui-fg-error"
-            >
-              <Trash className="h-4 w-4" />
-              {t("custom.general.delete")}
-            </DropdownMenu.Item>
-          </>
-        )}
-      </DropdownMenu.Content>
-    </DropdownMenu>
+      )}
+      
+      <DropdownMenu>
+        <DropdownMenu.Trigger asChild>
+          <IconButton size="small" variant="transparent">
+            <EllipsisHorizontal className="h-4 w-4" />
+          </IconButton>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content side="bottom">
+          {invoice.status === "draft" && (
+            <>
+              <DropdownMenu.Item
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigate(`/invoices/${invoice.id}/edit`)
+                }}
+                className="[&>svg]:text-ui-fg-subtle flex items-center gap-2"
+              >
+                <PencilSquare className="h-4 w-4" />
+                {t("custom.general.edit")}
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                onClick={(e) => {
+                  e.stopPropagation()
+                  // TODO: Add delete invoice functionality
+                  console.log('Delete invoice:', invoice.id)
+                }}
+                className="[&>svg]:text-ui-fg-subtle flex items-center gap-2 text-ui-fg-error"
+              >
+                <Trash className="h-4 w-4" />
+                {t("custom.general.delete")}
+              </DropdownMenu.Item>
+            </>
+          )}
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    </div>
   )
 }
 
@@ -343,9 +301,6 @@ const InvoicesListTable = () => {
     pageSize: PAGE_SIZE,
   })
 
-<<<<<<< HEAD
-  // Data processing (move before conditional returns)
-=======
   const handleViewInvoice = (invoice: Invoice) => {
     setSelectedInvoice(invoice)
     setIsViewModalOpen(true)
@@ -356,11 +311,7 @@ const InvoicesListTable = () => {
     setSelectedInvoice(null)
   }
 
-  if (error) {
-    throw error
-  }
-
->>>>>>> 22e8989 (Improve Invoicing module)
+  // Data processing (move before conditional returns)
   const invoices = data?.invoices || []
   const count = data?.count || 0
 
@@ -424,18 +375,13 @@ const InvoicesListTable = () => {
     }),
     columnHelper.display({
       id: "actions",
-<<<<<<< HEAD
       header: t("custom.general.actions"),
-      cell: ({ row }) => <InvoiceActions invoice={row.original} />,
-=======
-      header: "Acties",
       cell: ({ row }) => (
         <InvoiceActions 
           invoice={row.original} 
           onViewClick={handleViewInvoice}
         />
       ),
->>>>>>> 22e8989 (Improve Invoicing module)
     }),
   ]
 

@@ -39,7 +39,6 @@ module.exports = defineConfig({
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     }
   },
-<<<<<<< HEAD
   admin: {
     vite: () => {
       return {
@@ -52,10 +51,7 @@ module.exports = defineConfig({
         logLevel: 'info',
         server: {
           host: '0.0.0.0',
-          hmr: {
-            port: 3001,
-            host: 'localhost'
-          }
+          hmr: false
         },
         build: {
           rollupOptions: {
@@ -71,17 +67,12 @@ module.exports = defineConfig({
           },
           // Reduce memory usage during build
           minify: false, // Disable minification to save memory
-<<<<<<< HEAD
           sourcemap: true, // Enable source maps for debugging
-=======
-          sourcemap: true, // Disable source maps
->>>>>>> develop
           chunkSizeWarningLimit: 1000,
         },
       }
     },
   },
-=======
   plugins: [
     {
       resolve: "@rsc-labs/medusa-documents-v2",
@@ -91,7 +82,6 @@ module.exports = defineConfig({
       }
     }
   ],
->>>>>>> 22e8989 (Improve Invoicing module)
   modules: [
     // Use in-memory modules for development, Redis for production
     ...(process.env.NODE_ENV === 'development' ? [
@@ -133,8 +123,8 @@ module.exports = defineConfig({
         }
       },
     ]),
-    // File storage module with S3 provider for Supabase
-    {
+    // File storage module with S3 provider for Supabase (only when credentials are available)
+    ...(process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY ? [{
       resolve: "@medusajs/medusa/file",
       options: {
         providers: [
@@ -159,7 +149,7 @@ module.exports = defineConfig({
           },
         ],
       },
-    },
+    }] : []),
     // Custom modules
     {
       resolve: "./src/modules/brands",
