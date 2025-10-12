@@ -11,7 +11,8 @@ RUN apk add --no-cache python3 make g++
 COPY package.json yarn.lock .yarnrc.yml ./
 
 # Install Yarn classic and project dependencies
-RUN npm install -g yarn@1.22.22 \
+RUN corepack enable \
+  && corepack prepare yarn@1.22.22 --activate \
   && yarn install --frozen-lockfile
 
 # Copy source code
