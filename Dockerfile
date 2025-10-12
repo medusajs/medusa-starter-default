@@ -4,6 +4,9 @@ FROM node:20-alpine
 # Set working directory
 WORKDIR /server
 
+# Install build prerequisites for native Node modules
+RUN apk add --no-cache python3 make g++
+
 # Copy package files and yarn config
 COPY package.json yarn.lock .yarnrc.yml ./
 
