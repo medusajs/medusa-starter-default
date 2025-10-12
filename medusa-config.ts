@@ -9,7 +9,7 @@ const DEFAULT_STORE_CORS = [
 const DEFAULT_ADMIN_CORS = [
   "http://localhost:5173",
   "http://localhost:9000",
-  "https://admin.theerguminet.hu",
+  "https://admin.teherguminet.hu",
 ];
 
 const DEFAULT_AUTH_CORS = [

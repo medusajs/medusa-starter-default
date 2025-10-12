@@ -48,18 +48,25 @@ services:
       - medusa_network
       - coolify
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=coolify"
-      - "traefik.http.services.medusa.loadbalancer.server.port=9000"
-      - "traefik.http.routers.medusa-admin.rule=Host(`admin.theerguminet.hu`)"
-      - "traefik.http.routers.medusa-admin.entrypoints=https"
-      - "traefik.http.routers.medusa-admin.tls=true"
-      - "traefik.http.routers.medusa-admin.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.medusa-admin-http.rule=Host(`admin.theerguminet.hu`)"
-      - "traefik.http.routers.medusa-admin-http.entrypoints=http"
-      - "traefik.http.routers.medusa-admin-http.middlewares=medusa-force-https"
-      - "traefik.http.middlewares.medusa-force-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.medusa-force-https.redirectscheme.permanent=true"
+      - traefik.enable=true
+      - traefik.docker.network=coolify
+
+      # Service
+      - traefik.http.services.medusa.loadbalancer.server.port=9000
+
+      # HTTPS router
+      - traefik.http.routers.medusa-admin.rule=Host(`admin.teherguminet.hu`)
+      - traefik.http.routers.medusa-admin.entrypoints=https # or websecure
+      - traefik.http.routers.medusa-admin.tls=true
+      - traefik.http.routers.medusa-admin.tls.certresolver=letsencrypt
+      - traefik.http.routers.medusa-admin.service=medusa # bind router → service
+
+      # HTTP → HTTPS
+      - traefik.http.routers.medusa-admin-http.rule=Host(`admin.teherguminet.hu`)
+      - traefik.http.routers.medusa-admin-http.entrypoints=http # or web
+      - traefik.http.routers.medusa-admin-http.middlewares=medusa-force-https
+      - traefik.http.middlewares.medusa-force-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.medusa-force-https.redirectscheme.permanent=true
 
 volumes:
   postgres_data:
