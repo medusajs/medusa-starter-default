@@ -5,6 +5,7 @@ NODE_ENV=${NODE_ENV:-development}
 RUN_SEED=${RUN_SEED:-true}
 
 echo "Running database migrations..."
+echo "Working directory: $(pwd)"
 npx medusa db:migrate
 
 if [ "$RUN_SEED" = "true" ]; then
@@ -17,6 +18,12 @@ fi
 if [ "$NODE_ENV" = "production" ]; then
   echo "Building Medusa project..."
   yarn build
+
+  if [ -d ".medusa/server/public" ]; then
+    echo "Syncing admin build to public directory..."
+    mkdir -p public
+    cp -R .medusa/server/public/* public/
+  fi
 
   echo "Starting Medusa production server..."
   yarn start
