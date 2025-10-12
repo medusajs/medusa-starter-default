@@ -42,6 +42,16 @@ Visit the [Quickstart Guide](https://docs.medusajs.com/learn/installation) to se
 
 Visit the [Docs](https://docs.medusajs.com/learn/installation#get-started) to learn more about our system requirements.
 
+## Deployment Configuration
+
+If you deploy the backend on `https://admin.theerguminet.hu` (for example through Coolify) while serving the storefront from `https://therguminet.hu`, configure the following environment variables before starting the server:
+
+- `STORE_CORS=http://localhost:8000,https://therguminet.hu,https://www.therguminet.hu`
+- `ADMIN_CORS=http://localhost:5173,http://localhost:9000,https://admin.theerguminet.hu`
+- `AUTH_CORS=http://localhost:5173,http://localhost:9000,https://admin.theerguminet.hu,https://therguminet.hu,https://www.therguminet.hu`
+
+Coolify exposes a “Environment Variables” panel per service—add or update the variables there so the values propagate to the container. The project now falls back to these domains automatically when the variables are omitted, so you can keep local origins for development and append production URLs separated by commas as needed.
+
 ## What is Medusa
 
 Medusa is a set of commerce modules and tools that allow you to build rich, reliable, and performant commerce applications without reinventing core commerce logic. The modules can be customized and used to build advanced ecommerce stores, marketplaces, or any product that needs foundational commerce primitives. All modules are open-source and freely available on npm.

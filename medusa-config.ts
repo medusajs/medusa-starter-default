@@ -1,4 +1,34 @@
-import { loadEnv, defineConfig } from "@medusajs/framework/utils";
+import { loadEnv, defineConfig } from "@medusajs/utils";
+
+const DEFAULT_STORE_CORS = [
+  "http://localhost:8000",
+  "https://therguminet.hu",
+  "https://www.therguminet.hu",
+];
+
+const DEFAULT_ADMIN_CORS = [
+  "http://localhost:5173",
+  "http://localhost:9000",
+  "https://admin.theerguminet.hu",
+];
+
+const DEFAULT_AUTH_CORS = [
+  ...DEFAULT_ADMIN_CORS,
+  "https://therguminet.hu",
+  "https://www.therguminet.hu",
+];
+
+const formatCors = (value: string | undefined, defaults: string[]) => {
+  if (value?.trim()) {
+    return value
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+      .join(",");
+  }
+
+  return Array.from(new Set(defaults)).join(",");
+};
 
 loadEnv(process.env.NODE_ENV || "development", process.cwd());
 
@@ -6,9 +36,9 @@ module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     http: {
-      storeCors: process.env.STORE_CORS!,
-      adminCors: process.env.ADMIN_CORS!,
-      authCors: process.env.AUTH_CORS!,
+      storeCors: formatCors(process.env.STORE_CORS, DEFAULT_STORE_CORS),
+      adminCors: formatCors(process.env.ADMIN_CORS, DEFAULT_ADMIN_CORS),
+      authCors: formatCors(process.env.AUTH_CORS, DEFAULT_AUTH_CORS),
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     },

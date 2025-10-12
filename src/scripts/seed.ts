@@ -1,9 +1,18 @@
-import { CreateInventoryLevelInput, ExecArgs } from "@medusajs/framework/types";
+import type {
+  CreateInventoryLevelInput,
+  ExecArgs,
+  IFulfillmentModuleService,
+  ISalesChannelModuleService,
+  IStoreModuleService,
+  Logger,
+  Query,
+} from "@medusajs/types";
+import type { Link } from "@medusajs/modules-sdk";
 import {
   ContainerRegistrationKeys,
   Modules,
   ProductStatus,
-} from "@medusajs/framework/utils";
+} from "@medusajs/utils";
 import {
   createApiKeysWorkflow,
   createInventoryLevelsWorkflow,
@@ -18,15 +27,18 @@ import {
   linkSalesChannelsToApiKeyWorkflow,
   linkSalesChannelsToStockLocationWorkflow,
   updateStoresWorkflow,
-} from "@medusajs/medusa/core-flows";
+} from "@medusajs/core-flows";
 
 export default async function seedDemoData({ container }: ExecArgs) {
-  const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
-  const link = container.resolve(ContainerRegistrationKeys.LINK);
-  const query = container.resolve(ContainerRegistrationKeys.QUERY);
-  const fulfillmentModuleService = container.resolve(Modules.FULFILLMENT);
-  const salesChannelModuleService = container.resolve(Modules.SALES_CHANNEL);
-  const storeModuleService = container.resolve(Modules.STORE);
+  const logger = container.resolve<Logger>(ContainerRegistrationKeys.LOGGER);
+  const link = container.resolve<Link>(ContainerRegistrationKeys.LINK);
+  const query = container.resolve<Query>(ContainerRegistrationKeys.QUERY);
+  const fulfillmentModuleService =
+    container.resolve<IFulfillmentModuleService>(Modules.FULFILLMENT);
+  const salesChannelModuleService =
+    container.resolve<ISalesChannelModuleService>(Modules.SALES_CHANNEL);
+  const storeModuleService =
+    container.resolve<IStoreModuleService>(Modules.STORE);
 
   const countries = ["gb", "de", "dk", "se", "fr", "es", "it"];
 
@@ -89,7 +101,7 @@ export default async function seedDemoData({ container }: ExecArgs) {
   await createTaxRegionsWorkflow(container).run({
     input: countries.map((country_code) => ({
       country_code,
-      provider_id: "tp_system"
+      provider_id: "tp_system",
     })),
   });
   logger.info("Finished seeding tax regions.");
@@ -133,23 +145,27 @@ export default async function seedDemoData({ container }: ExecArgs) {
 
   logger.info("Seeding fulfillment data...");
   const shippingProfiles = await fulfillmentModuleService.listShippingProfiles({
-    type: "default"
-  })
-  let shippingProfile = shippingProfiles.length ? shippingProfiles[0] : null
+    type: "default",
+  });
+  let shippingProfile = shippingProfiles.length ? shippingProfiles[0] : null;
 
   if (!shippingProfile) {
     const { result: shippingProfileResult } =
     await createShippingProfilesWorkflow(container).run({
       input: {
         data: [
-          {
-            name: "Default Shipping Profile",
-            type: "default",
-          },
-        ],
+            {
+              name: "Default Shipping Profile",
+              type: "default",
+            },
+          ],
       },
     });
     shippingProfile = shippingProfileResult[0];
+  }
+
+  if (!shippingProfile) {
+    throw new Error("Unable to resolve the default shipping profile");
   }
 
   const fulfillmentSet = await fulfillmentModuleService.createFulfillmentSets({
