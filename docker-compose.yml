@@ -60,6 +60,7 @@ services:
       - traefik.http.routers.medusa-admin.tls=true
       - traefik.http.routers.medusa-admin.tls.certresolver=letsencrypt
       - traefik.http.routers.medusa-admin.service=medusa # bind router → service
+      - traefik.http.routers.medusa-admin.middlewares=medusa-redirect-root
 
       # HTTP → HTTPS
       - traefik.http.routers.medusa-admin-http.rule=Host(`admin.teherguminet.hu`)
@@ -67,6 +68,9 @@ services:
       - traefik.http.routers.medusa-admin-http.middlewares=medusa-force-https
       - traefik.http.middlewares.medusa-force-https.redirectscheme.scheme=https
       - traefik.http.middlewares.medusa-force-https.redirectscheme.permanent=true
+      - traefik.http.middlewares.medusa-redirect-root.redirectregex.regex=^https?://([^/]+)/?$
+      - traefik.http.middlewares.medusa-redirect-root.redirectregex.replacement=https://$1/app
+      - traefik.http.middlewares.medusa-redirect-root.redirectregex.permanent=true
 
 volumes:
   postgres_data:
