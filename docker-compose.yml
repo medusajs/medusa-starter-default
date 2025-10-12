@@ -65,11 +65,11 @@ services:
       # HTTP → HTTPS
       - traefik.http.routers.medusa-admin-http.rule=Host(`admin.teherguminet.hu`)
       - traefik.http.routers.medusa-admin-http.entrypoints=http # or web
-      - traefik.http.routers.medusa-admin-http.middlewares=medusa-force-https
+      - traefik.http.routers.medusa-admin-http.middlewares=medusa-force-https,medusa-redirect-root
       - traefik.http.middlewares.medusa-force-https.redirectscheme.scheme=https
       - traefik.http.middlewares.medusa-force-https.redirectscheme.permanent=true
-      - traefik.http.middlewares.medusa-redirect-root.redirectregex.regex=^https?://([^/]+)/?$
-      - traefik.http.middlewares.medusa-redirect-root.redirectregex.replacement=https://$1/app
+      - traefik.http.middlewares.medusa-redirect-root.redirectregex.regex=^https?://([^/]+)/(\\?.*)?$
+      - traefik.http.middlewares.medusa-redirect-root.redirectregex.replacement=https://$1/app$2
       - traefik.http.middlewares.medusa-redirect-root.redirectregex.permanent=true
 
 volumes:
