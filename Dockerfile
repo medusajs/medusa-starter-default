@@ -7,10 +7,9 @@ WORKDIR /server
 # Copy package files and yarn config
 COPY package.json yarn.lock .yarnrc.yml ./
 
-# Install all dependencies using yarn (respect packageManager field)
-RUN corepack enable \
-  && corepack prepare $(node -p "require('./package.json').packageManager") --activate \
-  && yarn install
+# Install Yarn classic and project dependencies
+RUN npm install -g yarn@1.22.22 \
+  && yarn install --frozen-lockfile
 
 # Copy source code
 COPY . .
