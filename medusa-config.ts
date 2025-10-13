@@ -16,6 +16,7 @@ const DEFAULT_AUTH_CORS = [
   ...DEFAULT_ADMIN_CORS,
   "https://therguminet.hu",
   "https://www.therguminet.hu",
+  "http://localhost:8000",
 ];
 
 const formatCors = (value: string | undefined, defaults: string[]) => {
@@ -45,6 +46,22 @@ module.exports = defineConfig({
     databaseDriverOptions: {
       ssl: false,
       sslmode: "disable",
+    },
+  },
+  modules: {
+    order: {},
+    approval: {},
+    company: {},
+    quote: {},
+  },
+  // @ts-expect-error Auth configuration isn't typed in the current Medusa release
+  auth: {
+    customer: {
+      strategies: {
+        emailpass: {
+          enabled: true,
+        },
+      },
     },
   },
 });
