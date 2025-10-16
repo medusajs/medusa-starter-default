@@ -30,7 +30,7 @@ function getDatabaseUrl() {
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: getDatabaseUrl(),
-    redisUrl: process.env.NODE_ENV === 'development' ? undefined : (process.env.REDIS_URL || "redis://localhost:6379"),
+    redisUrl: process.env.REDIS_URL,
     http: {
       storeCors: process.env.STORE_CORS!,
       adminCors: process.env.ADMIN_CORS!,
@@ -51,7 +51,11 @@ module.exports = defineConfig({
         logLevel: 'info',
         server: {
           host: '0.0.0.0',
-          hmr: false
+          hmr: {
+            port: 443,
+            host: '91.98.114.119',
+            protocol: 'wss'
+          }
         },
         build: {
           rollupOptions: {

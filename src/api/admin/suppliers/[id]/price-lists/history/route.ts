@@ -30,19 +30,21 @@ export const GET = async (
   const { limit = 20, offset = 0, brand_id } = req.query
 
   try {
-    const history = await purchasingService.getPriceListHistory(supplier_id)
-    
-    // Filter by brand_id if provided
-    const filteredHistory = brand_id 
-      ? history.filter(priceList => priceList.brand_id === brand_id)
-      : history
-    
-    // Paginate results
-    const paginatedHistory = filteredHistory.slice(Number(offset), Number(offset) + Number(limit))
-    
+    // Use database-level pagination
+    const config = {
+      skip: Number(offset),
+      take: Number(limit)
+    }
+
+    const [history, count] = await purchasingService.getPriceListHistoryAndCount(
+      supplier_id,
+      brand_id,
+      config
+    )
+
     // Get item counts and brand information for each price list
     const enrichedHistory = await Promise.all(
-      paginatedHistory.map(async (priceList) => {
+      history.map(async (priceList) => {
         const items = await purchasingService.listSupplierPriceListItems({
           price_list_id: priceList.id
         })
@@ -74,7 +76,7 @@ export const GET = async (
 
     res.json({
       history: enrichedHistory,
-      count: filteredHistory.length,
+      count,
       limit: Number(limit),
       offset: Number(offset)
     })

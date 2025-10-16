@@ -13,15 +13,19 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       technician_id: id,
       status: "in_progress"
     }
-    
-    const serviceOrders = await serviceOrdersService.listServiceOrdersWithLinks(filters)
-    
-    // Apply pagination
-    const paginatedOrders = serviceOrders.slice(Number(offset), Number(offset) + Number(limit))
-    
+
+    // Use database-level pagination
+    const config = {
+      skip: Number(offset),
+      take: Number(limit),
+      order: { created_at: "DESC" }
+    }
+
+    const [serviceOrders, count] = await serviceOrdersService.listAndCountServiceOrdersWithLinks(filters, config)
+
     res.json({
-      service_orders: paginatedOrders,
-      count: serviceOrders.length,
+      service_orders: serviceOrders,
+      count,
       offset: Number(offset),
       limit: Number(limit)
     })
