@@ -357,14 +357,25 @@ class ServiceOrdersService extends MedusaService({
     return await this.listServiceOrders({ status })
   }
   
-  async listServiceOrdersWithLinks(filters: any = {}) {
-    // Get service orders using the base service method
-    const serviceOrders = await this.listServiceOrders(filters)
-    
+  async listServiceOrdersWithLinks(filters: any = {}, config: any = {}) {
+    // Get service orders using the base service method with pagination config
+    const serviceOrders = await this.listServiceOrders(filters, config)
+
     // For now, return service orders as-is and let the frontend handle the lookup
     // This matches the behavior seen in the list view where lookups are done client-side
     // TODO: Implement proper server-side linking when MedusaJS Query API is fully set up
     return serviceOrders
+  }
+
+  async listAndCountServiceOrdersWithLinks(filters: any = {}, config: any = {}) {
+    // Use the built-in listAndCount method from MedusaService base class
+    // This method automatically handles pagination with skip/take parameters
+    const [serviceOrders, count] = await this.listAndCountServiceOrders(filters, config)
+
+    // For now, return service orders as-is and let the frontend handle the lookup
+    // This matches the behavior seen in the list view where lookups are done client-side
+    // TODO: Implement proper server-side linking when MedusaJS Query API is fully set up
+    return [serviceOrders, count]
   }
   
   async getServiceOrdersWithItems(serviceOrderId: string) {

@@ -61,20 +61,27 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       ]
     }
 
-    // Use the service method for consistency with detail view
-    const serviceOrders = await serviceOrdersService.listServiceOrdersWithLinks(filters)
-    
-    console.log('Fetched orders:', {
-      totalCount: serviceOrders.length,
+    // Use database-level pagination with skip/take
+    const config = {
+      skip: Number(offset),
+      take: Number(limit),
+      order: { created_at: "DESC" } // Order by most recent first
+    }
+
+    // Use the listAndCount method for efficient database pagination
+    const [serviceOrders, count] = await serviceOrdersService.listAndCountServiceOrdersWithLinks(filters, config)
+
+    console.log('Fetched orders with pagination:', {
+      totalCount: count,
+      returnedCount: serviceOrders.length,
+      offset: Number(offset),
+      limit: Number(limit),
       statuses: serviceOrders.map(o => ({ id: o.id, status: o.status })).slice(0, 10)
     })
-    
-    // Apply pagination manually since we're using the service method
-    const paginatedOrders = serviceOrders.slice(Number(offset), Number(offset) + Number(limit))
-    
-    res.json({ 
-      service_orders: paginatedOrders,
-      count: serviceOrders.length,
+
+    res.json({
+      service_orders: serviceOrders,
+      count,
       offset: Number(offset),
       limit: Number(limit)
     })

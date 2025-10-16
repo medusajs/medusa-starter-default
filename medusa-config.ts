@@ -50,12 +50,18 @@ module.exports = defineConfig({
         },
         logLevel: 'info',
         server: {
-          host: '0.0.0.0',
-          hmr: {
-            port: 443,
-            host: '91.98.114.119',
-            protocol: 'wss'
-          }
+          host: process.env.ADMIN_HOST || '127.0.0.1',
+          hmr: process.env.NODE_ENV === 'development'
+            ? {
+                protocol: 'ws',
+                host: 'localhost',
+                port: 5173,
+              }
+            : {
+                protocol: process.env.ADMIN_HMR_PROTOCOL || 'wss',
+                host: process.env.ADMIN_HMR_HOST || '91.98.114.119',
+                port: Number(process.env.ADMIN_HMR_PORT) || 443,
+              },
         },
         build: {
           rollupOptions: {

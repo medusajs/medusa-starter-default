@@ -379,10 +379,22 @@ class PurchasingService extends MedusaService({
     }
   }
 
-  async getPriceListHistory(supplierId: string) {
+  async getPriceListHistory(supplierId: string, config?: any) {
     return await this.listSupplierPriceLists(
       { supplier_id: supplierId },
-      { order: { version: 'DESC' } }
+      { order: { version: 'DESC' }, ...config }
+    )
+  }
+
+  async getPriceListHistoryAndCount(supplierId: string, brandId?: string, config?: any) {
+    const filters: any = { supplier_id: supplierId }
+    if (brandId) {
+      filters.brand_id = brandId
+    }
+
+    return await this.listAndCountSupplierPriceLists(
+      filters,
+      { order: { version: 'DESC' }, ...config }
     )
   }
 
