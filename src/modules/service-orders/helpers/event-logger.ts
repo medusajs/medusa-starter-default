@@ -37,8 +37,7 @@ export class ServiceOrderEventLogger {
       // Log single event immediately
       await this.createEventComment(input, serviceOrdersService)
     } catch (error) {
-      console.error("Failed to log service order event:", error)
-      // Don't throw - event logging should not break main functionality
+      // Silently fail - event logging should not break main functionality
     }
   }
 
@@ -155,12 +154,6 @@ export class ServiceOrderEventLogger {
    * Create the actual system comment
    */
   private static async createEventComment(input: EventLogInput, serviceOrdersService: any): Promise<void> {
-    console.log("Creating event comment:", {
-      eventType: input.eventType,
-      message: input.message,
-      serviceOrderId: input.serviceOrderId
-    })
-
     const comment = await serviceOrdersService.createServiceOrderComment({
       service_order_id: input.serviceOrderId,
       message: input.message,
@@ -174,8 +167,6 @@ export class ServiceOrderEventLogger {
         timestamp: new Date().toISOString()
       }
     })
-
-    console.log("Event comment created successfully:", comment.id)
   }
 
   /**

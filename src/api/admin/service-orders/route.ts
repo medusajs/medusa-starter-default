@@ -18,28 +18,20 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       offset = 0,
       tab // Add tab parameter for backlog vs active filtering
     } = req.query
-    
-    // Debug logging
-    console.log('Service Orders API called with:', { tab, status, limit, offset })
-    
+
     // Build filters
     const filters: any = {}
     
     // Handle tab-based filtering (backlog vs active)
     if (tab === "backlog") {
       filters.status = "draft"
-      console.log('Applying backlog filter: status = draft')
     } else if (tab === "active") {
       // For active tab, exclude draft orders
       filters.status = { $ne: "draft" }
-      console.log('Applying active filter: status != draft')
     } else if (status) {
       // If specific status is provided, use it
       filters.status = status
-      console.log('Applying specific status filter:', status)
     }
-    
-    console.log('Final filters applied:', filters)
     
     if (priority) filters.priority = priority
     if (service_type) filters.service_type = service_type
@@ -71,14 +63,6 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     // Use the listAndCount method for efficient database pagination
     const [serviceOrders, count] = await serviceOrdersService.listAndCountServiceOrdersWithLinks(filters, config)
 
-    console.log('Fetched orders with pagination:', {
-      totalCount: count,
-      returnedCount: serviceOrders.length,
-      offset: Number(offset),
-      limit: Number(limit),
-      statuses: serviceOrders.map(o => ({ id: o.id, status: o.status })).slice(0, 10)
-    })
-
     res.json({
       service_orders: serviceOrders,
       count,
@@ -86,7 +70,6 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       limit: Number(limit)
     })
   } catch (error) {
-    console.error("Error fetching service orders:", error)
     res.status(500).json({ 
       error: "Failed to fetch service orders",
       details: error instanceof Error ? error.message : "Unknown error"
@@ -134,7 +117,6 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     
     res.status(201).json({ service_order: result })
   } catch (error) {
-    console.error("Error creating service order:", error)
     res.status(500).json({ 
       error: "Failed to create service order",
       details: error instanceof Error ? error.message : "Unknown error"

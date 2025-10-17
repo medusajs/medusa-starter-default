@@ -18,7 +18,6 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     
     res.json({ comment })
   } catch (error) {
-    console.error("Error fetching service order comment:", error)
     res.status(500).json({ 
       error: "Failed to fetch comment",
       details: error instanceof Error ? error.message : "Unknown error"
@@ -66,7 +65,6 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     
     res.json({ comment })
   } catch (error) {
-    console.error("Error updating service order comment:", error)
     res.status(500).json({ 
       error: "Failed to update comment",
       details: error instanceof Error ? error.message : "Unknown error"
@@ -92,7 +90,6 @@ export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
     
     res.status(204).send()
   } catch (error) {
-    console.error("Error deleting service order comment:", error)
     res.status(500).json({ 
       error: "Failed to delete comment",
       details: error instanceof Error ? error.message : "Unknown error"

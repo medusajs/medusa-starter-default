@@ -15,6 +15,10 @@ const SupplierPriceListItem = model.define("supplier_price_list_item", {
   lead_time_days: model.number().nullable(),
   notes: model.text().nullable(),
   metadata: model.json().nullable(),
+  // Sync tracking fields for variant pricing sync workflow
+  last_synced_at: model.dateTime().nullable(),
+  sync_status: model.text().nullable(), // 'pending' | 'synced' | 'error' | 'skipped'
+  sync_error: model.text().nullable(),
 })
 
 export default SupplierPriceListItem

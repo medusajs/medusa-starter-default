@@ -47,7 +47,6 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     try {
       await serviceOrdersService.updateServiceOrderTotals(id)
     } catch (totalsError) {
-      console.error("Failed to update service order totals:", totalsError)
       // Don't fail the main operation if totals update fails
     }
     

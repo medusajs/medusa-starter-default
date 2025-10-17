@@ -18,7 +18,6 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     
     res.json({ comments })
   } catch (error) {
-    console.error("Error fetching service order comments:", error)
     res.status(500).json({ 
       error: "Failed to fetch comments",
       details: error instanceof Error ? error.message : "Unknown error"
@@ -68,7 +67,6 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     
     res.status(201).json({ comment })
   } catch (error) {
-    console.error("Error creating service order comment:", error)
     res.status(500).json({ 
       error: "Failed to create comment",
       details: error instanceof Error ? error.message : "Unknown error"

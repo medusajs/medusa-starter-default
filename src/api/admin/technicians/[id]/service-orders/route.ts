@@ -30,7 +30,6 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       limit: Number(limit)
     })
   } catch (error) {
-    console.error("Error fetching technician's service orders:", error)
     res.status(500).json({ 
       error: "Failed to fetch technician's service orders",
       details: error instanceof Error ? error.message : "Unknown error"

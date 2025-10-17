@@ -20,6 +20,10 @@ const Supplier = model.define("supplier", {
   is_active: model.boolean().default(true),
   notes: model.text().nullable(),
   metadata: model.json().nullable(),
+  // Pricing sync configuration
+  is_pricing_source: model.boolean().default(false), // Whether this supplier's prices should sync to variants
+  pricing_priority: model.number().default(0), // Higher number = higher priority for conflict resolution
+  auto_sync_prices: model.boolean().default(false), // Automatically sync prices on upload
 })
 
 export default Supplier 

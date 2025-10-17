@@ -137,7 +137,6 @@ class ServiceOrdersService extends MedusaService({
           ...eventTemplate
         }, this)
       } catch (eventError) {
-        console.error("Failed to log status change event:", eventError)
         // Don't fail the main operation if event logging fails
       }
       
@@ -167,7 +166,6 @@ class ServiceOrdersService extends MedusaService({
         ...eventTemplate
       }, this, ServiceOrderEventLogger.GroupConfigs.parts)
     } catch (eventError) {
-      console.error("Failed to log part added event:", eventError)
       // Don't fail the main operation if event logging fails
     }
     
@@ -197,7 +195,6 @@ class ServiceOrdersService extends MedusaService({
         ...eventTemplate
       }, this, ServiceOrderEventLogger.GroupConfigs.parts)
     } catch (eventError) {
-      console.error("Failed to log part removed event:", eventError)
       // Don't fail the main operation if event logging fails
     }
 
@@ -231,7 +228,6 @@ class ServiceOrdersService extends MedusaService({
         ...eventTemplate
       }, this, ServiceOrderEventLogger.GroupConfigs.timeEntries)
     } catch (eventError) {
-      console.error("Failed to log time entry added event:", eventError)
       // Don't fail the main operation if event logging fails
     }
     
@@ -288,7 +284,6 @@ class ServiceOrdersService extends MedusaService({
         eventData: eventTemplate.eventData,
       }, this, ServiceOrderEventLogger.GroupConfigs.timeEntries)
     } catch (eventError) {
-      console.error("Failed to log time entry updated event:", eventError)
       // Don't fail the main operation if event logging fails
     }
     
@@ -317,7 +312,6 @@ class ServiceOrdersService extends MedusaService({
         eventData: eventTemplate.eventData,
       }, this, ServiceOrderEventLogger.GroupConfigs.timeEntries)
     } catch (eventError) {
-      console.error("Failed to log time entry deleted event:", eventError)
       // Don't fail the main operation if event logging fails
     }
     

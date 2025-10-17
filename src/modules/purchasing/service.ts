@@ -464,7 +464,7 @@ class PurchasingService extends MedusaService({
     ])
 
     const activeSuppliers = suppliers.filter(s => s.is_active)
-    const pendingOrders = purchaseOrders.filter(po => 
+    const pendingOrders = purchaseOrders.filter(po =>
       ['draft', 'sent', 'confirmed'].includes(po.status)
     )
 
@@ -475,6 +475,87 @@ class PurchasingService extends MedusaService({
       pending_orders: pendingOrders.length,
       recent_orders: purchaseOrders.slice(0, 5)
     }
+  }
+
+  // ==========================================
+  // PRICING SYNC BUSINESS LOGIC
+  // ==========================================
+
+  /**
+   * Update supplier pricing configuration settings
+   */
+  async updateSupplierPricingSettings(supplierId: string, settings: {
+    is_pricing_source?: boolean
+    auto_sync_prices?: boolean
+    pricing_priority?: number
+  }) {
+    const updated = await this.updateSuppliers(
+      { id: supplierId },
+      {
+        is_pricing_source: settings.is_pricing_source,
+        auto_sync_prices: settings.auto_sync_prices,
+        pricing_priority: settings.pricing_priority,
+      }
+    )
+    return updated
+  }
+
+  /**
+   * Update sync status for a price list item
+   */
+  async updatePriceListItemSyncStatus(itemId: string, status: {
+    sync_status: string
+    sync_error?: string
+    last_synced_at?: Date
+  }) {
+    const updated = await this.updateSupplierPriceListItems(
+      { id: itemId },
+      {
+        sync_status: status.sync_status,
+        sync_error: status.sync_error || null,
+        last_synced_at: status.last_synced_at || new Date(),
+      }
+    )
+    return updated
+  }
+
+  /**
+   * Get suppliers configured as pricing sources
+   */
+  async getPricingSourceSuppliers() {
+    return await this.listSuppliers({
+      is_pricing_source: true,
+      is_active: true,
+    })
+  }
+
+  /**
+   * Get price list items pending sync
+   */
+  async getPendingSyncItems(priceListId?: string) {
+    const filters: any = {
+      sync_status: { $in: ['pending', 'error', null] },
+      gross_price: { $ne: null },
+    }
+
+    if (priceListId) {
+      filters.price_list_id = priceListId
+    }
+
+    return await this.listSupplierPriceListItems(filters)
+  }
+
+  /**
+   * Mark price list items as pending sync
+   */
+  async markItemsAsPendingSync(itemIds: string[]) {
+    const updates = itemIds.map(id => ({
+      id,
+      sync_status: 'pending',
+      sync_error: null,
+    }))
+
+    return await this.updateSupplierPriceListItems(updates)
   }
 }
 
