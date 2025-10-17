@@ -51,11 +51,8 @@ module.exports = defineConfig({
         logLevel: 'info',
         server: {
           host: '0.0.0.0',
-          hmr: {
-            port: 443,
-            host: '91.98.114.119',
-            protocol: 'wss'
-          }
+          // Disable HMR for local development to avoid port binding issues
+          hmr: false
         },
         build: {
           rollupOptions: {
