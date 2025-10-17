@@ -70,6 +70,10 @@ interface PriceListItem {
   is_active: boolean
   created_at: Date
   updated_at: Date
+  // Sync tracking fields
+  last_synced_at?: Date
+  sync_status?: string // 'pending' | 'synced' | 'error' | 'skipped'
+  sync_error?: string
 }
 
 interface Supplier {
@@ -136,11 +140,11 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     pageIndex: 0,
     pageSize: 10,
   })
+  const [isSyncingPrices, setIsSyncingPrices] = useState(false)
 
   const editItemForm = useForm<AddItemFormData>({
     resolver: zodResolver(addItemSchema),
     defaultValues: {
-      variant_id: "",
       supplier_sku: "",
       gross_price: undefined,
       discount_percentage: undefined,
@@ -330,7 +334,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
   const handleEditItem = (item: PriceListItem) => {
     setEditingItem(item)
     editItemForm.reset({
-      variant_id: item.product_variant_id,
       supplier_sku: item.supplier_sku || "",
       gross_price: item.gross_price ? item.gross_price / 100 : undefined,
       discount_percentage: item.discount_percentage || undefined,
@@ -349,7 +352,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     const processedData = {
       ...data,
       itemId: editingItem.id,
-      product_variant_id: data.variant_id,
       gross_price: data.gross_price ? Math.round(data.gross_price * 100) : undefined,
       net_price: Math.round(data.net_price * 100)
     }
@@ -377,6 +379,79 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
 
   const handleDownloadTemplate = () => {
     window.open(`/admin/suppliers/${supplier.id}/price-lists/template`, "_blank")
+  }
+
+  const handleManualSync = async () => {
+    if (!priceList) {
+      toast.error("No price list found")
+      return
+    }
+
+    setIsSyncingPrices(true)
+    try {
+      const response = await fetch(`/admin/suppliers/price-lists/${priceList.id}/sync-prices`, {
+        method: "POST",
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || "Failed to sync prices")
+      }
+
+      const result = await response.json()
+      queryClient.invalidateQueries({ queryKey: ["supplier-price-list", supplier.id] })
+
+      toast.success(
+        `Prices synced successfully: ${result.synced || 0} synced, ${result.failed || 0} failed, ${result.skipped || 0} skipped`
+      )
+    } catch (error: any) {
+      toast.error(`Failed to sync prices: ${error.message}`)
+    } finally {
+      setIsSyncingPrices(false)
+    }
+  }
+
+  const getSyncStatusBadge = (item: PriceListItem) => {
+    if (!item.sync_status) {
+      return <Badge color="grey">Not Synced</Badge>
+    }
+
+    switch (item.sync_status) {
+      case "synced":
+        return (
+          <div className="flex flex-col gap-1">
+            <Badge color="green">Synced</Badge>
+            {item.last_synced_at && (
+              <Text size="xsmall" className="text-ui-fg-muted">
+                {new Date(item.last_synced_at).toLocaleString()}
+              </Text>
+            )}
+          </div>
+        )
+      case "error":
+        return (
+          <div className="flex flex-col gap-1">
+            <Badge color="red" title={item.sync_error || "Unknown error"}>
+              Failed
+            </Badge>
+            {item.sync_error && item.sync_error.length > 0 && (
+              <Text size="xsmall" className="text-ui-fg-error">
+                {item.sync_error.substring(0, 50)}...
+              </Text>
+            )}
+          </div>
+        )
+      case "skipped":
+        return (
+          <Badge color="grey" title={item.sync_error || "Skipped"}>
+            Skipped
+          </Badge>
+        )
+      case "pending":
+        return <Badge color="blue">Pending</Badge>
+      default:
+        return <Badge color="grey">Unknown</Badge>
+    }
   }
 
   const formatPrice = (price: number) => {
@@ -435,11 +510,15 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     }),
     columnHelper.accessor("gross_price", {
       header: "Gross Price",
-      cell: ({ getValue }) => (
-        <Text className="font-medium">
-          {getValue() ? `${priceList?.currency_code || "USD"} ${(getValue() / 100).toFixed(2)}` : "—"}
-        </Text>
-      ),
+      cell: ({ getValue, row }) => {
+        const value = getValue()
+        if (!value) return <Text className="font-medium">—</Text>
+        return (
+          <Text className="font-medium">
+            {priceList?.currency_code || "USD"} {(value / 100).toFixed(2)}
+          </Text>
+        )
+      },
     }),
     columnHelper.accessor("discount_percentage", {
       header: "Discount",
@@ -466,6 +545,11 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
       cell: ({ getValue }) => (
         <Text>{getValue() ? `${getValue()} days` : "—"}</Text>
       ),
+    }),
+    columnHelper.display({
+      id: "sync_status",
+      header: "Sync Status",
+      cell: ({ row }) => getSyncStatusBadge(row.original),
     }),
     columnHelper.display({
       id: "actions",
@@ -541,11 +625,11 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
               <Heading level="h2">Price List</Heading>
               {priceList && (
                 <div className="flex items-center gap-2 mt-1">
-                  <Badge variant={priceList.is_active ? "green" : "red"}>
+                  <Badge color={priceList.is_active ? "green" : "red"}>
                     {priceList.is_active ? "Active" : "Inactive"}
                   </Badge>
                   {priceList.brand && (
-                    <Badge variant="grey">
+                    <Badge color="grey">
                       {priceList.brand.name} ({priceList.brand.code})
                     </Badge>
                   )}
@@ -564,6 +648,15 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
               <Button variant="secondary" size="small" onClick={() => setShowUploadModal(true)}>
                 <ArrowUpTray />
                 Upload CSV
+              </Button>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={handleManualSync}
+                disabled={isSyncingPrices || !priceList}
+                isLoading={isSyncingPrices}
+              >
+                Sync Prices to Variants
               </Button>
               <Button variant="primary" size="small" onClick={handleAddItem}>
                 <Plus />

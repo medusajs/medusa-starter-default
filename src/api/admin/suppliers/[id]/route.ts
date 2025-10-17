@@ -28,6 +28,10 @@ type PutAdminUpdateSupplierType = {
   is_active?: boolean
   notes?: string
   metadata?: Record<string, any>
+  // Pricing sync configuration
+  is_pricing_source?: boolean
+  pricing_priority?: number
+  auto_sync_prices?: boolean
 }
 
 // GET /admin/suppliers/:id - Get supplier by ID
@@ -47,7 +51,7 @@ export const GET = async (
 }
 
 // PUT /admin/suppliers/:id - Update supplier
-export const POST = async (
+export const PUT = async (
   req: MedusaRequest<PutAdminUpdateSupplierType>,
   res: MedusaResponse
 ) => {
@@ -56,14 +60,33 @@ export const POST = async (
   ) as PurchasingService
 
   const { id } = req.params
-  const updateData = req.validatedBody
+  const updateData = req.body
 
-  const [supplier] = await purchasingService.updateSuppliers([{
-    id,
-    ...updateData,
-  }])
+  try {
+    // Validate pricing_priority if provided
+    if (updateData.pricing_priority !== undefined) {
+      if (typeof updateData.pricing_priority !== 'number' || updateData.pricing_priority < 0) {
+        return res.status(400).json({
+          error: "Invalid pricing_priority",
+          message: "pricing_priority must be a non-negative number"
+        })
+      }
+    }
 
-  res.json({ supplier })
+    const [supplier] = await purchasingService.updateSuppliers([{
+      id,
+      ...updateData,
+    }])
+
+    res.json({ supplier })
+  } catch (error) {
+    console.error(`Failed to update supplier ${id}:`, error.message)
+
+    res.status(500).json({
+      error: "Failed to update supplier",
+      message: error.message || "An unexpected error occurred"
+    })
+  }
 }
 
 // DELETE /admin/suppliers/:id - Delete supplier

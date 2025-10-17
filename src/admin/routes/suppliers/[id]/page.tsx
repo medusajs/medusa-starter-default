@@ -5,6 +5,7 @@ import { SupplierGeneralSection } from "./components/supplier-general-section"
 import { SupplierContactSection } from "./components/supplier-contact-section"
 import { SupplierAddressSection } from "./components/supplier-address-section"
 import { SupplierFinancialSection } from "./components/supplier-financial-section"
+import { SupplierPricingSettingsSection } from "./components/supplier-pricing-settings-section"
 import { SingleColumnPageSkeleton } from "../../../components/common/skeleton"
 import { SupplierPriceLists } from "../../../components/supplier-price-lists"
 import { SupplierBrandsSection } from "./components/supplier-brands-section"
@@ -38,6 +39,7 @@ const SupplierDetailPage = () => {
       <SupplierContactSection supplier={supplier} />
       <SupplierAddressSection supplier={supplier} />
       <SupplierFinancialSection supplier={supplier} />
+      <SupplierPricingSettingsSection supplier={supplier} />
       <SupplierBrandsSection supplierId={supplier.id} />
       <SupplierPriceLists data={supplier} />
     </div>

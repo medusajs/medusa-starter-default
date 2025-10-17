@@ -40,27 +40,28 @@ export const syncVariantPricesFromSupplierWorkflow = createWorkflow(
 
     // Step 2: Update variant prices using Medusa's native workflow
     // Only run if not dry_run and there are variants to update
-    const updatedVariants = when(input, ({ dry_run }) => !dry_run).then(() => {
-      return when(variantsToUpdate, (variants) => variants.length > 0).then(() => {
-        // Transform the variants data into the format expected by upsertVariantPricesWorkflow
-        const pricesInput = transform(
-          { variantsToUpdate },
-          ({ variantsToUpdate }) => ({
-            variantPrices: variantsToUpdate.map(v => ({
-              variant_id: v.variant_id,
-              product_id: v.product_id,
-              prices: [{
-                amount: v.amount,
-                currency_code: v.currency_code,
-              }]
-            })),
-            previousVariantIds: variantsToUpdate.map(v => v.variant_id)
-          })
-        )
-
-        return upsertVariantPricesWorkflow.runAsStep({
-          input: pricesInput
+    const updatedVariants = when(
+      { input, variantsToUpdate },
+      ({ input, variantsToUpdate }) => !input.dry_run && variantsToUpdate.length > 0
+    ).then(() => {
+      // Transform the variants data into the format expected by upsertVariantPricesWorkflow
+      const pricesInput = transform(
+        { variantsToUpdate },
+        ({ variantsToUpdate }) => ({
+          variantPrices: variantsToUpdate.map(v => ({
+            variant_id: v.variant_id,
+            product_id: v.product_id,
+            prices: [{
+              amount: v.amount,
+              currency_code: v.currency_code,
+            }]
+          })),
+          previousVariantIds: variantsToUpdate.map(v => v.variant_id)
         })
+      )
+
+      return upsertVariantPricesWorkflow.runAsStep({
+        input: pricesInput
       })
     })
 
