@@ -1,0 +1,295 @@
+/**
+ * Fixed-Width Parser Workflow Step
+ *
+ * Handles fixed-width text file parsing for formats like Caterpillar,
+ * extracting fields from specific column positions with data transformations.
+ *
+ * @see TEM-157 - Create Fixed-Width Parser Workflow Step
+ */
+
+import { createStep, StepResponse } from "@medusajs/workflows-sdk"
+import { Modules } from "@medusajs/framework/utils"
+import { FixedWidthConfig, ParsedPriceListItem, ParseResult, Transformation } from "../types/parser-types"
+
+type ParseFixedWidthPriceListStepInput = {
+  file_content: string
+  supplier_id: string
+  brand_id?: string
+  config: FixedWidthConfig
+}
+
+/**
+ * Extract fields from fixed-width line based on column definitions
+ */
+function extractFixedWidthFields(
+  line: string,
+  columns: Array<{ field: string, start: number, width: number }>
+): Record<string, string> {
+  const row: Record<string, string> = {}
+
+  for (const column of columns) {
+    const end = column.start + column.width
+    const value = line.substring(column.start, end)
+    row[column.field] = value
+  }
+
+  return row
+}
+
+/**
+ * Apply transformation to a value
+ */
+function applyTransformation(value: any, transformation: Transformation): any {
+  if (!transformation) return value
+
+  switch (transformation.type) {
+    case 'divide':
+      return parseFloat(value) / transformation.divisor
+    case 'multiply':
+      return parseFloat(value) * transformation.multiplier
+    case 'trim':
+      return String(value).trim()
+    case 'uppercase':
+      return String(value).toUpperCase()
+    case 'lowercase':
+      return String(value).toLowerCase()
+    default:
+      return value
+  }
+}
+
+/**
+ * Fixed-width parser workflow step
+ */
+export const parseFixedWidthPriceListStep = createStep(
+  "parse-fixed-width-price-list-step",
+  async (input: ParseFixedWidthPriceListStepInput, { container }): Promise<ParseResult> => {
+    const productModuleService = container.resolve(Modules.PRODUCT)
+    const remoteQuery = container.resolve("REMOTE_QUERY") as any
+    const purchasingService = container.resolve("purchasingService")
+    const featureFlag = process.env.MEDUSA_FF_BRAND_AWARE_PURCHASING === "true"
+
+    const { config, file_content, supplier_id, brand_id } = input
+
+    const lines = file_content.split('\n').filter(line => line.trim())
+
+    // Skip rows if configured
+    const startIndex = config.skip_rows || 0
+    const dataLines = lines.slice(startIndex)
+
+    const processedItems: ParsedPriceListItem[] = []
+    const errors: string[] = []
+    const warnings: string[] = []
+
+    if (dataLines.length === 0) {
+      return new StepResponse({
+        items: [],
+        errors: ['No data rows found in file after skipping rows'],
+        warnings: [],
+        total_rows: 0,
+        processed_rows: 0
+      })
+    }
+
+    // Validate column definitions
+    const maxPosition = Math.max(...config.fixed_width_columns.map(col => col.start + col.width))
+
+    // Determine allowed brand ids for the supplier if feature enabled
+    let allowedBrandIds: string[] | null = null
+    if (featureFlag) {
+      try {
+        const supplierWithBrands = await remoteQuery({
+          entryPoint: "supplier",
+          fields: ["id", "brands.id"],
+          variables: { filters: { id: supplier_id } },
+        })
+        const supplier = Array.isArray(supplierWithBrands) ? supplierWithBrands[0] : supplierWithBrands
+        const supplierBrandIds: string[] = (supplier?.brands || []).map((b: any) => b.id)
+
+        if (brand_id) {
+          allowedBrandIds = supplierBrandIds.includes(brand_id) ? [brand_id] : []
+        } else {
+          allowedBrandIds = supplierBrandIds
+        }
+      } catch (e: any) {
+        errors.push(`Failed to load supplier brands: ${e.message || e}`)
+        if (brand_id) {
+          return new StepResponse({ items: [], errors, total_rows: dataLines.length, processed_rows: 0, warnings })
+        }
+      }
+    }
+
+    // Process lines
+    for (let i = 0; i < dataLines.length; i++) {
+      const line = dataLines[i]
+      const rowNum = i + 1 + startIndex
+
+      try {
+        // Check if line is long enough
+        if (line.length < maxPosition) {
+          warnings.push(`Row ${rowNum}: Line shorter than expected (${line.length} < ${maxPosition}), some fields may be empty`)
+        }
+
+        // Extract fields based on fixed-width columns
+        const row = extractFixedWidthFields(line, config.fixed_width_columns)
+
+        // Apply transformations
+        if (config.transformations) {
+          for (const [field, transformation] of Object.entries(config.transformations)) {
+            if (row[field] !== undefined && row[field] !== '') {
+              row[field] = applyTransformation(row[field], transformation)
+            }
+          }
+        }
+
+        // Validate required fields
+        const hasIdentifier = (row.variant_sku && row.variant_sku.trim()) ||
+                             (row.supplier_sku && row.supplier_sku.trim()) ||
+                             (row.product_id && row.product_id.trim())
+
+        if (!hasIdentifier) {
+          errors.push(`Row ${rowNum}: Either variant_sku, supplier_sku, or product_id is required`)
+          continue
+        }
+
+        if (!row.cost_price && row.cost_price !== '0') {
+          errors.push(`Row ${rowNum}: cost_price is required`)
+          continue
+        }
+
+        // Parse cost price
+        const costPrice = parseFloat(String(row.cost_price))
+        if (isNaN(costPrice)) {
+          errors.push(`Row ${rowNum}: Invalid cost_price value: "${row.cost_price}"`)
+          continue
+        }
+
+        // Find product variant
+        let productVariant = null
+        let product = null
+
+        // Try by variant_sku first
+        if (row.variant_sku && row.variant_sku.trim()) {
+          const variantFilters: any = { sku: row.variant_sku.trim() }
+          const variantConfig: any = { select: ["id", "product_id", "sku"], relations: ["product"] }
+
+          if (featureFlag && allowedBrandIds && allowedBrandIds.length > 0) {
+            variantFilters["brand.id"] = allowedBrandIds
+            variantConfig.relations = ["product", "brand"]
+          }
+
+          const variants = await productModuleService.listProductVariants(variantFilters, variantConfig)
+
+          if (variants.length > 0) {
+            productVariant = variants[0]
+            product = productVariant.product
+          } else if (!row.supplier_sku) {
+            // Only error if we don't have supplier_sku to try
+            const brandMsg = featureFlag ? " for supplier's allowed brands" : ""
+            errors.push(`Row ${rowNum}: Product variant with SKU "${row.variant_sku.trim()}" not found${brandMsg}`)
+            continue
+          }
+        }
+
+        // Try by supplier_sku if not found by variant_sku
+        if (!productVariant && row.supplier_sku && row.supplier_sku.trim()) {
+          const supplierProducts = await purchasingService.listSupplierProducts({
+            supplier_id: supplier_id,
+            supplier_sku: row.supplier_sku.trim()
+          })
+
+          if (supplierProducts.length > 0) {
+            const supplierProduct = supplierProducts[0]
+            const variants = await productModuleService.listProductVariants({
+              id: supplierProduct.product_variant_id
+            }, { select: ["id", "product_id", "sku"], relations: ["product"] })
+
+            if (variants.length > 0) {
+              productVariant = variants[0]
+              product = productVariant.product
+            }
+          } else if (!row.product_id) {
+            // Only error if we don't have product_id to try
+            errors.push(`Row ${rowNum}: Supplier SKU "${row.supplier_sku.trim()}" not found in supplier products`)
+            continue
+          }
+        }
+
+        // Try by product_id if still not found
+        if (!productVariant && row.product_id && row.product_id.trim()) {
+          const productFilters: any = { id: row.product_id.trim() }
+          const productConfig: any = { select: ["id"], relations: ["variants"] }
+
+          if (featureFlag && allowedBrandIds && allowedBrandIds.length > 0) {
+            productConfig.relations = ["variants", "variants.brand"]
+          }
+
+          const products = await productModuleService.listProducts(productFilters, productConfig)
+
+          if (products.length === 0) {
+            errors.push(`Row ${rowNum}: Product with ID "${row.product_id.trim()}" not found`)
+            continue
+          }
+
+          product = products[0]
+          const candidateVariants = (product.variants || [])
+          const filteredByBrand = featureFlag && allowedBrandIds && allowedBrandIds.length > 0
+            ? candidateVariants.filter((v: any) => v?.brand?.id && allowedBrandIds!.includes(v.brand.id))
+            : candidateVariants
+
+          if (filteredByBrand.length > 1 && featureFlag) {
+            errors.push(`Row ${rowNum}: Multiple variants found for product within allowed brands—SKU required`)
+            continue
+          }
+
+          if (filteredByBrand.length > 0) {
+            productVariant = filteredByBrand[0]
+          } else {
+            errors.push(`Row ${rowNum}: Product "${row.product_id.trim()}" has no variants${featureFlag ? " within allowed brands" : ""}`)
+            continue
+          }
+        }
+
+        if (!productVariant || !product) {
+          const identifier = row.variant_sku?.trim() || row.supplier_sku?.trim() || row.product_id?.trim()
+          errors.push(`Row ${rowNum}: Could not resolve product variant (identifier: ${identifier})`)
+          continue
+        }
+
+        // Parse optional fields
+        const quantity = row.quantity ? parseInt(String(row.quantity)) : 1
+        const leadTimeDays = row.lead_time_days ? parseInt(String(row.lead_time_days)) : undefined
+
+        const processedItem: ParsedPriceListItem = {
+          product_variant_id: productVariant.id,
+          product_id: product.id,
+          supplier_sku: row.supplier_sku?.trim() || undefined,
+          variant_sku: productVariant.sku || undefined,
+          cost_price: costPrice,
+          description: row.description?.trim() || undefined,
+          quantity: isNaN(quantity) ? 1 : quantity,
+          lead_time_days: isNaN(leadTimeDays!) ? undefined : leadTimeDays,
+          notes: row.notes?.trim() || undefined,
+        }
+
+        processedItems.push(processedItem)
+
+      } catch (error: any) {
+        errors.push(`Row ${rowNum}: Error processing row - ${error.message}`)
+      }
+    }
+
+    return new StepResponse({
+      items: processedItems,
+      errors,
+      warnings,
+      total_rows: dataLines.length,
+      processed_rows: processedItems.length
+    })
+  },
+  // Compensation logic - nothing to rollback for parsing step
+  // The actual data creation happens in subsequent steps
+  async () => {
+    return new StepResponse(void 0, {})
+  }
+)

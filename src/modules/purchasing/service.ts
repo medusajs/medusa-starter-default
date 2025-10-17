@@ -4,6 +4,9 @@ import SupplierProduct from "./models/supplier-product.model"
 import SupplierPriceList from "./models/supplier-price-list.model"
 import SupplierPriceListItem from "./models/supplier-price-list-item.model"
 import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus } from "./models/purchase-order.model"
+import { ParserConfig, ParserTemplate, ParserType, CsvConfig, FixedWidthConfig } from "./types/parser-types"
+import { PARSER_TEMPLATES, listParserTemplates as listTemplates } from "./config/parser-templates"
+import { FIELD_ALIASES } from "./config/field-aliases"
 
 class PurchasingService extends MedusaService({
   Supplier,
@@ -556,6 +559,213 @@ class PurchasingService extends MedusaService({
     }))
 
     return await this.updateSupplierPriceListItems(updates)
+  }
+
+  // ==========================================
+  // PARSER CONFIGURATION MANAGEMENT
+  // ==========================================
+
+  /**
+   * Get parser configuration for a supplier from metadata
+   * @param supplierId - The supplier ID
+   * @returns Parser configuration or null if not set
+   */
+  async getSupplierParserConfig(supplierId: string): Promise<ParserConfig | null> {
+    try {
+      const supplier = await this.retrieveSupplier(supplierId, {
+        select: ["id", "metadata"]
+      })
+
+      return supplier?.metadata?.price_list_parser || null
+    } catch (error) {
+      this.logger_.error("Failed to get supplier parser config", {
+        supplierId,
+        error: error.message
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Update parser configuration for a supplier in metadata
+   * @param supplierId - The supplier ID
+   * @param config - The parser configuration to save
+   */
+  async updateSupplierParserConfig(
+    supplierId: string,
+    config: ParserConfig
+  ): Promise<void> {
+    try {
+      // Validate config first
+      const validation = await this.validateParserConfig(config)
+      if (!validation.valid) {
+        throw new Error(`Invalid parser config: ${validation.errors.join(', ')}`)
+      }
+
+      const supplier = await this.retrieveSupplier(supplierId)
+
+      const updatedMetadata = {
+        ...supplier.metadata,
+        price_list_parser: config
+      }
+
+      await this.updateSuppliers(
+        { id: supplierId },
+        { metadata: updatedMetadata }
+      )
+
+      this.logger_.info("Updated supplier parser config", {
+        supplierId,
+        parserType: config.type,
+        templateName: config.template_name
+      })
+    } catch (error) {
+      this.logger_.error("Failed to update supplier parser config", {
+        supplierId,
+        error: error.message
+      })
+      throw error
+    }
+  }
+
+  /**
+   * List all available parser templates
+   * @returns Array of parser templates
+   */
+  async listParserTemplates(): Promise<ParserTemplate[]> {
+    return listTemplates()
+  }
+
+  /**
+   * Get a specific parser template by name
+   * @param templateName - The template identifier
+   * @returns Parser configuration or null if not found
+   */
+  async getParserTemplate(templateName: string): Promise<ParserConfig | null> {
+    const template = PARSER_TEMPLATES[templateName]
+    if (!template) return null
+
+    return {
+      type: template.type,
+      template_name: templateName,
+      config: template.config
+    }
+  }
+
+  /**
+   * Detect parser type from file content and filename
+   * @param fileContent - The file content as string
+   * @param fileName - The file name with extension
+   * @returns Detected parser type
+   */
+  async detectParserFromContent(
+    fileContent: string,
+    fileName: string
+  ): Promise<ParserType> {
+    // Simple detection based on file extension and content
+    const extension = fileName.split('.').pop()?.toLowerCase()
+
+    if (extension === 'csv' || extension === 'tsv') {
+      return 'csv'
+    }
+
+    if (extension === 'txt') {
+      // Check if content has delimiters
+      const firstLine = fileContent.split('\n')[0]
+      if (firstLine.includes(',') || firstLine.includes('\t')) {
+        return 'csv'
+      }
+      return 'fixed-width'
+    }
+
+    // Default to CSV
+    return 'csv'
+  }
+
+  /**
+   * Match CSV headers to known field names using aliases
+   * @param headers - Array of column headers from CSV
+   * @param fieldAliases - Optional custom field aliases (defaults to FIELD_ALIASES)
+   * @returns Mapping of field names to actual headers
+   */
+  async matchColumnsToFields(
+    headers: string[],
+    fieldAliases: Record<string, string[]> = FIELD_ALIASES
+  ): Promise<Record<string, string>> {
+    const mapping: Record<string, string> = {}
+
+    for (const [field, aliases] of Object.entries(fieldAliases)) {
+      for (const header of headers) {
+        const normalizedHeader = header.toLowerCase().trim().replace(/[_\s-]/g, '')
+
+        for (const alias of aliases) {
+          const normalizedAlias = alias.toLowerCase().trim().replace(/[_\s-]/g, '')
+
+          // Exact match or contains match
+          if (normalizedHeader === normalizedAlias ||
+              normalizedHeader.includes(normalizedAlias) ||
+              normalizedAlias.includes(normalizedHeader)) {
+            mapping[field] = header
+            break
+          }
+        }
+
+        if (mapping[field]) break
+      }
+    }
+
+    return mapping
+  }
+
+  /**
+   * Validate parser configuration
+   * @param config - The parser configuration to validate
+   * @returns Validation result with errors if any
+   */
+  async validateParserConfig(config: ParserConfig): Promise<{ valid: boolean, errors: string[] }> {
+    const errors: string[] = []
+
+    if (!config.type) {
+      errors.push("Parser type is required")
+    }
+
+    if (config.type === 'csv') {
+      const csvConfig = config.config as CsvConfig
+      if (!csvConfig.delimiter) {
+        errors.push("CSV delimiter is required")
+      }
+      if (csvConfig.skip_rows < 0) {
+        errors.push("Skip rows must be non-negative")
+      }
+      if (!csvConfig.column_mapping || Object.keys(csvConfig.column_mapping).length === 0) {
+        errors.push("Column mapping is required")
+      }
+    }
+
+    if (config.type === 'fixed-width') {
+      const fwConfig = config.config as FixedWidthConfig
+      if (!fwConfig.fixed_width_columns || fwConfig.fixed_width_columns.length === 0) {
+        errors.push("Fixed-width columns are required")
+      }
+      if (fwConfig.skip_rows < 0) {
+        errors.push("Skip rows must be non-negative")
+      }
+
+      // Validate column definitions
+      for (const col of fwConfig.fixed_width_columns || []) {
+        if (!col.field) {
+          errors.push("Column field name is required")
+        }
+        if (col.start < 0) {
+          errors.push(`Column ${col.field}: start position must be non-negative`)
+        }
+        if (col.width <= 0) {
+          errors.push(`Column ${col.field}: width must be positive`)
+        }
+      }
+    }
+
+    return { valid: errors.length === 0, errors }
   }
 }
 

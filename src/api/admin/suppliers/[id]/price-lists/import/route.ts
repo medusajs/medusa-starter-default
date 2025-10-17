@@ -1,5 +1,13 @@
+/**
+ * Price List Import Route
+ *
+ * Supports flexible file format import (CSV, fixed-width) with dynamic parser selection
+ *
+ * @see TEM-161 - Update Import Route to use new workflow
+ */
+
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { uploadPriceListCsvWorkflow } from "../../../../../../modules/purchasing/workflows/upload-price-list-csv"
+import { uploadPriceListWorkflow } from "../../../../../../modules/purchasing/workflows/upload-price-list"
 import { z } from "zod"
 
 const importPriceListSchema = z.object({
@@ -9,8 +17,9 @@ const importPriceListSchema = z.object({
   expiry_date: z.string().optional(),
   currency_code: z.string().default("USD"),
   brand_id: z.string().optional(),
-  csv_content: z.string().min(1, "CSV content is required"),
-  upload_filename: z.string().min(1, "Upload filename is required"),
+  file_content: z.string().min(1, "File content is required"),
+  file_name: z.string().min(1, "File name is required"),
+  upload_filename: z.string().optional(), // Optional for backward compatibility
 })
 
 export async function POST(
@@ -38,8 +47,8 @@ export async function POST(
       ? new Date(validatedData.expiry_date) 
       : undefined
 
-    // Run the upload workflow
-    const { result } = await uploadPriceListCsvWorkflow(req.scope).run({
+    // Run the flexible upload workflow
+    const { result } = await uploadPriceListWorkflow(req.scope).run({
       input: {
         supplier_id: supplierId,
         name: validatedData.name,
@@ -48,24 +57,36 @@ export async function POST(
         expiry_date: expiryDate,
         currency_code: validatedData.currency_code,
         brand_id: validatedData.brand_id,
-        csv_content: validatedData.csv_content,
-        upload_filename: validatedData.upload_filename,
+        file_content: validatedData.file_content,
+        file_name: validatedData.file_name,
+        upload_filename: validatedData.upload_filename || validatedData.file_name,
       },
     })
 
     res.status(200).json({
       price_list: result.price_list,
       import_summary: result.import_summary,
-      message: `Price list imported successfully. ${result.import_summary.success_count} items processed.`,
+      parser_config: result.parser_config,
+      message: `Price list imported successfully. ${result.import_summary.success_count} items processed, ${result.import_summary.error_count} errors.`,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error importing price list:", error)
-    
+
     if (error.name === "ZodError") {
       res.status(400).json({
         type: "validation_error",
         message: "Invalid request data",
         errors: error.errors,
+      })
+      return
+    }
+
+    // Enhanced error handling for parser-specific errors
+    if (error.message?.includes("parser") || error.message?.includes("parse")) {
+      res.status(400).json({
+        type: "parser_error",
+        message: "File format not supported or invalid",
+        details: error.message,
       })
       return
     }
