@@ -58,14 +58,23 @@ export type Transformation =
 
 /**
  * Parsed price list item structure
+ * Updated to support flexible discount structures (TEM-170)
  */
 export type ParsedPriceListItem = {
   product_variant_id?: string
   product_id?: string
   supplier_sku?: string
   variant_sku?: string
-  cost_price: number
-  description?: string
+
+  // Pricing fields
+  gross_price?: number
+  discount_code?: string // Original supplier discount code (e.g., 'A', 'B')
+  discount_percentage?: number
+  net_price: number
+
+  // Product information
+  description?: string // Product description from supplier
+  category?: string // Supplier's product category
   quantity?: number
   lead_time_days?: number
   notes?: string

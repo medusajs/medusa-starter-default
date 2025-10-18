@@ -1,14 +1,14 @@
-import { useParams } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { SupplierGeneralSection } from "./components/supplier-general-section"
-import { SupplierContactSection } from "./components/supplier-contact-section"
-import { SupplierAddressSection } from "./components/supplier-address-section"
-import { SupplierFinancialSection } from "./components/supplier-financial-section"
-import { SingleColumnPageSkeleton } from "../../../components/common/skeleton"
-import { SupplierPriceLists } from "../../../components/supplier-price-lists"
+import { Container, Heading } from "@medusajs/ui"
+import { SupplierPricingSettingsSection } from "../components/supplier-pricing-settings-section"
+import { SupplierParserConfigSection } from "../components/supplier-parser-config-section"
+import { SupplierDiscountConfigSection } from "../components/supplier-discount-config-section"
+import { SupplierBrandsSection } from "../components/supplier-brands-section"
+import { SingleColumnPageSkeleton } from "../../../../components/common/skeleton"
 
-const SupplierDetailPage = () => {
+const SupplierSettingsPage = () => {
   const { id } = useParams()
   
   const { data: supplier, isLoading, error } = useQuery({
@@ -33,16 +33,19 @@ const SupplierDetailPage = () => {
 
   return (
     <div className="flex flex-col gap-y-2">
-      <SupplierGeneralSection supplier={supplier} />
-      <SupplierContactSection supplier={supplier} />
-      <SupplierAddressSection supplier={supplier} />
-      <SupplierFinancialSection supplier={supplier} />
-      <SupplierPriceLists data={supplier} />
+      <Container className="p-6">
+        <Heading level="h1">Supplier Configuration</Heading>
+      </Container>
+      
+      <SupplierPricingSettingsSection supplier={supplier} />
+      <SupplierDiscountConfigSection supplier={supplier} />
+      <SupplierParserConfigSection supplierId={supplier.id} />
+      <SupplierBrandsSection supplierId={supplier.id} />
     </div>
   )
 }
 
-export default SupplierDetailPage
+export default SupplierSettingsPage
 
 // Loader function to fetch supplier data for breadcrumbs
 export const loader = async ({ params }: { params: { id: string } }) => {
@@ -57,14 +60,13 @@ export const loader = async ({ params }: { params: { id: string } }) => {
   }
 }
 
-export const config = defineRouteConfig({})
+export const config = defineRouteConfig({
+  label: "Configuration",
+})
 
 // Breadcrumb configuration
 export const handle = {
-  breadcrumb: ({ data }: { data: any }) => {
-    if (data && data.name) {
-      return data.name
-    }
-    return "Supplier Details"
-  },
-} 
+  breadcrumb: () => "Configuration",
+}
+
+

@@ -78,7 +78,7 @@ export const SupplierGeneralSection = ({
                     label: "Edit",
                     icon: <PencilSquare />,
                     render: () => (
-                      <EditSupplierForm 
+                      <EditSupplierForm
                         supplier={supplier}
                         trigger={
                           <DropdownMenu.Item className="flex items-center gap-2">
@@ -88,6 +88,11 @@ export const SupplierGeneralSection = ({
                         }
                       />
                     ),
+                  },
+                  {
+                    label: "Configuration",
+                    icon: <PencilSquare />,
+                    to: `/suppliers/${supplier.id}/settings`,
                   },
                   {
                     label: "View Purchase Orders",

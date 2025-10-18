@@ -222,15 +222,25 @@ export const parseCsvPriceListStep = createStep(
           continue
         }
 
-        if (!mappedRow.cost_price && mappedRow.cost_price !== 0) {
-          errors.push(`Row ${rowNum}: cost_price is required`)
+        // TEM-173: Parse pricing fields (gross_price, discount_code, discount_percentage, net_price)
+        const grossPrice = mappedRow.gross_price
+          ? parseFloat(String(mappedRow.gross_price))
+          : undefined
+
+        const discountPercentage = mappedRow.discount_percentage
+          ? parseFloat(String(mappedRow.discount_percentage))
+          : undefined
+
+        // Support both net_price (new) and cost_price (legacy) for backward compatibility
+        const netPrice = mappedRow.net_price || mappedRow.cost_price
+        if (!netPrice && netPrice !== 0) {
+          errors.push(`Row ${rowNum}: net_price or cost_price is required`)
           continue
         }
 
-        // Parse cost price
-        const costPrice = parseFloat(String(mappedRow.cost_price))
-        if (isNaN(costPrice)) {
-          errors.push(`Row ${rowNum}: Invalid cost_price value: "${mappedRow.cost_price}"`)
+        const parsedNetPrice = parseFloat(String(netPrice))
+        if (isNaN(parsedNetPrice)) {
+          errors.push(`Row ${rowNum}: Invalid net_price value: "${netPrice}"`)
           continue
         }
 
@@ -333,13 +343,24 @@ export const parseCsvPriceListStep = createStep(
         const quantity = mappedRow.quantity ? parseInt(String(mappedRow.quantity)) : 1
         const leadTimeDays = mappedRow.lead_time_days ? parseInt(String(mappedRow.lead_time_days)) : undefined
 
+        // TEM-173: Create processed item with new discount and product information fields
         const processedItem: ParsedPriceListItem = {
           product_variant_id: productVariant.id,
           product_id: product.id,
           supplier_sku: mappedRow.supplier_sku || undefined,
           variant_sku: productVariant.sku || undefined,
-          cost_price: costPrice,
+
+          // Pricing fields (TEM-173)
+          gross_price: isNaN(grossPrice!) ? undefined : grossPrice,
+          discount_code: mappedRow.discount_code || undefined,
+          discount_percentage: isNaN(discountPercentage!) ? undefined : discountPercentage,
+          net_price: parsedNetPrice,
+
+          // Product information fields (TEM-173)
           description: mappedRow.description || undefined,
+          category: mappedRow.category || undefined,
+
+          // Other fields
           quantity: isNaN(quantity) ? 1 : quantity,
           lead_time_days: isNaN(leadTimeDays!) ? undefined : leadTimeDays,
           notes: mappedRow.notes || undefined,

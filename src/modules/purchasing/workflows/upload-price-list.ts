@@ -4,8 +4,12 @@
  * Supports multiple file formats (CSV, fixed-width) with dynamic parser selection
  * based on supplier configuration and file content detection.
  *
+ * Includes discount calculation step that normalizes pricing data from various
+ * supplier formats (discount codes, percentages, pre-calculated prices).
+ *
  * @see TEM-150 - Phase 2: Workflow Integration
  * @see TEM-159 - Update Upload Workflow
+ * @see TEM-172 - Create Discount Calculation Workflow Step
  */
 
 import { createWorkflow, WorkflowResponse, when, transform } from "@medusajs/workflows-sdk"
@@ -14,6 +18,7 @@ import { processPriceListItemsStep } from "../steps/process-price-list-items"
 import { detectParserConfigStep } from "../steps/detect-parser-config"
 import { parseCsvPriceListStep } from "../steps/parse-csv-price-list-flexible"
 import { parseFixedWidthPriceListStep } from "../steps/parse-fixed-width-price-list"
+import { calculateDiscountAndNetPriceStep } from "../steps/calculate-discount-and-net-price"
 
 type WorkflowInput = {
   supplier_id: string
@@ -76,7 +81,14 @@ export const uploadPriceListWorkflow = createWorkflow(
       ({ csvParseResult, fixedWidthParseResult }) => csvParseResult || fixedWidthParseResult
     )
 
-    // Step 3: Create price list with enhanced metadata
+    // Step 3: Calculate discounts and net prices (TEM-172)
+    // Runs after parsing, before saving to database
+    const calculatedItems = calculateDiscountAndNetPriceStep({
+      items: transform({ parseResult }, ({ parseResult }) => parseResult.items),
+      supplier_id: input.supplier_id
+    })
+
+    // Step 4: Create price list with enhanced metadata
     const { price_list } = createPriceListStep({
       supplier_id: input.supplier_id,
       name: input.name,
@@ -97,13 +109,13 @@ export const uploadPriceListWorkflow = createWorkflow(
       }))
     })
 
-    // Step 4: Process price list items
+    // Step 5: Process price list items with calculated prices
     const { items: processedItems } = processPriceListItemsStep({
       price_list_id: price_list.id,
-      items: transform({ parseResult }, ({ parseResult }) => parseResult.items)
+      items: transform({ calculatedItems }, ({ calculatedItems }) => calculatedItems.items)
     })
 
-    // Step 5: Build comprehensive response with import summary
+    // Step 6: Build comprehensive response with import summary
     return new WorkflowResponse(
       transform({ price_list, processedItems, parseResult, parserConfig },
       ({ price_list, processedItems, parseResult, parserConfig }) => ({

@@ -7,6 +7,8 @@ import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus } from "./models/
 import { ParserConfig, ParserTemplate, ParserType, CsvConfig, FixedWidthConfig } from "./types/parser-types"
 import { PARSER_TEMPLATES, listParserTemplates as listTemplates } from "./config/parser-templates"
 import { FIELD_ALIASES } from "./config/field-aliases"
+import { DiscountStructure } from "./types/discount-types"
+import { validateDiscountStructure } from "./validators/discount-structure-validator"
 
 class PurchasingService extends MedusaService({
   Supplier,
@@ -322,15 +324,20 @@ class PurchasingService extends MedusaService({
     )
   }
 
+  /**
+   * Upsert a price list item (TEM-170: discount_amount removed - use discount_code/discount_percentage)
+   */
   async upsertPriceListItem(supplierId: string, itemData: {
     product_variant_id: string
     product_id: string
     supplier_sku?: string
     variant_sku?: string
     gross_price?: number
-    discount_amount?: number
+    discount_code?: string // TEM-170: Original supplier discount code
     discount_percentage?: number
     net_price: number
+    description?: string // TEM-170: Product description from supplier
+    category?: string // TEM-170: Supplier's product category
     quantity?: number
     lead_time_days?: number
     notes?: string
@@ -348,23 +355,25 @@ class PurchasingService extends MedusaService({
     })
     
     if (existingItem) {
-      // Update existing item
+      // Update existing item (TEM-170: discount_amount removed, new fields added)
       return await this.updateSupplierPriceListItems(
         { id: existingItem.id },
         {
           supplier_sku: itemData.supplier_sku,
           variant_sku: itemData.variant_sku,
           gross_price: itemData.gross_price,
-          discount_amount: itemData.discount_amount,
+          discount_code: itemData.discount_code,
           discount_percentage: itemData.discount_percentage,
           net_price: itemData.net_price,
+          description: itemData.description,
+          category: itemData.category,
           quantity: itemData.quantity || 1,
           lead_time_days: itemData.lead_time_days,
           notes: itemData.notes
         }
       )
     } else {
-      // Create new item
+      // Create new item (TEM-170: discount_amount removed, new fields added)
       return await this.createSupplierPriceListItems([{
         price_list_id: activeList.id,
         product_variant_id: itemData.product_variant_id,
@@ -372,9 +381,11 @@ class PurchasingService extends MedusaService({
         supplier_sku: itemData.supplier_sku,
         variant_sku: itemData.variant_sku,
         gross_price: itemData.gross_price,
-        discount_amount: itemData.discount_amount,
+        discount_code: itemData.discount_code,
         discount_percentage: itemData.discount_percentage,
         net_price: itemData.net_price,
+        description: itemData.description,
+        category: itemData.category,
         quantity: itemData.quantity || 1,
         lead_time_days: itemData.lead_time_days,
         notes: itemData.notes
@@ -766,6 +777,119 @@ class PurchasingService extends MedusaService({
     }
 
     return { valid: errors.length === 0, errors }
+  }
+
+  // ==========================================
+  // DISCOUNT STRUCTURE CONFIGURATION (TEM-171)
+  // ==========================================
+
+  /**
+   * Get supplier discount structure from metadata
+   * @param supplierId - The supplier ID
+   * @returns Discount structure or null if not configured
+   */
+  async getSupplierDiscountStructure(
+    supplierId: string
+  ): Promise<DiscountStructure | null> {
+    try {
+      const supplier = await this.retrieveSupplier(supplierId, {
+        select: ["id", "metadata"]
+      })
+
+      return supplier?.metadata?.discount_structure || null
+    } catch (error) {
+      this.logger_.error("Failed to get supplier discount structure", {
+        supplierId,
+        error: error.message
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Update supplier discount structure in metadata
+   * @param supplierId - The supplier ID
+   * @param discountStructure - The discount structure configuration
+   * @throws Error if validation fails
+   */
+  async updateSupplierDiscountStructure(
+    supplierId: string,
+    discountStructure: DiscountStructure
+  ): Promise<void> {
+    try {
+      // Validate structure before saving
+      validateDiscountStructure(discountStructure)
+
+      const supplier = await this.retrieveSupplier(supplierId)
+
+      // Update supplier metadata with discount structure
+      const updatedMetadata = {
+        ...supplier.metadata,
+        discount_structure: discountStructure
+      }
+
+      await this.updateSuppliers(
+        { id: supplierId },
+        { metadata: updatedMetadata }
+      )
+
+      this.logger_.info("Updated supplier discount structure", {
+        supplierId,
+        discountType: discountStructure.type
+      })
+    } catch (error) {
+      this.logger_.error("Failed to update supplier discount structure", {
+        supplierId,
+        error: error.message
+      })
+      throw error
+    }
+  }
+
+  /**
+   * Resolve discount code to percentage using supplier's discount structure
+   * @param code - The discount code to resolve
+   * @param structure - The discount structure to use
+   * @returns Discount percentage or null if code not found
+   *
+   * @example
+   * ```typescript
+   * const structure = {
+   *   type: "code_mapping",
+   *   mappings: { A: 25, B: 35 }
+   * }
+   * const percentage = service.resolveDiscountCode("A", structure) // Returns 25
+   * ```
+   */
+  resolveDiscountCode(
+    code: string,
+    structure: DiscountStructure
+  ): number | null {
+    if (structure.type === "code_mapping") {
+      return structure.mappings[code] || null
+    }
+    return null
+  }
+
+  /**
+   * Get default discount percentage from supplier's discount structure
+   * @param structure - The discount structure
+   * @returns Default percentage or null if not applicable
+   *
+   * @example
+   * ```typescript
+   * const structure = {
+   *   type: "percentage",
+   *   default_percentage: 20
+   * }
+   * const percentage = service.getDefaultDiscountPercentage(structure) // Returns 20
+   * ```
+   */
+  getDefaultDiscountPercentage(structure: DiscountStructure): number | null {
+    if (structure.type === "percentage") {
+      return structure.default_percentage
+    }
+    return null
   }
 }
 

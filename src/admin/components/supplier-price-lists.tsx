@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from "react"
 import { useForm, Controller, FieldPath, useWatch } from "react-hook-form"
-import { 
-  Container, 
-  Heading, 
-  Button, 
+import {
+  Container,
+  Heading,
+  Button,
   Badge,
   Text,
   toast,
@@ -62,11 +62,14 @@ interface PriceListItem {
     title: string
   }
   gross_price?: number
+  discount_code?: string
   discount_percentage?: number
   net_price: number
   quantity?: number
   lead_time_days?: number
   notes?: string
+  description?: string
+  category?: string
   is_active: boolean
   created_at: Date
   updated_at: Date
@@ -79,6 +82,13 @@ interface PriceListItem {
 interface Supplier {
   id: string
   name: string
+  metadata?: {
+    discount_structure?: {
+      type: string
+      mappings?: Record<string, number>
+      default_percentage?: number
+    }
+  }
 }
 
 interface ProductVariant {
@@ -141,6 +151,10 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     pageSize: 10,
   })
   const [isSyncingPrices, setIsSyncingPrices] = useState(false)
+  // Preview state for parser preview functionality
+  const [uploadPreview, setUploadPreview] = useState<any>(null)
+  const [showPreview, setShowPreview] = useState(false)
+  const [currentParserConfig, setCurrentParserConfig] = useState<any>(null)
 
   const editItemForm = useForm<AddItemFormData>({
     resolver: zodResolver(addItemSchema),
@@ -370,10 +384,47 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     uploadCSVMutation.mutate(uploadFile)
   }
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
+    if (!file) return
+
+    try {
+      const content = await file.text()
+
+      // Get current parser config for supplier
+      const configResponse = await fetch(`/admin/suppliers/${supplier.id}/parser-config`)
+      const configData = await configResponse.json()
+      const parserConfig = configData.parser_config || {
+        type: 'csv',
+        config: { delimiter: ',', has_header: true, skip_rows: 0, column_mapping: {} }
+      }
+
+      // Call preview endpoint
+      const response = await fetch(
+        `/admin/suppliers/${supplier.id}/parser-config/preview`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            file_content: content,
+            config: parserConfig
+          })
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Preview failed')
+      }
+
+      const preview = await response.json()
+      setUploadPreview({ file, content, preview })
+      setCurrentParserConfig(parserConfig)
+      setShowPreview(true)
+    } catch (error) {
+      console.error('Preview error:', error)
+      // Fallback to direct upload
       setUploadFile(file)
+      toast.error('Preview failed, file selected for direct upload')
     }
   }
 
@@ -408,6 +459,45 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
       toast.error(`Failed to sync prices: ${error.message}`)
     } finally {
       setIsSyncingPrices(false)
+    }
+  }
+
+  const confirmUpload = async () => {
+    if (!uploadPreview) return
+
+    try {
+      const formData = new FormData()
+      formData.append('file', uploadPreview.file)
+      formData.append('file_name', uploadPreview.file.name)
+
+      const response = await fetch(
+        `/admin/suppliers/${supplier.id}/price-lists/import`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Upload failed')
+      }
+
+      const result = await response.json()
+
+      // Show success message with import summary
+      toast.success(
+        `Price list imported successfully. ${result.import_summary?.success_count || 0} items processed, ${result.import_summary?.error_count || 0} errors.`
+      )
+
+      // Close preview and refresh data
+      setShowPreview(false)
+      setUploadPreview(null)
+      setShowUploadModal(false)
+      queryClient.invalidateQueries({ queryKey: ["supplier-price-list", supplier.id] })
+
+    } catch (error: any) {
+      console.error('Upload error:', error)
+      toast.error(`Failed to upload price list: ${error.message}`)
     }
   }
 
@@ -503,9 +593,21 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
       },
     }),
     columnHelper.accessor("supplier_sku", {
-      header: "Supplier SKU", 
+      header: "Supplier SKU",
       cell: ({ getValue }) => (
         <Text className="font-mono text-sm">{getValue() || "—"}</Text>
+      ),
+    }),
+    columnHelper.accessor("description", {
+      header: "Description",
+      cell: ({ getValue }) => (
+        <Text className="text-sm">{getValue() || "—"}</Text>
+      ),
+    }),
+    columnHelper.accessor("category", {
+      header: "Category",
+      cell: ({ getValue }) => (
+        <Text className="text-sm">{getValue() || "—"}</Text>
       ),
     }),
     columnHelper.accessor("gross_price", {
@@ -520,13 +622,30 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
         )
       },
     }),
-    columnHelper.accessor("discount_percentage", {
+    columnHelper.display({
+      id: "discount",
       header: "Discount",
-      cell: ({ getValue }) => (
-        <Text>
-          {getValue() ? `${getValue()}%` : "—"}
-        </Text>
-      ),
+      cell: ({ row }) => {
+        const item = row.original
+        const discountValue = typeof item.discount_percentage === 'number' 
+          ? item.discount_percentage 
+          : parseFloat(item.discount_percentage)
+        const hasValidDiscount = !isNaN(discountValue) && discountValue !== null && discountValue !== undefined
+        
+        return (
+          <div className="flex flex-col gap-1">
+            {item.discount_code && (
+              <Badge color="blue">{item.discount_code}</Badge>
+            )}
+            {hasValidDiscount && (
+              <Text className="text-sm">{discountValue.toFixed(1)}%</Text>
+            )}
+            {!item.discount_code && !hasValidDiscount && (
+              <Text>—</Text>
+            )}
+          </div>
+        )
+      },
     }),
     columnHelper.accessor("net_price", {
       header: "Net Price",
@@ -567,7 +686,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
               Edit
             </DropdownMenu.Item>
             <DropdownMenu.Separator />
-            <DropdownMenu.Item 
+            <DropdownMenu.Item
               onClick={() => handleDeleteItem(row.original.id)}
               className="text-ui-fg-error"
             >
@@ -696,7 +815,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
 
 
       {/* Single Upload CSV Modal */}
-      {showUploadModal && (
+      {showUploadModal && !showPreview && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
             <div className="p-6 border-b">
@@ -707,17 +826,17 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                 </Button>
               </div>
             </div>
-            
+
             <div className="p-6">
               <Text className="text-ui-fg-subtle mb-4">
-                Upload a CSV file to overwrite existing prices. This will replace all current price list items.
+                Upload a CSV file to preview and import prices. This will replace all current price list items.
               </Text>
-              
+
               <div className="space-y-4">
                 <div>
                   <input
                     type="file"
-                    accept=".csv"
+                    accept=".csv,.txt"
                     onChange={handleFileSelect}
                     className="block w-full text-sm text-ui-fg-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-ui-bg-subtle file:text-ui-fg-base hover:file:bg-ui-bg-subtle-hover"
                   />
@@ -730,17 +849,126 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                 )}
               </div>
             </div>
-            
+
             <div className="p-6 border-t flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setShowUploadModal(false)}>
                 Cancel
               </Button>
-              <Button 
-                onClick={handleUploadCSV} 
+              <Button
+                onClick={handleUploadCSV}
                 disabled={!uploadFile || uploadCSVMutation.isPending}
                 isLoading={uploadCSVMutation.isPending}
               >
                 Upload & Replace
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Dialog */}
+      {showPreview && uploadPreview && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl my-8 mx-4">
+            <div className="p-6 border-b">
+              <h2 className="text-lg font-semibold">Preview Import</h2>
+              <Text className="text-sm text-ui-fg-subtle mt-1">
+                Review the parsed data before confirming the import
+              </Text>
+            </div>
+
+            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+              {/* Field Detection Status */}
+              <div>
+                <h3 className="text-md font-medium mb-2">Detected Fields</h3>
+                <div className="flex flex-wrap gap-2">
+                  {uploadPreview.preview.detected_fields?.map((field: string) => (
+                    <Badge key={field} color="green">{field}</Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Warnings */}
+              {uploadPreview.preview.warnings && uploadPreview.preview.warnings.length > 0 && (
+                <div>
+                  <h3 className="text-md font-medium mb-2 text-yellow-600">Warnings</h3>
+                  <ul className="list-disc list-inside space-y-1">
+                    {uploadPreview.preview.warnings.map((warning: string, index: number) => (
+                      <li key={index} className="text-yellow-600 text-sm">{warning}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Errors */}
+              {uploadPreview.preview.errors && uploadPreview.preview.errors.length > 0 && (
+                <div>
+                  <h3 className="text-md font-medium mb-2 text-red-600">Errors</h3>
+                  <ul className="list-disc list-inside space-y-1">
+                    {uploadPreview.preview.errors.map((error: string, index: number) => (
+                      <li key={index} className="text-red-600 text-sm">{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Preview Table */}
+              <div>
+                <h3 className="text-md font-medium mb-2">Preview Data (First 10 rows)</h3>
+                <div className="overflow-x-auto border rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Supplier SKU
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Variant SKU
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Cost Price
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Description
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Quantity
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {uploadPreview.preview.preview_rows?.map((row: any, index: number) => (
+                        <tr key={index}>
+                          <td className="px-4 py-2 text-sm text-gray-900">{row.supplier_sku || '-'}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">{row.variant_sku || '-'}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">
+                            {row.cost_price ? `€${(row.cost_price / 100).toFixed(2)}` : '-'}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-900">{row.description || '-'}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">{row.quantity || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => {
+                setShowPreview(false)
+                setUploadPreview(null)
+              }}>
+                Cancel
+              </Button>
+              <Button variant="secondary" onClick={() => {
+                setShowPreview(false)
+                navigate(`/suppliers/${supplier.id}/settings`)
+              }}>
+                Configure Parser
+              </Button>
+              <Button onClick={confirmUpload}>
+                Confirm Upload
               </Button>
             </div>
           </div>
@@ -846,32 +1074,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="add_discount_percentage">Discount %</Label>
-                  <Controller
-                    name="discount_percentage"
-                    control={addItemForm.control}
-                    render={({ field, fieldState }) => (
-                      <div className="flex flex-col gap-y-1">
-                        <Input
-                          {...field}
-                          id="add_discount_percentage"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          placeholder="0.00"
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
-                        />
-                        {fieldState.error && (
-                          <Text size="xsmall" className="text-ui-fg-error">
-                            {fieldState.error.message}
-                          </Text>
-                        )}
-                      </div>
-                    )}
-                  />
-                </div>
-                <div className="flex flex-col gap-y-2">
                   <Label htmlFor="add_net_price">Net Price (What You Pay) *</Label>
                   <Controller
                     name="net_price"
@@ -896,6 +1098,13 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
                     )}
                   />
                 </div>
+              </div>
+              
+              <div className="p-3 bg-ui-bg-subtle rounded-lg border border-ui-border-base">
+                <Text size="small" className="text-ui-fg-subtle">
+                  <strong>Note:</strong> Discounts are managed through the supplier's discount configuration. 
+                  When uploading price lists, discounts will be calculated automatically based on the configured structure.
+                </Text>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

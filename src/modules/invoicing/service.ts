@@ -1,4 +1,4 @@
-import { MedusaService } from "@medusajs/framework/utils"
+import { MedusaService, MathBN } from "@medusajs/framework/utils"
 import Invoice, { InvoiceStatus, InvoiceType } from "./models/invoice"
 import InvoiceLineItem, { InvoiceLineItemType } from "./models/invoice-line-item"
 import InvoiceStatusHistory from "./models/invoice-status-history"
@@ -93,14 +93,15 @@ class InvoicingService extends MedusaService({
   }
   
   async addLineItemToInvoice(data: CreateInvoiceLineItemInput) {
-    // Calculate total price
-    const totalPrice = data.quantity * data.unit_price - (data.discount_amount || 0)
-    const taxAmount = totalPrice * (data.tax_rate || 0)
+    // Calculate total price using MathBN for BigNumber arithmetic
+    const subtotal = MathBN.mult(data.quantity, data.unit_price)
+    const totalPrice = MathBN.sub(subtotal, data.discount_amount || 0)
+    const taxAmount = MathBN.mult(totalPrice, data.tax_rate || 0)
     
     const lineItem = await this.createInvoiceLineItems({
       ...data,
-      total_price: totalPrice,
-      tax_amount: taxAmount,
+      total_price: totalPrice.toNumber(),
+      tax_amount: taxAmount.toNumber(),
       discount_amount: data.discount_amount || 0,
       tax_rate: data.tax_rate || 0,
     })
@@ -112,8 +113,6 @@ class InvoicingService extends MedusaService({
   }
   
   async recalculateInvoiceTotals(invoiceId: string) {
-    console.log('recalculateInvoiceTotals called with invoiceId:', invoiceId)
-    
     if (!invoiceId) {
       throw new Error('Invoice ID is required for recalculating totals')
     }
@@ -121,18 +120,30 @@ class InvoicingService extends MedusaService({
     const invoice = await this.retrieveInvoice(invoiceId)
     const lineItems = await this.listInvoiceLineItems({ invoice_id: invoiceId })
 
-    const subtotal = lineItems.reduce((sum, item) => sum + Number(item.total_price), 0)
-    const taxAmount = lineItems.reduce((sum, item) => sum + Number(item.tax_amount), 0)
-    const discountAmount = lineItems.reduce((sum, item) => sum + Number(item.discount_amount), 0)
-    const totalAmount = subtotal + taxAmount
+    // Calculate subtotal from unit_price * quantity (before discounts)
+    // Use MathBN.sum for proper BigNumber handling
+    const subtotal = MathBN.sum(
+      ...lineItems.map(item => MathBN.mult(item.unit_price || 0, item.quantity || 0))
+    )
     
-    console.log('About to call updateInvoices with invoiceId:', invoiceId)
+    const discountAmount = MathBN.sum(
+      ...lineItems.map(item => item.discount_amount || 0)
+    )
+    
+    const taxAmount = MathBN.sum(
+      ...lineItems.map(item => item.tax_amount || 0)
+    )
+    
+    // Total = subtotal - discount + tax
+    const subtotalAfterDiscount = MathBN.sub(subtotal, discountAmount)
+    const totalAmount = MathBN.add(subtotalAfterDiscount, taxAmount)
+    
     return await this.updateInvoices({
       id: invoiceId,
-      subtotal,
-      tax_amount: taxAmount,
-      discount_amount: discountAmount,
-      total_amount: totalAmount,
+      subtotal: subtotal.toNumber(),
+      tax_amount: taxAmount.toNumber(),
+      discount_amount: discountAmount.toNumber(),
+      total_amount: totalAmount.toNumber(),
     }, { id: invoiceId })
   }
   

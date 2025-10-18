@@ -1,10 +1,29 @@
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
+import { MathBN } from "@medusajs/framework/utils"
 import { INVOICING_MODULE } from "../../../modules/invoicing"
 
 export const addLineItemStep = createStep(
   "add-line-item",
   async (input: any, { container }) => {
     const invoicingService = container.resolve(INVOICING_MODULE)
+
+    // Validate required fields
+    if (!input.title) {
+      throw new Error('Title is required for line item')
+    }
+
+    if (!input.quantity || input.quantity <= 0) {
+      throw new Error('Quantity must be greater than 0')
+    }
+
+    if (input.unit_price === undefined || input.unit_price === null) {
+      throw new Error('Unit price is required')
+    }
+
+    // Calculate totals using MathBN for proper BigNumber arithmetic
+    const subtotal = MathBN.mult(input.quantity, input.unit_price)
+    const totalPrice = MathBN.sub(subtotal, input.discount_amount || 0)
+    const taxAmount = MathBN.mult(totalPrice, input.tax_rate || 0.21)
 
     const lineItem = await invoicingService.createInvoiceLineItems({
       invoice_id: input.invoice_id,
@@ -21,9 +40,8 @@ export const addLineItemStep = createStep(
       hours_worked: input.hours_worked,
       hourly_rate: input.hourly_rate,
       notes: input.notes,
-      // Calculate totals
-      total_price: input.quantity * input.unit_price - (input.discount_amount || 0),
-      tax_amount: (input.quantity * input.unit_price - (input.discount_amount || 0)) * (input.tax_rate || 0.21),
+      total_price: totalPrice.toNumber(),
+      tax_amount: taxAmount.toNumber(),
     })
 
     return new StepResponse(lineItem, {

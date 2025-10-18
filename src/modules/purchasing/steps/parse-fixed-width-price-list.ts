@@ -65,7 +65,7 @@ export const parseFixedWidthPriceListStep = createStep(
   "parse-fixed-width-price-list-step",
   async (input: ParseFixedWidthPriceListStepInput, { container }): Promise<ParseResult> => {
     const productModuleService = container.resolve(Modules.PRODUCT)
-    const remoteQuery = container.resolve("REMOTE_QUERY") as any
+    const remoteQuery = container.resolve(Modules.REMOTE_QUERY) as any
     const purchasingService = container.resolve("purchasingService")
     const featureFlag = process.env.MEDUSA_FF_BRAND_AWARE_PURCHASING === "true"
 
@@ -152,15 +152,20 @@ export const parseFixedWidthPriceListStep = createStep(
           continue
         }
 
-        if (!row.cost_price && row.cost_price !== '0') {
-          errors.push(`Row ${rowNum}: cost_price is required`)
+        // TEM-173: Parse pricing fields (gross_price, discount_code, discount_percentage, net_price)
+        const grossPrice = row.gross_price ? parseFloat(row.gross_price) : undefined
+        const discountPercentage = row.discount_percentage ? parseFloat(row.discount_percentage) : undefined
+
+        // Support both net_price (new) and cost_price (legacy) for backward compatibility
+        const netPrice = row.net_price || row.cost_price
+        if (!netPrice && netPrice !== '0') {
+          errors.push(`Row ${rowNum}: net_price or cost_price is required`)
           continue
         }
 
-        // Parse cost price
-        const costPrice = parseFloat(String(row.cost_price))
-        if (isNaN(costPrice)) {
-          errors.push(`Row ${rowNum}: Invalid cost_price value: "${row.cost_price}"`)
+        const parsedNetPrice = parseFloat(String(netPrice))
+        if (isNaN(parsedNetPrice)) {
+          errors.push(`Row ${rowNum}: Invalid net_price value: "${netPrice}"`)
           continue
         }
 
@@ -260,13 +265,24 @@ export const parseFixedWidthPriceListStep = createStep(
         const quantity = row.quantity ? parseInt(String(row.quantity)) : 1
         const leadTimeDays = row.lead_time_days ? parseInt(String(row.lead_time_days)) : undefined
 
+        // TEM-173: Create processed item with new discount and product information fields
         const processedItem: ParsedPriceListItem = {
           product_variant_id: productVariant.id,
           product_id: product.id,
           supplier_sku: row.supplier_sku?.trim() || undefined,
           variant_sku: productVariant.sku || undefined,
-          cost_price: costPrice,
+
+          // Pricing fields (TEM-173)
+          gross_price: isNaN(grossPrice!) ? undefined : grossPrice,
+          discount_code: row.discount_code?.trim() || undefined,
+          discount_percentage: isNaN(discountPercentage!) ? undefined : discountPercentage,
+          net_price: parsedNetPrice,
+
+          // Product information fields (TEM-173)
           description: row.description?.trim() || undefined,
+          category: row.category?.trim() || undefined,
+
+          // Other fields
           quantity: isNaN(quantity) ? 1 : quantity,
           lead_time_days: isNaN(leadTimeDays!) ? undefined : leadTimeDays,
           notes: row.notes?.trim() || undefined,

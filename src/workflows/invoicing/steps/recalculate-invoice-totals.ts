@@ -1,4 +1,5 @@
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
+import { MathBN } from "@medusajs/framework/utils"
 import { INVOICING_MODULE } from "../../../modules/invoicing"
 
 export const recalculateInvoiceTotalsStep = createStep(
@@ -10,17 +11,31 @@ export const recalculateInvoiceTotalsStep = createStep(
       invoice_id,
     })
 
-    const subtotal = lineItems.reduce((sum, item) => sum + item.total_price, 0)
-    const taxAmount = lineItems.reduce((sum, item) => sum + item.tax_amount, 0)
-    const invoice = await invoicingService.retrieveInvoice(invoice_id)
+    // Calculate subtotal from unit_price * quantity (before discounts)
+    // Use MathBN.sum for proper BigNumber handling
+    const subtotal = MathBN.sum(
+      ...lineItems.map(item => MathBN.mult(item.unit_price || 0, item.quantity || 0))
+    )
+    
+    const discountAmount = MathBN.sum(
+      ...lineItems.map(item => item.discount_amount || 0)
+    )
+    
+    const taxAmount = MathBN.sum(
+      ...lineItems.map(item => item.tax_amount || 0)
+    )
 
-    const totalAmount = subtotal + taxAmount - (invoice.discount_amount || 0)
+    // Total = subtotal - discount + tax
+    const subtotalAfterDiscount = MathBN.sub(subtotal, discountAmount)
+    const totalAmount = MathBN.add(subtotalAfterDiscount, taxAmount)
 
     const updatedInvoice = await invoicingService.updateInvoices(
       {
-        subtotal,
-        tax_amount: taxAmount,
-        total_amount: totalAmount,
+        id: invoice_id,
+        subtotal: subtotal.toNumber(),
+        tax_amount: taxAmount.toNumber(),
+        discount_amount: discountAmount.toNumber(),
+        total_amount: totalAmount.toNumber(),
       },
       { id: invoice_id }
     )

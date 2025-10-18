@@ -25,15 +25,39 @@ export const PARSER_TEMPLATES: Record<string, ParserTemplate> = {
       skip_rows: 0,
       column_mapping: {
         supplier_sku: ["supplier_sku", "sku", "part_number", "onderdeelnummer"],
-        cost_price: ["cost_price", "price", "net_price", "lijstprijs"],
+        net_price: ["net_price", "cost_price", "price", "lijstprijs"],
         variant_sku: ["variant_sku", "internal_sku", "our_sku"],
         description: ["description", "desc", "name", "omschrijving"],
+        category: ["category", "product_category", "cat", "categorie"],
         quantity: ["quantity", "qty", "amount"],
         lead_time_days: ["lead_time", "lead_time_days", "delivery_time"],
         notes: ["notes", "comment", "remarks"]
       }
     }
   },
+  // TEM-173: CSV template with gross price and discount structure
+  "standard-csv-with-discounts": {
+    id: "standard-csv-with-discounts",
+    name: "Standard CSV with Gross/Discount/Net",
+    type: "csv",
+    config: {
+      delimiter: ",",
+      quote_char: "\"",
+      has_header: true,
+      skip_rows: 0,
+      column_mapping: {
+        variant_sku: ["variant_sku", "sku"],
+        gross_price: ["gross_price", "list_price"],
+        discount_code: ["discount_code", "disc_code"],
+        discount_percentage: ["discount_%", "disc_pct"],
+        net_price: ["net_price", "cost_price"],
+        description: ["description", "product_desc"],
+        category: ["category", "product_category"],
+        quantity: ["quantity", "qty"]
+      }
+    }
+  },
+  // TEM-173: Updated Caterpillar fixed-width template with discount fields
   "caterpillar-fixed-width": {
     id: "caterpillar-fixed-width",
     name: "Caterpillar Fixed Width",
@@ -43,23 +67,25 @@ export const PARSER_TEMPLATES: Record<string, ParserTemplate> = {
       fixed_width_columns: [
         { field: "supplier_sku", start: 0, width: 18 },
         { field: "description", start: 18, width: 40 },
-        { field: "cost_price", start: 69, width: 13 },
+        { field: "category", start: 58, width: 11 },
+        { field: "gross_price", start: 69, width: 13 },
         { field: "net_price", start: 82, width: 13 },
-        { field: "currency", start: 95, width: 3 },
+        { field: "discount_code", start: 95, width: 1 },
+        { field: "currency", start: 96, width: 2 },
         { field: "availability", start: 98, width: 1 },
         { field: "lead_time", start: 99, width: 2 },
         { field: "brand", start: 101, width: 2 },
-        { field: "category", start: 103, width: 2 },
-        { field: "subcategory", start: 105, width: 2 },
-        { field: "weight", start: 107, width: 6 },
-        { field: "dimensions", start: 113, width: 15 },
-        { field: "notes", start: 128, width: 20 }
+        { field: "subcategory", start: 103, width: 2 },
+        { field: "weight", start: 105, width: 6 },
+        { field: "dimensions", start: 111, width: 15 },
+        { field: "notes", start: 126, width: 20 }
       ],
       transformations: {
-        cost_price: { type: "divide", divisor: 100000 },
-        net_price: { type: "divide", divisor: 100000 },
+        gross_price: { type: "divide", divisor: 100 },
+        net_price: { type: "divide", divisor: 100 },
         supplier_sku: { type: "trim" },
-        description: { type: "trim" }
+        description: { type: "trim" },
+        category: { type: "trim" }
       }
     }
   },
@@ -74,9 +100,10 @@ export const PARSER_TEMPLATES: Record<string, ParserTemplate> = {
       skip_rows: 0,
       column_mapping: {
         supplier_sku: ["supplier_sku", "sku", "part_number"],
-        cost_price: ["cost_price", "price", "net_price"],
+        net_price: ["net_price", "cost_price", "price"],
         variant_sku: ["variant_sku", "internal_sku"],
-        description: ["description", "desc", "name"]
+        description: ["description", "desc", "name"],
+        category: ["category", "product_category"]
       }
     }
   }
