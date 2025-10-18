@@ -3,6 +3,7 @@ import { INVOICING_MODULE } from "../../../../modules/invoicing"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { updateInvoiceWorkflow } from "../../../../workflows/invoicing/update-invoice-workflow"
 import { changeInvoiceStatusWorkflow } from "../../../../workflows/invoicing/change-invoice-status-workflow"
+import { deleteInvoiceWorkflow } from "../../../../workflows/invoicing/delete-invoice-workflow"
 
 interface UpdateInvoiceRequest {
   status?: string
@@ -139,36 +140,38 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
 
 export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
   try {
-    const invoicingService: any = req.scope.resolve(INVOICING_MODULE)
     const invoiceId = req.params.id
-    
-    // Check if invoice exists and can be deleted
-    const invoice = await invoicingService.retrieveInvoice(invoiceId)
-    
-    if (!invoice) {
-      return res.status(404).json({ 
-        error: "Invoice not found",
-        details: `Invoice with id ${invoiceId} does not exist`
-      })
-    }
-    
-    // Only allow deletion of draft invoices
-    if (invoice.status !== "draft") {
-      return res.status(400).json({ 
+
+    // Use workflow for safe deletion with cascade
+    const { result } = await deleteInvoiceWorkflow(req.scope).run({
+      input: {
+        invoice_id: invoiceId,
+      }
+    })
+
+    res.json({
+      success: true,
+      message: `Invoice ${result.invoice_number} deleted successfully`
+    })
+  } catch (error: any) {
+    console.error("Error deleting invoice:", error)
+
+    // Handle specific error types
+    if (error.message?.includes("Only draft invoices")) {
+      return res.status(400).json({
         error: "Cannot delete invoice",
         details: "Only draft invoices can be deleted"
       })
     }
-    
-    await invoicingService.deleteInvoices([invoiceId])
-    
-    res.json({ 
-      success: true,
-      message: `Invoice ${invoice.invoice_number} deleted successfully`
-    })
-  } catch (error) {
-    console.error("Error deleting invoice:", error)
-    res.status(500).json({ 
+
+    if (error.type === "not_found" || error.message?.includes("not found")) {
+      return res.status(404).json({
+        error: "Invoice not found",
+        details: `Invoice with id ${invoiceId} does not exist`
+      })
+    }
+
+    res.status(500).json({
       error: "Failed to delete invoice",
       details: error instanceof Error ? error.message : "Unknown error"
     })

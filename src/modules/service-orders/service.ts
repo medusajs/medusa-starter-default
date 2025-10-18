@@ -1,4 +1,4 @@
-import { MedusaService } from "@medusajs/framework/utils"
+import { MedusaService, Modules } from "@medusajs/framework/utils"
 import ServiceOrder, { ServiceOrderType, ServiceOrderPriority, ServiceOrderStatus } from "./models/service-order"
 import ServiceOrderItem, { ServiceOrderItemStatus } from "./models/service-order-item" 
 import ServiceOrderTimeEntry, { WorkCategory } from "./models/service-order-time-entry"
@@ -52,9 +52,11 @@ class ServiceOrdersService extends MedusaService({
   ServiceOrderStatusHistory,
   ServiceOrderComment,
 }) {
+  protected eventBusService_: any
 
   constructor(container: any) {
     super(...arguments)
+    this.eventBusService_ = container[Modules.EVENT_BUS]
   }
   
   async generateServiceOrderNumber(): Promise<string> {
@@ -128,6 +130,22 @@ class ServiceOrdersService extends MedusaService({
         reason,
       })
 
+      // Emit service_order.updated event
+      try {
+        await this.eventBusService_.emit({
+          name: "service_order.updated",
+          data: {
+            id: id,
+            status: newStatus,
+            previous_status: oldStatus,
+            changed_by: userId,
+          },
+        })
+      } catch (eventError) {
+        // Log but don't fail the status update if event emission fails
+        console.error(`Failed to emit service_order.updated event for ${id}:`, eventError)
+      }
+
       // Log status change event
       try {
         const eventTemplate = ServiceOrderEventLogger.EventTemplates.statusChanged(oldStatus, newStatus, reason)
@@ -139,7 +157,7 @@ class ServiceOrdersService extends MedusaService({
       } catch (eventError) {
         // Don't fail the main operation if event logging fails
       }
-      
+
       return updatedServiceOrder
       
     } catch (error) {

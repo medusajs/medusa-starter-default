@@ -60,7 +60,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
         "customer_email",
         "created_at",
         "updated_at",
-        "customer.*", // Get customer details
+        "customer.id",
+        "customer.first_name",
+        "customer.last_name",
+        "customer.email",
+        "customer.company_name",
       ],
       filters,
       pagination: {

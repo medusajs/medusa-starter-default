@@ -1,9 +1,10 @@
-import { 
-  createStep, 
-  StepResponse 
+import {
+  createStep,
+  StepResponse
 } from "@medusajs/framework/workflows-sdk"
-import { 
-  ContainerRegistrationKeys 
+import {
+  ContainerRegistrationKeys,
+  Modules
 } from "@medusajs/framework/utils"
 import { INVOICING_MODULE } from "../../../modules/invoicing"
 import { SERVICE_ORDERS_MODULE } from "../../../modules/service-orders"
@@ -121,7 +122,10 @@ export const convertServiceOrderToInvoiceStep = createStep(
     // Add parts/items used
     if (serviceOrder.items?.length > 0) {
       for (const item of serviceOrder.items) {
-        if (item.quantity_used > 0) {
+        // Use quantity_used if set, otherwise fall back to quantity_needed
+        const quantity = item.quantity_used > 0 ? item.quantity_used : item.quantity_needed
+
+        if (quantity > 0) {
           await invoicingService.addLineItemToInvoice({
             invoice_id: invoice.id,
             item_type: "product",
@@ -131,7 +135,7 @@ export const convertServiceOrderToInvoiceStep = createStep(
             title: item.title,
             description: item.description ?? undefined,
             sku: item.sku ?? undefined,
-            quantity: item.quantity_used,
+            quantity: quantity,
             unit_price: item.unit_price,
             tax_rate: 0.21,
           })
@@ -141,7 +145,18 @@ export const convertServiceOrderToInvoiceStep = createStep(
     
     // Recalculate totals
     await invoicingService.recalculateInvoiceTotals(invoice.id)
-    
+
+    // Create the module link between invoice and customer
+    const remoteLink = container.resolve(ContainerRegistrationKeys.REMOTE_LINK)
+    await remoteLink.create({
+      [INVOICING_MODULE]: {
+        invoice_id: invoice.id,
+      },
+      [Modules.CUSTOMER]: {
+        customer_id: serviceOrder.customer_id,
+      },
+    })
+
     return new StepResponse(invoice, invoice.id)
   },
   async (invoiceId: string, { container }) => {

@@ -202,169 +202,276 @@ export const generateInvoicePdfStep = createStep(
       }
     }
 
-    // Build PDF document definition
+    // Modern color palette - elegant and minimalistic
+    const colorPalette = {
+      primary: invoiceSettings.template.header_color || '#1a1a2e',      // Deep navy/custom
+      accent: '#0f4c75',           // Sophisticated blue
+      accentLight: '#3282b8',      // Light blue for highlights
+      success: '#16db93',          // Modern mint green
+      text: {
+        primary: '#2d3436',        // Almost black, softer than pure black
+        secondary: '#636e72',      // Medium grey
+        muted: '#95a5a6',          // Light grey
+      },
+      background: {
+        light: '#f8f9fa',          // Very light grey
+        lighter: '#ffffff',        // Pure white
+        subtle: '#f1f3f5',         // Subtle grey
+      }
+    }
+
+    // Build PDF document definition with modern design system
     const docDefinition: TDocumentDefinitions = {
       pageSize: 'A4',
-      pageMargins: [40, 60, 40, 60],
+      pageMargins: [50, 70, 50, 70], // Increased margins for elegance
       content: [],
       styles: {
         header: {
-          fontSize: 18,
+          fontSize: 20,
           bold: true,
-          color: invoiceSettings.template.header_color,
-          margin: [0, 0, 0, 10] as [number, number, number, number]
+          color: colorPalette.primary,
+          margin: [0, 0, 0, 4] as [number, number, number, number]
         },
         subheader: {
-          fontSize: 14,
+          fontSize: 11,
           bold: true,
-          color: invoiceSettings.template.header_color,
-          margin: [0, 10, 0, 5] as [number, number, number, number]
+          color: colorPalette.text.secondary,
+          margin: [0, 0, 0, 8] as [number, number, number, number]
         },
         tableHeader: {
           bold: true,
+          fontSize: 10,
+          color: colorPalette.text.primary,
+          margin: [0, 0, 0, 0] as [number, number, number, number]
+        },
+        invoiceTitle: {
           fontSize: 11,
-          color: 'white',
-          fillColor: invoiceSettings.template.header_color
+          bold: true,
+          color: colorPalette.text.muted,
+          alignment: 'right'
         },
         invoiceNumber: {
-          fontSize: 24,
+          fontSize: 32,
           bold: true,
-          color: '#d32f2f',
-          alignment: 'right'
+          color: colorPalette.primary,
+          alignment: 'right',
+          margin: [0, 4, 0, 0] as [number, number, number, number]
+        },
+        body: {
+          fontSize: 10,
+          color: colorPalette.text.primary,
+          lineHeight: 1.4
         },
         small: {
           fontSize: 9,
-          color: '#666'
+          color: colorPalette.text.secondary,
+          lineHeight: 1.3
         },
         italic: {
           fontSize: 9,
           italics: true,
-          color: '#666'
+          color: colorPalette.text.muted,
+          lineHeight: 1.3
+        },
+        label: {
+          fontSize: 9,
+          color: colorPalette.text.secondary,
+          bold: true
+        },
+        value: {
+          fontSize: 10,
+          color: colorPalette.text.primary
+        },
+        totalLabel: {
+          fontSize: 13,
+          bold: true,
+          color: colorPalette.primary
+        },
+        totalValue: {
+          fontSize: 16,
+          bold: true,
+          color: colorPalette.primary
         }
+      },
+      defaultStyle: {
+        font: 'Roboto'
       }
     }
 
     const content: Content[] = []
 
-    // Header with company info and invoice number
+    // Modern header with elegant spacing
     content.push({
       columns: [
         {
           width: '*',
           stack: [
             { text: invoiceSettings.company.name, style: 'header' },
-            { text: invoiceSettings.company.address.street, fontSize: 10 },
-            { text: `${invoiceSettings.company.address.postal_code} ${invoiceSettings.company.address.city}`, fontSize: 10 },
-            { text: invoiceSettings.company.address.country, fontSize: 10 },
-            { text: `VAT: ${invoiceSettings.company.legal.vat_number}`, fontSize: 10, margin: [0, 5, 0, 0] as [number, number, number, number] },
-            ...(invoiceSettings.company.contact.email ? [{ text: invoiceSettings.company.contact.email, fontSize: 10 }] : []),
-            ...(invoiceSettings.company.contact.phone ? [{ text: invoiceSettings.company.contact.phone, fontSize: 10 }] : []),
+            { text: invoiceSettings.company.address.street, fontSize: 10, color: colorPalette.text.secondary, margin: [0, 8, 0, 2] as [number, number, number, number] },
+            { text: `${invoiceSettings.company.address.postal_code} ${invoiceSettings.company.address.city}`, fontSize: 10, color: colorPalette.text.secondary, margin: [0, 0, 0, 2] as [number, number, number, number] },
+            { text: invoiceSettings.company.address.country, fontSize: 10, color: colorPalette.text.secondary },
+            {
+              canvas: [{
+                type: 'line',
+                x1: 0, y1: 0,
+                x2: 80, y2: 0,
+                lineWidth: 2,
+                lineColor: colorPalette.accentLight
+              }],
+              margin: [0, 12, 0, 12] as [number, number, number, number]
+            },
+            { text: `VAT ${invoiceSettings.company.legal.vat_number}`, fontSize: 9, color: colorPalette.text.muted, bold: true },
+            ...(invoiceSettings.company.contact.email ? [{ text: invoiceSettings.company.contact.email, fontSize: 9, color: colorPalette.text.secondary, margin: [0, 4, 0, 0] as [number, number, number, number] }] : []),
+            ...(invoiceSettings.company.contact.phone ? [{ text: invoiceSettings.company.contact.phone, fontSize: 9, color: colorPalette.text.secondary, margin: [0, 2, 0, 0] as [number, number, number, number] }] : []),
           ]
         },
         {
           width: 'auto',
           stack: [
-            { text: `FACTUUR`, fontSize: 16, bold: true, alignment: 'right' },
+            { text: 'FACTUUR', style: 'invoiceTitle' },
             { text: invoiceData.invoice_number, style: 'invoiceNumber' },
           ]
         }
       ],
-      margin: [0, 0, 0, 20] as [number, number, number, number]
+      margin: [0, 0, 0, 40] as [number, number, number, number]
     })
 
-    // Customer and invoice details
+    // Customer and invoice details with modern card-like styling
     content.push({
       columns: [
         {
           width: '*',
           stack: [
-            { text: 'FACTUUR AAN:', style: 'subheader' },
-            { 
-              text: customerData?.company_name || 
+            { text: 'FACTUUR AAN', style: 'subheader' },
+            {
+              text: customerData?.company_name ||
                     `${customerData?.first_name || ''} ${customerData?.last_name || ''}`.trim() || 'Customer',
-              bold: true 
+              fontSize: 12,
+              bold: true,
+              color: colorPalette.text.primary,
+              margin: [0, 0, 0, 6] as [number, number, number, number]
             },
             ...(invoiceData.billing_address ? [
-              { text: invoiceData.billing_address.address_1 || '', fontSize: 10 },
-              { text: `${invoiceData.billing_address.postal_code || ''} ${invoiceData.billing_address.city || ''}`, fontSize: 10 },
-              { text: (invoiceData.billing_address.country_code as string)?.toUpperCase() || '', fontSize: 10 },
+              { text: invoiceData.billing_address.address_1 || '', fontSize: 9, color: colorPalette.text.secondary, margin: [0, 0, 0, 2] as [number, number, number, number] },
+              { text: `${invoiceData.billing_address.postal_code || ''} ${invoiceData.billing_address.city || ''}`, fontSize: 9, color: colorPalette.text.secondary, margin: [0, 0, 0, 2] as [number, number, number, number] },
+              { text: (invoiceData.billing_address.country_code as string)?.toUpperCase() || '', fontSize: 9, color: colorPalette.text.secondary },
             ] : []),
-            { text: (customerData?.email || invoiceData.customer_email) || '', fontSize: 10, margin: [0, 5, 0, 0] as [number, number, number, number] },
+            { text: (customerData?.email || invoiceData.customer_email) || '', fontSize: 9, color: colorPalette.accentLight, margin: [0, 8, 0, 0] as [number, number, number, number] },
           ]
         },
         {
-          width: 'auto',
+          width: 200,
           stack: [
-            { text: 'FACTUURGEGEVENS:', style: 'subheader' },
+            { text: 'FACTUURGEGEVENS', style: 'subheader' },
             {
               table: {
-                widths: [100, 100],
+                widths: ['*', 'auto'],
                 body: [
                   [
-                    { text: 'Factuurdatum:', fontSize: 10 },
-                    { text: formatDate(invoiceData.invoice_date, invoiceSettings.template.date_format), fontSize: 10, alignment: 'right' as const }
+                    { text: 'Factuurdatum', style: 'label', border: [false, false, false, false] },
+                    { text: formatDate(invoiceData.invoice_date, invoiceSettings.template.date_format), style: 'value', alignment: 'right' as const, border: [false, false, false, false] }
                   ],
                   ...(invoiceSettings.template.show_due_date ? [[
-                    { text: 'Vervaldatum:', fontSize: 10 },
-                    { text: formatDate(invoiceData.due_date, invoiceSettings.template.date_format), fontSize: 10, alignment: 'right' as const }
+                    { text: 'Vervaldatum', style: 'label', border: [false, false, false, false] },
+                    { text: formatDate(invoiceData.due_date, invoiceSettings.template.date_format), style: 'value', alignment: 'right' as const, border: [false, false, false, false] }
                   ]] : []),
                   ...(invoiceSettings.template.show_payment_terms && invoiceData.payment_terms ? [[
-                    { text: 'Betalingstermijn:', fontSize: 10 },
-                    { text: invoiceData.payment_terms, fontSize: 10, alignment: 'right' as const }
+                    { text: 'Betalingstermijn', style: 'label', border: [false, false, false, false] },
+                    { text: invoiceData.payment_terms, style: 'value', alignment: 'right' as const, border: [false, false, false, false] }
                   ]] : [])
                 ]
               },
-              layout: 'noBorders'
+              layout: {
+                paddingTop: () => 4,
+                paddingBottom: () => 4,
+                paddingLeft: () => 0,
+                paddingRight: () => 0,
+                hLineWidth: () => 0,
+                vLineWidth: () => 0
+              }
             }
           ]
         }
       ],
-      margin: [0, 0, 0, 30] as [number, number, number, number]
+      margin: [0, 0, 0, 40] as [number, number, number, number]
     } as any)
 
-    // Line items table
+    // Modern line items table with clean design
     const lineItemsBody: any[] = [
       [
-        { text: 'Aantal', style: 'tableHeader' },
-        { text: 'Beschrijving', style: 'tableHeader' },
-        { text: 'Eenheidsprijs', style: 'tableHeader', alignment: 'right' },
-        { text: 'BTW', style: 'tableHeader', alignment: 'right' },
-        { text: 'Totaal', style: 'tableHeader', alignment: 'right' }
+        { text: 'QTY', style: 'tableHeader', alignment: 'center' as const },
+        { text: 'BESCHRIJVING', style: 'tableHeader' },
+        { text: 'PRIJS', style: 'tableHeader', alignment: 'right' as const },
+        { text: 'BTW', style: 'tableHeader', alignment: 'center' as const },
+        { text: 'TOTAAL', style: 'tableHeader', alignment: 'right' as const }
       ]
     ]
 
-    // Add line items with notes
+    // Add line items with enhanced styling
     if (invoiceData.line_items && invoiceData.line_items.length > 0) {
       for (const item of invoiceData.line_items) {
         if (!item) continue
-        
-        // Build description stack with title, description, and notes
+
+        // Build description stack with elegant formatting
         const descriptionStack: any[] = [
-          { text: item.title || '', bold: true }
+          { text: item.title || '', fontSize: 10, bold: true, color: colorPalette.text.primary }
         ]
-        
+
         if (item.description) {
-          descriptionStack.push({ text: item.description, style: 'small', margin: [0, 2, 0, 0] as [number, number, number, number] })
+          descriptionStack.push({
+            text: item.description,
+            fontSize: 9,
+            color: colorPalette.text.secondary,
+            margin: [0, 3, 0, 0] as [number, number, number, number]
+          })
         }
-        
+
         if (item.notes) {
-          descriptionStack.push({ 
-            text: `Opmerking: ${item.notes}`, 
-            style: 'italic', 
-            margin: [0, 2, 0, 0] as [number, number, number, number] 
+          descriptionStack.push({
+            text: `${item.notes}`,
+            fontSize: 8,
+            italics: true,
+            color: colorPalette.text.muted,
+            margin: [0, 3, 0, 0] as [number, number, number, number]
           })
         }
 
         if (item.sku) {
-          descriptionStack.push({ text: `SKU: ${item.sku}`, style: 'small', margin: [0, 2, 0, 0] as [number, number, number, number] })
+          descriptionStack.push({
+            text: `SKU: ${item.sku}`,
+            fontSize: 8,
+            color: colorPalette.text.muted,
+            margin: [0, 3, 0, 0] as [number, number, number, number]
+          })
         }
 
         lineItemsBody.push([
-          { text: (item.quantity || 0).toString(), alignment: 'center' as const },
+          {
+            text: (item.quantity || 0).toString(),
+            alignment: 'center' as const,
+            fontSize: 10,
+            color: colorPalette.text.primary
+          },
           { stack: descriptionStack },
-          { text: formatCurrency(item.unit_price || 0, invoiceData.currency_code, invoiceSettings.template.currency_format), alignment: 'right' as const },
-          { text: `${((item.tax_rate || 0) * 100).toFixed(0)}%`, alignment: 'right' as const },
-          { text: formatCurrency(item.total_price || 0, invoiceData.currency_code, invoiceSettings.template.currency_format), alignment: 'right' as const }
+          {
+            text: formatCurrency(item.unit_price || 0, invoiceData.currency_code, invoiceSettings.template.currency_format),
+            alignment: 'right' as const,
+            fontSize: 10,
+            color: colorPalette.text.primary
+          },
+          {
+            text: `${((item.tax_rate || 0) * 100).toFixed(0)}%`,
+            alignment: 'center' as const,
+            fontSize: 9,
+            color: colorPalette.text.secondary
+          },
+          {
+            text: formatCurrency(item.total_price || 0, invoiceData.currency_code, invoiceSettings.template.currency_format),
+            alignment: 'right' as const,
+            fontSize: 10,
+            bold: true,
+            color: colorPalette.text.primary
+          }
         ])
       }
     }
@@ -372,97 +479,216 @@ export const generateInvoicePdfStep = createStep(
     content.push({
       table: {
         headerRows: 1,
-        widths: [50, '*', 80, 50, 80],
+        widths: [45, '*', 75, 45, 85],
         body: lineItemsBody
       },
       layout: {
         fillColor: (rowIndex: number) => {
-          return rowIndex === 0 ? '#2c5530' : (rowIndex % 2 === 0 ? '#f9f9f9' : null)
+          return rowIndex === 0 ? colorPalette.background.subtle : (rowIndex % 2 === 0 ? null : colorPalette.background.light)
         },
         hLineWidth: (i: number, node: any) => {
-          return (i === 0 || i === node.table.body.length) ? 1 : 0.5
+          if (i === 0) return 0
+          if (i === 1) return 2
+          if (i === node.table.body.length) return 2
+          return 0
         },
         vLineWidth: () => 0,
-        hLineColor: () => '#ddd',
-        paddingLeft: () => 8,
-        paddingRight: () => 8,
-        paddingTop: () => 10,
-        paddingBottom: () => 10
+        hLineColor: (i: number, node: any) => {
+          if (i === 1) return colorPalette.accentLight
+          if (i === node.table.body.length) return colorPalette.background.subtle
+          return colorPalette.background.subtle
+        },
+        paddingLeft: () => 12,
+        paddingRight: () => 12,
+        paddingTop: () => 12,
+        paddingBottom: () => 12
       },
-      margin: [0, 0, 0, 20] as [number, number, number, number]
+      margin: [0, 0, 0, 30] as [number, number, number, number]
     })
 
-    // Totals section
+    // Modern totals section with elegant card design
     content.push({
       columns: [
         { width: '*', text: '' },
         {
-          width: 250,
+          width: 260,
           stack: [
             {
               table: {
-                widths: ['*', 100],
+                widths: ['*', 'auto'],
                 body: [
                   [
-                    { text: 'Subtotaal:', fontSize: 11 },
-                    { text: formatCurrency(invoiceData.subtotal, invoiceData.currency_code, invoiceSettings.template.currency_format), fontSize: 11, alignment: 'right' as const }
+                    {
+                      text: 'Subtotaal',
+                      fontSize: 10,
+                      color: colorPalette.text.secondary,
+                      border: [false, false, false, false]
+                    },
+                    {
+                      text: formatCurrency(invoiceData.subtotal, invoiceData.currency_code, invoiceSettings.template.currency_format),
+                      fontSize: 10,
+                      color: colorPalette.text.primary,
+                      alignment: 'right' as const,
+                      border: [false, false, false, false]
+                    }
                   ],
                   ...(invoiceData.discount_amount > 0 ? [[
-                    { text: 'Korting:', fontSize: 11 },
-                    { text: `-${formatCurrency(invoiceData.discount_amount, invoiceData.currency_code, invoiceSettings.template.currency_format)}`, fontSize: 11, alignment: 'right' as const }
+                    {
+                      text: 'Korting',
+                      fontSize: 10,
+                      color: colorPalette.text.secondary,
+                      border: [false, false, false, false]
+                    },
+                    {
+                      text: `-${formatCurrency(invoiceData.discount_amount, invoiceData.currency_code, invoiceSettings.template.currency_format)}`,
+                      fontSize: 10,
+                      color: colorPalette.success,
+                      alignment: 'right' as const,
+                      border: [false, false, false, false]
+                    }
                   ]] : []),
                   [
-                    { text: 'BTW:', fontSize: 11 },
-                    { text: formatCurrency(invoiceData.tax_amount, invoiceData.currency_code, invoiceSettings.template.currency_format), fontSize: 11, alignment: 'right' as const }
-                  ],
-                  [
-                    { text: 'Totaal:', fontSize: 14, bold: true, color: invoiceSettings.template.header_color },
-                    { text: formatCurrency(invoiceData.total_amount, invoiceData.currency_code, invoiceSettings.template.currency_format), fontSize: 14, bold: true, color: invoiceSettings.template.header_color, alignment: 'right' as const }
+                    {
+                      text: 'BTW',
+                      fontSize: 10,
+                      color: colorPalette.text.secondary,
+                      border: [false, false, false, false]
+                    },
+                    {
+                      text: formatCurrency(invoiceData.tax_amount, invoiceData.currency_code, invoiceSettings.template.currency_format),
+                      fontSize: 10,
+                      color: colorPalette.text.primary,
+                      alignment: 'right' as const,
+                      border: [false, false, false, false]
+                    }
                   ]
                 ]
               },
               layout: {
-                hLineWidth: (i: number, node: any) => {
-                  return i === node.table.body.length - 1 ? 2 : 0.5
-                },
+                paddingTop: () => 8,
+                paddingBottom: () => 8,
+                paddingLeft: () => 16,
+                paddingRight: () => 16,
+                hLineWidth: () => 0,
                 vLineWidth: () => 0,
-                hLineColor: (i: number, node: any) => {
-                  return i === node.table.body.length - 1 ? invoiceSettings.template.header_color : '#ddd'
-                },
-                paddingTop: () => 5,
-                paddingBottom: () => 5
+                fillColor: () => colorPalette.background.light
               }
+            },
+            {
+              canvas: [{
+                type: 'rect',
+                x: 0,
+                y: 0,
+                w: 260,
+                h: 50,
+                r: 4,
+                color: colorPalette.primary,
+                fillOpacity: 0.05
+              }],
+              absolutePosition: { x: 0, y: 0 }
+            },
+            {
+              table: {
+                widths: ['*', 'auto'],
+                body: [
+                  [
+                    {
+                      text: 'TOTAAL',
+                      style: 'totalLabel',
+                      border: [false, false, false, false]
+                    },
+                    {
+                      text: formatCurrency(invoiceData.total_amount, invoiceData.currency_code, invoiceSettings.template.currency_format),
+                      style: 'totalValue',
+                      alignment: 'right' as const,
+                      border: [false, false, false, false]
+                    }
+                  ]
+                ]
+              },
+              layout: {
+                paddingTop: () => 12,
+                paddingBottom: () => 12,
+                paddingLeft: () => 16,
+                paddingRight: () => 16,
+                hLineWidth: (i: number) => i === 0 ? 2 : 0,
+                vLineWidth: () => 0,
+                hLineColor: () => colorPalette.accentLight
+              },
+              margin: [0, 0, 0, 0] as [number, number, number, number]
             }
           ]
         }
       ]
     } as any)
 
-    // Notes section
+    // Notes section with elegant styling
     if (invoiceData.notes) {
       content.push({
-        text: 'Opmerkingen:',
-        style: 'subheader',
-        margin: [0, 20, 0, 5] as [number, number, number, number]
-      })
-      content.push({
-        text: invoiceData.notes,
-        fontSize: 10,
-        margin: [0, 0, 0, 20] as [number, number, number, number]
+        stack: [
+          {
+            text: 'OPMERKINGEN',
+            style: 'subheader',
+            margin: [0, 30, 0, 12] as [number, number, number, number]
+          },
+          {
+            table: {
+              widths: ['*'],
+              body: [[{
+                text: invoiceData.notes,
+                fontSize: 9,
+                color: colorPalette.text.primary,
+                border: [false, false, false, false],
+                lineHeight: 1.5
+              }]]
+            },
+            layout: {
+              paddingLeft: () => 16,
+              paddingRight: () => 16,
+              paddingTop: () => 12,
+              paddingBottom: () => 12,
+              hLineWidth: () => 0,
+              vLineWidth: () => 0,
+              fillColor: () => colorPalette.background.light
+            }
+          }
+        ]
       })
     }
 
-    // Footer
-    const footerText = invoiceSettings.template.footer_text || 
-      (invoiceSettings.company.legal.bank_account 
+    // Modern footer with payment information
+    const footerText = invoiceSettings.template.footer_text ||
+      (invoiceSettings.company.legal.bank_account
         ? `Gelieve het factuurbedrag over te maken op rekeningnummer ${invoiceSettings.company.legal.bank_account} met vermelding van het factuurnummer.`
         : 'Gelieve het factuurbedrag over te maken met vermelding van het factuurnummer.')
-    
+
     content.push({
-      text: footerText,
-      fontSize: 9,
-      color: '#666',
-      margin: [0, 30, 0, 0] as [number, number, number, number]
+      stack: [
+        {
+          canvas: [{
+            type: 'line',
+            x1: 0, y1: 0,
+            x2: 515, y2: 0,
+            lineWidth: 1,
+            lineColor: colorPalette.background.subtle
+          }],
+          margin: [0, 40, 0, 20] as [number, number, number, number]
+        },
+        {
+          text: footerText,
+          fontSize: 9,
+          color: colorPalette.text.secondary,
+          alignment: 'center',
+          lineHeight: 1.4
+        },
+        ...(invoiceSettings.company.contact.website ? [{
+          text: invoiceSettings.company.contact.website,
+          fontSize: 8,
+          color: colorPalette.accentLight,
+          alignment: 'center' as const,
+          margin: [0, 8, 0, 0] as [number, number, number, number]
+        }] : [])
+      ]
     })
 
     docDefinition.content = content

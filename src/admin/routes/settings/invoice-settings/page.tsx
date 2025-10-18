@@ -119,7 +119,7 @@ const useUpdateInvoiceSettings = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ settings }),
+        body: { settings },
       })
       
       return response.settings
@@ -583,7 +583,17 @@ const DefaultSettingsSection = ({ form }: { form: any }) => {
                   <Label size="small" weight="plus">
                     Due Days *
                   </Label>
-                  <Input {...field} type="number" min="1" placeholder="30" />
+                  <Input 
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) => {
+                      const value = e.target.value === "" ? 1 : parseInt(e.target.value, 10)
+                      field.onChange(value)
+                    }}
+                    type="number" 
+                    min="1" 
+                    placeholder="30" 
+                  />
                   <Text size="xsmall" className="text-ui-fg-subtle">
                     Number of days after invoice date when payment is due
                   </Text>
@@ -641,7 +651,12 @@ const DefaultSettingsSection = ({ form }: { form: any }) => {
                   </Label>
                   <div className="flex items-center gap-2">
                     <Input 
-                      {...field} 
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) => {
+                        const value = e.target.value === "" ? 0 : parseFloat(e.target.value)
+                        field.onChange(value)
+                      }}
                       type="number" 
                       min="0" 
                       max="1" 

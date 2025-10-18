@@ -1,8 +1,6 @@
-import React from "react"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import {
   Button,
-  Badge,
   Container,
   Heading,
   Text,
@@ -69,15 +67,6 @@ const formatCurrency = (amount: number, currencyCode = "EUR") => {
   }).format(amount) // Remove division by 100 - prices are already in correct format
 }
 
-// Format date for Belgian locale
-const formatDate = (date: string) => {
-  return new Intl.DateTimeFormat("nl-BE", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(date))
-}
-
 
 // Type badge component
 const InvoiceTypeBadge = ({ type }: { type: Invoice["invoice_type"] }) => {
@@ -139,9 +128,8 @@ const useInvoiceFilters = () => {
 }
 
 const useDeleteInvoice = () => {
-  const { t } = useCustomTranslation()
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(`/admin/invoices/${id}`, {
@@ -156,7 +144,7 @@ const useDeleteInvoice = () => {
         description: "The invoice has been successfully deleted.",
       })
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Error", {
         description: "An error occurred while deleting the invoice.",
       })
@@ -200,85 +188,83 @@ const useDownloadInvoice = () => {
 // Page constants
 const PAGE_SIZE = 20
 
-// Invoice actions component
-const InvoiceActions = ({ 
-  invoice, 
-  onViewClick 
-}: { 
+// Invoice actions component - following MedusaJS best practices
+const InvoiceActions = ({
+  invoice,
+  onViewClick
+}: {
   invoice: Invoice
-  onViewClick: (invoice: Invoice) => void 
+  onViewClick: (invoice: Invoice) => void
 }) => {
   const { t } = useCustomTranslation()
   const navigate = useNavigate()
   const downloadInvoice = useDownloadInvoice()
+  const deleteInvoice = useDeleteInvoice()
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (window.confirm(t("custom.invoices.deleteConfirm"))) {
+      deleteInvoice.mutate(invoice.id)
+    }
+  }
 
   return (
-    <div className="flex items-center gap-2">
-      <IconButton
-        size="small"
-        variant="transparent"
-        onClick={() => onViewClick(invoice)}
-        title="Bekijk factuur"
-      >
-        <Eye className="w-4 h-4" />
-      </IconButton>
-      
-      <IconButton
-        size="small"
-        variant="transparent"
-        onClick={() => downloadInvoice.mutate(invoice.id)}
-        disabled={downloadInvoice.isPending}
-        title="Download factuur"
-      >
-        <ArrowDownTray className="w-4 h-4" />
-      </IconButton>
-      
-      {invoice.status === "draft" && (
-        <IconButton
-          size="small"
-          variant="transparent"
-          onClick={() => navigate(`/invoices/${invoice.id}/edit`)}
-          title="Bewerk factuur"
-        >
-          <PencilSquare className="w-4 h-4" />
+    <DropdownMenu>
+      <DropdownMenu.Trigger asChild>
+        <IconButton size="small" variant="transparent">
+          <EllipsisHorizontal className="h-4 w-4" />
         </IconButton>
-      )}
-      
-      <DropdownMenu>
-        <DropdownMenu.Trigger asChild>
-          <IconButton size="small" variant="transparent">
-            <EllipsisHorizontal className="h-4 w-4" />
-          </IconButton>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Content side="bottom">
-          {invoice.status === "draft" && (
-            <>
-              <DropdownMenu.Item
-                onClick={(e) => {
-                  e.stopPropagation()
-                  navigate(`/invoices/${invoice.id}/edit`)
-                }}
-                className="[&>svg]:text-ui-fg-subtle flex items-center gap-2"
-              >
-                <PencilSquare className="h-4 w-4" />
-                {t("custom.general.edit")}
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onClick={(e) => {
-                  e.stopPropagation()
-                  // TODO: Add delete invoice functionality
-                  console.log('Delete invoice:', invoice.id)
-                }}
-                className="[&>svg]:text-ui-fg-subtle flex items-center gap-2 text-ui-fg-error"
-              >
-                <Trash className="h-4 w-4" />
-                {t("custom.general.delete")}
-              </DropdownMenu.Item>
-            </>
-          )}
-        </DropdownMenu.Content>
-      </DropdownMenu>
-    </div>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content side="bottom" align="end">
+        <DropdownMenu.Item
+          onClick={(e) => {
+            e.stopPropagation()
+            onViewClick(invoice)
+          }}
+          className="flex items-center gap-2"
+        >
+          <Eye className="h-4 w-4" />
+          {t("custom.invoices.view")}
+        </DropdownMenu.Item>
+
+        <DropdownMenu.Item
+          onClick={(e) => {
+            e.stopPropagation()
+            downloadInvoice.mutate(invoice.id)
+          }}
+          disabled={downloadInvoice.isPending}
+          className="flex items-center gap-2"
+        >
+          <ArrowDownTray className="h-4 w-4" />
+          {t("custom.invoices.download")}
+        </DropdownMenu.Item>
+
+        {invoice.status === "draft" && (
+          <>
+            <DropdownMenu.Separator />
+            <DropdownMenu.Item
+              onClick={(e) => {
+                e.stopPropagation()
+                navigate(`/invoices/${invoice.id}`)
+              }}
+              className="flex items-center gap-2"
+            >
+              <PencilSquare className="h-4 w-4" />
+              {t("custom.general.edit")}
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              onClick={handleDelete}
+              disabled={deleteInvoice.isPending}
+              className="flex items-center gap-2 text-ui-fg-error"
+            >
+              <Trash className="h-4 w-4" />
+              {t("custom.general.delete")}
+            </DropdownMenu.Item>
+          </>
+        )}
+      </DropdownMenu.Content>
+    </DropdownMenu>
   )
 }
 
@@ -322,13 +308,10 @@ const InvoicesListTable = () => {
     columnHelper.accessor("invoice_number", {
       header: t("custom.invoices.number"),
       enableSorting: true,
-      cell: ({ getValue, row }) => (
-        <button
-          onClick={() => handleViewInvoice(row.original)}
-          className="text-blue-600 hover:text-blue-800 font-medium cursor-pointer text-left"
-        >
+      cell: ({ getValue }) => (
+        <Text className="font-medium">
           {getValue()}
-        </button>
+        </Text>
       ),
     }),
     columnHelper.accessor("customer", {
@@ -336,14 +319,9 @@ const InvoicesListTable = () => {
       cell: ({ getValue }) => {
         const customer = getValue()
         if (!customer) return <Text className="text-ui-fg-muted">No customer</Text>
-        
+
         const name = customer.company_name || `${customer.first_name} ${customer.last_name}`
-        return (
-          <div>
-            <Text size="small" weight="plus">{name}</Text>
-            <Text size="xsmall" className="text-ui-fg-subtle">{customer.email}</Text>
-          </div>
-        )
+        return <Text>{name}</Text>
       },
     }),
     columnHelper.accessor("invoice_type", {
@@ -392,7 +370,8 @@ const InvoicesListTable = () => {
     filters,
     rowCount: count,
     getRowId: (row) => row.id,
-    onRowClick: (event, row) => {
+    onRowClick: (_, row) => {
+      // Navigate to invoice detail page (following MedusaJS best practices)
       navigate(`/invoices/${row.id}`)
     },
     search: {
