@@ -1,10 +1,11 @@
 import { Container, Heading, Text, Button, IconButton, toast, Copy } from "@medusajs/ui"
-import { Plus, Trash } from "@medusajs/icons"
+import { Plus, Trash, PencilSquare } from "@medusajs/icons"
 import { useState } from "react"
 import { useQueryClient, useMutation } from "@tanstack/react-query"
 import { Thumbnail } from "../common/thumbnail"
 import { formatCurrency } from "../../lib/format-currency"
 import { AddLineItemModal } from "../modals/add-line-item-modal"
+import { EditLineItemModal } from "../modals/edit-line-item-modal"
 
 interface InvoiceLineItem {
   id: string
@@ -23,6 +24,7 @@ interface InvoiceLineItem {
   variant_title?: string
   product_title?: string
   thumbnail?: string
+  notes?: string
 }
 
 interface Invoice {
@@ -39,6 +41,8 @@ interface InvoiceLineItemsWidgetProps {
 const InvoiceLineItemsWidget = ({ data: invoice }: InvoiceLineItemsWidgetProps) => {
   const queryClient = useQueryClient()
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingItem, setEditingItem] = useState<InvoiceLineItem | null>(null)
   const isDraft = invoice.status === 'draft'
 
   const deleteLineItemMutation = useMutation({
@@ -57,6 +61,16 @@ const InvoiceLineItemsWidget = ({ data: invoice }: InvoiceLineItemsWidgetProps) 
       toast.error(`Failed to delete line item: ${error.message}`)
     }
   })
+
+  const handleEditLineItem = (item: InvoiceLineItem) => {
+    setEditingItem(item)
+    setShowEditModal(true)
+  }
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false)
+    setEditingItem(null)
+  }
 
   return (
     <>
@@ -101,6 +115,11 @@ const InvoiceLineItemsWidget = ({ data: invoice }: InvoiceLineItemsWidgetProps) 
                       {item.description}
                     </Text>
                   )}
+                  {item.notes && (
+                    <Text size="small" className="text-ui-fg-muted italic">
+                      Note: {item.notes}
+                    </Text>
+                  )}
                 </div>
               </div>
 
@@ -124,13 +143,22 @@ const InvoiceLineItemsWidget = ({ data: invoice }: InvoiceLineItemsWidgetProps) 
                     {formatCurrency(item.total_price, invoice.currency_code)}
                   </Text>
                   {isDraft && (
-                    <IconButton
-                      size="small"
-                      variant="transparent"
-                      onClick={() => deleteLineItemMutation.mutate(item.id)}
-                    >
-                      <Trash />
-                    </IconButton>
+                    <>
+                      <IconButton
+                        size="small"
+                        variant="transparent"
+                        onClick={() => handleEditLineItem(item)}
+                      >
+                        <PencilSquare />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        variant="transparent"
+                        onClick={() => deleteLineItemMutation.mutate(item.id)}
+                      >
+                        <Trash />
+                      </IconButton>
+                    </>
                   )}
                 </div>
               </div>
@@ -150,6 +178,15 @@ const InvoiceLineItemsWidget = ({ data: invoice }: InvoiceLineItemsWidgetProps) 
           invoiceId={invoice.id}
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
+        />
+      )}
+
+      {showEditModal && editingItem && (
+        <EditLineItemModal
+          invoiceId={invoice.id}
+          lineItem={editingItem}
+          isOpen={showEditModal}
+          onClose={handleCloseEditModal}
         />
       )}
     </>

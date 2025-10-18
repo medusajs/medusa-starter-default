@@ -33,6 +33,7 @@ interface LineItemFormData {
   quantity: number
   unit_price: number
   tax_rate: number
+  notes?: string
 }
 
 export const AddLineItemModal = ({ invoiceId, isOpen, onClose }: AddLineItemModalProps) => {
@@ -54,6 +55,7 @@ export const AddLineItemModal = ({ invoiceId, isOpen, onClose }: AddLineItemModa
       quantity: 1,
       unit_price: 0,
       tax_rate: 0.21,
+      notes: '',
     }
   })
 
@@ -355,6 +357,15 @@ export const AddLineItemModal = ({ invoiceId, isOpen, onClose }: AddLineItemModa
                       step="0.01"
                       {...form.register('tax_rate', { valueAsNumber: true })}
                       placeholder="21"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Comment (appears on invoice)</Label>
+                    <Textarea 
+                      {...form.register('notes')} 
+                      rows={2}
+                      placeholder="Optional comment to display on the invoice"
                     />
                   </div>
 

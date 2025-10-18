@@ -164,6 +164,9 @@ module.exports = defineConfig({
       resolve: "./src/modules/brands",
     },
     {
+      resolve: "./src/modules/invoice-settings",
+    },
+    {
       resolve: "./src/modules/invoicing",
     },
     {

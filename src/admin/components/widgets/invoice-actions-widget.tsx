@@ -56,7 +56,7 @@ const InvoiceActionsWidget = ({ data: invoice }: InvoiceActionsWidgetProps) => {
   const handlePreviewPdf = async () => {
     try {
       setIsPreviewing(true)
-      const response = await fetch(`/admin/invoices/${invoice.id}/pdf`)
+      const response = await fetch(`/admin/invoices/${invoice.id}/pdf?preview=true`)
       if (!response.ok) throw new Error("Failed to load PDF")
 
       const data = await response.json()

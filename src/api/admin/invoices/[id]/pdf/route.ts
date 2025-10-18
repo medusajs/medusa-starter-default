@@ -10,11 +10,10 @@ interface RegenerateInvoicePdfRequest {
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
     const invoicingService: any = req.scope.resolve(INVOICING_MODULE)
-    const fileService = req.scope.resolve(Modules.FILE)
     const invoiceId = req.params.id
     const { download = false, preview = false } = req.query
     
-    // Get invoice to check if PDF already exists
+    // Get invoice
     const invoice = await invoicingService.retrieveInvoice(invoiceId)
     
     if (!invoice) {
@@ -24,75 +23,51 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       })
     }
     
-    let fileId = invoice.pdf_file_id
-    
-    // Generate PDF if it doesn't exist
-    if (!fileId) {
+    // Only generate PDF if explicitly requested (preview or download mode)
+    if (preview === 'true' || download === 'true') {
       const { result } = await generateInvoicePdfWorkflow(req.scope).run({
         input: {
           invoice_id: invoiceId
         }
       })
       
-      fileId = result.file.id
-    }
-    
-    // If we have an order_id and the documents plugin generated a PDF
-    if (invoice.order_id) {
-      const documentsService = req.scope.resolve("documentsModuleService")
-      
-      try {
-        // For download mode, use the plugin's direct PDF endpoint
-        if (download === 'true') {
-          return res.redirect(`/admin/orders/${invoice.order_id}/invoice/pdf`)
-        }
-        
-        // For preview mode, return the plugin's PDF URL
-        res.json({ 
-          file: {
-            id: invoice.pdf_file_id || `invoice-${invoice.id}`,
-            url: `/admin/orders/${invoice.order_id}/invoice/pdf`,
-            filename: `factuur-${invoice.invoice_number}.pdf`,
-            content_type: 'application/pdf'
-          },
-          invoice: {
-            id: invoice.id,
-            invoice_number: invoice.invoice_number,
-            status: invoice.status,
-            total_amount: invoice.total_amount,
-            currency_code: invoice.currency_code
-          }
-        })
-        return
-      } catch (documentsError) {
-        console.warn("Could not use documents plugin, falling back:", documentsError.message)
+      // Check if pdf_buffer exists
+      if (!result.pdf_buffer) {
+        throw new Error("PDF generation failed: no buffer returned")
       }
-    }
-
-    // Fallback: Check if we have a generated file
-    if (fileId) {
-      // Get file details
-      const file = await fileService.retrieveFile(fileId)
       
-      // For download mode, trigger actual file download
+      // Convert array back to Buffer
+      const pdfBuffer = Buffer.from(result.pdf_buffer)
+      
+      // For download mode, send as attachment
       if (download === 'true') {
-        res.setHeader('Content-Disposition', `attachment; filename="factuur-${invoice.invoice_number}.pdf"`)
+        res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoice_number}.pdf"`)
         res.setHeader('Content-Type', 'application/pdf')
-        
-        // Fetch file content and send as stream
-        const fileResponse = await fetch(file.url)
-        const fileBuffer = await fileResponse.arrayBuffer()
-        
-        res.send(Buffer.from(fileBuffer))
+        res.send(pdfBuffer)
         return
       }
       
-      // For preview mode or regular API call, return file info
+      // For preview mode, save temporarily and return URL
+      // Generate a temporary filename
+      const tempFilename = `private-${Date.now()}-invoice-${invoice.invoice_number}.pdf`
+      const fs = require('fs')
+      const path = require('path')
+      const staticDir = path.join(process.cwd(), 'static')
+      
+      // Ensure static directory exists
+      if (!fs.existsSync(staticDir)) {
+        fs.mkdirSync(staticDir, { recursive: true })
+      }
+      
+      const tempFilePath = path.join(staticDir, tempFilename)
+      fs.writeFileSync(tempFilePath, pdfBuffer)
+      
+      // Return URL to the temporary file
       res.json({ 
         file: {
-          id: file.id,
-          url: file.url,
-          filename: `factuur-${invoice.invoice_number}.pdf`,
+          id: tempFilename,
+          url: `/static/${tempFilename}`,
+          filename: `invoice-${invoice.invoice_number}.pdf`,
           content_type: 'application/pdf'
         },
         invoice: {
@@ -104,10 +79,10 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
         }
       })
     } else {
-      // No file available
+      // No preview or download requested
       return res.status(404).json({ 
         error: "PDF not available",
-        details: "Invoice PDF has not been generated yet"
+        details: "Please use preview=true or download=true to generate PDF"
       })
     }
   } catch (error) {
@@ -132,11 +107,32 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
         }
       })
       
+      // Check if pdf_buffer exists
+      if (!result.pdf_buffer) {
+        throw new Error("PDF generation failed: no buffer returned")
+      }
+      
+      // Convert array back to Buffer
+      const pdfBuffer = Buffer.from(result.pdf_buffer)
+      
+      // Save temporarily
+      const tempFilename = `private-${Date.now()}-invoice-${result.invoice.invoice_number}.pdf`
+      const fs = require('fs')
+      const path = require('path')
+      const staticDir = path.join(process.cwd(), 'static')
+      
+      if (!fs.existsSync(staticDir)) {
+        fs.mkdirSync(staticDir, { recursive: true })
+      }
+      
+      const tempFilePath = path.join(staticDir, tempFilename)
+      fs.writeFileSync(tempFilePath, pdfBuffer)
+      
       return res.json({ 
         file: {
-          id: result.file.id,
-          url: result.file.url,
-          filename: `factuur-${result.invoice.invoice_number}.pdf`
+          id: tempFilename,
+          url: `/static/${tempFilename}`,
+          filename: `invoice-${result.invoice.invoice_number}.pdf`
         },
         regenerated: true
       })

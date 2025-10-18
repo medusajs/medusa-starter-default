@@ -17,7 +17,7 @@ export const generateInvoicePdfWorkflow = createWorkflow(
     })
     
     return new WorkflowResponse({
-      file: result.file,
+      pdf_buffer: result.pdf_buffer,
       invoice: result.invoice
     })
   }
