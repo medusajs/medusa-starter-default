@@ -556,6 +556,15 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "IDX_purchase_order_item_purchase_order_id",
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_purchase_order_item_purchase_order_id\" ON \"purchase_order_item\" (purchase_order_id) WHERE deleted_at IS NULL"
+        },
+        {
           "keyName": "IDX_purchase_order_item_deleted_at",
           "columnNames": [],
           "composite": false,
@@ -576,7 +585,20 @@
         }
       ],
       "checks": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "purchase_order_item_purchase_order_id_foreign": {
+          "constraintName": "purchase_order_item_purchase_order_id_foreign",
+          "columnNames": [
+            "purchase_order_id"
+          ],
+          "localTableName": "public.purchase_order_item",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.purchase_order",
+          "updateRule": "cascade"
+        }
+      },
       "nativeEnums": {}
     },
     {
@@ -754,6 +776,36 @@
           "nullable": true,
           "mappedType": "json"
         },
+        "is_pricing_source": {
+          "name": "is_pricing_source",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        },
+        "pricing_priority": {
+          "name": "pricing_priority",
+          "type": "integer",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "0",
+          "mappedType": "integer"
+        },
+        "auto_sync_prices": {
+          "name": "auto_sync_prices",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamptz",
@@ -841,6 +893,15 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "mappedType": "text"
+        },
+        "brand_id": {
+          "name": "brand_id",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
           "mappedType": "text"
         },
         "name": {
@@ -984,13 +1045,13 @@
           "expression": "CREATE INDEX IF NOT EXISTS \"IDX_supplier_price_list_deleted_at\" ON \"supplier_price_list\" (deleted_at) WHERE deleted_at IS NULL"
         },
         {
-          "keyName": "supplier_active_price_list_idx",
+          "keyName": "supplier_active_price_list_brand_idx",
           "columnNames": [],
           "composite": false,
           "constraint": false,
           "primary": false,
           "unique": false,
-          "expression": "CREATE UNIQUE INDEX IF NOT EXISTS \"supplier_active_price_list_idx\" ON \"supplier_price_list\" (supplier_id, is_active) WHERE is_active = true AND deleted_at IS NULL"
+          "expression": "CREATE UNIQUE INDEX IF NOT EXISTS \"supplier_active_price_list_brand_idx\" ON \"supplier_price_list\" (supplier_id, brand_id, is_active) WHERE is_active = true AND deleted_at IS NULL"
         },
         {
           "keyName": "supplier_price_list_pkey",
@@ -1072,14 +1133,14 @@
           "nullable": true,
           "mappedType": "decimal"
         },
-        "discount_amount": {
-          "name": "discount_amount",
-          "type": "numeric",
+        "discount_code": {
+          "name": "discount_code",
+          "type": "text",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "mappedType": "decimal"
+          "mappedType": "text"
         },
         "discount_percentage": {
           "name": "discount_percentage",
@@ -1109,6 +1170,24 @@
           "default": "1",
           "mappedType": "integer"
         },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
         "lead_time_days": {
           "name": "lead_time_days",
           "type": "integer",
@@ -1136,17 +1215,36 @@
           "nullable": true,
           "mappedType": "json"
         },
-        "raw_gross_price": {
-          "name": "raw_gross_price",
-          "type": "jsonb",
+        "last_synced_at": {
+          "name": "last_synced_at",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "mappedType": "json"
+          "length": 6,
+          "mappedType": "datetime"
         },
-        "raw_discount_amount": {
-          "name": "raw_discount_amount",
+        "sync_status": {
+          "name": "sync_status",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "sync_error": {
+          "name": "sync_error",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "text"
+        },
+        "raw_gross_price": {
+          "name": "raw_gross_price",
           "type": "jsonb",
           "unsigned": false,
           "autoincrement": false,

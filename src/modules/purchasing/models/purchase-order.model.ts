@@ -40,11 +40,16 @@ export const PurchaseOrder = model.define("purchase_order", {
   confirmed_by: model.text().nullable(),
   approved_by: model.text().nullable(),
   metadata: model.json().nullable(),
+  items: model.hasMany(() => PurchaseOrderItem, {
+    mappedBy: "purchase_order",
+  }),
 })
 
 export const PurchaseOrderItem = model.define("purchase_order_item", {
   id: model.id().primaryKey(),
-  purchase_order_id: model.text(),
+  purchase_order: model.belongsTo(() => PurchaseOrder, {
+    mappedBy: "items",
+  }),
   product_variant_id: model.text(),
   supplier_product_id: model.text().nullable(),
   supplier_sku: model.text().nullable(),
