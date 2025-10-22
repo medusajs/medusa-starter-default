@@ -12,7 +12,7 @@ COPY package.json yarn.lock .yarnrc.yml ./
 
 # Install dependencies with the Yarn version pinned in package.json
 RUN corepack enable \
-  && yarn install --frozen-lockfile
+  && yarn install --frozen-lockfile --production=false
 
 # Copy source code
 COPY . .
