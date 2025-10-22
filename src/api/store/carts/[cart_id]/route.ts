@@ -79,7 +79,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
   const b2bService: B2BModuleService = req.scope.resolve(B2B_MODULE)
 
-  let company = null
+  let company: Awaited<ReturnType<B2BModuleService["retrieveCompany"]>> | null =
+    null
 
   const companyId =
     detailedCart?.metadata && "company_id" in detailedCart.metadata
@@ -88,7 +89,10 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
   if (companyId) {
     try {
-      company = await b2bService.retrieveCompany(companyId as string)
+      const retrievedCompany = await b2bService.retrieveCompany(
+        companyId as string
+      )
+      company = retrievedCompany ?? null
     } catch (e) {
       company = null
     }
