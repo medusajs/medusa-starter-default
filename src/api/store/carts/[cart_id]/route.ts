@@ -35,12 +35,6 @@ const parseFields = (raw?: unknown) => {
     .filter(Boolean)
 }
 
-type AuthenticatedRequest = MedusaRequest & {
-  auth_context?: {
-    actor_id?: string
-  }
-}
-
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const { cart_id: cartId } = req.params
 

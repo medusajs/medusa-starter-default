@@ -111,6 +111,7 @@ class B2BModuleService extends MedusaService({
         {
           ...data,
           company_id: data.company_id,
+          metadata: this.normalizeMetadata(data.metadata),
         },
       ],
       sharedContext
@@ -123,7 +124,12 @@ class B2BModuleService extends MedusaService({
     data: UpdateEmployeeInput,
     @MedusaContext() sharedContext: Context = {}
   ) {
-    const [employee] = await this.updateEmployees([data], sharedContext)
+    const payload = {
+      ...data,
+      metadata: this.normalizeMetadata(data.metadata),
+    }
+
+    const [employee] = await this.updateEmployees([payload], sharedContext)
     return employee
   }
 
@@ -145,6 +151,7 @@ class B2BModuleService extends MedusaService({
         {
           ...data,
           status: data.status ?? "pending",
+          metadata: this.normalizeMetadata(data.metadata),
         },
       ],
       sharedContext

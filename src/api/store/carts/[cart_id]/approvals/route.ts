@@ -10,8 +10,12 @@ const approvalSchema = z
   })
   .optional()
 
+type AuthenticatedRequest = MedusaRequest & {
+  auth_context?: { actor_id?: string }
+}
+
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
-  const customerId = req.auth_context?.actor_id
+  const customerId = (req as AuthenticatedRequest).auth_context?.actor_id
 
   if (!customerId) {
     throw new MedusaError(MedusaError.Types.NOT_ALLOWED, "Unauthorized")
@@ -25,7 +29,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const approval = await b2bService.requestCartApproval({
     cart_id: cartId,
     requested_by: customerId,
-    metadata: metadata ?? null,
+    metadata: metadata ?? undefined,
   })
 
   res.status(200).json({ approval })
