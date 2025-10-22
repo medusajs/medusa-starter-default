@@ -38,6 +38,7 @@ const sharedRedisUrl = process.env.REDIS_URL;
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
+    redisUrl: sharedRedisUrl,
     http: {
       storeCors: formatCors(process.env.STORE_CORS, DEFAULT_STORE_CORS),
       adminCors: formatCors(process.env.ADMIN_CORS, DEFAULT_ADMIN_CORS),
