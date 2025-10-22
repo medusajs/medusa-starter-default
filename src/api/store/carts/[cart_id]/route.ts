@@ -7,8 +7,8 @@ import {
   createRawPropertiesFromBigNumber,
   remoteQueryObjectFromString,
 } from "@medusajs/framework/utils"
-import { B2B_MODULE } from "../../../../../modules/b2b"
-import type B2BModuleService from "../../../../../modules/b2b/service"
+import { B2B_MODULE } from "../../../../modules/b2b"
+import type B2BModuleService from "../../../../modules/b2b/service"
 
 const CART_FORBIDDEN_FIELDS = ["*company", "*approvals"]
 
@@ -35,6 +35,12 @@ const parseFields = (raw?: unknown) => {
     .filter(Boolean)
 }
 
+type AuthenticatedRequest = MedusaRequest & {
+  auth_context?: {
+    actor_id?: string
+  }
+}
+
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const { cart_id: cartId } = req.params
 
@@ -48,7 +54,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const query = remoteQueryObjectFromString({
     entryPoint: "cart",
     variables: { filters: { id: cartId } },
-    fields: allowedFields,
+    fields: allowedFields ?? [],
   })
 
   const [cart] = await remoteQuery(query)
