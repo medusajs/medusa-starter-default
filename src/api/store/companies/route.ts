@@ -1,8 +1,8 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MedusaError } from "@medusajs/framework/utils"
 import { z } from "zod"
-import { B2B_MODULE } from "../../../modules/b2b"
-import type B2BModuleService from "../../../modules/b2b/service"
+import { B2B_MODULE } from "../../../../modules/b2b"
+import type B2BModuleService from "../../../../modules/b2b/service"
 
 const createCompanySchema = z.object({
   name: z.string().min(1),
@@ -17,8 +17,12 @@ const createCompanySchema = z.object({
   metadata: z.record(z.unknown()).optional().nullable(),
 })
 
+type AuthenticatedRequest = MedusaRequest & {
+  auth_context?: { actor_id?: string }
+}
+
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
-  const customerId = req.auth_context?.actor_id
+  const customerId = (req as AuthenticatedRequest).auth_context?.actor_id
 
   if (!customerId) {
     throw new MedusaError(MedusaError.Types.NOT_ALLOWED, "Unauthorized")
@@ -50,7 +54,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 }
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
-  const customerId = req.auth_context?.actor_id
+  const customerId = (req as AuthenticatedRequest).auth_context?.actor_id
 
   if (!customerId) {
     throw new MedusaError(MedusaError.Types.NOT_ALLOWED, "Unauthorized")
