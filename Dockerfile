@@ -10,10 +10,9 @@ RUN apk add --no-cache python3 make g++
 # Copy package files and yarn config
 COPY package.json yarn.lock .yarnrc.yml ./
 
-# Install Yarn classic and project dependencies
+# Install dependencies with the Yarn version pinned in package.json
 RUN corepack enable \
-  && corepack prepare yarn@1.22.22 --activate \
-  && yarn install --frozen-lockfile
+  && yarn install --immutable
 
 # Copy source code
 COPY . .
