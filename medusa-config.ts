@@ -50,9 +50,6 @@ module.exports = defineConfig({
   },
   modules: {
     order: {},
-    approval: {},
-    company: {},
-    quote: {},
     b2b: {
       resolve: "./src/modules/b2b",
     },
