@@ -23,6 +23,13 @@
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down"
   },
+  "scripts": {
+    "postinstall": "patch-package"
+  },
+  "devDependencies": {
+    "patch-package": "^8.0.0",
+    "ts-node": "^10.9.2"
+  },
   "dependencies": {
     "@medusajs/admin-sdk": "2.10.3",
     "@medusajs/cli": "2.10.3",
