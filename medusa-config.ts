@@ -61,12 +61,6 @@ module.exports = defineConfig({
         redisUrl: process.env.EVENT_BUS_REDIS_URL || sharedRedisUrl,
       },
     },
-    workflowEngine: {
-      resolve: "@medusajs/workflow-engine-redis",
-      options: {
-        redisUrl: process.env.WORKFLOW_REDIS_URL || sharedRedisUrl,
-      },
-    },
   },
   // @ts-expect-error Auth configuration isn't typed in the current Medusa release
   auth: {
