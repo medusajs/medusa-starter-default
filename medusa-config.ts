@@ -53,6 +53,9 @@ module.exports = defineConfig({
     approval: {},
     company: {},
     quote: {},
+    b2b: {
+      resolve: "./src/modules/b2b",
+    },
   },
   // @ts-expect-error Auth configuration isn't typed in the current Medusa release
   auth: {
