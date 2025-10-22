@@ -2,7 +2,7 @@
 set -e
 
 NODE_ENV=${NODE_ENV:-development}
-RUN_SEED=${RUN_SEED:-true}
+RUN_SEED=${RUN_SEED:-false}
 HOST=${HOST:-0.0.0.0}
 PORT=${PORT:-9000}
 export NODE_ENV RUN_SEED HOST PORT
