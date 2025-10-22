@@ -9,7 +9,7 @@ export NODE_ENV RUN_SEED HOST PORT
 
 echo "Running database migrations..."
 echo "Working directory: $(pwd)"
-yarn medusa db:migrate
+yarn run medusa db:migrate
 
 if [ "$RUN_SEED" = "true" ]; then
   echo "Seeding database..."
