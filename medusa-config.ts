@@ -67,18 +67,6 @@ module.exports = defineConfig({
         redisUrl: process.env.WORKFLOW_REDIS_URL || sharedRedisUrl,
       },
     },
-    cacheService: {
-      resolve: "@medusajs/cache-redis",
-      options: {
-        redisUrl: process.env.CACHE_REDIS_URL || sharedRedisUrl,
-      },
-    },
-    locking: {
-      resolve: "@medusajs/locking-redis",
-      options: {
-        redisUrl: process.env.LOCKING_REDIS_URL || sharedRedisUrl,
-      },
-    },
   },
   // @ts-expect-error Auth configuration isn't typed in the current Medusa release
   auth: {
