@@ -33,6 +33,8 @@ const formatCors = (value: string | undefined, defaults: string[]) => {
 
 loadEnv(process.env.NODE_ENV || "development", process.cwd());
 
+const sharedRedisUrl = process.env.REDIS_URL;
+
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
@@ -52,6 +54,30 @@ module.exports = defineConfig({
     order: {},
     b2b: {
       resolve: "./src/modules/b2b",
+    },
+    eventBus: {
+      resolve: "@medusajs/event-bus-redis",
+      options: {
+        redisUrl: process.env.EVENT_BUS_REDIS_URL || sharedRedisUrl,
+      },
+    },
+    workflowEngine: {
+      resolve: "@medusajs/workflow-engine-redis",
+      options: {
+        redisUrl: process.env.WORKFLOW_REDIS_URL || sharedRedisUrl,
+      },
+    },
+    cacheService: {
+      resolve: "@medusajs/cache-redis",
+      options: {
+        redisUrl: process.env.CACHE_REDIS_URL || sharedRedisUrl,
+      },
+    },
+    locking: {
+      resolve: "@medusajs/locking-redis",
+      options: {
+        redisUrl: process.env.LOCKING_REDIS_URL || sharedRedisUrl,
+      },
     },
   },
   // @ts-expect-error Auth configuration isn't typed in the current Medusa release
