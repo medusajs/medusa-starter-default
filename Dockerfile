@@ -12,7 +12,7 @@ COPY package.json yarn.lock .yarnrc.yml ./
 
 # Install dependencies with the Yarn version pinned in package.json
 RUN corepack enable \
-  && yarn install --immutable
+  && yarn install --mode=update-lockfile
 
 # Copy source code
 COPY . .
