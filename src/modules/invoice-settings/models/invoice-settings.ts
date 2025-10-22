@@ -28,3 +28,5 @@ const InvoiceSettings = model.define("invoice_settings", {
 
 export default InvoiceSettings
 
+
+

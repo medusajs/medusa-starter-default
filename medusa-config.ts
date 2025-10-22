@@ -39,14 +39,6 @@ module.exports = defineConfig({
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     }
   },
-  // Supplier Pricing Sync Configuration
-  pricingConfig: {
-    autoSyncSupplierPrices: process.env.AUTO_SYNC_SUPPLIER_PRICES === 'true',
-    autoCreateVariants: process.env.AUTO_CREATE_VARIANTS === 'true',
-    overwriteExistingPrices: process.env.OVERWRITE_EXISTING_PRICES === 'true',
-    defaultCurrencyCode: process.env.DEFAULT_CURRENCY_CODE || 'EUR',
-    pricingConflictStrategy: process.env.PRICING_CONFLICT_STRATEGY || 'preferred_supplier', // 'preferred_supplier' | 'lowest_price' | 'manual'
-  },
   admin: {
     vite: () => {
       return {

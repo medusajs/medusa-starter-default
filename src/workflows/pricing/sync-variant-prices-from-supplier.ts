@@ -4,7 +4,7 @@ import {
   when,
   transform
 } from "@medusajs/framework/workflows-sdk"
-import { upsertVariantPricesWorkflow } from "@medusajs/medusa/core-flows"
+import { updateProductsWorkflow } from "@medusajs/medusa/core-flows"
 import {
   resolveVariantPricingConflictsStep,
   updatePriceListItemSyncStatusStep
@@ -38,30 +38,51 @@ export const syncVariantPricesFromSupplierWorkflow = createWorkflow(
     // Step 1: Resolve which variants should be updated and with what prices
     const { variantsToUpdate, itemsToTrack } = resolveVariantPricingConflictsStep(input)
 
-    // Step 2: Update variant prices using Medusa's native workflow
-    // Only run if not dry_run and there are variants to update
+    // Step 2: Update variant prices using updateProductsWorkflow
+    // This is the proper Medusa way to update existing variant prices
     const updatedVariants = when(
       { input, variantsToUpdate },
       ({ input, variantsToUpdate }) => !input.dry_run && variantsToUpdate.length > 0
     ).then(() => {
-      // Transform the variants data into the format expected by upsertVariantPricesWorkflow
-      const pricesInput = transform(
+      // Group variants by product_id since updateProductsWorkflow expects products
+      const productsInput = transform(
         { variantsToUpdate },
-        ({ variantsToUpdate }) => ({
-          variantPrices: variantsToUpdate.map(v => ({
-            variant_id: v.variant_id,
-            product_id: v.product_id,
-            prices: [{
-              amount: v.amount,
-              currency_code: v.currency_code,
-            }]
-          })),
-          previousVariantIds: variantsToUpdate.map(v => v.variant_id)
-        })
+        ({ variantsToUpdate }) => {
+          // Group variants by product
+          const productMap = new Map()
+
+          for (const v of variantsToUpdate) {
+            if (!productMap.has(v.product_id)) {
+              productMap.set(v.product_id, {
+                id: v.product_id,
+                variants: []
+              })
+            }
+
+            const product = productMap.get(v.product_id)
+            product.variants.push({
+              id: v.variant_id,
+              prices: v.price_id
+                ? [{
+                    id: v.price_id,
+                    amount: v.amount,
+                    currency_code: v.currency_code,
+                  }]
+                : [{
+                    amount: v.amount,
+                    currency_code: v.currency_code,
+                  }]
+            })
+          }
+
+          return {
+            products: Array.from(productMap.values())
+          }
+        }
       )
 
-      return upsertVariantPricesWorkflow.runAsStep({
-        input: pricesInput
+      return updateProductsWorkflow.runAsStep({
+        input: productsInput
       })
     })
 

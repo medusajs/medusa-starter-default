@@ -121,9 +121,12 @@ interface SelectedVariantForPricing {
 
 const addItemSchema = zod.object({
   supplier_sku: zod.string().optional(),
+  variant_sku: zod.string().optional(),
+  product_name: zod.string().optional(),
+  description: zod.string().optional(),
+  category: zod.string().optional(),
   gross_price: zod.number().min(0, "Gross price must be 0 or greater").optional(),
-  discount_percentage: zod.number().min(0, "Discount percentage must be 0 or greater").max(100, "Discount percentage cannot exceed 100").optional(),
-  net_price: zod.number().min(0, "Net price must be 0 or greater").refine(val => val > 0, "Net price is required"),
+  discount_percentage: zod.number().min(0, "Discount percentage must be 0 or greater").max(100, "Discount percentage cannot exceed 100").default(0),
   quantity: zod.number().min(1, "Quantity must be at least 1").default(1),
   lead_time_days: zod.number().min(0).optional(),
   notes: zod.string().optional()
@@ -144,6 +147,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
   const [editingItem, setEditingItem] = useState<PriceListItem | null>(null)
   const [selectedVariantForAdd, setSelectedVariantForAdd] = useState<SelectedVariantForPricing | null>(null)
   const [productSearchOpen, setProductSearchOpen] = useState(false)
+  const [itemEntryType, setItemEntryType] = useState<'catalog' | 'manual'>('catalog')
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [tableSearch, setTableSearch] = useState("")
   const [pagination, setPagination] = useState({
@@ -160,9 +164,12 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     resolver: zodResolver(addItemSchema),
     defaultValues: {
       supplier_sku: "",
+      variant_sku: "",
+      product_name: "",
+      description: "",
+      category: "",
       gross_price: undefined,
-      discount_percentage: undefined,
-      net_price: 0,
+      discount_percentage: 0,
       quantity: 1,
       lead_time_days: 0,
       notes: ""
@@ -271,33 +278,82 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     resolver: zodResolver(addItemSchema),
     defaultValues: {
       supplier_sku: "",
+      variant_sku: "",
+      product_name: "",
+      description: "",
+      category: "",
       gross_price: undefined,
-      discount_percentage: undefined,
-      net_price: 0,
+      discount_percentage: 0,
       quantity: 1,
       lead_time_days: 0,
       notes: ""
     }
   })
 
+  // Watch gross_price and discount_percentage to calculate net_price
+  const watchGrossPrice = useWatch({ control: addItemForm.control, name: "gross_price" })
+  const watchDiscount = useWatch({ control: addItemForm.control, name: "discount_percentage" })
+
+  // Calculate net price based on gross and discount
+  const calculatedNetPrice = useMemo(() => {
+    if (!watchGrossPrice || watchGrossPrice <= 0) return 0
+    const discount = watchDiscount || 0
+    return watchGrossPrice * (1 - discount / 100)
+  }, [watchGrossPrice, watchDiscount])
+
   const addItemMutation = useMutation({
     mutationFn: async (data: AddItemFormData) => {
-      if (!selectedVariantForAdd) {
-        throw new Error("Please select a product variant")
-      }
       const priceList = priceListData?.price_list
       if (!priceList) {
         throw new Error("No active price list found")
       }
+
+      // Determine variant and product IDs based on entry type
+      let productVariantId: string
+      let productId: string
+      let variantSku: string | undefined
+
+      if (itemEntryType === 'catalog') {
+        // Catalog entry - require selected variant
+        if (!selectedVariantForAdd) {
+          throw new Error("Please select a product variant")
+        }
+        productVariantId = selectedVariantForAdd.id
+        productId = selectedVariantForAdd.product_id
+        variantSku = data.variant_sku || selectedVariantForAdd.sku
+      } else {
+        // Manual entry - require product name and use supplier SKU as identifier
+        if (!data.product_name || data.product_name.trim() === "") {
+          throw new Error("Product name is required for manual entries")
+        }
+        if (!data.supplier_sku || data.supplier_sku.trim() === "") {
+          throw new Error("Supplier SKU is required for manual entries")
+        }
+        // Use supplier_sku as the unique identifier for both product and variant
+        productVariantId = `manual-${data.supplier_sku}`
+        productId = `manual-${data.supplier_sku}`
+        variantSku = data.variant_sku
+      }
+
+      // Calculate net price from gross and discount
+      const netPrice = calculatedNetPrice > 0 ? Math.round(calculatedNetPrice * 100) : 0
+
       const response = await fetch(`/admin/suppliers/${supplier.id}/price-lists/${priceList.id}/items`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...data,
-          product_variant_id: selectedVariantForAdd.id,
-          product_id: selectedVariantForAdd.product_id,
-          // gross_price not persisted in current schema; keep client-side only
-          net_price: data.net_price && !isNaN(data.net_price) ? Math.round(data.net_price * 100) : 0
+          supplier_sku: data.supplier_sku,
+          variant_sku: variantSku,
+          description: data.description,
+          category: data.category,
+          gross_price: data.gross_price ? Math.round(data.gross_price * 100) : undefined,
+          discount_percentage: data.discount_percentage,
+          net_price: netPrice,
+          quantity: data.quantity,
+          lead_time_days: data.lead_time_days,
+          notes: data.notes,
+          product_variant_id: productVariantId,
+          product_id: productId,
         }),
       })
       if (!response.ok) {
@@ -325,6 +381,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     setShowAddModal(false)
     addItemForm.reset()
     setSelectedVariantForAdd(null)
+    setItemEntryType('catalog')
   }
 
   const handleProductSelect = (variant: SelectedVariantForPricing) => {
@@ -332,9 +389,23 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
   }
 
   const handleSubmitAddItem = addItemForm.handleSubmit(async (data) => {
-    if (!selectedVariantForAdd) {
+    if (itemEntryType === 'catalog' && !selectedVariantForAdd) {
       toast.error("Please select a product variant")
       return
+    }
+    if (itemEntryType === 'manual') {
+      if (!data.product_name || data.product_name.trim() === "") {
+        toast.error("Product name is required for manual entries")
+        return
+      }
+      if (!data.supplier_sku || data.supplier_sku.trim() === "") {
+        toast.error("Supplier SKU is required for manual entries")
+        return
+      }
+      if (!data.gross_price || data.gross_price <= 0) {
+        toast.error("Gross price is required for manual entries")
+        return
+      }
     }
     addItemMutation.mutate(data)
   })
@@ -349,9 +420,11 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     setEditingItem(item)
     editItemForm.reset({
       supplier_sku: item.supplier_sku || "",
+      variant_sku: item.variant_sku || "",
+      description: item.description || "",
+      category: item.category || "",
       gross_price: item.gross_price ? item.gross_price / 100 : undefined,
-      discount_percentage: item.discount_percentage || undefined,
-      net_price: item.net_price / 100,
+      discount_percentage: item.discount_percentage || 0,
       quantity: item.quantity || 1,
       lead_time_days: item.lead_time_days || 0,
       notes: item.notes || ""
@@ -367,7 +440,9 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
       ...data,
       itemId: editingItem.id,
       gross_price: data.gross_price ? Math.round(data.gross_price * 100) : undefined,
-      net_price: Math.round(data.net_price * 100)
+      discount_percentage: data.discount_percentage,
+      description: data.description,
+      category: data.category,
     }
 
     editItemMutation.mutate(processedData)
@@ -440,7 +515,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
 
     setIsSyncingPrices(true)
     try {
-      const response = await fetch(`/admin/suppliers/price-lists/${priceList.id}/sync-prices`, {
+      const response = await fetch(`/admin/suppliers/${supplier.id}/price-lists/${priceList.id}/sync-prices`, {
         method: "POST",
       })
 
@@ -989,122 +1064,273 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
           </FocusModal.Header>
           <FocusModal.Body className="p-6">
             <form onSubmit={handleSubmitAddItem} className="space-y-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Product Search *</Label>
-                  <div className="relative">
-                    <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-fg-muted" />
-                    <Input
-                      placeholder="Search for a product to add..."
-                      value={selectedVariantForAdd ? `${selectedVariantForAdd.product?.title} - ${selectedVariantForAdd.title}` : ""}
-                      onClick={() => setProductSearchOpen(true)}
-                      readOnly
-                      className="pl-9 cursor-pointer"
-                    />
-                  </div>
-                  <Text size="small" className="text-ui-fg-subtle">
-                    Click to search and select a product variant
-                  </Text>
+              {/* Item Entry Type Toggle */}
+              <div className="space-y-2">
+                <Label>Entry Type</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={itemEntryType === 'catalog' ? 'primary' : 'secondary'}
+                    size="small"
+                    onClick={() => {
+                      setItemEntryType('catalog')
+                      setSelectedVariantForAdd(null)
+                    }}
+                  >
+                    From Catalog
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={itemEntryType === 'manual' ? 'primary' : 'secondary'}
+                    size="small"
+                    onClick={() => {
+                      setItemEntryType('manual')
+                      setSelectedVariantForAdd(null)
+                    }}
+                  >
+                    Manual Entry
+                  </Button>
                 </div>
-                
-                {selectedVariantForAdd && (
-                  <div className="p-4 bg-ui-bg-subtle rounded-lg">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <Text className="font-medium">{selectedVariantForAdd.product?.title}</Text>
-                        <Text size="small" className="text-ui-fg-subtle">{selectedVariantForAdd.title}</Text>
-                        {selectedVariantForAdd.sku && (
-                          <Text size="xsmall" className="text-ui-fg-muted">SKU: {selectedVariantForAdd.sku}</Text>
-                        )}
+                <Text size="small" className="text-ui-fg-subtle">
+                  {itemEntryType === 'catalog'
+                    ? 'Select an existing product from your catalog'
+                    : 'Create a new item using supplier part number as identifier'}
+                </Text>
+              </div>
+
+              {/* Catalog Entry - Product Search */}
+              {itemEntryType === 'catalog' && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Product Search *</Label>
+                    <div className="relative">
+                      <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-fg-muted" />
+                      <Input
+                        placeholder="Search for a product to add..."
+                        value={selectedVariantForAdd ? `${selectedVariantForAdd.product?.title} - ${selectedVariantForAdd.title}` : ""}
+                        onClick={() => setProductSearchOpen(true)}
+                        readOnly
+                        className="pl-9 cursor-pointer"
+                      />
+                    </div>
+                    <Text size="small" className="text-ui-fg-subtle">
+                      Click to search and select a product variant
+                    </Text>
+                  </div>
+
+                  {selectedVariantForAdd && (
+                    <div className="p-4 bg-ui-bg-subtle rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <Text className="font-medium">{selectedVariantForAdd.product?.title}</Text>
+                          <Text size="small" className="text-ui-fg-subtle">{selectedVariantForAdd.title}</Text>
+                          {selectedVariantForAdd.sku && (
+                            <Text size="xsmall" className="text-ui-fg-muted">SKU: {selectedVariantForAdd.sku}</Text>
+                          )}
+                        </div>
+                        <Button
+                          variant="secondary"
+                          size="small"
+                          type="button"
+                          onClick={() => setSelectedVariantForAdd(null)}
+                        >
+                          Remove
+                        </Button>
                       </div>
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        type="button"
-                        onClick={() => setSelectedVariantForAdd(null)}
-                      >
-                        Remove
-                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Manual Entry Fields */}
+              {itemEntryType === 'manual' && (
+                <div className="space-y-4 p-4 bg-ui-bg-subtle rounded-lg border border-ui-border-base">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-y-2">
+                      <Label htmlFor="product_name">Product/Variant Name *</Label>
+                      <Controller
+                        name="product_name"
+                        control={addItemForm.control}
+                        render={({ field, fieldState }) => (
+                          <div className="flex flex-col gap-y-1">
+                            <Input
+                              {...field}
+                              id="product_name"
+                              placeholder="Enter product name"
+                            />
+                            {fieldState.error && (
+                              <Text size="xsmall" className="text-ui-fg-error">
+                                {fieldState.error.message}
+                              </Text>
+                            )}
+                          </div>
+                        )}
+                      />
+                      <Text size="xsmall" className="text-ui-fg-subtle">
+                        Name as it appears in supplier catalog
+                      </Text>
+                    </div>
+
+                    <div className="flex flex-col gap-y-2">
+                      <Label htmlFor="manual_variant_sku">Your Internal SKU</Label>
+                      <Controller
+                        name="variant_sku"
+                        control={addItemForm.control}
+                        render={({ field }) => (
+                          <Input
+                            {...field}
+                            id="manual_variant_sku"
+                            placeholder="Your SKU (if exists)"
+                          />
+                        )}
+                      />
+                      <Text size="xsmall" className="text-ui-fg-subtle">
+                        Optional: Your internal product SKU
+                      </Text>
                     </div>
                   </div>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="add_supplier_sku">Supplier SKU</Label>
-                  <Controller
-                    name="supplier_sku"
-                    control={addItemForm.control}
-                    render={({ field }) => (
+
+                  <div className="flex flex-col gap-y-2">
+                    <Label htmlFor="manual_description">Description</Label>
+                    <Controller
+                      name="description"
+                      control={addItemForm.control}
+                      render={({ field }) => (
+                        <Textarea
+                          {...field}
+                          id="manual_description"
+                          rows={2}
+                          placeholder="Product description from supplier..."
+                        />
+                      )}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-y-2">
+                    <Label htmlFor="manual_category">Category</Label>
+                    <Controller
+                      name="category"
+                      control={addItemForm.control}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          id="manual_category"
+                          placeholder="Supplier's category"
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+              )}
+
+
+              {/* Pricing Section */}
+              <div className="space-y-4 p-4 bg-ui-bg-subtle rounded-lg border border-ui-border-base">
+                <Heading level="h3" className="text-sm font-medium">Pricing Information</Heading>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-y-2">
+                    <Label htmlFor="add_supplier_sku">
+                      Supplier SKU {itemEntryType === 'manual' && '*'}
+                    </Label>
+                    <Controller
+                      name="supplier_sku"
+                      control={addItemForm.control}
+                      render={({ field, fieldState }) => (
+                        <div className="flex flex-col gap-y-1">
+                          <Input
+                            {...field}
+                            id="add_supplier_sku"
+                            placeholder={itemEntryType === 'manual' ? 'Required: Supplier part number' : 'Enter supplier SKU (optional)'}
+                          />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-ui-fg-error">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
+                        </div>
+                      )}
+                    />
+                    {itemEntryType === 'manual' && (
+                      <Text size="xsmall" className="text-ui-fg-subtle">
+                        Used as unique identifier for this item
+                      </Text>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-y-2">
+                    <Label htmlFor="add_gross_price">
+                      Gross Price (RRP) {itemEntryType === 'manual' && '*'}
+                    </Label>
+                    <Controller
+                      name="gross_price"
+                      control={addItemForm.control}
+                      render={({ field, fieldState }) => (
+                        <div className="flex flex-col gap-y-1">
+                          <Input
+                            {...field}
+                            id="add_gross_price"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
+                          />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-ui-fg-error">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
+                        </div>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-y-2">
+                    <Label htmlFor="add_discount_percentage">Discount %</Label>
+                    <Controller
+                      name="discount_percentage"
+                      control={addItemForm.control}
+                      render={({ field, fieldState }) => (
+                        <div className="flex flex-col gap-y-1">
+                          <Input
+                            {...field}
+                            id="add_discount_percentage"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            placeholder="0.00"
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                          {fieldState.error && (
+                            <Text size="xsmall" className="text-ui-fg-error">
+                              {fieldState.error.message}
+                            </Text>
+                          )}
+                        </div>
+                      )}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-y-2">
+                    <Label htmlFor="calculated_net_price">Net Price (Calculated)</Label>
+                    <div className="relative">
                       <Input
-                        {...field}
-                        id="add_supplier_sku"
-                        placeholder="Enter supplier SKU (optional)"
+                        id="calculated_net_price"
+                        type="text"
+                        value={calculatedNetPrice > 0 ? calculatedNetPrice.toFixed(2) : '0.00'}
+                        readOnly
+                        className="bg-ui-bg-disabled text-ui-fg-muted"
                       />
-                    )}
-                  />
+                    </div>
+                    <Text size="xsmall" className="text-ui-fg-subtle">
+                      Auto-calculated from gross price - discount
+                    </Text>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="add_gross_price">Gross Price (RRP)</Label>
-                  <Controller
-                    name="gross_price"
-                    control={addItemForm.control}
-                    render={({ field, fieldState }) => (
-                      <div className="flex flex-col gap-y-1">
-                        <Input
-                          {...field}
-                          id="add_gross_price"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
-                        />
-                        {fieldState.error && (
-                          <Text size="xsmall" className="text-ui-fg-error">
-                            {fieldState.error.message}
-                          </Text>
-                        )}
-                      </div>
-                    )}
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="add_net_price">Net Price (What You Pay) *</Label>
-                  <Controller
-                    name="net_price"
-                    control={addItemForm.control}
-                    render={({ field, fieldState }) => (
-                      <div className="flex flex-col gap-y-1">
-                        <Input
-                          {...field}
-                          id="add_net_price"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                        {fieldState.error && (
-                          <Text size="xsmall" className="text-ui-fg-error">
-                            {fieldState.error.message}
-                          </Text>
-                        )}
-                      </div>
-                    )}
-                  />
-                </div>
-              </div>
-              
-              <div className="p-3 bg-ui-bg-subtle rounded-lg border border-ui-border-base">
-                <Text size="small" className="text-ui-fg-subtle">
-                  <strong>Note:</strong> Discounts are managed through the supplier's discount configuration. 
-                  When uploading price lists, discounts will be calculated automatically based on the configured structure.
-                </Text>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1180,9 +1406,9 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
               <Button variant="secondary" onClick={handleAddModalClose}>
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleSubmitAddItem}
-                disabled={addItemMutation.isPending || !selectedVariantForAdd}
+                disabled={addItemMutation.isPending || (itemEntryType === 'catalog' && !selectedVariantForAdd)}
                 isLoading={addItemMutation.isPending}
               >
                 Add Item

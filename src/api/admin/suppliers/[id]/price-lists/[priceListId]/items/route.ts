@@ -24,9 +24,12 @@ type PostAdminCreatePriceListItemType = {
   product_id: string
   supplier_sku?: string
   variant_sku?: string
+  gross_price?: number
   discount_percentage?: number
   net_price: number
   quantity?: number
+  description?: string
+  category?: string
   lead_time_days?: number
   notes?: string
 }
@@ -120,9 +123,12 @@ export const POST = async (
       product_id: req.body.product_id,
       supplier_sku: req.body.supplier_sku,
       variant_sku: req.body.variant_sku,
+      gross_price: req.body.gross_price,
       discount_percentage: req.body.discount_percentage,
       net_price: req.body.net_price,
       quantity: req.body.quantity || 1,
+      description: req.body.description,
+      category: req.body.category,
       lead_time_days: req.body.lead_time_days,
       notes: req.body.notes
     }

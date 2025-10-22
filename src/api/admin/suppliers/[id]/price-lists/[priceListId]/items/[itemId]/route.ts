@@ -19,6 +19,8 @@ type PutAdminUpdatePriceListItemType = {
   discount_percentage?: number
   net_price?: number
   quantity?: number
+  description?: string
+  category?: string
   lead_time_days?: number
   notes?: string
   is_active?: boolean

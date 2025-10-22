@@ -23,3 +23,5 @@ class InvoiceSettingsService extends MedusaService({
 
 export default InvoiceSettingsService
 
+
+
