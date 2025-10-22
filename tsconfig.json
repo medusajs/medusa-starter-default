@@ -17,7 +17,11 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "checkJs": false,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "baseUrl": "./",
+    "paths": {
+      "@modules/*": ["src/modules/*"]
+    }
   },
   "ts-node": {
     "swc": true
