@@ -1,9 +1,12 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { MedusaError } from "@medusajs/framework/utils"
+import {
+  ContainerRegistrationKeys,
+  MedusaError,
+  remoteQueryObjectFromString,
+} from "@medusajs/framework/utils"
 import { updateCustomersWorkflow } from "@medusajs/core-flows"
-import { refetchCustomer } from "@medusajs/medusa/dist/api/store/customers/helpers"
-import { B2B_MODULE } from "../../../../../modules/b2b"
-import type B2BModuleService from "../../../../../modules/b2b/service"
+import { B2B_MODULE } from "../../../../modules/b2b"
+import type B2BModuleService from "../../../../modules/b2b/service"
 
 const CUSTOMER_FORBIDDEN_FIELDS = ["*employee", "*employees"]
 
@@ -32,15 +35,38 @@ async function attachEmployee(
   return employee ?? null
 }
 
+const fetchCustomer = async (
+  scope: MedusaRequest["scope"],
+  customerId: string,
+  fields?: string[]
+) => {
+  const remoteQuery = scope.resolve(ContainerRegistrationKeys.REMOTE_QUERY)
+
+  const query = remoteQueryObjectFromString({
+    entryPoint: "customer",
+    variables: {
+      filters: { id: customerId },
+    },
+    fields: fields?.length ? fields : ["id", "email", "first_name", "last_name"],
+  })
+
+  const [customer] = await remoteQuery(query)
+  return customer ?? null
+}
+
+type AuthenticatedRequest = MedusaRequest & {
+  auth_context?: { actor_id?: string }
+}
+
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
-  const customerId = req.auth_context?.actor_id
+  const customerId = (req as AuthenticatedRequest).auth_context?.actor_id
 
   if (!customerId) {
     throw new MedusaError(MedusaError.Types.NOT_ALLOWED, "Unauthorized")
   }
 
   const sanitizedFields = sanitizeFields(req.queryConfig?.fields)
-  const customer = await refetchCustomer(customerId, req.scope, sanitizedFields)
+  const customer = await fetchCustomer(req.scope, customerId, sanitizedFields)
 
   if (!customer) {
     throw new MedusaError(
@@ -60,7 +86,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 }
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
-  const customerId = req.auth_context?.actor_id
+  const customerId = (req as AuthenticatedRequest).auth_context?.actor_id
 
   if (!customerId) {
     throw new MedusaError(MedusaError.Types.NOT_ALLOWED, "Unauthorized")
@@ -69,12 +95,12 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   await updateCustomersWorkflow(req.scope).run({
     input: {
       selector: { id: customerId },
-      update: req.validatedBody,
+      update: req.validatedBody as any,
     },
   })
 
   const sanitizedFields = sanitizeFields(req.queryConfig?.fields)
-  const customer = await refetchCustomer(customerId, req.scope, sanitizedFields)
+  const customer = await fetchCustomer(req.scope, customerId, sanitizedFields)
 
   if (!customer) {
     throw new MedusaError(
