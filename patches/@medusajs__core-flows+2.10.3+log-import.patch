@@ -1,0 +1,29 @@
+*** Begin Patch
+*** Update File: dist/product/steps/process-import-chunks.js
+@@
+-        for (let chunk of input.chunks) {
+-            const contents = await file.getAsBuffer(chunk.id);
+-            let products = JSON.parse(contents.toString("utf-8"));
+-            await (0, batch_products_1.batchProductsWorkflow)(container).run({
+-                input: products,
+-            });
+-            products = undefined;
+-        }
++        for (let chunk of input.chunks) {
++            const contents = await file.getAsBuffer(chunk.id);
++            const raw = contents.toString("utf-8");
++            let products;
++            try {
++                products = JSON.parse(raw);
++            }
++            catch (error) {
++                console.error("Product import chunk failed to parse JSON for chunk", chunk.id);
++                console.error("Chunk contents (first 500 chars):", raw.slice(0, 500));
++                throw error;
++            }
++            await (0, batch_products_1.batchProductsWorkflow)(container).run({
++                input: products,
++            });
++            products = undefined;
++        }
+*** End Patch

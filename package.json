@@ -21,14 +21,8 @@
     "test:integration:modules": "TEST_TYPE=integration:modules NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit",
     "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit",
     "docker:up": "docker compose up --build -d",
-    "docker:down": "docker compose down"
-  },
-  "scripts": {
+    "docker:down": "docker compose down",
     "postinstall": "patch-package"
-  },
-  "devDependencies": {
-    "patch-package": "^8.0.0",
-    "ts-node": "^10.9.2"
   },
   "dependencies": {
     "@medusajs/admin-sdk": "2.10.3",
@@ -41,6 +35,7 @@
     "@mikro-orm/postgresql": "6.4.3",
     "awilix": "^8.0.1",
     "pg": "^8.13.0",
+    "patch-package": "^8.0.0",
     "posthog-node": "^4.17.1"
   },
   "devDependencies": {
