@@ -1,8 +1,8 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MedusaError } from "@medusajs/framework/utils"
 import { z } from "zod"
-import { B2B_MODULE } from "../../../../modules/b2b"
-import type B2BModuleService from "../../../../modules/b2b/service"
+import { B2B_MODULE } from "@modules/b2b"
+import type B2BModuleService from "@modules/b2b/service"
 
 const createEmployeeSchema = z.object({
   customer_id: z.string().min(1),

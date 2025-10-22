@@ -7,8 +7,8 @@ import {
   createRawPropertiesFromBigNumber,
   remoteQueryObjectFromString,
 } from "@medusajs/framework/utils"
-import { B2B_MODULE } from "../../../../modules/b2b"
-import type B2BModuleService from "../../../../modules/b2b/service"
+import { B2B_MODULE } from "@modules/b2b"
+import type B2BModuleService from "@modules/b2b/service"
 
 const CART_FORBIDDEN_FIELDS = ["*company", "*approvals"]
 

@@ -5,8 +5,8 @@ import {
   remoteQueryObjectFromString,
 } from "@medusajs/framework/utils"
 import { updateCustomersWorkflow } from "@medusajs/core-flows"
-import { B2B_MODULE } from "../../../../modules/b2b"
-import type B2BModuleService from "../../../../modules/b2b/service"
+import { B2B_MODULE } from "@modules/b2b"
+import type B2BModuleService from "@modules/b2b/service"
 
 const CUSTOMER_FORBIDDEN_FIELDS = ["*employee", "*employees"]
 
