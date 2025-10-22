@@ -49,6 +49,13 @@ class B2BModuleService extends MedusaService({
   Employee,
   CartApproval,
 }) {
+  private normalizeString(value?: string | null) {
+    return value ?? undefined
+  }
+
+  private normalizeMetadata(value?: Record<string, unknown> | null) {
+    return value ?? undefined
+  }
 
   @InjectManager()
   async createCompany(
@@ -57,6 +64,13 @@ class B2BModuleService extends MedusaService({
   ) {
     const payload = {
       ...data,
+      phone: this.normalizeString(data.phone),
+      address: this.normalizeString(data.address),
+      city: this.normalizeString(data.city),
+      state: this.normalizeString(data.state),
+      zip: this.normalizeString(data.zip),
+      country: this.normalizeString(data.country),
+      metadata: this.normalizeMetadata(data.metadata),
       approval_settings: data.approval_settings ?? {
         requires_admin_approval: false,
       },
@@ -71,7 +85,19 @@ class B2BModuleService extends MedusaService({
     data: UpdateCompanyInput,
     @MedusaContext() sharedContext: Context = {}
   ) {
-    const [company] = await this.updateCompanies([data], sharedContext)
+    const payload = {
+      ...data,
+      phone: this.normalizeString(data.phone),
+      address: this.normalizeString(data.address),
+      city: this.normalizeString(data.city),
+      state: this.normalizeString(data.state),
+      zip: this.normalizeString(data.zip),
+      country: this.normalizeString(data.country),
+      metadata: this.normalizeMetadata(data.metadata),
+      approval_settings: data.approval_settings,
+    }
+
+    const [company] = await this.updateCompanies([payload], sharedContext)
     return company
   }
 

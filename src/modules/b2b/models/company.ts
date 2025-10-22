@@ -7,11 +7,11 @@ export const Company = model
     name: model.text(),
     email: model.text().searchable(),
     phone: model.text().nullable(),
-    address: model.text(),
-    city: model.text(),
+    address: model.text().nullable(),
+    city: model.text().nullable(),
     state: model.text().nullable(),
-    zip: model.text(),
-    country: model.text(),
+    zip: model.text().nullable(),
+    country: model.text().nullable(),
     currency_code: model.text(),
     approval_settings: model
       .json()
