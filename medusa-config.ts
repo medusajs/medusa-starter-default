@@ -7,11 +7,11 @@ module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     http: {
-      storeCors: "https://shopcat-vendorpanel-staging-575553836979.europe-west1.run.app",
-      adminCors: "https://shopcat-vendorpanel-staging-575553836979.europe-west1.run.app",
+      storeCors: process.env.STORE_CORS!,
+      adminCors: process.env.ADMIN_CORS!,
       // @ts-expect-error: vendorCors is not a valid config
-      vendorCors: "https://shopcat-vendorpanel-staging-575553836979.europe-west1.run.app",
-      authCors: "https://shopcat-vendorpanel-staging-575553836979.europe-west1.run.app",
+      vendorCors: process.env.VENDOR_CORS!,
+      authCors: process.env.AUTH_CORS!,
       jwtSecret: process.env.JWT_SECRET || 'supersecret',
       cookieSecret: process.env.COOKIE_SECRET || 'supersecret'
     }
