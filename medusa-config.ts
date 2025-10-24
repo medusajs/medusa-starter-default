@@ -1,3 +1,4 @@
+import path from "path";
 import { loadEnv, defineConfig } from "@medusajs/utils";
 
 const DEFAULT_STORE_CORS = [
@@ -34,11 +35,17 @@ const formatCors = (value: string | undefined, defaults: string[]) => {
 loadEnv(process.env.NODE_ENV || "development", process.cwd());
 
 const sharedRedisUrl = process.env.REDIS_URL;
+const resolveBackendUrl = () => {
+  const url = process.env.MEDUSA_BACKEND_URL || "http://localhost:9000";
+  return url.endsWith("/") ? url.slice(0, -1) : url;
+};
+const backendUrl = resolveBackendUrl();
 
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     redisUrl: sharedRedisUrl,
+    backendUrl,
     http: {
       storeCors: formatCors(process.env.STORE_CORS, DEFAULT_STORE_CORS),
       adminCors: formatCors(process.env.ADMIN_CORS, DEFAULT_ADMIN_CORS),
@@ -69,6 +76,16 @@ module.exports = defineConfig({
             },
           },
         ],
+      },
+    },
+    file: {
+      resolve: "@medusajs/file-local",
+      options: {
+        backend_url: `${backendUrl}/static`,
+        upload_dir:
+          process.env.FILE_UPLOAD_DIR || path.join(process.cwd(), "static"),
+        private_upload_dir:
+          process.env.FILE_PRIVATE_UPLOAD_DIR || path.join(process.cwd(), "static"),
       },
     },
     eventBus: {
