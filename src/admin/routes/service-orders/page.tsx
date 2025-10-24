@@ -29,6 +29,7 @@ import { useCustomTranslation } from "../../hooks/use-custom-translation"
 import { KanbanView } from "./components/kanban-view"
 import { EditServiceOrderForm } from "../../components/edit-service-order-form"
 import { ServiceTypeLabel } from "../../components/common/service-type-label"
+import { useCustomers, useTechnicians, createCustomerLookup, createTechnicianLookup } from "./hooks/use-service-order-data"
 
 // Types for service order data
 interface ServiceOrder {
@@ -109,7 +110,7 @@ const useServiceOrders = (query?: any) => {
       if (query?.customer_id) searchParams.set('customer_id', query.customer_id)
       if (query?.technician_id) searchParams.set('technician_id', query.technician_id)
       if (query?.tab) searchParams.set('tab', query.tab) // Add tab parameter
-      
+
       const response = await fetch(`/admin/service-orders?${searchParams.toString()}`)
       if (!response.ok) {
         throw new Error("Failed to fetch service orders")
@@ -120,42 +121,9 @@ const useServiceOrders = (query?: any) => {
         count: data.count || 0
       }
     },
+    enabled: query?.enabled !== false, // Allow conditional execution
     staleTime: 0, // Always consider data stale to ensure fresh data
     gcTime: 5 * 60 * 1000,
-  })
-}
-
-// Hook to fetch customers for display
-const useCustomers = () => {
-  return useQuery({
-    queryKey: ["service-orders-customers"],
-    queryFn: async () => {
-      const response = await fetch(`/admin/customers?limit=1000`)
-      if (!response.ok) throw new Error("Failed to fetch customers")
-      const data = await response.json()
-      return {
-        customers: data.customers || [],
-        count: data.count || 0
-      }
-    },
-    staleTime: 5 * 60 * 1000,
-  })
-}
-
-// Hook to fetch technicians for display
-const useTechnicians = () => {
-  return useQuery({
-    queryKey: ["service-orders-technicians"],
-    queryFn: async () => {
-      const response = await fetch(`/admin/technicians?limit=1000`)
-      if (!response.ok) throw new Error("Failed to fetch technicians")
-      const data = await response.json()
-      return {
-        technicians: data.technicians || [],
-        count: data.count || 0
-      }
-    },
-    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -322,26 +290,9 @@ const BacklogDataTable = () => {
   const customers = customersData?.customers || []
   const technicians = techniciansData?.technicians || []
 
-  // Create lookup maps for efficient customer/technician display
-  const customerLookup = React.useMemo(() => {
-    const map = new Map()
-    if (Array.isArray(customers)) {
-      customers.forEach((customer: any) => {
-        map.set(customer.id, customer)
-      })
-    }
-    return map
-  }, [customers])
-  
-  const technicianLookup = React.useMemo(() => {
-    const map = new Map()
-    if (Array.isArray(technicians)) {
-      technicians.forEach((technician: any) => {
-        map.set(technician.id, technician)
-      })
-    }
-    return map
-  }, [technicians])
+  // Create lookup maps using shared utility functions
+  const customerLookup = React.useMemo(() => createCustomerLookup(customers), [customers])
+  const technicianLookup = React.useMemo(() => createTechnicianLookup(technicians), [technicians])
 
   // Data processing - server-side filtered, no client-side filtering needed
   const serviceOrders = data?.service_orders || []
@@ -571,26 +522,9 @@ const ActiveOrdersDataTable = () => {
   const customers = customersData?.customers || []
   const technicians = techniciansData?.technicians || []
 
-  // Create lookup maps
-  const customerLookup = React.useMemo(() => {
-    const map = new Map()
-    if (Array.isArray(customers)) {
-      customers.forEach((customer: any) => {
-        map.set(customer.id, customer)
-      })
-    }
-    return map
-  }, [customers])
-  
-  const technicianLookup = React.useMemo(() => {
-    const map = new Map()
-    if (Array.isArray(technicians)) {
-      technicians.forEach((technician: any) => {
-        map.set(technician.id, technician)
-      })
-    }
-    return map
-  }, [technicians])
+  // Create lookup maps using shared utility functions
+  const customerLookup = React.useMemo(() => createCustomerLookup(customers), [customers])
+  const technicianLookup = React.useMemo(() => createTechnicianLookup(technicians), [technicians])
 
   // Data processing - server-side filtered, no client-side filtering needed
   const serviceOrders = data?.service_orders || []
@@ -777,11 +711,12 @@ const ActiveOrdersDataTable = () => {
 const ServiceOrdersList = () => {
   const { t } = useCustomTranslation()
   const [activeTab, setActiveTab] = useState("active")
-  const [activeView, setActiveView] = useState("list") // "list" or "kanban"
-  
+  const [activeView, setActiveView] = useState("kanban") // "list" or "kanban" - default to kanban
+
   // Use different data sources for different tabs to ensure consistency
-  const backlogQuery = useServiceOrders({ tab: "backlog" })
-  const activeQuery = useServiceOrders({ tab: "active" })
+  // Only fetch data for the currently active tab to reduce unnecessary queries
+  const backlogQuery = useServiceOrders({ tab: "backlog", enabled: activeTab === "backlog" })
+  const activeQuery = useServiceOrders({ tab: "active", enabled: activeTab === "active" })
 
   // Use the appropriate query based on active tab
   const currentQuery = activeTab === "backlog" ? backlogQuery : activeQuery

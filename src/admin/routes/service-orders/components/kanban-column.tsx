@@ -2,6 +2,10 @@ import React from "react"
 import { useDroppable } from "@dnd-kit/core"
 import { Badge, Heading, Text } from "@medusajs/ui"
 
+// Synchronized animation timing - matches kanban-view.tsx and kanban-card.tsx
+const ANIMATION_DURATION = 250 // ms
+const ANIMATION_EASING = "ease-out"
+
 type KanbanColumnProps = {
   id: string
   title: string
@@ -38,9 +42,12 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       {/* Droppable Area */}
       <div
         ref={setNodeRef}
-        className={`flex min-h-[500px] flex-1 flex-col gap-3 rounded-lg border-2 border-dashed p-3 transition-all duration-200 ease-out ${
+        style={{
+          transition: `all ${ANIMATION_DURATION}ms ${ANIMATION_EASING}`,
+        }}
+        className={`flex min-h-[500px] flex-1 flex-col gap-3 rounded-lg border-2 border-dashed p-3 ${
           isOver
-            ? "border-ui-border-interactive bg-ui-bg-highlight shadow-md scale-[1.02]"
+            ? "border-ui-border-interactive bg-ui-bg-highlight shadow-md scale-[1.01]"
             : "border-ui-border-base bg-ui-bg-subtle hover:border-ui-border-base-hover"
         }`}
       >

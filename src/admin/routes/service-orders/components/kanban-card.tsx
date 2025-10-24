@@ -8,6 +8,10 @@ import { Link } from "react-router-dom"
 import { Clock, User, Tools, ChevronUpMini, ChevronDownMini, ChevronRightMini, ExclamationCircle, ArrowUpMini, ArrowDownMini } from "@medusajs/icons"
 import { ServiceTypeLabel } from "../../../components/common/service-type-label"
 
+// Synchronized animation timing - matches kanban-view.tsx
+const ANIMATION_DURATION = 250 // ms
+const ANIMATION_EASING = "cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+
 type ServiceOrder = {
   id: string
   service_order_number: string
@@ -76,17 +80,35 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
     isDragging: isSortableDragging,
   } = useSortable({
     id: order.id,
-    disabled: isPending,
+    disabled: isPending, // Disable dragging while API call is in progress
   })
 
-  // Simplified and reliable animation handling
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition: isOverlay || isDragging || isSortableDragging 
-      ? "none" 
-      : transition || "transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-    opacity: isDragging || isSortableDragging ? 0.4 : isPending ? 0.8 : 1,
-    pointerEvents: isPending ? "none" as const : "auto" as const,
+  // Improved animation handling with proper null safety
+  const style: React.CSSProperties = {
+    // Transform with null safety
+    transform: transform ? CSS.Transform.toString(transform) : undefined,
+
+    // Transition logic:
+    // - Overlay: smooth animation (not "none" - fixes visual jump)
+    // - Dragging: no transition (for immediate feedback)
+    // - Pending: smooth transition to new position
+    // - Default: use dnd-kit's transition or fallback
+    transition: isDragging || isSortableDragging
+      ? "none"
+      : isOverlay
+      ? `transform ${ANIMATION_DURATION}ms ${ANIMATION_EASING}`
+      : transition || `transform ${ANIMATION_DURATION}ms ${ANIMATION_EASING}`,
+
+    // Separate opacity states for clarity
+    opacity: (() => {
+      if (isSortableDragging) return 0.4  // Being dragged (original position)
+      if (isPending) return 0.8            // API call in progress
+      if (isDragging && !isOverlay) return 0.4  // Extra safety
+      return 1                              // Normal state
+    })(),
+
+    // Pointer events
+    pointerEvents: isPending ? "none" : "auto",
   }
 
   const formatDate = (dateString?: string) => {
@@ -113,7 +135,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
 
   const cardContent = (
     <Container
-      className={`cursor-grab touch-none select-none rounded-lg border bg-ui-bg-base shadow-sm transition-all duration-200 ease-out hover:shadow-md ${
+      className={`cursor-grab touch-none select-none rounded-lg border bg-ui-bg-base shadow-sm transition-shadow duration-200 ease-out hover:shadow-md ${
         isOverlay ? "rotate-2 shadow-xl scale-105" : ""
       } ${isDragging || isSortableDragging || isPending ? "pointer-events-none" : ""} ${
         isPending ? "opacity-90 shadow-md" : ""
@@ -195,7 +217,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
   }
 
   return (
-    <Link 
+    <Link
       to={`/service-orders/${order.id}`}
       className="block"
       onClick={(e) => {
@@ -208,4 +230,4 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
       {cardContent}
     </Link>
   )
-} 
+}
