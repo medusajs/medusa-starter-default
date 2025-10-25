@@ -359,17 +359,9 @@ class OfferService extends MedusaService({
       : null
 
     // Build line items table with header and data rows
-    const tableBody = [
-      // Header row
-      [
-        { text: "Item", style: "tableHeader" },
-        { text: "Quantity", style: "tableHeader", alignment: "right" },
-        { text: "Unit Price", style: "tableHeader", alignment: "right" },
-        { text: "Tax", style: "tableHeader", alignment: "right" },
-        { text: "Total", style: "tableHeader", alignment: "right" },
-      ],
-      // Data rows - map each line item to a table row
-      ...lineItems.map(item => [
+    // Process line items with async formatAmount calls
+    const lineItemRows = await Promise.all(
+      lineItems.map(async (item) => [
         {
           text: [
             { text: item.title, bold: true },
@@ -391,6 +383,19 @@ class OfferService extends MedusaService({
           alignment: "right"
         },
       ])
+    )
+
+    const tableBody = [
+      // Header row
+      [
+        { text: "Item", style: "tableHeader" },
+        { text: "Quantity", style: "tableHeader", alignment: "right" },
+        { text: "Unit Price", style: "tableHeader", alignment: "right" },
+        { text: "Tax", style: "tableHeader", alignment: "right" },
+        { text: "Total", style: "tableHeader", alignment: "right" },
+      ],
+      // Data rows
+      ...lineItemRows
     ]
 
     // Document definition following pdfmake structure
