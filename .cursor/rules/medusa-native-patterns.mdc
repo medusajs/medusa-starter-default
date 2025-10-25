@@ -1,48 +1,44 @@
+## ⚠️ MANDATORY MCP VERIFICATION PROTOCOL ⚠️
+
+**STOP**: Before writing ANY MedusaJS code, you MUST:
+
+1. ✅ **USE MEDUSA MCP FIRST** - Call `mcp__medusa__ask_medusa_question` or `mcp__medusa__search_medusa_sources` to verify:
+   - Correct API patterns for the feature
+   - Latest best practices in Medusa v2
+   - Proper module/workflow/service structure
+   - Available utilities and helpers
+
+2. ✅ **SHOW YOUR VERIFICATION** - In your response, explicitly state:
+   - "Verified with Medusa MCP: [key findings]"
+   - Link to relevant documentation found
+   - Any patterns or APIs confirmed
+
+3. ✅ **THEN IMPLEMENT** - Only after MCP verification:
+   - Check `.medusa-source/` for implementation examples
+   - Write code following verified patterns
+   - Use framework utilities over custom solutions
+
+**NO EXCEPTIONS**: Never propose MedusaJS implementations without MCP verification. If you skip this step, the user should reject your proposal.
+
+If not working, use https://docs.medusajs.com/llms-full.txt to check the txt of the docs.
+
 ---
-description: 
-globs: 
-alwaysApply: false
----
----
-description:medusa-native-patterns
-glob:
-alwaysApply: true
----
 
-Rule Name: medusa-native-patterns
-Description: MedusaJS development guide that references native source patterns from .medusa-source folder for accurate implementation following official conventions and architecture.
+## MedusaJS v2 Project
 
-You are an expert in MedusaJS development with deep knowledge of the modular commerce platform.
+This is a MedusaJS v2 application with custom ecommerce/service management system.
 
-Technologies:
-- Backend: MedusaJS 2.0, Node.js, TypeScript, PostgreSQL, MikroORM
-- Frontend: Next.js, React, TypeScript
-- Infrastructure: Docker, Redis, Event Bus
+### Development Commands
+- `npx medusa develop` - Start development server
+- `npm run seed` - Seed database with demo data
 
-Key Principles:
-- Follow patterns from `.medusa-source/packages/modules/` for module structure
-- Use `.medusa-source/packages/core/core-flows/` as reference for workflow patterns
-- Reference `.medusa-source/packages/medusa/src/api/` for API route structure
-- Follow `.medusa-source/.eslintrc.js` and `.medusa-source/.prettierrc` for code style
-- Use native MedusaJS patterns over custom implementations
-
-Architecture Guidelines:
-- Use `model.define()` for entities (see product module examples)
-- Extend `MedusaService` for module services
-- Use `createStep()` and `createWorkflow()` for business logic
-- Export modules with `Module(MODULE_NAME, { service })` pattern
-- Follow the file structure from native modules
-
-When implementing features:
-1. Check `.medusa-source` for existing patterns first
-2. Use framework utilities over custom solutions
-3. Maintain module composability and type safety
-4. Follow established naming and organization conventions
-
-AI Reasoning:
-- Always reference native source patterns from `.medusa-source` before suggesting implementations
-- Documentation about the native components can be found in .medusa-source\www\apps\resources\app, so check when new components need to be developed.
-- Ask clarifying questions when multiple approaches exist in the source
-- Prioritize consistency with MedusaJS conventions
-
-- Consider performance and maintainability implications
+### Custom Modules
+Located in `/src/modules/`:
+- `purchasing/` - Purchase orders, suppliers, and supplier products
+- `machines/` - Machine management and tracking
+- `service-orders/` - Service order management with status tracking
+- `brands/` - Brand management and certifications
+- `technicians/` - Technician management and brand certifications
+- `invoicing/` - Invoice generation and PDF creation
+- `stock-location-details/` - Extended stock location information
+- `user-preferences/` - User-specific preferences and settings
