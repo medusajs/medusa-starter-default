@@ -96,5 +96,30 @@ const ServiceOrder = model.define("service_order", {
   updated_by: model.text().nullable(),
   metadata: model.json().nullable(),
 })
+// TEM-248: Add database indexes for optimized calendar date range queries
+.indexes([
+  {
+    // Index on scheduled_start_date for efficient date range filtering
+    // Only index non-null dates as calendar only shows scheduled orders
+    on: ["scheduled_start_date"],
+    where: "scheduled_start_date IS NOT NULL"
+  },
+  {
+    // Index on scheduled_end_date for efficient end date filtering
+    on: ["scheduled_end_date"],
+    where: "scheduled_end_date IS NOT NULL"
+  },
+  {
+    // Composite index on both dates for range queries
+    // Optimizes queries that filter by both start and end dates
+    on: ["scheduled_start_date", "scheduled_end_date"],
+    where: "scheduled_start_date IS NOT NULL"
+  },
+  {
+    // Index on status for filtering scheduled orders by status
+    on: ["status", "scheduled_start_date"],
+    where: "scheduled_start_date IS NOT NULL"
+  },
+])
 
 export default ServiceOrder 

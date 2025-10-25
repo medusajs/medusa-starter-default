@@ -165,6 +165,9 @@ module.exports = defineConfig({
       resolve: "./src/modules/machines",
     },
     {
+      resolve: "./src/modules/offers",
+    },
+    {
       resolve: "./src/modules/purchasing",
     },
     {

@@ -8,6 +8,7 @@ import ServiceOrderItemsWidget from "../../../components/widgets/service-order-i
 import ServiceOrderTimeEntriesWidget from "../../../components/widgets/service-order-time-entries"
 import ServiceOrderCommentsWidget from "../../../components/widgets/service-order-comments"
 import ServiceOrderCharacteristicsWidget from "../../../components/widgets/service-order-characteristics"
+import ServiceOrderScheduleWidget from "../../../components/widgets/service-order-schedule"
 
 const ServiceOrderDetails = () => {
   const { id } = useParams()
@@ -55,6 +56,7 @@ const ServiceOrderDetails = () => {
 
       <TwoColumnPage.Sidebar>
         <ServiceOrderOverviewWidget data={so} />
+        <ServiceOrderScheduleWidget data={so} />
         <ServiceOrderCharacteristicsWidget data={so} />
       </TwoColumnPage.Sidebar>
     </TwoColumnPage>

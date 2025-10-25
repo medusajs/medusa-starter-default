@@ -514,6 +514,80 @@ class ServiceOrdersService extends MedusaService({
 
     return mentionedComments
   }
+
+  /**
+   * TEM-248: Optimized method for calendar view queries
+   * 
+   * This method is specifically optimized for calendar date range queries:
+   * - Uses database indexes on scheduled_start_date and scheduled_end_date
+   * - Returns only scheduled orders (non-null dates)
+   * - Supports efficient date range filtering
+   * 
+   * @param dateRange - Start and end dates for the calendar view
+   * @param additionalFilters - Optional filters (status, priority, technician_id, etc.)
+   * @returns Array of scheduled service orders within the date range
+   */
+  async listScheduledServiceOrders(
+    dateRange: { start: Date; end: Date },
+    additionalFilters?: {
+      status?: string
+      priority?: string
+      technician_id?: string | null
+      service_type?: string
+    }
+  ) {
+    // Build filters for scheduled orders within date range
+    const filters: any = {
+      // Only orders with scheduled dates
+      scheduled_start_date: {
+        $ne: null,
+        $gte: dateRange.start,
+        $lte: dateRange.end,
+      }
+    }
+
+    // Apply additional filters if provided
+    if (additionalFilters) {
+      if (additionalFilters.status) {
+        filters.status = additionalFilters.status
+      }
+      if (additionalFilters.priority) {
+        filters.priority = additionalFilters.priority
+      }
+      if (additionalFilters.technician_id !== undefined) {
+        filters.technician_id = additionalFilters.technician_id
+      }
+      if (additionalFilters.service_type) {
+        filters.service_type = additionalFilters.service_type
+      }
+    }
+
+    // Use optimized query with indexed fields
+    // The database will use the indexes created in TEM-248
+    const serviceOrders = await this.listServiceOrders(filters, {
+      order: { scheduled_start_date: "ASC" },
+    })
+
+    return serviceOrders
+  }
+
+  /**
+   * TEM-248: Get count of unscheduled service orders
+   * 
+   * Efficiently counts service orders that don't have scheduled dates.
+   * Used by calendar view to show unscheduled orders count.
+   * 
+   * @returns Count of unscheduled service orders (excluding completed)
+   */
+  async getUnscheduledOrdersCount() {
+    const filters = {
+      scheduled_start_date: null,
+      status: { $ne: "done" } // Exclude completed orders
+    }
+
+    const [, count] = await this.listAndCountServiceOrders(filters, { take: 0 })
+    return count
+  }
 }
 
 export default ServiceOrdersService 

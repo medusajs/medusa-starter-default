@@ -16,7 +16,12 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       q,
       limit = 50, 
       offset = 0,
-      tab // Add tab parameter for backlog vs active filtering
+      tab, // Add tab parameter for backlog vs active filtering
+      // TEM-245: Date range filtering parameters for calendar view
+      scheduled_start_date_gte,
+      scheduled_start_date_lte,
+      scheduled_end_date_gte,
+      scheduled_end_date_lte,
     } = req.query
 
     // Build filters
@@ -51,6 +56,59 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
         { description: { $ilike: `%${q}%` } },
         { customer_complaint: { $ilike: `%${q}%` } },
       ]
+    }
+
+    // TEM-245: Date range filtering for calendar view
+    // Filter by scheduled start date (greater than or equal)
+    if (scheduled_start_date_gte) {
+      try {
+        const startDate = new Date(scheduled_start_date_gte as string)
+        if (!isNaN(startDate.getTime())) {
+          filters.scheduled_start_date = filters.scheduled_start_date || {}
+          filters.scheduled_start_date.$gte = startDate
+        }
+      } catch (error) {
+        // Invalid date format - skip filter
+      }
+    }
+
+    // Filter by scheduled start date (less than or equal)
+    if (scheduled_start_date_lte) {
+      try {
+        const endDate = new Date(scheduled_start_date_lte as string)
+        if (!isNaN(endDate.getTime())) {
+          filters.scheduled_start_date = filters.scheduled_start_date || {}
+          filters.scheduled_start_date.$lte = endDate
+        }
+      } catch (error) {
+        // Invalid date format - skip filter
+      }
+    }
+
+    // Filter by scheduled end date (greater than or equal)
+    if (scheduled_end_date_gte) {
+      try {
+        const startDate = new Date(scheduled_end_date_gte as string)
+        if (!isNaN(startDate.getTime())) {
+          filters.scheduled_end_date = filters.scheduled_end_date || {}
+          filters.scheduled_end_date.$gte = startDate
+        }
+      } catch (error) {
+        // Invalid date format - skip filter
+      }
+    }
+
+    // Filter by scheduled end date (less than or equal)
+    if (scheduled_end_date_lte) {
+      try {
+        const endDate = new Date(scheduled_end_date_lte as string)
+        if (!isNaN(endDate.getTime())) {
+          filters.scheduled_end_date = filters.scheduled_end_date || {}
+          filters.scheduled_end_date.$lte = endDate
+        }
+      } catch (error) {
+        // Invalid date format - skip filter
+      }
     }
 
     // Use database-level pagination with skip/take

@@ -30,6 +30,11 @@ import { KanbanView } from "./components/kanban-view"
 import { EditServiceOrderForm } from "../../components/edit-service-order-form"
 import { ServiceTypeLabel } from "../../components/common/service-type-label"
 import { useCustomers, useTechnicians, createCustomerLookup, createTechnicianLookup } from "./hooks/use-service-order-data"
+// TEM-253: Import calendar components
+// TEM-256: Import optimistic update hooks
+import { CalendarView } from "./components/calendar-view"
+import { useCalendarData, useUpdateSchedule, useResizeEvent } from "./hooks/use-calendar-data"
+import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from "date-fns"
 
 // Types for service order data
 interface ServiceOrder {
@@ -711,12 +716,45 @@ const ActiveOrdersDataTable = () => {
 const ServiceOrdersList = () => {
   const { t } = useCustomTranslation()
   const [activeTab, setActiveTab] = useState("active")
-  const [activeView, setActiveView] = useState("kanban") // "list" or "kanban" - default to kanban
+  const [activeView, setActiveView] = useState("kanban") // "list", "kanban", or "calendar" - TEM-253
 
   // Use different data sources for different tabs to ensure consistency
   // Only fetch data for the currently active tab to reduce unnecessary queries
   const backlogQuery = useServiceOrders({ tab: "backlog", enabled: activeTab === "backlog" })
   const activeQuery = useServiceOrders({ tab: "active", enabled: activeTab === "active" })
+
+  // TEM-253: Calendar data fetching with date range
+  const currentDate = new Date()
+  const monthStart = startOfMonth(currentDate)
+  const monthEnd = endOfMonth(currentDate)
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 })
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
+  
+  const calendarQuery = useCalendarData({
+    startDate: calendarStart,
+    endDate: calendarEnd,
+  })
+
+  // TEM-256: Mutation hooks for optimistic updates
+  const updateSchedule = useUpdateSchedule()
+  const resizeEvent = useResizeEvent()
+
+  // TEM-256: Handler for drag-and-drop schedule updates
+  const handleEventDrop = (serviceOrderId: string, newStartDate: Date, newEndDate: Date) => {
+    updateSchedule.mutate({
+      serviceOrderId,
+      newStartDate,
+      newEndDate,
+    })
+  }
+
+  // TEM-257: Handler for event resize
+  const handleEventResize = (serviceOrderId: string, newEndDate: Date) => {
+    resizeEvent.mutate({
+      serviceOrderId,
+      newEndDate,
+    })
+  }
 
   // Use the appropriate query based on active tab
   const currentQuery = activeTab === "backlog" ? backlogQuery : activeQuery
@@ -770,7 +808,7 @@ const ServiceOrdersList = () => {
               </Tabs.List>
 
               
-              {/* View Toggle - only show when Active tab is selected */}
+              {/* TEM-253: View Toggle - only show when Active tab is selected */}
               {activeTab === "active" && (
                 <div className="flex items-center gap-2">
                   <Button
@@ -791,6 +829,16 @@ const ServiceOrdersList = () => {
                     <SquareTwoStack className="w-4 h-4" />
                     Kanban
                   </Button>
+                  {/* TEM-253: Add Calendar view button */}
+                  <Button
+                    size="small"
+                    variant={activeView === "calendar" ? "primary" : "secondary"}
+                    onClick={() => setActiveView("calendar")}
+                    className="flex items-center gap-2"
+                  >
+                    <DocumentText className="w-4 h-4" />
+                    Calendar
+                  </Button>
                 </div>
               )}
             </div>
@@ -801,9 +849,24 @@ const ServiceOrdersList = () => {
           </Tabs.Content>
 
           <Tabs.Content value="active" className="mt-0" key="active-tab">
+            {/* TEM-253: Render appropriate view based on activeView state */}
             {activeView === "list" ? (
               <ActiveOrdersDataTable />
+            ) : activeView === "calendar" ? (
+              // TEM-253: Calendar view
+              // TEM-256: Added drag-and-drop handlers
+              <CalendarView 
+                events={calendarQuery.events}
+                isLoading={calendarQuery.isLoading}
+                onEventClick={(order) => {
+                  // Navigate to service order detail page
+                  window.location.href = `/service-orders/${order.id}`
+                }}
+                onEventDrop={handleEventDrop}
+                onEventResize={handleEventResize}
+              />
             ) : (
+              // Kanban view
               <div className="p-6">
                 <KanbanView 
                   serviceOrders={serviceOrders}
