@@ -2,6 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { OFFER_MODULE } from "../../../modules/offers"
 import { createOfferWorkflow } from "../../../workflows/offers/create-offer-workflow"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { PostAdminCreateOfferSchemaType } from "./validators"
 
 /**
  * GET /admin/offers
@@ -47,6 +48,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
         "valid_until",
         "total_amount",
         "currency_code",
+        "customer_id",
         "customer_email",
         "created_at",
         "updated_at",
@@ -59,8 +61,33 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       },
     })
 
+    // Fetch customer details for all offers
+    const customerIds = [...new Set(offers.map((o: any) => o.customer_id).filter(Boolean))]
+    let customersMap = new Map()
+
+    if (customerIds.length > 0) {
+      const { data: customers } = await query.graph({
+        entity: "customer",
+        fields: ["id", "first_name", "last_name", "email"],
+        filters: { id: customerIds },
+      })
+
+      customersMap = new Map(customers.map((c: any) => [c.id, c]))
+    }
+
+    // Enrich offers with customer names
+    const enrichedOffers = offers.map((offer: any) => {
+      const customer = customersMap.get(offer.customer_id)
+      return {
+        ...offer,
+        customer_name: customer
+          ? [customer.first_name, customer.last_name].filter(Boolean).join(" ") || customer.email
+          : null,
+      }
+    })
+
     res.json({
-      offers,
+      offers: enrichedOffers,
       count: metadata?.count || offers.length,
       offset: Number(offset),
       limit: Number(limit)
@@ -77,8 +104,14 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 /**
  * POST /admin/offers
  * Create a new offer with auto-generated offer number
+ *
+ * Uses Zod validation via validateAndTransformBody middleware
+ * Validated data is accessed via req.validatedBody
  */
-export async function POST(req: MedusaRequest, res: MedusaResponse) {
+export async function POST(
+  req: MedusaRequest<PostAdminCreateOfferSchemaType>,
+  res: MedusaResponse
+) {
   try {
     const {
       customer_id,
@@ -92,22 +125,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       notes,
       terms_and_conditions,
       metadata
-    } = req.body
-
-    // Validate required fields
-    if (!customer_id || !customer_email) {
-      return res.status(400).json({
-        error: "Validation failed",
-        details: "customer_id and customer_email are required"
-      })
-    }
-
-    if (!billing_address) {
-      return res.status(400).json({
-        error: "Validation failed",
-        details: "billing_address is required"
-      })
-    }
+    } = req.validatedBody
 
     // Create offer via workflow
     const { result } = await createOfferWorkflow(req.scope).run({

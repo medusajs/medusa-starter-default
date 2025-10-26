@@ -21,7 +21,7 @@ import {
   DocumentText,
   EllipsisHorizontal,
   Trash,
-  PaperAirplane,
+  EnvelopeSolid,
 } from "@medusajs/icons"
 import { useNavigate, Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -42,6 +42,7 @@ interface Offer {
   valid_until: string
   customer_id: string
   customer_email: string
+  customer_name?: string | null
   customer_phone?: string
   pdf_file_id?: string
   notes?: string
@@ -241,7 +242,7 @@ const OfferActions = ({
               disabled={sendOffer.isPending}
               className="flex items-center gap-2"
             >
-              <PaperAirplane className="h-4 w-4" />
+              <EnvelopeSolid className="h-4 w-4" />
               {t("custom.offers.send")}
             </DropdownMenu.Item>
 
@@ -303,13 +304,26 @@ const OffersListTable = () => {
         </Text>
       ),
     }),
-    columnHelper.accessor("customer_email", {
+    columnHelper.accessor("customer_name", {
       header: t("custom.offers.customer"),
-      cell: ({ getValue }) => {
-        const email = getValue()
-        if (!email) return <Text className="text-ui-fg-muted">No customer</Text>
+      cell: ({ row }) => {
+        const customerName = row.original.customer_name
+        const customerEmail = row.original.customer_email
 
-        return <Text>{email}</Text>
+        if (!customerName && !customerEmail) {
+          return <Text className="text-ui-fg-muted">No customer</Text>
+        }
+
+        return (
+          <div>
+            <Text weight="plus">{customerName || "Unknown"}</Text>
+            {customerName && customerEmail && (
+              <Text size="xsmall" className="text-ui-fg-subtle">
+                {customerEmail}
+              </Text>
+            )}
+          </div>
+        )
       },
     }),
     columnHelper.accessor("status", {
