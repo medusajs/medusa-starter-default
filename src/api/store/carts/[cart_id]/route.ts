@@ -98,7 +98,18 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     }
   }
 
-  const approvals = await b2bService.getCartApprovals(cartId)
+  let approvals = []
+
+  try {
+    approvals = await b2bService.getCartApprovals(cartId)
+  } catch (error) {
+    const logger = req.scope.resolve(ContainerRegistrationKeys.LOGGER)
+    logger?.warn(
+      "Failed to load cart approvals for cart %s: %s",
+      cartId,
+      (error as Error)?.message ?? error
+    )
+  }
 
   res.json({
     cart: {
