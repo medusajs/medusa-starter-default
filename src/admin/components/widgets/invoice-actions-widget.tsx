@@ -59,8 +59,13 @@ const InvoiceActionsWidget = ({ data: invoice }: InvoiceActionsWidgetProps) => {
       const response = await fetch(`/admin/invoices/${invoice.id}/pdf?preview=true`)
       if (!response.ok) throw new Error("Failed to load PDF")
 
-      const data = await response.json()
-      window.open(data.file.url, '_blank')
+      // Create blob URL from PDF stream (no files saved to disk)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      window.open(url, '_blank')
+
+      // Clean up blob URL after a delay to allow the window to open
+      setTimeout(() => window.URL.revokeObjectURL(url), 100)
     } catch (error) {
       toast.error("Failed to preview PDF", {
         description: error instanceof Error ? error.message : "Unknown error"

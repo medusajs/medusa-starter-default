@@ -94,7 +94,18 @@ const useInvoicePdf = (invoiceId: string) => {
     queryFn: async () => {
       const response = await fetch(`/admin/invoices/${invoiceId}/pdf?preview=true`)
       if (!response.ok) throw new Error("Failed to fetch invoice PDF")
-      return response.json()
+
+      // Create blob URL from PDF stream (no files saved to disk)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+
+      return {
+        file: {
+          url,
+          content_type: 'application/pdf',
+          filename: `invoice-${invoiceId}.pdf`
+        }
+      }
     },
     enabled: !!invoiceId,
   })
@@ -154,6 +165,15 @@ export const InvoiceViewModal: React.FC<InvoiceViewModalProps> = ({
   const { data: pdfData, isLoading: isPdfLoading, error: pdfError } = useInvoicePdf(invoice.id)
   const { data: htmlContent, isLoading: isHtmlLoading } = useInvoiceHtmlContent(pdfData?.file?.url)
   const downloadInvoice = useDownloadInvoice()
+
+  // Clean up blob URL when modal closes
+  React.useEffect(() => {
+    return () => {
+      if (pdfData?.file?.url && pdfData.file.url.startsWith('blob:')) {
+        window.URL.revokeObjectURL(pdfData.file.url)
+      }
+    }
+  }, [pdfData?.file?.url])
 
   const handleDownload = () => {
     downloadInvoice.mutate(invoice.id)
