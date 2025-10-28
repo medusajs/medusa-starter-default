@@ -54,7 +54,11 @@ module.exports = defineConfig({
         server: {
           host: '0.0.0.0',
           // Disable HMR for local development to avoid port binding issues
-          hmr: false
+          hmr: false,
+          // Add allowedHosts for production
+          ...(process.env.ALLOWED_HOSTS && {
+            allowedHosts: process.env.ALLOWED_HOSTS.split(',').map(h => h.trim()).filter(Boolean)
+          }),
         },
         build: {
           rollupOptions: {
