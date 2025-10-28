@@ -336,6 +336,12 @@ const InvoicesListTable = () => {
   
   // Selection state for bulk operations
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({})
+  
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 20,
+  })
 
   const handleViewInvoice = (invoice: Invoice) => {
     setSelectedInvoice(invoice)
@@ -547,8 +553,11 @@ const InvoicesListTable = () => {
     columns,
     filters,
     rowCount: count,
-    pageSize: 20,
     getRowId: (row) => row.id,
+    pagination: {
+      state: pagination,
+      onPaginationChange: setPagination,
+    },
     onRowClick: (_, row) => {
       // Navigate to invoice detail page (following MedusaJS best practices)
       navigate(`/invoices/${row.id}`)
