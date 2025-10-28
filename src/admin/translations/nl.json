@@ -157,6 +157,36 @@
         "product_sale": "Productverkoop",
         "service_work": "Servicewerk",
         "mixed": "Gemengd"
+      },
+      "merge": {
+        "title": "Facturen Samenvoegen",
+        "button": "Geselecteerde Samenvoegen",
+        "confirmTitle": "{count} Facturen Samenvoegen?",
+        "warning": "Bronfacturen worden geannuleerd. Deze actie kan niet ongedaan worden gemaakt.",
+        "success": "{count} facturen succesvol samengevoegd in {invoiceNumber}",
+        "error": "Samenvoegen van facturen mislukt",
+        "validation": {
+          "differentCustomers": "Alle facturen moeten tot dezelfde klant behoren",
+          "notDraft": "Alleen conceptfacturen kunnen worden samengevoegd",
+          "differentCurrencies": "Alle facturen moeten dezelfde valuta hebben",
+          "minimum": "Selecteer minstens 2 facturen om samen te voegen",
+          "maximum": "Kan niet meer dan 10 facturen tegelijk samenvoegen"
+        },
+        "labels": {
+          "sourceInvoices": "Bronfacturen",
+          "mergedInvoice": "Samengevoegde Factuur",
+          "additionalNotes": "Extra Notities",
+          "paymentTerms": "Betalingsvoorwaarden",
+          "totalAmount": "Totaalbedrag",
+          "totalLineItems": "Totaal Regelitems",
+          "customer": "Klant",
+          "currency": "Valuta"
+        },
+        "badges": {
+          "mergedFrom": "Samengevoegd uit {count} facturen",
+          "mergedInto": "Samengevoegd in {invoiceNumber}"
+        },
+        "selected": "{count} geselecteerd"
       }
     },
     "purchaseOrders": {

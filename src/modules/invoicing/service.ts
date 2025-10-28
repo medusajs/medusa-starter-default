@@ -217,6 +217,247 @@ class InvoicingService extends MedusaService({
       }
     )
   }
+
+  /**
+   * Get mergeable invoices for a specific customer
+   * Returns all draft invoices with the same currency that haven't been paid
+   * 
+   * @param customerId - The customer ID to find mergeable invoices for
+   * @returns Array of mergeable invoices
+   */
+  async getMergeableInvoicesForCustomer(customerId: string): Promise<any[]> {
+    const invoices = await this.listInvoices({
+      customer_id: customerId,
+      status: InvoiceStatus.DRAFT,
+      paid_date: null, // No payment received
+    }, {
+      order: { invoice_date: "ASC" },
+      relations: ["line_items"]
+    })
+
+    // Group by currency to help identify mergeable sets
+    const mergeableInvoices = invoices.filter(invoice => {
+      // Additional validation: ensure invoice has line items
+      return invoice.line_items && invoice.line_items.length > 0
+    })
+
+    return mergeableInvoices
+  }
+
+  /**
+   * Check if a set of invoices can be merged together
+   * Validates business rules without throwing errors
+   * 
+   * @param invoiceIds - Array of invoice IDs to check
+   * @returns Object with mergeable status and reason if not mergeable
+   */
+  async canInvoicesBeMerged(
+    invoiceIds: string[]
+  ): Promise<{ mergeable: boolean; reason?: string }> {
+    // Check minimum/maximum count
+    if (!invoiceIds || invoiceIds.length < 2) {
+      return { 
+        mergeable: false, 
+        reason: "At least 2 invoices are required to merge" 
+      }
+    }
+
+    if (invoiceIds.length > 10) {
+      return { 
+        mergeable: false, 
+        reason: "Cannot merge more than 10 invoices at once" 
+      }
+    }
+
+    try {
+      // Retrieve all invoices
+      const invoices = await this.listInvoices({
+        id: invoiceIds,
+      }, {
+        relations: ["line_items"]
+      })
+
+      // Check if all invoices exist
+      if (invoices.length !== invoiceIds.length) {
+        return { 
+          mergeable: false, 
+          reason: "One or more invoices not found" 
+        }
+      }
+
+      // Check if all belong to same customer
+      const customerIds = [...new Set(invoices.map(inv => inv.customer_id))]
+      if (customerIds.length > 1) {
+        return { 
+          mergeable: false, 
+          reason: "All invoices must belong to the same customer" 
+        }
+      }
+
+      // Check if all are in draft status
+      const nonDraftInvoices = invoices.filter(
+        inv => inv.status !== InvoiceStatus.DRAFT
+      )
+      if (nonDraftInvoices.length > 0) {
+        const invoiceNumbers = nonDraftInvoices.map(inv => inv.invoice_number).join(", ")
+        return { 
+          mergeable: false, 
+          reason: `Only draft invoices can be merged. Non-draft: ${invoiceNumbers}` 
+        }
+      }
+
+      // Check if all have same currency
+      const currencies = [...new Set(invoices.map(inv => inv.currency_code))]
+      if (currencies.length > 1) {
+        return { 
+          mergeable: false, 
+          reason: `All invoices must have the same currency. Found: ${currencies.join(", ")}` 
+        }
+      }
+
+      // Check if any have payments
+      const invoicesWithPayments = invoices.filter(inv => inv.paid_date !== null)
+      if (invoicesWithPayments.length > 0) {
+        const invoiceNumbers = invoicesWithPayments.map(inv => inv.invoice_number).join(", ")
+        return { 
+          mergeable: false, 
+          reason: `Cannot merge invoices with payments: ${invoiceNumbers}` 
+        }
+      }
+
+      return { mergeable: true }
+
+    } catch (error) {
+      return { 
+        mergeable: false, 
+        reason: error instanceof Error ? error.message : "Unknown error occurred" 
+      }
+    }
+  }
+
+  /**
+   * Get source invoices that were merged into a specific merged invoice
+   * 
+   * @param mergedInvoiceId - The ID of the merged invoice
+   * @returns Array of source invoices that were merged, or empty array if none
+   */
+  async getSourceInvoicesForMerged(mergedInvoiceId: string): Promise<any[]> {
+    try {
+      // Get the merged invoice and check its metadata
+      const mergedInvoice = await this.retrieveInvoice(mergedInvoiceId)
+      
+      if (!mergedInvoice.metadata?.merged_from) {
+        return []
+      }
+
+      const sourceInvoiceIds = mergedInvoice.metadata.merged_from as string[]
+
+      if (!Array.isArray(sourceInvoiceIds) || sourceInvoiceIds.length === 0) {
+        return []
+      }
+
+      // Retrieve all source invoices
+      const sourceInvoices = await this.listInvoices({
+        id: sourceInvoiceIds,
+      }, {
+        order: { invoice_date: "ASC" },
+        relations: ["line_items"]
+      })
+
+      return sourceInvoices
+
+    } catch (error) {
+      console.error("Error fetching source invoices for merged invoice:", error)
+      return []
+    }
+  }
+
+  /**
+   * Get the merged invoice from a source invoice (if it was merged)
+   * 
+   * @param sourceInvoiceId - The ID of a source invoice that may have been merged
+   * @returns The merged invoice if found, null otherwise
+   */
+  async getMergedInvoiceFromSource(sourceInvoiceId: string): Promise<any | null> {
+    try {
+      // Get the source invoice and check its metadata
+      const sourceInvoice = await this.retrieveInvoice(sourceInvoiceId)
+      
+      if (
+        !sourceInvoice.metadata?.cancelled_reason ||
+        sourceInvoice.metadata.cancelled_reason !== "merged" ||
+        !sourceInvoice.metadata.merged_into_invoice_id
+      ) {
+        return null
+      }
+
+      const mergedInvoiceId = sourceInvoice.metadata.merged_into_invoice_id as string
+
+      // Retrieve the merged invoice
+      const mergedInvoice = await this.retrieveInvoice(mergedInvoiceId)
+
+      return mergedInvoice
+
+    } catch (error) {
+      console.error("Error fetching merged invoice from source:", error)
+      return null
+    }
+  }
+
+  /**
+   * Get all merged invoices (invoices created from merge operations)
+   * 
+   * @returns Array of invoices that were created from merging other invoices
+   */
+  async getAllMergedInvoices(): Promise<any[]> {
+    // Note: This uses a metadata query which may need to be adapted based on
+    // the ORM's support for JSON field queries
+    try {
+      const allInvoices = await this.listInvoices({}, {
+        order: { created_at: "DESC" }
+      })
+
+      // Filter to only invoices with merge metadata
+      const mergedInvoices = allInvoices.filter(
+        invoice => invoice.metadata?.merged_from && 
+                  Array.isArray(invoice.metadata.merged_from) &&
+                  invoice.metadata.merged_from.length > 0
+      )
+
+      return mergedInvoices
+
+    } catch (error) {
+      console.error("Error fetching all merged invoices:", error)
+      return []
+    }
+  }
+
+  /**
+   * Get all cancelled invoices that were merged into other invoices
+   * 
+   * @returns Array of cancelled invoices that were part of a merge
+   */
+  async getAllMergedSourceInvoices(): Promise<any[]> {
+    try {
+      const cancelledInvoices = await this.listInvoices({
+        status: InvoiceStatus.CANCELLED,
+      }, {
+        order: { created_at: "DESC" }
+      })
+
+      // Filter to only invoices cancelled due to merge
+      const mergedSourceInvoices = cancelledInvoices.filter(
+        invoice => invoice.metadata?.cancelled_reason === "merged" &&
+                  invoice.metadata?.merged_into_invoice_id
+      )
+
+      return mergedSourceInvoices
+
+    } catch (error) {
+      console.error("Error fetching merged source invoices:", error)
+      return []
+    }
+  }
 }
 
 export default InvoicingService 

@@ -158,6 +158,36 @@
         "product_sale": "Product Sale",
         "service_work": "Service Work",
         "mixed": "Mixed"
+      },
+      "merge": {
+        "title": "Merge Invoices",
+        "button": "Merge Selected",
+        "confirmTitle": "Merge {count} Invoices?",
+        "warning": "Source invoices will be cancelled. This action cannot be undone.",
+        "success": "Successfully merged {count} invoices into {invoiceNumber}",
+        "error": "Failed to merge invoices",
+        "validation": {
+          "differentCustomers": "All invoices must belong to the same customer",
+          "notDraft": "Only draft invoices can be merged",
+          "differentCurrencies": "All invoices must have the same currency",
+          "minimum": "Select at least 2 invoices to merge",
+          "maximum": "Cannot merge more than 10 invoices at once"
+        },
+        "labels": {
+          "sourceInvoices": "Source Invoices",
+          "mergedInvoice": "Merged Invoice",
+          "additionalNotes": "Additional Notes",
+          "paymentTerms": "Payment Terms",
+          "totalAmount": "Total Amount",
+          "totalLineItems": "Total Line Items",
+          "customer": "Customer",
+          "currency": "Currency"
+        },
+        "badges": {
+          "mergedFrom": "Merged from {count} invoices",
+          "mergedInto": "Merged into {invoiceNumber}"
+        },
+        "selected": "{count} selected"
       }
     },
     "purchaseOrders": {
