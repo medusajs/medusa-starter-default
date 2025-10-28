@@ -39,45 +39,20 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       // Convert array back to Buffer
       const pdfBuffer = Buffer.from(result.pdf_buffer)
       
+      // Stream PDF directly (no disk storage needed)
+      const filename = `invoice-${invoice.invoice_number}.pdf`
+
       // For download mode, send as attachment
       if (download === 'true') {
-        res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoice_number}.pdf"`)
-        res.setHeader('Content-Type', 'application/pdf')
-        res.send(pdfBuffer)
-        return
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+      } else {
+        // For preview mode, send as inline (opens in browser)
+        res.setHeader('Content-Disposition', `inline; filename="${filename}"`)
       }
-      
-      // For preview mode, save temporarily and return URL
-      // Generate a temporary filename
-      const tempFilename = `private-${Date.now()}-invoice-${invoice.invoice_number}.pdf`
-      const fs = require('fs')
-      const path = require('path')
-      const staticDir = path.join(process.cwd(), 'static')
-      
-      // Ensure static directory exists
-      if (!fs.existsSync(staticDir)) {
-        fs.mkdirSync(staticDir, { recursive: true })
-      }
-      
-      const tempFilePath = path.join(staticDir, tempFilename)
-      fs.writeFileSync(tempFilePath, pdfBuffer)
-      
-      // Return URL to the temporary file
-      res.json({ 
-        file: {
-          id: tempFilename,
-          url: `/static/${tempFilename}`,
-          filename: `invoice-${invoice.invoice_number}.pdf`,
-          content_type: 'application/pdf'
-        },
-        invoice: {
-          id: invoice.id,
-          invoice_number: invoice.invoice_number,
-          status: invoice.status,
-          total_amount: invoice.total_amount,
-          currency_code: invoice.currency_code
-        }
-      })
+
+      res.setHeader('Content-Type', 'application/pdf')
+      res.setHeader('Content-Length', pdfBuffer.length.toString())
+      res.send(pdfBuffer)
     } else {
       // No preview or download requested
       return res.status(404).json({ 
@@ -114,28 +89,13 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       
       // Convert array back to Buffer
       const pdfBuffer = Buffer.from(result.pdf_buffer)
-      
-      // Save temporarily
-      const tempFilename = `private-${Date.now()}-invoice-${result.invoice.invoice_number}.pdf`
-      const fs = require('fs')
-      const path = require('path')
-      const staticDir = path.join(process.cwd(), 'static')
-      
-      if (!fs.existsSync(staticDir)) {
-        fs.mkdirSync(staticDir, { recursive: true })
-      }
-      
-      const tempFilePath = path.join(staticDir, tempFilename)
-      fs.writeFileSync(tempFilePath, pdfBuffer)
-      
-      return res.json({ 
-        file: {
-          id: tempFilename,
-          url: `/static/${tempFilename}`,
-          filename: `invoice-${result.invoice.invoice_number}.pdf`
-        },
-        regenerated: true
-      })
+
+      // Stream PDF directly as inline (no disk storage)
+      const filename = `invoice-${result.invoice.invoice_number}.pdf`
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`)
+      res.setHeader('Content-Type', 'application/pdf')
+      res.setHeader('Content-Length', pdfBuffer.length.toString())
+      return res.send(pdfBuffer)
     }
     
     // Otherwise, use GET logic

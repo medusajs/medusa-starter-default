@@ -24,56 +24,26 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     // Convert to Buffer (workflows serialize buffers as arrays)
     const pdfBuffer = Buffer.from(result.pdf_buffer)
 
+    // Stream PDF directly (no disk storage needed)
+    const filename = result.filename
+
     // For download mode, send as attachment
     if (download === 'true') {
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${result.filename}"`,
-        'Content-Length': pdfBuffer.length.toString()
-      })
-      return res.send(pdfBuffer)
-    }
-
-    // For preview mode, save temporarily and return URL
-    if (preview === 'true') {
-      const fs = require('fs')
-      const path = require('path')
-
-      // Generate a temporary filename
-      const tempFilename = `private-${Date.now()}-${result.filename}`
-      const staticDir = path.join(process.cwd(), 'static')
-
-      // Ensure static directory exists
-      if (!fs.existsSync(staticDir)) {
-        fs.mkdirSync(staticDir, { recursive: true })
-      }
-
-      const tempFilePath = path.join(staticDir, tempFilename)
-      fs.writeFileSync(tempFilePath, pdfBuffer)
-
-      // Return URL to the temporary file
-      return res.json({
-        file: {
-          id: tempFilename,
-          url: `/static/${tempFilename}`,
-          filename: result.filename,
-          content_type: 'application/pdf'
-        },
-        offer: {
-          id: result.offer.id,
-          offer_number: result.offer.offer_number,
-          status: result.offer.status,
-          total_amount: result.offer.total_amount,
-          currency_code: result.offer.currency_code
-        }
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+    } else if (preview === 'true') {
+      // For preview mode, send as inline (opens in browser)
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`)
+    } else {
+      // No preview or download requested
+      return res.status(400).json({
+        error: "Invalid request",
+        details: "Please use preview=true or download=true query parameter"
       })
     }
 
-    // No preview or download requested
-    return res.status(400).json({
-      error: "Invalid request",
-      details: "Please use preview=true or download=true query parameter"
-    })
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Length', pdfBuffer.length.toString())
+    return res.send(pdfBuffer)
   } catch (error: any) {
     console.error("Error generating PDF:", error)
 
