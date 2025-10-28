@@ -333,14 +333,14 @@ export function Step3FieldMapping({
 
                 {/* Target Field Selector */}
                 <Select
-                  value={currentMapping || ""}
-                  onValueChange={(value) => handleMappingChange(parsedCol, value || null)}
+                  value={currentMapping || "__unmapped__"}
+                  onValueChange={(value) => handleMappingChange(parsedCol, value === "__unmapped__" ? null : value)}
                 >
                   <Select.Trigger>
                     <Select.Value placeholder="Select target field..." />
                   </Select.Trigger>
                   <Select.Content>
-                    <Select.Item value="">Not mapped</Select.Item>
+                    <Select.Item value="__unmapped__">Not mapped</Select.Item>
                     <Select.Group>
                       <Select.Label>Required Fields</Select.Label>
                       {TARGET_FIELDS.filter(f => f.required).map(field => (
