@@ -61,6 +61,11 @@ interface PriceListItem {
     id: string
     title: string
   }
+  variant?: {
+    id: string
+    title: string
+    sku?: string
+  }
   gross_price?: number
   discount_code?: string
   discount_percentage?: number
@@ -648,24 +653,36 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
   const columnHelper = createDataTableColumnHelper<PriceListItem>()
 
   const columns = [
-    columnHelper.display({
-      id: "variant_info",
+    columnHelper.accessor("product.title", {
       header: "Product",
+      cell: ({ getValue, row }) => (
+        <Text className="font-medium text-sm">
+          {getValue() || row.original.description || "—"}
+        </Text>
+      ),
+    }),
+    columnHelper.display({
+      id: "variant_title",
+      header: "Variant",
       cell: ({ row }) => {
         const item = row.original
+        const variantTitle = item.variant?.title
+        const isManual = item.product_variant_id?.startsWith("manual-")
+
         return (
-          <div className="flex flex-col gap-1">
-            <Text className="font-medium text-sm">
-              {item.product?.title || "Product"}
-            </Text>
-            {item.variant_sku && (
-              <Text className="font-mono text-xs text-ui-fg-subtle">
-                SKU: {item.variant_sku}
-              </Text>
-            )}
-          </div>
+          <Text className="text-sm">
+            {isManual ? "Manual Entry" : variantTitle || "—"}
+          </Text>
         )
       },
+    }),
+    columnHelper.accessor("variant_sku", {
+      header: "SKU",
+      cell: ({ getValue, row }) => (
+        <Text className="font-mono text-sm">
+          {getValue() || row.original.variant?.sku || "—"}
+        </Text>
+      ),
     }),
     columnHelper.accessor("supplier_sku", {
       header: "Supplier SKU",
@@ -673,21 +690,9 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
         <Text className="font-mono text-sm">{getValue() || "—"}</Text>
       ),
     }),
-    columnHelper.accessor("description", {
-      header: "Description",
-      cell: ({ getValue }) => (
-        <Text className="text-sm">{getValue() || "—"}</Text>
-      ),
-    }),
-    columnHelper.accessor("category", {
-      header: "Category",
-      cell: ({ getValue }) => (
-        <Text className="text-sm">{getValue() || "—"}</Text>
-      ),
-    }),
     columnHelper.accessor("gross_price", {
       header: "Gross Price",
-      cell: ({ getValue, row }) => {
+      cell: ({ getValue }) => {
         const value = getValue()
         if (!value) return <Text className="font-medium">—</Text>
         return (
@@ -702,15 +707,15 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
       header: "Discount",
       cell: ({ row }) => {
         const item = row.original
-        const discountValue = typeof item.discount_percentage === 'number' 
-          ? item.discount_percentage 
+        const discountValue = typeof item.discount_percentage === 'number'
+          ? item.discount_percentage
           : parseFloat(item.discount_percentage)
         const hasValidDiscount = !isNaN(discountValue) && discountValue !== null && discountValue !== undefined
-        
+
         return (
           <div className="flex flex-col gap-1">
             {item.discount_code && (
-              <Badge color="blue">{item.discount_code}</Badge>
+              <Badge color="blue" size="small">{item.discount_code}</Badge>
             )}
             {hasValidDiscount && (
               <Text className="text-sm">{discountValue.toFixed(1)}%</Text>
@@ -725,19 +730,15 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     columnHelper.accessor("net_price", {
       header: "Net Price",
       cell: ({ getValue }) => (
-        <Text className="font-medium">
+        <Text className="font-medium text-green-600">
           {priceList?.currency_code || "USD"} {(getValue() / 100).toFixed(2)}
         </Text>
       ),
     }),
-    columnHelper.accessor("quantity", {
-      header: "Quantity",
-      cell: ({ getValue }) => <Text>{getValue() || 1}</Text>,
-    }),
     columnHelper.accessor("lead_time_days", {
       header: "Lead Time",
       cell: ({ getValue }) => (
-        <Text>{getValue() ? `${getValue()} days` : "—"}</Text>
+        <Text>{getValue() ? `${getValue()}d` : "—"}</Text>
       ),
     }),
     columnHelper.display({
@@ -747,7 +748,7 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     }),
     columnHelper.display({
       id: "actions",
-      header: "Actions",
+      header: "",
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenu.Trigger asChild>

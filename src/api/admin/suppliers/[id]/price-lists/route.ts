@@ -96,9 +96,55 @@ export const GET = async (
     }
     
     if (include_items) {
-      items = await purchasingService.listSupplierPriceListItems({
+      // Get price list items
+      const rawItems = await purchasingService.listSupplierPriceListItems({
         price_list_id: activePriceList.id
       })
+
+      // Enrich items with product and variant data
+      items = await Promise.all(rawItems.map(async (item) => {
+        let product = null
+        let variant = null
+
+        // Only fetch for non-manual entries
+        if (item.product_variant_id && !item.product_variant_id.startsWith('manual-')) {
+          try {
+            // Fetch variant data
+            const variantQueryObj = remoteQueryObjectFromString({
+              entryPoint: "variant",
+              fields: ["id", "title", "sku"],
+              variables: {
+                filters: { id: item.product_variant_id },
+                limit: 1,
+              },
+            })
+            const [variantData] = await query(variantQueryObj)
+            variant = variantData
+
+            // Fetch product data
+            if (item.product_id) {
+              const productQueryObj = remoteQueryObjectFromString({
+                entryPoint: "product",
+                fields: ["id", "title"],
+                variables: {
+                  filters: { id: item.product_id },
+                  limit: 1,
+                },
+              })
+              const [productData] = await query(productQueryObj)
+              product = productData
+            }
+          } catch (error) {
+            console.error(`Error fetching product/variant for item ${item.id}:`, error)
+          }
+        }
+
+        return {
+          ...item,
+          product,
+          variant,
+        }
+      }))
     }
 
     const finalPriceList = {

@@ -3,6 +3,7 @@ import Supplier from "./models/supplier.model"
 import SupplierProduct from "./models/supplier-product.model"
 import SupplierPriceList from "./models/supplier-price-list.model"
 import SupplierPriceListItem from "./models/supplier-price-list-item.model"
+import SupplierImportTemplate from "./models/supplier-import-template.model"
 import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus } from "./models/purchase-order.model"
 import { ParserConfig, ParserTemplate, ParserType, CsvConfig, FixedWidthConfig } from "./types/parser-types"
 import { PARSER_TEMPLATES, listParserTemplates as listTemplates } from "./config/parser-templates"
@@ -15,6 +16,7 @@ class PurchasingService extends MedusaService({
   SupplierProduct,
   SupplierPriceList,
   SupplierPriceListItem,
+  SupplierImportTemplate,
   PurchaseOrder,
   PurchaseOrderItem,
 }) {
@@ -890,6 +892,146 @@ class PurchasingService extends MedusaService({
       return structure.default_percentage
     }
     return null
+  }
+
+  // ==========================================
+  // IMPORT TEMPLATE MANAGEMENT
+  // @see TEM-301 - Create Import Template Storage API
+  // ==========================================
+
+  /**
+   * Create a new import template for a supplier
+   */
+  async createImportTemplate(data: {
+    supplier_id: string
+    name: string
+    description?: string
+    file_type: 'csv' | 'txt'
+    parse_config: any
+    column_mapping: Record<string, string>
+  }) {
+    // Validate required fields in column_mapping
+    const mappedFields = Object.values(data.column_mapping)
+    const hasIdentifier =
+      mappedFields.includes('supplier_sku') ||
+      mappedFields.includes('variant_sku') ||
+      mappedFields.includes('product_id')
+
+    if (!hasIdentifier) {
+      throw new Error('Column mapping must include at least one of: supplier_sku, variant_sku, or product_id')
+    }
+
+    // Check for duplicate template name for this supplier
+    const existing = await this.listSupplierImportTemplates({
+      supplier_id: data.supplier_id,
+      name: data.name,
+    })
+
+    if (existing.length > 0) {
+      throw new Error(`Template name "${data.name}" already exists for this supplier`)
+    }
+
+    const template = await this.createSupplierImportTemplates(data)
+    return template
+  }
+
+  /**
+   * List import templates for a supplier
+   */
+  async listImportTemplates(
+    supplier_id: string,
+    filters: { file_type?: 'csv' | 'txt' } = {}
+  ) {
+    const query: any = { supplier_id }
+
+    if (filters.file_type) {
+      query.file_type = filters.file_type
+    }
+
+    const templates = await this.listSupplierImportTemplates(query, {
+      order: { created_at: 'DESC' }
+    })
+
+    return templates
+  }
+
+  /**
+   * Get a single import template by ID
+   */
+  async getImportTemplate(template_id: string, supplier_id: string) {
+    const [template] = await this.listSupplierImportTemplates({
+      id: template_id,
+      supplier_id: supplier_id,
+    })
+
+    if (!template) {
+      throw new Error(`Template not found`)
+    }
+
+    return template
+  }
+
+  /**
+   * Update an import template
+   */
+  async updateImportTemplate(
+    template_id: string,
+    supplier_id: string,
+    data: {
+      name?: string
+      description?: string
+      file_type?: 'csv' | 'txt'
+      parse_config?: any
+      column_mapping?: Record<string, string>
+    }
+  ) {
+    // Verify template exists and belongs to supplier
+    await this.getImportTemplate(template_id, supplier_id)
+
+    // If updating name, check for duplicates
+    if (data.name) {
+      const existing = await this.listSupplierImportTemplates({
+        supplier_id: supplier_id,
+        name: data.name,
+        id: { $ne: template_id },
+      })
+
+      if (existing.length > 0) {
+        throw new Error(`Template name "${data.name}" already exists for this supplier`)
+      }
+    }
+
+    // Validate column mapping if provided
+    if (data.column_mapping) {
+      const mappedFields = Object.values(data.column_mapping)
+      const hasIdentifier =
+        mappedFields.includes('supplier_sku') ||
+        mappedFields.includes('variant_sku') ||
+        mappedFields.includes('product_id')
+
+      if (!hasIdentifier) {
+        throw new Error('Column mapping must include at least one of: supplier_sku, variant_sku, or product_id')
+      }
+    }
+
+    const updated = await this.updateSupplierImportTemplates(
+      { id: template_id },
+      { ...data, updated_at: new Date() }
+    )
+
+    return updated[0]
+  }
+
+  /**
+   * Delete an import template
+   */
+  async deleteImportTemplate(template_id: string, supplier_id: string) {
+    // Verify template exists and belongs to supplier
+    await this.getImportTemplate(template_id, supplier_id)
+
+    await this.deleteSupplierImportTemplates({ id: template_id })
+
+    return { id: template_id, deleted: true }
   }
 }
 

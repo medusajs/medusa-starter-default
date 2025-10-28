@@ -10,6 +10,7 @@
 
 import { createStep, StepResponse } from "@medusajs/workflows-sdk"
 import { Modules } from "@medusajs/framework/utils"
+import { createProductsWorkflow } from "@medusajs/medusa/core-flows"
 import { CsvConfig, ParsedPriceListItem, ParseResult, Transformation } from "../types/parser-types"
 import { FIELD_ALIASES } from "../config/field-aliases"
 
@@ -334,9 +335,63 @@ export const parseCsvPriceListStep = createStep(
           }
         }
 
+        // If product variant not found, create new product and variant using Medusa workflow
         if (!productVariant || !product) {
-          errors.push(`Row ${rowNum}: Could not resolve product variant`)
-          continue
+          // Only auto-create if we have the necessary information
+          const skuForCreation = mappedRow.variant_sku || mappedRow.supplier_sku
+          const titleForProduct = mappedRow.supplier_sku || mappedRow.variant_sku || `Product-${rowNum}`
+          const titleForVariant = mappedRow.description || skuForCreation || `Variant-${rowNum}`
+
+          if (!skuForCreation) {
+            errors.push(`Row ${rowNum}: Cannot create product - no SKU provided (need variant_sku or supplier_sku)`)
+            continue
+          }
+
+          try {
+            // Use createProductsWorkflow for proper data consistency and rollback
+            const { result } = await createProductsWorkflow(container).run({
+              input: {
+                products: [{
+                  title: titleForProduct,
+                  status: 'draft', // Start as draft for review
+                  options: [{
+                    title: 'Default',
+                    values: ['Default']
+                  }],
+                  variants: [{
+                    title: titleForVariant,
+                    sku: skuForCreation,
+                    options: {
+                      Default: 'Default'
+                    },
+                    manage_inventory: false, // Don't manage inventory for supplier-only items
+                    prices: [{
+                      amount: Math.round(parsedNetPrice * 100), // Convert to cents
+                      currency_code: 'USD', // Default currency
+                    }]
+                  }]
+                }]
+              }
+            })
+
+            const createdProduct = result[0]
+            product = createdProduct
+            productVariant = createdProduct.variants?.[0]
+
+            if (!productVariant) {
+              errors.push(`Row ${rowNum}: Product created but variant not found`)
+              continue
+            }
+
+            warnings.push(
+              `Row ${rowNum}: Created new product "${titleForProduct}" and variant with SKU "${skuForCreation}"`
+            )
+          } catch (createError: any) {
+            errors.push(
+              `Row ${rowNum}: Failed to create product/variant - ${createError.message}`
+            )
+            continue
+          }
         }
 
         // Parse optional fields
