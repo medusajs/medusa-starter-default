@@ -28,6 +28,7 @@ import * as zod from "zod"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { ProductSearchModal } from "./modals/product-search-modal"
+import { PriceListImportWizard } from "./import-wizard/PriceListImportWizard"
 
 interface PriceList {
   id: string
@@ -890,57 +891,16 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
       </DataTable>
 
 
-      {/* Single Upload CSV Modal */}
-      {showUploadModal && !showPreview && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
-            <div className="p-6 border-b">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Upload Price List CSV</h2>
-                <Button variant="secondary" size="small" onClick={() => setShowUploadModal(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
-
-            <div className="p-6">
-              <Text className="text-ui-fg-subtle mb-4">
-                Upload a CSV file to preview and import prices. This will replace all current price list items.
-              </Text>
-
-              <div className="space-y-4">
-                <div>
-                  <input
-                    type="file"
-                    accept=".csv,.txt"
-                    onChange={handleFileSelect}
-                    className="block w-full text-sm text-ui-fg-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-ui-bg-subtle file:text-ui-fg-base hover:file:bg-ui-bg-subtle-hover"
-                  />
-                </div>
-                {uploadFile && (
-                  <div className="p-3 bg-ui-bg-subtle rounded-lg">
-                    <Text className="text-sm">Selected file: {uploadFile.name}</Text>
-                    <Text className="text-xs text-ui-fg-subtle">Size: {(uploadFile.size / 1024).toFixed(1)} KB</Text>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="p-6 border-t flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setShowUploadModal(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleUploadCSV}
-                disabled={!uploadFile || uploadCSVMutation.isPending}
-                isLoading={uploadCSVMutation.isPending}
-              >
-                Upload & Replace
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Import Wizard - New 3-step wizard for CSV/TXT import */}
+      <PriceListImportWizard
+        open={showUploadModal}
+        onOpenChange={setShowUploadModal}
+        supplierId={supplier.id}
+        onImportComplete={() => {
+          // Refresh price lists after successful import
+          queryClient.invalidateQueries({ queryKey: ['supplier-price-lists', supplier.id] })
+        }}
+      />
 
       {/* Preview Dialog */}
       {showPreview && uploadPreview && (
