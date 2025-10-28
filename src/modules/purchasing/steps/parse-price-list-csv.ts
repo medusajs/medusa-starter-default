@@ -1,5 +1,5 @@
 import { createStep, StepResponse } from "@medusajs/workflows-sdk"
-import { Modules } from "@medusajs/framework/utils"
+import { Modules, ContainerRegistrationKeys } from "@medusajs/framework/utils"
 
 type ParsePriceListCsvStepInput = {
   csv_content: string
@@ -72,7 +72,7 @@ export const parsePriceListCsvStep = createStep(
   "parse-price-list-csv-step",
   async (input: ParsePriceListCsvStepInput, { container }) => {
     const productModuleService = container.resolve(Modules.PRODUCT)
-    const remoteQuery = container.resolve("REMOTE_QUERY") as any
+    const query = container.resolve(ContainerRegistrationKeys.QUERY)
     const featureFlag = process.env.MEDUSA_FF_BRAND_AWARE_PURCHASING === "true"
     
     const csvRows = parseCSV(input.csv_content)
@@ -83,14 +83,11 @@ export const parsePriceListCsvStep = createStep(
     let allowedBrandIds: string[] | null = null
     if (featureFlag) {
       try {
-        const supplierWithBrands = await remoteQuery(
-          {
-            entryPoint: "supplier",
-            fields: ["id", "brands.id", "brands.code"],
-            variables: { filters: { id: input.supplier_id } },
-          },
-          {}
-        )
+        const { data: supplierWithBrands } = await query.graph({
+          entity: "supplier",
+          fields: ["id", "brands.id", "brands.code"],
+          filters: { id: input.supplier_id },
+        })
         const supplier = Array.isArray(supplierWithBrands) ? supplierWithBrands[0] : supplierWithBrands
         const supplierBrandIds: string[] = (supplier?.brands || []).map((b: any) => b.id)
         if (input.brand_id) {

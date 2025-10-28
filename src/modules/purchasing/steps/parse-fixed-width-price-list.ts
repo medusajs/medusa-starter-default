@@ -8,7 +8,7 @@
  */
 
 import { createStep, StepResponse } from "@medusajs/workflows-sdk"
-import { Modules } from "@medusajs/framework/utils"
+import { Modules, ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { FixedWidthConfig, ParsedPriceListItem, ParseResult, Transformation } from "../types/parser-types"
 
 type FixedWidthConfigWithMapping = {
@@ -76,7 +76,7 @@ export const parseFixedWidthPriceListStep = createStep(
   "parse-fixed-width-price-list-step",
   async (input: ParseFixedWidthPriceListStepInput, { container }): Promise<ParseResult> => {
     const productModuleService = container.resolve(Modules.PRODUCT)
-    const remoteQuery = container.resolve(Modules.REMOTE_QUERY) as any
+    const query = container.resolve(ContainerRegistrationKeys.QUERY)
     const purchasingService = container.resolve("purchasingService")
     const featureFlag = process.env.MEDUSA_FF_BRAND_AWARE_PURCHASING === "true"
 
@@ -117,10 +117,10 @@ export const parseFixedWidthPriceListStep = createStep(
     let allowedBrandIds: string[] | null = null
     if (featureFlag) {
       try {
-        const supplierWithBrands = await remoteQuery({
-          entryPoint: "supplier",
+        const { data: supplierWithBrands } = await query.graph({
+          entity: "supplier",
           fields: ["id", "brands.id"],
-          variables: { filters: { id: supplier_id } },
+          filters: { id: supplier_id },
         })
         const supplier = Array.isArray(supplierWithBrands) ? supplierWithBrands[0] : supplierWithBrands
         const supplierBrandIds: string[] = (supplier?.brands || []).map((b: any) => b.id)
