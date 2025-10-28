@@ -89,6 +89,26 @@ export const FIELD_ALIASES = {
   ],
 
   // Product information fields - TEM-173
+  product_title: [
+    "product_title",
+    "product_name",
+    "product name",
+    "product",
+    "title",
+    "name",
+    "productnaam",
+    "artikel"
+  ],
+  variant_title: [
+    "variant_title",
+    "variant_name",
+    "variant name",
+    "variant",
+    "option",
+    "size",
+    "color",
+    "variantnaam"
+  ],
   description: [
     "description",
     "product_description",
@@ -98,11 +118,7 @@ export const FIELD_ALIASES = {
     "product description",
     "product_desc",
     "item_description",
-    "item description",
-    "name",
-    "product_name",
-    "item_name",
-    "title"
+    "item description"
   ],
   category: [
     "category",

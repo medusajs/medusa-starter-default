@@ -48,7 +48,9 @@ const FIELD_ALIASES: Record<string, string[]> = {
   discount_code: ["discount_code", "discount code", "discount_cd", "disc_code", "kortingscode", "code"],
   discount_percentage: ["discount_percentage", "discount %", "discount_pct", "disc_pct", "discount_percent", "korting %"],
   net_price: ["net_price", "net price", "netto prijs", "final_price", "cost_price", "purchase_price", "inkoopprijs", "net", "price"],
-  description: ["description", "product_description", "desc", "omschrijving", "beschrijving", "product_desc", "item_description", "name", "product_name"],
+  product_title: ["product_title", "product_name", "product name", "product", "title", "name", "productnaam", "artikel"],
+  variant_title: ["variant_title", "variant_name", "variant name", "variant", "option", "size", "color", "variantnaam"],
+  description: ["description", "product_description", "desc", "omschrijving", "beschrijving", "product_desc", "item_description"],
   category: ["category", "product_category", "cat", "categorie", "productcategorie", "product category", "item_category", "group"],
   quantity: ["quantity", "qty", "amount", "stock", "available"],
   lead_time_days: ["lead_time", "lead_time_days", "delivery_time", "days"],
@@ -62,6 +64,8 @@ const TARGET_FIELDS = [
   { value: "gross_price", label: "Gross Price", required: false, group: "pricing" },
   { value: "discount_code", label: "Discount Code", required: false, group: "pricing" },
   { value: "discount_percentage", label: "Discount Percentage", required: false, group: "pricing" },
+  { value: "product_title", label: "Product Title", required: false, group: "product_info" },
+  { value: "variant_title", label: "Variant Title", required: false, group: "product_info" },
   { value: "description", label: "Description", required: false, group: "product_info" },
   { value: "category", label: "Category", required: false, group: "product_info" },
   { value: "quantity", label: "Quantity", required: false, group: "other" },
@@ -262,7 +266,7 @@ export function Step3FieldMapping({
           Map Columns to Fields
         </Text>
         <Text size="small" className="text-ui-fg-subtle">
-          Match your file columns to the required data fields
+          Required: At least one identifier (Supplier SKU or Variant SKU) and Net Price
         </Text>
       </div>
 
