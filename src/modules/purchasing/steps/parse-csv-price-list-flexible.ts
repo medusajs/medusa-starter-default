@@ -14,11 +14,20 @@ import { createProductsWorkflow } from "@medusajs/medusa/core-flows"
 import { CsvConfig, ParsedPriceListItem, ParseResult, Transformation } from "../types/parser-types"
 import { FIELD_ALIASES } from "../config/field-aliases"
 
+type CsvConfigWithMapping = {
+  delimiter: string
+  quote_char: string
+  has_header: boolean
+  skip_rows: number
+  column_mapping: Record<string, string>
+  transformations?: Record<string, Transformation>
+}
+
 type ParseCsvPriceListStepInput = {
   file_content: string
   supplier_id: string
   brand_id?: string
-  config: CsvConfig
+  config: CsvConfigWithMapping
 }
 
 /**
@@ -132,40 +141,15 @@ export const parseCsvPriceListStep = createStep(
       })
     }
 
-    // Auto-match columns if mapping uses arrays (aliases)
-    let columnMapping = config.column_mapping
-    const headers = Object.keys(csvRows[0])
+    // Use provided column mapping from wizard
+    // column_mapping is a Record where keys are parsed column names, values are target field names
+    // Example: { "SKU": "variant_sku", "Price": "net_price", "Discount": "discount_percentage" }
 
-    // Get auto-detected mapping
-    const autoMapping = await purchasingService.matchColumnsToFields(headers, FIELD_ALIASES)
-
-    // Build final mapping: prefer explicit config, fallback to auto-detection
-    const finalMapping: Record<string, string> = {}
-    for (const [field, columnOrAliases] of Object.entries(columnMapping)) {
-      if (typeof columnOrAliases === 'string') {
-        // Explicit column name provided
-        finalMapping[field] = columnOrAliases
-      } else if (Array.isArray(columnOrAliases)) {
-        // Array of aliases - try to find match in headers
-        for (const alias of columnOrAliases) {
-          const normalizedAlias = alias.toLowerCase().trim()
-          const match = headers.find(h => h.toLowerCase().trim() === normalizedAlias)
-          if (match) {
-            finalMapping[field] = match
-            break
-          }
-        }
-        // If no match found in explicit aliases, use auto-detection
-        if (!finalMapping[field] && autoMapping[field]) {
-          finalMapping[field] = autoMapping[field]
-        }
-      }
-    }
-
-    // Also add auto-detected mappings that weren't explicitly configured
-    for (const [field, header] of Object.entries(autoMapping)) {
-      if (!finalMapping[field]) {
-        finalMapping[field] = header
+    // Invert the mapping to go from target field → parsed column
+    const fieldToColumnMapping: Record<string, string> = {}
+    for (const [parsedColumn, targetField] of Object.entries(config.column_mapping)) {
+      if (targetField && targetField.trim() !== '') {
+        fieldToColumnMapping[targetField] = parsedColumn
       }
     }
 
@@ -200,9 +184,9 @@ export const parseCsvPriceListStep = createStep(
       const rowNum = i + 2 + (config.skip_rows || 0) // Adjust for skipped rows and header
 
       try {
-        // Map columns using final column mapping
+        // Map columns using provided field → column mapping
         const mappedRow: any = {}
-        for (const [field, columnName] of Object.entries(finalMapping)) {
+        for (const [field, columnName] of Object.entries(fieldToColumnMapping)) {
           if (row[columnName] !== undefined) {
             mappedRow[field] = row[columnName]
           }

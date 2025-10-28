@@ -11,11 +11,22 @@ import { createStep, StepResponse } from "@medusajs/workflows-sdk"
 import { Modules } from "@medusajs/framework/utils"
 import { FixedWidthConfig, ParsedPriceListItem, ParseResult, Transformation } from "../types/parser-types"
 
+type FixedWidthConfigWithMapping = {
+  columns: Array<{
+    name: string
+    start: number
+    width: number
+  }>
+  skip_rows: number
+  column_mapping: Record<string, string>
+  transformations?: Record<string, Transformation>
+}
+
 type ParseFixedWidthPriceListStepInput = {
   file_content: string
   supplier_id: string
   brand_id?: string
-  config: FixedWidthConfig
+  config: FixedWidthConfigWithMapping
 }
 
 /**
@@ -23,14 +34,14 @@ type ParseFixedWidthPriceListStepInput = {
  */
 function extractFixedWidthFields(
   line: string,
-  columns: Array<{ field: string, start: number, width: number }>
+  columns: Array<{ name: string, start: number, width: number }>
 ): Record<string, string> {
   const row: Record<string, string> = {}
 
   for (const column of columns) {
     const end = column.start + column.width
-    const value = line.substring(column.start, end)
-    row[column.field] = value
+    const value = line.substring(column.start, end).trim()
+    row[column.name] = value
   }
 
   return row
@@ -92,7 +103,15 @@ export const parseFixedWidthPriceListStep = createStep(
     }
 
     // Validate column definitions
-    const maxPosition = Math.max(...config.fixed_width_columns.map(col => col.start + col.width))
+    const maxPosition = Math.max(...config.columns.map(col => col.start + col.width))
+
+    // Invert the column mapping: target field → parsed column
+    const fieldToColumnMapping: Record<string, string> = {}
+    for (const [parsedColumn, targetField] of Object.entries(config.column_mapping)) {
+      if (targetField && targetField.trim() !== '') {
+        fieldToColumnMapping[targetField] = parsedColumn
+      }
+    }
 
     // Determine allowed brand ids for the supplier if feature enabled
     let allowedBrandIds: string[] | null = null
@@ -130,34 +149,42 @@ export const parseFixedWidthPriceListStep = createStep(
           warnings.push(`Row ${rowNum}: Line shorter than expected (${line.length} < ${maxPosition}), some fields may be empty`)
         }
 
-        // Extract fields based on fixed-width columns
-        const row = extractFixedWidthFields(line, config.fixed_width_columns)
+        // Extract fields based on fixed-width columns (gets parsed column values)
+        const parsedRow = extractFixedWidthFields(line, config.columns)
+
+        // Map parsed columns to target fields using column_mapping
+        const mappedRow: any = {}
+        for (const [targetField, parsedColumn] of Object.entries(fieldToColumnMapping)) {
+          if (parsedRow[parsedColumn] !== undefined) {
+            mappedRow[targetField] = parsedRow[parsedColumn]
+          }
+        }
 
         // Apply transformations
         if (config.transformations) {
           for (const [field, transformation] of Object.entries(config.transformations)) {
-            if (row[field] !== undefined && row[field] !== '') {
-              row[field] = applyTransformation(row[field], transformation)
+            if (mappedRow[field] !== undefined && mappedRow[field] !== '') {
+              mappedRow[field] = applyTransformation(mappedRow[field], transformation)
             }
           }
         }
 
         // Validate required fields
-        const hasIdentifier = (row.variant_sku && row.variant_sku.trim()) ||
-                             (row.supplier_sku && row.supplier_sku.trim()) ||
-                             (row.product_id && row.product_id.trim())
+        const hasIdentifier = (mappedRow.variant_sku && mappedRow.variant_sku.trim()) ||
+                             (mappedRow.supplier_sku && mappedRow.supplier_sku.trim()) ||
+                             (mappedRow.product_id && mappedRow.product_id.trim())
 
         if (!hasIdentifier) {
           errors.push(`Row ${rowNum}: Either variant_sku, supplier_sku, or product_id is required`)
           continue
         }
 
-        // TEM-173: Parse pricing fields (gross_price, discount_code, discount_percentage, net_price)
-        const grossPrice = row.gross_price ? parseFloat(row.gross_price) : undefined
-        const discountPercentage = row.discount_percentage ? parseFloat(row.discount_percentage) : undefined
+        // Parse pricing fields
+        const grossPrice = mappedRow.gross_price ? parseFloat(mappedRow.gross_price) : undefined
+        const discountPercentage = mappedRow.discount_percentage ? parseFloat(mappedRow.discount_percentage) : undefined
 
         // Support both net_price (new) and cost_price (legacy) for backward compatibility
-        const netPrice = row.net_price || row.cost_price
+        const netPrice = mappedRow.net_price || mappedRow.cost_price
         if (!netPrice && netPrice !== '0') {
           errors.push(`Row ${rowNum}: net_price or cost_price is required`)
           continue
@@ -174,8 +201,8 @@ export const parseFixedWidthPriceListStep = createStep(
         let product = null
 
         // Try by variant_sku first
-        if (row.variant_sku && row.variant_sku.trim()) {
-          const variantFilters: any = { sku: row.variant_sku.trim() }
+        if (mappedRow.variant_sku && mappedRow.variant_sku.trim()) {
+          const variantFilters: any = { sku: mappedRow.variant_sku.trim() }
           const variantConfig: any = { select: ["id", "product_id", "sku"], relations: ["product"] }
 
           if (featureFlag && allowedBrandIds && allowedBrandIds.length > 0) {
@@ -188,19 +215,19 @@ export const parseFixedWidthPriceListStep = createStep(
           if (variants.length > 0) {
             productVariant = variants[0]
             product = productVariant.product
-          } else if (!row.supplier_sku) {
+          } else if (!mappedRow.supplier_sku) {
             // Only error if we don't have supplier_sku to try
             const brandMsg = featureFlag ? " for supplier's allowed brands" : ""
-            errors.push(`Row ${rowNum}: Product variant with SKU "${row.variant_sku.trim()}" not found${brandMsg}`)
+            errors.push(`Row ${rowNum}: Product variant with SKU "${mappedRow.variant_sku.trim()}" not found${brandMsg}`)
             continue
           }
         }
 
         // Try by supplier_sku if not found by variant_sku
-        if (!productVariant && row.supplier_sku && row.supplier_sku.trim()) {
+        if (!productVariant && mappedRow.supplier_sku && mappedRow.supplier_sku.trim()) {
           const supplierProducts = await purchasingService.listSupplierProducts({
             supplier_id: supplier_id,
-            supplier_sku: row.supplier_sku.trim()
+            supplier_sku: mappedRow.supplier_sku.trim()
           })
 
           if (supplierProducts.length > 0) {
@@ -213,16 +240,16 @@ export const parseFixedWidthPriceListStep = createStep(
               productVariant = variants[0]
               product = productVariant.product
             }
-          } else if (!row.product_id) {
+          } else if (!mappedRow.product_id) {
             // Only error if we don't have product_id to try
-            errors.push(`Row ${rowNum}: Supplier SKU "${row.supplier_sku.trim()}" not found in supplier products`)
+            errors.push(`Row ${rowNum}: Supplier SKU "${mappedRow.supplier_sku.trim()}" not found in supplier products`)
             continue
           }
         }
 
         // Try by product_id if still not found
-        if (!productVariant && row.product_id && row.product_id.trim()) {
-          const productFilters: any = { id: row.product_id.trim() }
+        if (!productVariant && mappedRow.product_id && mappedRow.product_id.trim()) {
+          const productFilters: any = { id: mappedRow.product_id.trim() }
           const productConfig: any = { select: ["id"], relations: ["variants"] }
 
           if (featureFlag && allowedBrandIds && allowedBrandIds.length > 0) {
@@ -232,7 +259,7 @@ export const parseFixedWidthPriceListStep = createStep(
           const products = await productModuleService.listProducts(productFilters, productConfig)
 
           if (products.length === 0) {
-            errors.push(`Row ${rowNum}: Product with ID "${row.product_id.trim()}" not found`)
+            errors.push(`Row ${rowNum}: Product with ID "${mappedRow.product_id.trim()}" not found`)
             continue
           }
 
@@ -250,42 +277,42 @@ export const parseFixedWidthPriceListStep = createStep(
           if (filteredByBrand.length > 0) {
             productVariant = filteredByBrand[0]
           } else {
-            errors.push(`Row ${rowNum}: Product "${row.product_id.trim()}" has no variants${featureFlag ? " within allowed brands" : ""}`)
+            errors.push(`Row ${rowNum}: Product "${mappedRow.product_id.trim()}" has no variants${featureFlag ? " within allowed brands" : ""}`)
             continue
           }
         }
 
         if (!productVariant || !product) {
-          const identifier = row.variant_sku?.trim() || row.supplier_sku?.trim() || row.product_id?.trim()
+          const identifier = mappedRow.variant_sku?.trim() || mappedRow.supplier_sku?.trim() || mappedRow.product_id?.trim()
           errors.push(`Row ${rowNum}: Could not resolve product variant (identifier: ${identifier})`)
           continue
         }
 
         // Parse optional fields
-        const quantity = row.quantity ? parseInt(String(row.quantity)) : 1
-        const leadTimeDays = row.lead_time_days ? parseInt(String(row.lead_time_days)) : undefined
+        const quantity = mappedRow.quantity ? parseInt(String(mappedRow.quantity)) : 1
+        const leadTimeDays = mappedRow.lead_time_days ? parseInt(String(mappedRow.lead_time_days)) : undefined
 
-        // TEM-173: Create processed item with new discount and product information fields
+        // Create processed item
         const processedItem: ParsedPriceListItem = {
           product_variant_id: productVariant.id,
           product_id: product.id,
-          supplier_sku: row.supplier_sku?.trim() || undefined,
+          supplier_sku: mappedRow.supplier_sku?.trim() || undefined,
           variant_sku: productVariant.sku || undefined,
 
-          // Pricing fields (TEM-173)
+          // Pricing fields
           gross_price: isNaN(grossPrice!) ? undefined : grossPrice,
-          discount_code: row.discount_code?.trim() || undefined,
+          discount_code: mappedRow.discount_code?.trim() || undefined,
           discount_percentage: isNaN(discountPercentage!) ? undefined : discountPercentage,
           net_price: parsedNetPrice,
 
-          // Product information fields (TEM-173)
-          description: row.description?.trim() || undefined,
-          category: row.category?.trim() || undefined,
+          // Product information fields
+          description: mappedRow.description?.trim() || undefined,
+          category: mappedRow.category?.trim() || undefined,
 
           // Other fields
           quantity: isNaN(quantity) ? 1 : quantity,
           lead_time_days: isNaN(leadTimeDays!) ? undefined : leadTimeDays,
-          notes: row.notes?.trim() || undefined,
+          notes: mappedRow.notes?.trim() || undefined,
         }
 
         processedItems.push(processedItem)
