@@ -13,6 +13,7 @@ import { Modules, ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { createProductsWorkflow } from "@medusajs/medusa/core-flows"
 import { CsvConfig, ParsedPriceListItem, ParseResult, Transformation } from "../types/parser-types"
 import { FIELD_ALIASES } from "../config/field-aliases"
+import { PURCHASING_MODULE } from ".."
 
 type CsvConfigWithMapping = {
   delimiter: string
@@ -114,7 +115,7 @@ export const parseCsvPriceListStep = createStep(
   async (input: ParseCsvPriceListStepInput, { container }): Promise<ParseResult> => {
     const productModuleService = container.resolve(Modules.PRODUCT)
     const query = container.resolve(ContainerRegistrationKeys.QUERY)
-    const purchasingService = container.resolve("purchasingService")
+    const purchasingService = container.resolve(PURCHASING_MODULE)
     const featureFlag = process.env.MEDUSA_FF_BRAND_AWARE_PURCHASING === "true"
 
     const { config, file_content, supplier_id, brand_id } = input

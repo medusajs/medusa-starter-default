@@ -10,6 +10,7 @@
 import { createStep, StepResponse } from "@medusajs/workflows-sdk"
 import { Modules, ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { FixedWidthConfig, ParsedPriceListItem, ParseResult, Transformation } from "../types/parser-types"
+import { PURCHASING_MODULE } from ".."
 
 type FixedWidthConfigWithMapping = {
   columns: Array<{
@@ -77,7 +78,7 @@ export const parseFixedWidthPriceListStep = createStep(
   async (input: ParseFixedWidthPriceListStepInput, { container }): Promise<ParseResult> => {
     const productModuleService = container.resolve(Modules.PRODUCT)
     const query = container.resolve(ContainerRegistrationKeys.QUERY)
-    const purchasingService = container.resolve("purchasingService")
+    const purchasingService = container.resolve(PURCHASING_MODULE)
     const featureFlag = process.env.MEDUSA_FF_BRAND_AWARE_PURCHASING === "true"
 
     const { config, file_content, supplier_id, brand_id } = input
