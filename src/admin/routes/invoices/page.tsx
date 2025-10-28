@@ -342,6 +342,13 @@ const InvoicesListTable = () => {
     pageIndex: 0,
     pageSize: 20,
   })
+  
+  // Search state
+  const [search, setSearch] = useState("")
+  
+  // Filtering state
+  const [filtering, setFiltering] = useState<any>({})
+
 
   const handleViewInvoice = (invoice: Invoice) => {
     setSelectedInvoice(invoice)
@@ -557,6 +564,14 @@ const InvoicesListTable = () => {
     pagination: {
       state: pagination,
       onPaginationChange: setPagination,
+    },
+    search: {
+      state: search,
+      onSearchChange: setSearch,
+    },
+    filtering: {
+      state: filtering,
+      onFilteringChange: setFiltering,
     },
     onRowClick: (_, row) => {
       // Navigate to invoice detail page (following MedusaJS best practices)
