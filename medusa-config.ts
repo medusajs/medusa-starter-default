@@ -150,7 +150,37 @@ module.exports = defineConfig({
           },
         ],
       },
-    }] : []),
+    }    ] : []),
+    // Notification module for email service
+    {
+      resolve: "@medusajs/medusa/notification",
+      key: Modules.NOTIFICATION,
+      options: {
+        providers: [
+          // Use Resend if API key is set
+          ...(process.env.RESEND_API_KEY ? [
+            {
+              resolve: "./src/modules/resend/service",
+              id: "resend",
+              options: {
+                channels: ["email"],
+                api_key: process.env.RESEND_API_KEY,
+                from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+              },
+            },
+          ] : [
+            // Local provider for development (logs emails to console)
+            {
+              resolve: "@medusajs/medusa/notification-local",
+              id: "local",
+              options: {
+                channels: ["email"],
+              },
+            },
+          ]),
+        ],
+      },
+    },
     // Custom modules
     {
       resolve: "./src/modules/brands",
