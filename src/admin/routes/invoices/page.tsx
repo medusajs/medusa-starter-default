@@ -547,6 +547,7 @@ const InvoicesListTable = () => {
     columns,
     filters,
     rowCount: count,
+    pageSize: 20,
     getRowId: (row) => row.id,
     onRowClick: (_, row) => {
       // Navigate to invoice detail page (following MedusaJS best practices)
