@@ -10,9 +10,25 @@
  * @see TEM-303 - Frontend: Build Step 2 - Parse Configuration Component
  */
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button, Text, Input, Label, Switch, Badge, toast, Tabs } from "@medusajs/ui"
-import { useDebounce } from "@medusajs/ui"
+
+// Custom debounce hook
+function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: number) {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  return useCallback(
+    (...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      timeoutRef.current = setTimeout(() => {
+        callback(...args)
+      }, delay)
+    },
+    [callback, delay]
+  )
+}
 
 interface Step2ParseConfigurationProps {
   fileContent: string
