@@ -37,6 +37,8 @@ module.exports = defineConfig({
       authCors: process.env.AUTH_CORS!,
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
+      // Only include allowedHosts if the environment variable is set (production)
+      ...(process.env.ALLOWED_HOSTS && { allowedHosts: process.env.ALLOWED_HOSTS }),
     }
   },
   admin: {
