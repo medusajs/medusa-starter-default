@@ -91,7 +91,8 @@ module.exports = defineConfig({
       resolve: "@rsc-labs/medusa-documents-v2",
       options: {
         invoice_number_template: "INV-{year}-{month}-{sequence}",
-        document_language: "nl"
+        // Removed document_language to use default English for admin panel
+        // Document language can be set per-invoice if needed
       }
     }
   ],
