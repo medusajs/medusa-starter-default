@@ -1,4 +1,4 @@
-import { Migration } from '@mikro-orm/migrations';
+import { Migration } from '@medusajs/framework/mikro-orm/migrations';
 
 /**
  * TEM-170: Update SupplierPriceListItem model to support flexible discount structures

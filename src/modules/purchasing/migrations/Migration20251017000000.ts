@@ -1,4 +1,4 @@
-import { Migration } from '@mikro-orm/migrations';
+import { Migration } from '@medusajs/framework/mikro-orm/migrations';
 
 /**
  * Adds sync tracking fields to supplier_price_list_item for variant pricing sync workflow
