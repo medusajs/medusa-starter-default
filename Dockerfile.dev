@@ -1,5 +1,5 @@
-# Development Dockerfile for MedusaJS v2 - No build step, builds at runtime
-# Build stage - installs dependencies only
+# Production Dockerfile for MedusaJS v2 - Builds at Docker build time
+# Build stage - installs dependencies and builds the application
 FROM node:20-slim AS builder
 
 # Install build dependencies
@@ -35,16 +35,21 @@ COPY --chown=medusa:nodejs package.json yarn.lock .yarnrc.yml ./
 RUN corepack yarn --version && \
     corepack yarn install
 
-# Rebuild esbuild for the current platform to prevent crashes
-RUN npm rebuild esbuild
-
 # Copy source code
 COPY --chown=medusa:nodejs . .
 
 # Patch zod package for compatibility
 RUN node -e "const fs=require('fs');const p='node_modules/zod/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.exports=j.exports||{};j.exports['./v3']={types:'./index.d.ts',require:'./lib/index.js',import:'./lib/index.mjs'};fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n');console.log('Patched zod package.json with ./v3 export');"
 
-# Runtime stage - runs in development mode
+# Build the application (compiles TypeScript and builds admin)
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+RUN npx medusa build
+
+# Verify build output
+RUN ls -la .medusa/server/ && echo "Build completed successfully"
+
+# Runtime stage - serves pre-built application
 FROM node:20-slim AS runtime
 
 # Install runtime OS dependencies including PDF generation support
@@ -80,24 +85,28 @@ RUN groupadd -g 1001 nodejs && \
 WORKDIR /app
 RUN chown medusa:nodejs /app
 
-# Copy everything from builder (source + node_modules)
-COPY --from=builder --chown=medusa:nodejs /app ./
+# Copy built server from builder (.medusa/server)
+COPY --from=builder --chown=medusa:nodejs /app/.medusa/server ./
+
+# Copy node_modules from builder
+COPY --from=builder --chown=medusa:nodejs /app/node_modules ./node_modules
+
+# Copy essential files
+COPY --from=builder --chown=medusa:nodejs /app/package.json ./
 
 USER medusa
 
-# Development environment - builds at runtime when DB is available
-ENV NODE_ENV=development
-ENV NODE_OPTIONS="--max-old-space-size=4096"
+# Production environment
+ENV NODE_ENV=production
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-ENV ESBUILD_BINARY_PATH=/app/node_modules/esbuild/bin/esbuild
 
 EXPOSE 9000
 
-# Health check with longer start period for dev build
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
   CMD curl -f http://localhost:9000/health || exit 1
 
-# Use dumb-init and run medusa develop (builds + runs at startup)
+# Use dumb-init and start with medusa CLI (serves pre-built admin)
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "./node_modules/.bin/medusa", "develop"]
+CMD ["node", "./node_modules/.bin/medusa", "start"]
 
