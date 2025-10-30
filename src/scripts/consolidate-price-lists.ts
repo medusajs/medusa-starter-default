@@ -1,7 +1,6 @@
 // Using dynamic app bootstrap is deprecated in v2 scripts. If retained,
 // ensure imports match available APIs. For now, type-only import removed.
-import { PURCHASING_MODULE } from "../modules/purchasing"
-import PurchasingService from "../modules/purchasing/service"
+import { PURCHASING_MODULE, PurchasingService } from "../modules/purchasing"
 
 // Price list item interface - this could be moved to purchasing module types
 interface PriceListItem {
