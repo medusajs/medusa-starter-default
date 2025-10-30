@@ -1,0 +1,78 @@
+# Development Dockerfile for MedusaJS v2 - No build step, builds at runtime
+# Build stage - installs dependencies only
+FROM node:20-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ curl
+
+# Create medusa user (uid 1001)
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S medusa -u 1001
+
+# Enable corepack as root (needs permissions to create symlinks)
+RUN corepack enable
+
+# Set working directory and ownership
+WORKDIR /app
+RUN chown medusa:nodejs /app
+
+# Switch to medusa user and configure Yarn under $HOME
+USER medusa
+ENV HOME=/home/medusa
+ENV YARN_CACHE_FOLDER=$HOME/.yarn/cache
+ENV YARN_GLOBAL_FOLDER=$HOME/.yarn/global
+ENV YARN_INSTALL_STATE_PATH=$HOME/.yarn/install-state.gz
+
+# Copy package manager files
+COPY --chown=medusa:nodejs package.json yarn.lock .yarnrc.yml ./
+
+# Install dependencies via Corepack as medusa user
+RUN corepack yarn --version && \
+    corepack yarn install
+
+# Copy source code
+COPY --chown=medusa:nodejs . .
+
+# Patch zod package for compatibility
+RUN node -e "const fs=require('fs');const p='node_modules/zod/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.exports=j.exports||{};j.exports['./v3']={types:'./index.d.ts',require:'./lib/index.js',import:'./lib/index.mjs'};fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n');console.log('Patched zod package.json with ./v3 export');"
+
+# Runtime stage - runs in development mode
+FROM node:20-alpine AS runtime
+
+# Install runtime OS dependencies including PDF generation support
+RUN apk add --no-cache \
+    dumb-init \
+    curl \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    chromium
+
+# Create same medusa user (uid 1001)
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S medusa -u 1001
+
+WORKDIR /app
+
+# Copy everything from builder (source + node_modules)
+COPY --from=builder --chown=medusa:nodejs /app ./
+
+USER medusa
+
+# Development environment - builds at runtime when DB is available
+ENV NODE_ENV=development
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+EXPOSE 9000
+
+# Health check with longer start period for dev build
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:9000/health || exit 1
+
+# Use dumb-init and run medusa develop (builds + runs at startup)
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "./node_modules/.bin/medusa", "develop"]
+
