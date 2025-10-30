@@ -87,14 +87,8 @@ module.exports = defineConfig({
     },
   },
   plugins: [
-    {
-      resolve: "@rsc-labs/medusa-documents-v2",
-      options: {
-        invoice_number_template: "INV-{year}-{month}-{sequence}",
-        // Removed document_language to use default English for admin panel
-        // Document language can be set per-invoice if needed
-      }
-    }
+    // Removed @rsc-labs/medusa-documents-v2 plugin
+    // It was causing i18n conflicts by changing the global locale
   ],
   modules: [
     // Use in-memory modules for development, Redis for production
