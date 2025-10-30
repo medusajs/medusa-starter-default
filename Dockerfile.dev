@@ -43,7 +43,7 @@ RUN node -e "const fs=require('fs');const p='node_modules/zod/package.json';cons
 
 # Build the application (compiles TypeScript and builds admin)
 # Set dummy env vars for build time (real values injected at runtime by Railway)
-# Cache bust: Force rebuild with English locale - 2025-10-30
+# Cache bust: Fix i18next pre-initialization - 2025-10-30v2
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV MEDUSA_BUILD=true
