@@ -35,7 +35,7 @@ export const BrandSelect = ({
         disabled={disabled || isLoading}
       >
         <Select.Trigger>
-          <Select.Value placeholder={`Select ${label.toLowerCase()}`} />
+          <Select.Value placeholder={`Select ${(label || 'brand').toLowerCase()}`} />
         </Select.Trigger>
         <Select.Content>
           {options.map((opt) => (
