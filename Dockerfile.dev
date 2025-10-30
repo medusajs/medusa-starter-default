@@ -55,6 +55,7 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S medusa -u 1001
 
 WORKDIR /app
+RUN chown medusa:nodejs /app
 
 # Copy everything from builder (source + node_modules)
 COPY --from=builder --chown=medusa:nodejs /app ./
