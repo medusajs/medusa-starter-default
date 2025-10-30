@@ -204,26 +204,27 @@ export const resolveVariantPricingConflictsStep = createStep(
             entity: "product_variant",
             fields: [
               "id",
-              "prices.id",
-              "prices.currency_code",
-              "prices.amount",
+              "prices.*",
             ],
             filters: {
               id: variantId,
             },
           })
 
-          if (variants && variants.length > 0 && variants[0].prices) {
-            // Find the price with matching currency
-            const matchingPrice = variants[0].prices.find(
-              (p: any) => p.currency_code === priceListData.currency_code
-            )
-
-            if (matchingPrice) {
-              existingPriceId = matchingPrice.id
-              logger.debug(
-                `Found existing price ${existingPriceId} for variant ${variantId} with currency ${priceListData.currency_code}`
+          if (variants && variants.length > 0) {
+            const variant = variants[0] as any
+            if (variant.prices && Array.isArray(variant.prices)) {
+              // Find the price with matching currency
+              const matchingPrice = variant.prices.find(
+                (p: any) => p.currency_code === priceListData.currency_code
               )
+
+              if (matchingPrice) {
+                existingPriceId = matchingPrice.id
+                logger.debug(
+                  `Found existing price ${existingPriceId} for variant ${variantId} with currency ${priceListData.currency_code}`
+                )
+              }
             }
           }
         } catch (error) {

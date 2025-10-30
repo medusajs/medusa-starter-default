@@ -24,6 +24,14 @@ type LinkVariantsToPriceListItemsOutput = {
   linked_items: LinkedItem[]
 }
 
+type LinkVariantsToPriceListItemsCompensation = {
+  previous_values: Array<{
+    id: string
+    product_variant_id: string | null
+    product_id: string | null
+  }>
+}
+
 /**
  * Links created variants back to their corresponding price list items
  * by updating the product_variant_id and product_id fields.
@@ -81,12 +89,11 @@ export const linkVariantsToPriceListItemsStep = createStep(
 
     logger.info(`Successfully linked ${linkedItems.length} price list items to variants`)
 
-    return new StepResponse<LinkVariantsToPriceListItemsOutput>(
+    return new StepResponse<LinkVariantsToPriceListItemsOutput, LinkVariantsToPriceListItemsCompensation>(
       {
         linked_items: linkedItems,
       },
       {
-        // Store previous values for compensation
         previous_values: previousValues,
       }
     )
@@ -104,8 +111,8 @@ export const linkVariantsToPriceListItemsStep = createStep(
       await purchasingService.updateSupplierPriceListItems(
         compensation.previous_values.map(item => ({
           id: item.id,
-          product_variant_id: item.product_variant_id,
-          product_id: item.product_id,
+          product_variant_id: item.product_variant_id ?? undefined,
+          product_id: item.product_id ?? undefined,
         }))
       )
       logger.info(`Rolled back ${compensation.previous_values.length} price list item links`)

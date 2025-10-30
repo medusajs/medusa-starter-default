@@ -24,7 +24,146 @@ class PurchasingService extends MedusaService({
   // ==========================================
   // PURCHASE ORDER BUSINESS LOGIC
   // ==========================================
-  
+
+  /**
+   * List purchase orders with detailed relations (supplier, line items, etc.)
+   * Used by admin API routes to fetch enriched purchase order data
+   */
+  async listPurchaseOrdersWithDetails(
+    filters: Record<string, any> = {},
+    config: any = {}
+  ): Promise<any[]> {
+    const purchaseOrders = await this.listPurchaseOrders(filters, {
+      ...config,
+      relations: ["items"]
+    })
+
+    // Manually load suppliers if needed
+    if (purchaseOrders.length > 0) {
+      const supplierIds = [...new Set(purchaseOrders.map(po => po.supplier_id))]
+      const suppliers = await this.listSuppliers({ id: supplierIds })
+      const supplierMap = suppliers.reduce((acc, supplier) => {
+        acc[supplier.id] = supplier
+        return acc
+      }, {} as Record<string, any>)
+
+      return purchaseOrders.map(po => ({
+        ...po,
+        supplier: supplierMap[po.supplier_id]
+      }))
+    }
+
+    return purchaseOrders
+  }
+
+  /**
+   * Create a purchase order from an existing order
+   * Converts order items to purchase order line items
+   */
+  async createPurchaseOrderFromOrder(
+    orderId: string,
+    data: {
+      supplier_id: string
+      expected_delivery_date?: Date
+      notes?: string
+      item_mappings?: Record<string, { quantity: number; unit_cost: number }>
+    }
+  ): Promise<any> {
+    // This is a placeholder implementation
+    // In a real scenario, you'd need to:
+    // 1. Fetch the order from the order module
+    // 2. Transform order items to PO items
+    // 3. Create the purchase order
+
+    const poNumber = await this.generatePONumber()
+
+    const [purchaseOrder] = await this.createPurchaseOrders([{
+      po_number: poNumber,
+      supplier_id: data.supplier_id,
+      status: PurchaseOrderStatus.DRAFT,
+      order_date: new Date(),
+      expected_delivery_date: data.expected_delivery_date,
+      notes: data.notes,
+      metadata: { source_order_id: orderId },
+      subtotal: 0,
+      total_amount: 0
+    }])
+
+    return purchaseOrder
+  }
+
+  /**
+   * Create a new purchase order with line items
+   * Simplified creation method used by admin API
+   */
+  async createPurchaseOrder(
+    data: {
+      supplier_id: string
+      po_number?: string
+      status?: string
+      priority?: string
+      order_date?: Date
+      expected_delivery_date?: Date
+      currency_code?: string
+      payment_terms?: string
+      notes?: string
+      internal_notes?: string
+      items?: Array<{
+        product_variant_id: string
+        supplier_product_id?: string
+        supplier_sku?: string
+        product_title: string
+        product_variant_title?: string
+        product_sku?: string
+        quantity_ordered: number
+        unit_cost: number
+      }>
+    }
+  ): Promise<any> {
+    const poNumber = data.po_number || await this.generatePONumber()
+
+    // Calculate totals from items
+    const items = data.items || []
+    const totals = await this.calculateOrderTotals(items)
+
+    const [purchaseOrder] = await this.createPurchaseOrders([{
+      po_number: poNumber,
+      supplier_id: data.supplier_id,
+      status: data.status || PurchaseOrderStatus.DRAFT,
+      priority: data.priority || PurchaseOrderPriority.NORMAL,
+      order_date: data.order_date || new Date(),
+      expected_delivery_date: data.expected_delivery_date,
+      currency_code: data.currency_code || "USD",
+      payment_terms: data.payment_terms,
+      notes: data.notes,
+      internal_notes: data.internal_notes,
+      ...totals
+    }])
+
+    // Create line items if provided
+    if (items.length > 0) {
+      const lineItems = items.map(item => ({
+        purchase_order_id: purchaseOrder.id,
+        product_variant_id: item.product_variant_id,
+        supplier_product_id: item.supplier_product_id,
+        supplier_sku: item.supplier_sku,
+        product_title: item.product_title,
+        product_variant_title: item.product_variant_title,
+        product_sku: item.product_sku,
+        quantity_ordered: item.quantity_ordered,
+        unit_cost: item.unit_cost,
+        line_total: item.quantity_ordered * item.unit_cost
+      }))
+
+      await this.createPurchaseOrderItems(lineItems)
+    }
+
+    // Return with items
+    return await this.listPurchaseOrders({ id: purchaseOrder.id }, {
+      relations: ["items"]
+    }).then(pos => pos[0])
+  }
+
   async generatePONumber(): Promise<string> {
     const currentDate = new Date()
     const year = currentDate.getFullYear()
@@ -82,7 +221,111 @@ class PurchasingService extends MedusaService({
   // ==========================================
   // SUPPLIER BUSINESS LOGIC
   // ==========================================
-  
+
+  /**
+   * List supplier products by supplier ID
+   * Used by admin API routes to fetch all products for a specific supplier
+   */
+  async listBySupplier(
+    supplierId: string,
+    filters: Record<string, any> = {},
+    config: any = {}
+  ): Promise<any[]> {
+    return await this.listSupplierProducts({
+      supplier_id: supplierId,
+      ...filters
+    }, config)
+  }
+
+  /**
+   * Bulk create supplier products
+   * Efficiently creates multiple supplier-product relationships at once
+   */
+  async bulkCreate(
+    products: Array<{
+      supplier_id: string
+      product_variant_id: string
+      supplier_sku?: string
+      supplier_product_name?: string
+      supplier_product_description?: string
+      cost_price: number
+      currency_code?: string
+      minimum_order_quantity?: number
+      lead_time_days?: number
+      is_preferred_supplier?: boolean
+      is_active?: boolean
+      notes?: string
+      metadata?: Record<string, any>
+    }>
+  ): Promise<any[]> {
+    const entities = products.map(data => ({
+      supplier_id: data.supplier_id,
+      product_variant_id: data.product_variant_id,
+      supplier_sku: data.supplier_sku,
+      supplier_product_name: data.supplier_product_name,
+      supplier_product_description: data.supplier_product_description,
+      cost_price: data.cost_price,
+      currency_code: data.currency_code || "USD",
+      minimum_order_quantity: data.minimum_order_quantity || 1,
+      lead_time_days: data.lead_time_days,
+      is_preferred_supplier: data.is_preferred_supplier || false,
+      is_active: data.is_active !== undefined ? data.is_active : true,
+      last_cost_update: new Date(),
+      notes: data.notes,
+      metadata: data.metadata
+    }))
+
+    return await this.createSupplierProducts(entities)
+  }
+
+  /**
+   * Bulk update supplier products
+   * Efficiently updates multiple supplier products at once
+   */
+  async bulkUpdate(
+    updates: Array<{
+      id: string
+      data: Partial<{
+        supplier_sku: string
+        supplier_product_name: string
+        supplier_product_description: string
+        cost_price: number
+        currency_code: string
+        minimum_order_quantity: number
+        lead_time_days: number
+        is_preferred_supplier: boolean
+        is_active: boolean
+        notes: string
+        metadata: Record<string, any>
+      }>
+    }>
+  ): Promise<any[]> {
+    const results: any[] = []
+
+    for (const { id, data } of updates) {
+      const [product] = await this.listSupplierProducts({ id })
+
+      if (!product) {
+        throw new Error(`Supplier product with id ${id} not found`)
+      }
+
+      // Update last_cost_update if cost_price is being changed
+      const updateData = { ...data }
+      if (data.cost_price !== undefined) {
+        updateData.last_cost_update = new Date()
+      }
+
+      const [updated] = await this.updateSupplierProducts([{
+        id,
+        ...updateData
+      }])
+
+      results.push(updated)
+    }
+
+    return results
+  }
+
   async generateSupplierCode(name: string): Promise<string> {
     const baseCode = name.substring(0, 3).toUpperCase()
     const existing = await this.listSuppliers({

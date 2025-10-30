@@ -131,12 +131,15 @@ const emitScheduleUpdateEventStep = createStep(
   "emit-schedule-update-event",
   async (serviceOrder: any, { container }) => {
     const eventBusService = container.resolve(Modules.EVENT_BUS)
-    
+
     // Emit event that can be listened to by the frontend for real-time updates
-    await eventBusService.emit("service-order.schedule-updated", {
-      service_order_id: serviceOrder.id,
-      scheduled_start_date: serviceOrder.scheduled_start_date,
-      scheduled_end_date: serviceOrder.scheduled_end_date,
+    await eventBusService.emit({
+      name: "service-order.schedule-updated",
+      data: {
+        service_order_id: serviceOrder.id,
+        scheduled_start_date: serviceOrder.scheduled_start_date,
+        scheduled_end_date: serviceOrder.scheduled_end_date,
+      }
     })
 
     return new StepResponse({ success: true })

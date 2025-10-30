@@ -45,6 +45,11 @@ type FindOrCreateProductAndVariantByPartNumberOutput = {
   skippedItems: SkippedItem[]
 }
 
+type FindOrCreateProductAndVariantCompensation = {
+  createdProductIds: string[]
+  createdVariantIds: string[]
+}
+
 /**
  * Finds price list items without product_variant_id and creates products/variants
  * using the supplier part number as both product ID and variant SKU.
@@ -85,6 +90,11 @@ export const findOrCreateProductAndVariantByPartNumberStep = createStep(
 
     if (!priceListData) {
       throw new Error(`Price list ${input.supplier_price_list_id} not found`)
+    }
+
+    // Type assertion to include supplier data from query
+    const priceList = priceListData as typeof priceListData & {
+      supplier: { id: string; name: string }
     }
 
     // Load all price list items
@@ -169,8 +179,8 @@ export const findOrCreateProductAndVariantByPartNumberStep = createStep(
             manage_inventory: true,
             allow_backorder: false,
             metadata: {
-              supplier_id: priceListData.supplier.id,
-              supplier_name: priceListData.supplier.name,
+              supplier_id: priceList.supplier.id,
+              supplier_name: priceList.supplier.name,
             },
           }
 
@@ -178,7 +188,7 @@ export const findOrCreateProductAndVariantByPartNumberStep = createStep(
           if (item.gross_price) {
             variantData.prices = [{
               amount: Number(item.gross_price),
-              currency_code: priceListData.currency_code,
+              currency_code: priceList.currency_code,
             }]
           }
 
@@ -216,7 +226,7 @@ export const findOrCreateProductAndVariantByPartNumberStep = createStep(
       `Created ${createdProducts.length} products and ${createdVariants.length} variants. Skipped ${skippedItems.length} items.`
     )
 
-    return new StepResponse<FindOrCreateProductAndVariantByPartNumberOutput>(
+    return new StepResponse<FindOrCreateProductAndVariantByPartNumberOutput, FindOrCreateProductAndVariantCompensation>(
       {
         createdProducts,
         createdVariants,
@@ -224,7 +234,6 @@ export const findOrCreateProductAndVariantByPartNumberStep = createStep(
         skippedItems,
       },
       {
-        // Compensation function to rollback created products and variants
         createdProductIds: createdProducts.map(p => p.id),
         createdVariantIds: createdVariants.map(v => v.id),
       }

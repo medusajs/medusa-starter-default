@@ -146,7 +146,20 @@ export class MachinesModuleService
         { notes: { $ilike: `%${searchTerm}%` } },
       ]
     }
-    
+
+    return await this.listMachines(filters, config, sharedContext)
+  }
+
+  @InjectManager()
+  async listMachinesWithDetails(
+    filters: FilterableMachineProps = {},
+    config?: any,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<MachineDTO[]> {
+    // Use the generated listMachines method with any additional configuration
+    // In the future, this can be extended to include relations or additional data
+    // For now, it delegates to listMachines but provides a dedicated method
+    // for fetching machines with details, which can be enhanced later
     return await this.listMachines(filters, config, sharedContext)
   }
 } 
