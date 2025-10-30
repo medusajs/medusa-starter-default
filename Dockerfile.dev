@@ -42,8 +42,16 @@ COPY --chown=medusa:nodejs . .
 RUN node -e "const fs=require('fs');const p='node_modules/zod/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.exports=j.exports||{};j.exports['./v3']={types:'./index.d.ts',require:'./lib/index.js',import:'./lib/index.mjs'};fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n');console.log('Patched zod package.json with ./v3 export');"
 
 # Build the application (compiles TypeScript and builds admin)
+# Set dummy env vars for build time (real values injected at runtime by Railway)
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV MEDUSA_BUILD=true
+ENV DATABASE_URL=postgres://dummy:dummy@localhost:5432/dummy
+ENV JWT_SECRET=dummy_build_secret
+ENV COOKIE_SECRET=dummy_build_secret
+ENV STORE_CORS=http://localhost:8000
+ENV ADMIN_CORS=http://localhost:7000
+ENV AUTH_CORS=http://localhost:7000
 RUN npx medusa build
 
 # Verify build output

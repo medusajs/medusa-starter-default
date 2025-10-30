@@ -5,8 +5,14 @@ import { Modules } from '@medusajs/utils'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
-// Validate required environment variables in production
-if (process.env.NODE_ENV === 'production') {
+// Validate required environment variables in production runtime (not during build)
+// Skip validation if:
+// 1. MEDUSA_BUILD=true (during medusa build command)
+// 2. DATABASE_URL contains 'dummy' (build-time dummy value)
+const isBuildTime = process.env.MEDUSA_BUILD === 'true' || 
+                    process.env.DATABASE_URL?.includes('dummy')
+
+if (process.env.NODE_ENV === 'production' && !isBuildTime) {
   const required = ['DATABASE_URL', 'JWT_SECRET', 'COOKIE_SECRET', 'STORE_CORS', 'ADMIN_CORS', 'AUTH_CORS']
   for (const env of required) {
     if (!process.env[env] && !process.env.SUPABASE_DATABASE_URL) {
