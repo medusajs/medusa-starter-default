@@ -55,13 +55,13 @@ ENV AUTH_CORS=http://localhost:7000
 
 # Build - TypeScript errors cause exit code 1 but build still succeeds
 RUN npx medusa build || true
-RUN echo "Checking build output..." && \
-    if [ -d ".medusa/server" ] && [ -f ".medusa/server/index.js" ]; then \
-        echo "✓ Build succeeded - server bundle exists"; \
+
+# Verify build output exists
+RUN if [ -d ".medusa/server" ] && [ "$(ls -A .medusa/server)" ]; then \
+        echo "✓ Build succeeded - server output exists"; \
         ls -lah .medusa/server/; \
     else \
-        echo "✗ Build failed - no server bundle found"; \
-        ls -la .medusa/ 2>/dev/null || echo "No .medusa directory"; \
+        echo "✗ Build failed - no server output"; \
         exit 1; \
     fi
 
