@@ -36,7 +36,7 @@ COPY --chown=medusa:nodejs . .
 # Build with medusa CLI per docs
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=2048"
-RUN npx medusa build
+RUN npx medusa develop
 
 # Verify build output and remove any PnP files if present
 RUN ls -la .medusa/server/ && \
