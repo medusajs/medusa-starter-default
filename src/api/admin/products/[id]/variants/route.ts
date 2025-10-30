@@ -1,7 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys, remoteQueryObjectFromString } from "@medusajs/framework/utils"
 import { ProductVariantDTO } from "@medusajs/framework/types"
-import { toStringOrUndefined } from "@/utils/query-params"
+import { toStringOrUndefined } from "../../../../../utils/query-params"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {

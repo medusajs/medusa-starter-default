@@ -1,5 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { BRANDS_MODULE, BrandDTO } from "@/modules/brands"
+import { BRANDS_MODULE, BrandDTO } from "../../../../modules/brands"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {

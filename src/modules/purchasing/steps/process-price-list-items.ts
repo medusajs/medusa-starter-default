@@ -1,6 +1,6 @@
 import { createStep, StepResponse } from "@medusajs/workflows-sdk"
-import { PURCHASING_MODULE, SupplierProductDTO } from "@/modules/purchasing"
-import PurchasingService from "@/modules/purchasing/service"
+import { PURCHASING_MODULE, SupplierProductDTO } from "../.."
+import PurchasingService from "../../service"
 
 type ProcessPriceListItemsStepInput = {
   price_list_id: string

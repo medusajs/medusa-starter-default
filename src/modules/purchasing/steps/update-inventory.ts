@@ -1,7 +1,7 @@
 import { createStep, StepResponse } from "@medusajs/workflows-sdk"
 import { ModuleRegistrationName } from "@medusajs/utils"
-import { PURCHASING_MODULE } from "@/modules/purchasing"
-import PurchasingService from "@/modules/purchasing/service"
+import { PURCHASING_MODULE } from "../.."
+import PurchasingService from "../../service"
 
 // Custom type for our inventory update tracking
 interface InventoryUpdateInput {
