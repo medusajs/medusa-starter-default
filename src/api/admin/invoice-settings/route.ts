@@ -2,6 +2,46 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework"
 import { INVOICE_SETTINGS_MODULE } from "../../../modules/invoice-settings"
 import { updateInvoiceSettingsWorkflow } from "../../../workflows/invoice-settings/update-invoice-settings"
 
+// Type definitions for request bodies
+type UpdateInvoiceSettingsRequest = {
+  settings: {
+    company?: {
+      name?: string
+      address?: {
+        street?: string
+        city?: string
+        postal_code?: string
+        country?: string
+      }
+      contact?: {
+        email?: string
+        phone?: string
+        website?: string
+      }
+      legal?: {
+        vat_number?: string
+        registration_number?: string
+        bank_account?: string
+      }
+    }
+    template?: {
+      header_color?: string
+      logo_url?: string
+      footer_text?: string
+      show_payment_terms?: boolean
+      show_due_date?: boolean
+      currency_format?: string
+      date_format?: string
+    }
+    defaults?: {
+      payment_terms?: string
+      due_days?: number
+      tax_rate?: number
+      currency_code?: string
+    }
+  }
+}
+
 // Helper function to transform flat database model to nested structure for frontend
 function transformToNestedStructure(settings: any) {
   if (!settings) return null
@@ -88,7 +128,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   }
 }
 
-export async function PUT(req: MedusaRequest, res: MedusaResponse) {
+export async function PUT(req: MedusaRequest<UpdateInvoiceSettingsRequest>, res: MedusaResponse) {
   try {
     const { settings } = req.body
     

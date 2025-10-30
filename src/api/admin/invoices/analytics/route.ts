@@ -70,6 +70,29 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     const topCustomers = calculateTopCustomers(customerInvoices)
     
     // Get product/service performance
+    // First, get invoices with the desired status and date range
+    const invoiceFilters: any = {
+      status: { $in: ["sent", "paid"] },
+    }
+    if (start_date) {
+      invoiceFilters.invoice_date = { $gte: new Date(start_date as string) }
+    }
+    if (end_date) {
+      invoiceFilters.invoice_date = {
+        ...invoiceFilters.invoice_date,
+        $lte: new Date(end_date as string)
+      }
+    }
+
+    const { data: filteredInvoices } = await query.graph({
+      entity: "invoice",
+      fields: ["id"],
+      filters: invoiceFilters,
+    })
+
+    const invoiceIds = filteredInvoices.map((inv: any) => inv.id)
+
+    // Then get line items for those invoices
     const { data: lineItems } = await query.graph({
       entity: "invoice_line_item",
       fields: [
@@ -81,9 +104,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
         "invoice.invoice_date",
       ],
       filters: {
-        "invoice.status": { $in: ["sent", "paid"] },
-        ...(start_date && { "invoice.invoice_date": { $gte: new Date(start_date as string) } }),
-        ...(end_date && { "invoice.invoice_date": { $lte: new Date(end_date as string) } }),
+        invoice_id: { $in: invoiceIds },
       },
     })
     

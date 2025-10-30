@@ -35,6 +35,9 @@ COPY --chown=medusa:nodejs package.json yarn.lock .yarnrc.yml ./
 RUN corepack yarn --version && \
     corepack yarn install
 
+# Rebuild esbuild for the current platform to prevent crashes
+RUN npm rebuild esbuild
+
 # Copy source code
 COPY --chown=medusa:nodejs . .
 
@@ -84,8 +87,9 @@ USER medusa
 
 # Development environment - builds at runtime when DB is available
 ENV NODE_ENV=development
-ENV NODE_OPTIONS="--max-old-space-size=2048"
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV ESBUILD_BINARY_PATH=/app/node_modules/esbuild/bin/esbuild
 
 EXPOSE 9000
 

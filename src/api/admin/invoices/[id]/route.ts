@@ -85,10 +85,27 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
 
     // Handle field updates via workflow (validates draft status)
     if (Object.keys(updateData).length > 0) {
-      const { result } = await updateInvoiceWorkflow(req.scope).run({
+      // Filter updateData to only include allowed properties from UpdateInvoiceInput
+      const filteredData: {
+        customer_email?: string
+        customer_phone?: string
+        payment_terms?: string
+        notes?: string
+        internal_notes?: string
+        discount_amount?: number
+      } = {}
+
+      if ('customer_email' in updateData) filteredData.customer_email = updateData.customer_email
+      if ('customer_phone' in updateData) filteredData.customer_phone = updateData.customer_phone
+      if ('payment_terms' in updateData) filteredData.payment_terms = updateData.payment_terms
+      if ('notes' in updateData) filteredData.notes = updateData.notes
+      if ('internal_notes' in updateData) filteredData.internal_notes = updateData.internal_notes
+      if ('discount_amount' in updateData) filteredData.discount_amount = updateData.discount_amount
+
+      await updateInvoiceWorkflow(req.scope).run({
         input: {
           invoice_id: invoiceId,
-          data: updateData,
+          data: filteredData,
         }
       })
 
@@ -139,13 +156,13 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
 }
 
 export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
-  try {
-    const invoiceId = req.params.id
+  const id = req.params.id
 
+  try {
     // Use workflow for safe deletion with cascade
     const { result } = await deleteInvoiceWorkflow(req.scope).run({
       input: {
-        invoice_id: invoiceId,
+        invoice_id: id,
       }
     })
 
@@ -167,7 +184,7 @@ export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
     if (error.type === "not_found" || error.message?.includes("not found")) {
       return res.status(404).json({
         error: "Invoice not found",
-        details: `Invoice with id ${invoiceId} does not exist`
+        details: `Invoice with id ${id} does not exist`
       })
     }
 
