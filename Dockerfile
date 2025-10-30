@@ -36,6 +36,7 @@ COPY --chown=medusa:nodejs . .
 # Build with medusa CLI per docs
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=2048"
+RUN node -e "const fs=require('fs');const p='node_modules/zod/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.exports=j.exports||{};j.exports['./v3']={types:'./index.d.ts',require:'./lib/index.js',import:'./lib/index.mjs'};fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n');console.log('Patched zod package.json with ./v3 export');"
 RUN npx medusa develop
 
 # Verify build output and remove any PnP files if present
