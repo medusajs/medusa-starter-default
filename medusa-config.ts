@@ -38,7 +38,7 @@ module.exports = defineConfig({
     databaseUrl: getDatabaseUrl(),
     redisUrl: process.env.REDIS_URL,
     // Worker mode: shared (default) for development, server/worker for production
-    workerMode: process.env.WORKER_MODE as "shared" | "worker" | "server" || "shared",
+    workerMode: (process.env.WORKER_MODE || "shared") as "shared" | "worker" | "server",
     http: {
       storeCors: process.env.STORE_CORS!,
       adminCors: process.env.ADMIN_CORS!,
