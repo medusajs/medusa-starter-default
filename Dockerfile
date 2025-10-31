@@ -37,6 +37,12 @@ COPY --chown=medusa:nodejs . .
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 RUN node -e "const fs=require('fs');const p='node_modules/zod/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.exports=j.exports||{};j.exports['./v3']={types:'./index.d.ts',require:'./lib/index.js',import:'./lib/index.mjs'};fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n');console.log('Patched zod package.json with ./v3 export');"
+
+# CRITICAL FIX: Patch the PRE-BUILT dashboard chunk to prevent i18n crash
+# The dashboard's chunk-SC6BSTC7.mjs calls i18n.t().toLowerCase() at module load before i18n is initialized
+# We wrap the problematic calls to return fallback string if i18n.t() returns undefined
+RUN node -e "const fs=require('fs');const path='node_modules/@medusajs/dashboard/dist/chunk-SC6BSTC7.mjs';let content=fs.readFileSync(path,'utf8');content=content.replace(/i18n\\.t\\(\"statuses\\.scheduled\"\\)\\.toLowerCase\\(\\)/g,'(i18n.t(\"statuses.scheduled\")||\"scheduled\").toLowerCase()').replace(/i18n\\.t\\(\"statuses\\.expired\"\\)\\.toLowerCase\\(\\)/g,'(i18n.t(\"statuses.expired\")||\"expired\").toLowerCase()');fs.writeFileSync(path,content);console.log('✓ Patched chunk-SC6BSTC7.mjs for safe i18n fallback');"
+
 RUN npx medusa develop
 
 # Verify build output and remove any PnP files if present
