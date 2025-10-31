@@ -1,7 +1,7 @@
 import { model } from "@medusajs/framework/utils"
 
 const UserPreference = model
-  .define("user_preference", {
+  .define("custom_user_preference", {
     id: model.id({ prefix: "upref" }).primaryKey(),
     user_id: model.text().searchable(),
     language: model.text().default("en"), // Default to English

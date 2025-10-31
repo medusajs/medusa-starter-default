@@ -94,29 +94,29 @@
           "mappedType": "datetime"
         }
       },
-      "name": "user_preferences",
+      "name": "custom_user_preference",
       "schema": "public",
       "indexes": [
         {
-          "keyName": "IDX_user_preferences_deleted_at",
+          "keyName": "IDX_custom_user_preference_deleted_at",
           "columnNames": [],
           "composite": false,
           "constraint": false,
           "primary": false,
           "unique": false,
-          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_user_preferences_deleted_at\" ON \"user_preferences\" (deleted_at) WHERE deleted_at IS NULL"
+          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_custom_user_preference_deleted_at\" ON \"custom_user_preference\" (deleted_at) WHERE deleted_at IS NULL"
         },
         {
-          "keyName": "IDX_user_preferences_user_id_unique",
+          "keyName": "IDX_custom_user_preference_user_id_unique",
           "columnNames": [],
           "composite": false,
           "constraint": false,
           "primary": false,
           "unique": false,
-          "expression": "CREATE UNIQUE INDEX IF NOT EXISTS \"IDX_user_preferences_user_id_unique\" ON \"user_preferences\" (user_id) WHERE deleted_at IS NULL"
+          "expression": "CREATE UNIQUE INDEX IF NOT EXISTS \"IDX_custom_user_preference_user_id_unique\" ON \"custom_user_preference\" (user_id) WHERE deleted_at IS NULL"
         },
         {
-          "keyName": "user_preferences_pkey",
+          "keyName": "custom_user_preference_pkey",
           "columnNames": [
             "id"
           ],

@@ -18,7 +18,6 @@ import { UserPreferencesDTO, CreateUserPreferencesDTO, UpdateUserPreferencesDTO,
 
 type InjectedDependencies = {
   baseRepository: DAL.RepositoryService
-  userPreferenceService: ModulesSdkTypes.IMedusaInternalService<any>
 }
 
 export default class UserPreferencesService
@@ -29,14 +28,10 @@ export default class UserPreferencesService
   })
 {
   protected baseRepository_: DAL.RepositoryService
-  protected userPreferenceService_: ModulesSdkTypes.IMedusaInternalService<
-    InferEntityType<typeof UserPreference>
-  >
 
   constructor(
     {
       baseRepository,
-      userPreferenceService,
     }: InjectedDependencies,
     protected readonly moduleDeclaration: InternalModuleDeclaration
   ) {
@@ -44,7 +39,6 @@ export default class UserPreferencesService
     super(...arguments)
 
     this.baseRepository_ = baseRepository
-    this.userPreferenceService_ = userPreferenceService
   }
 
   async getUserPreferences(
