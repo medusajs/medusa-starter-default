@@ -13,30 +13,30 @@ import {
   MedusaError,
   MedusaService,
 } from "@medusajs/framework/utils"
-import UserPreferences from "./models/user-preferences"
+import UserPreference from "./models/user-preferences"
 import { UserPreferencesDTO, CreateUserPreferencesDTO, UpdateUserPreferencesDTO, FilterableUserPreferencesProps } from "./types"
 
 type InjectedDependencies = {
   baseRepository: DAL.RepositoryService
-  userPreferencesService: ModulesSdkTypes.IMedusaInternalService<any>
+  userPreferenceService: ModulesSdkTypes.IMedusaInternalService<any>
 }
 
 export default class UserPreferencesService
   extends MedusaService<{
-    UserPreferences: { dto: UserPreferencesDTO }
+    UserPreference: { dto: UserPreferencesDTO }
   }>({
-    UserPreferences,
+    UserPreference,
   })
 {
   protected baseRepository_: DAL.RepositoryService
-  protected userPreferencesService_: ModulesSdkTypes.IMedusaInternalService<
-    InferEntityType<typeof UserPreferences>
+  protected userPreferenceService_: ModulesSdkTypes.IMedusaInternalService<
+    InferEntityType<typeof UserPreference>
   >
 
   constructor(
     {
       baseRepository,
-      userPreferencesService,
+      userPreferenceService,
     }: InjectedDependencies,
     protected readonly moduleDeclaration: InternalModuleDeclaration
   ) {
@@ -44,14 +44,14 @@ export default class UserPreferencesService
     super(...arguments)
 
     this.baseRepository_ = baseRepository
-    this.userPreferencesService_ = userPreferencesService
+    this.userPreferenceService_ = userPreferenceService
   }
 
   async getUserPreferences(
     userId: string,
     @MedusaContext() sharedContext: Context = {}
   ): Promise<UserPreferencesDTO | null> {
-    const preferences = await this.listUserPreferences(
+    const preferences = await this.listUserPreference(
       { user_id: userId },
       {},
       sharedContext
@@ -65,15 +65,15 @@ export default class UserPreferencesService
     @MedusaContext() sharedContext: Context = {}
   ): Promise<UserPreferencesDTO> {
     const existing = await this.getUserPreferences(userId, sharedContext)
-    
+
     if (existing) {
-      const [updated] = await this.updateUserPreferences(
+      const [updated] = await this.updateUserPreference(
         [{ id: existing.id, ...data }],
         sharedContext
       )
       return updated
     } else {
-      const [created] = await this.createUserPreferences(
+      const [created] = await this.createUserPreference(
         [{ user_id: userId, language: "en", ...data }],
         sharedContext
       )
