@@ -21,6 +21,11 @@ if (!i18next.isInitialized) {
         translation: {}
       }
     },
+    // CRITICAL: Return the key itself when translation is missing
+    // This ensures i18n.t("statuses.scheduled") returns "statuses.scheduled" (a string)
+    // instead of undefined, making .toLowerCase() work
+    returnNull: false,
+    returnEmptyString: false,
     // Silent mode to avoid console spam during bootstrap
     debug: false,
     interpolation: {
