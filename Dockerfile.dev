@@ -41,6 +41,11 @@ COPY --chown=medusa:nodejs . .
 # Patch zod package for compatibility
 RUN node -e "const fs=require('fs');const p='node_modules/zod/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.exports=j.exports||{};j.exports['./v3']={types:'./index.d.ts',require:'./lib/index.js',import:'./lib/index.mjs'};fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n');console.log('Patched zod package.json with ./v3 export');"
 
+# CRITICAL FIX: Patch dashboard's promotions.ts to prevent i18n crash at build time
+# The dashboard evaluates i18n.t().toLowerCase() at module load before i18n is initialized
+# This wraps the StatusMap in a function for lazy evaluation
+RUN node -e "const fs=require('fs');const path='node_modules/@medusajs/dashboard/src/lib/promotions.ts';let content=fs.readFileSync(path,'utf8');content=content.replace(/export const promotionStatusMap: StatusMap = \\{/,'export const getPromotionStatusMap = (): StatusMap => ({').replace(/\\}\\nexport const getPromotionStatus/,'}); export const promotionStatusMap: StatusMap = getPromotionStatusMap(); export const getPromotionStatus');fs.writeFileSync(path,content);console.log('✓ Patched promotions.ts for lazy i18n loading');"
+
 # Build the application (compiles TypeScript and builds admin)
 # Set dummy env vars for build time (real values injected at runtime by Railway)
 # Cache bust: Fix i18next pre-initialization - 2025-10-30v2
