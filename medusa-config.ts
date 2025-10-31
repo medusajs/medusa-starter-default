@@ -37,6 +37,8 @@ module.exports = defineConfig({
   projectConfig: {
     databaseUrl: getDatabaseUrl(),
     redisUrl: process.env.REDIS_URL,
+    // Worker mode: shared (default) for development, server/worker for production
+    workerMode: process.env.WORKER_MODE as "shared" | "worker" | "server" || "shared",
     http: {
       storeCors: process.env.STORE_CORS!,
       adminCors: process.env.ADMIN_CORS!,
@@ -48,6 +50,8 @@ module.exports = defineConfig({
     }
   },
   admin: {
+    // Disable admin in worker mode to save resources
+    disable: process.env.ADMIN_DISABLED === "true",
     vite: () => {
       return {
         define: {
