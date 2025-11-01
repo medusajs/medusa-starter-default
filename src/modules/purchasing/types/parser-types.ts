@@ -55,6 +55,8 @@ export type Transformation =
   | { type: "trim" }
   | { type: "uppercase" }
   | { type: "lowercase" }
+  | { type: "substring", start: number, length?: number } // Extract substring
+  | { type: "date", input_format: string, output_format?: string } // Parse date (input: YYYYMMDD, YYYY-MM-DD, etc.)
 
 /**
  * Parsed price list item structure
@@ -78,6 +80,7 @@ export type ParsedPriceListItem = {
   quantity?: number
   lead_time_days?: number
   notes?: string
+  metadata?: Record<string, any> // Additional supplier-specific data
 }
 
 /**

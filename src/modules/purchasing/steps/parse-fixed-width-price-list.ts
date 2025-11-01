@@ -65,6 +65,23 @@ function applyTransformation(value: any, transformation: Transformation): any {
       return String(value).toUpperCase()
     case 'lowercase':
       return String(value).toLowerCase()
+    case 'substring':
+      const str = String(value)
+      return transformation.length 
+        ? str.substring(transformation.start, transformation.start + transformation.length)
+        : str.substring(transformation.start)
+    case 'date':
+      // Parse date from input format (e.g., YYYYMMDD) to ISO format (YYYY-MM-DD)
+      const dateStr = String(value).trim()
+      if (!dateStr || dateStr.length < 8) return value
+      
+      if (transformation.input_format === 'YYYYMMDD') {
+        const year = dateStr.substring(0, 4)
+        const month = dateStr.substring(4, 6)
+        const day = dateStr.substring(6, 8)
+        return `${year}-${month}-${day}`
+      }
+      return value
     default:
       return value
   }
@@ -293,6 +310,22 @@ export const parseFixedWidthPriceListStep = createStep(
         const quantity = mappedRow.quantity ? parseInt(String(mappedRow.quantity)) : 1
         const leadTimeDays = mappedRow.lead_time_days ? parseInt(String(mappedRow.lead_time_days)) : undefined
 
+        // Collect unmapped fields into metadata
+        // Standard fields that are directly mapped to ParsedPriceListItem properties
+        const standardFields = new Set([
+          'product_variant_id', 'product_id', 'supplier_sku', 'variant_sku',
+          'gross_price', 'discount_code', 'discount_percentage', 'net_price',
+          'description', 'category', 'quantity', 'lead_time_days', 'notes',
+          'cost_price' // Legacy field alias
+        ])
+        
+        const metadata: Record<string, any> = {}
+        for (const [field, value] of Object.entries(mappedRow)) {
+          if (!standardFields.has(field) && value !== undefined && value !== '') {
+            metadata[field] = value
+          }
+        }
+
         // Create processed item
         const processedItem: ParsedPriceListItem = {
           product_variant_id: productVariant.id,
@@ -314,6 +347,9 @@ export const parseFixedWidthPriceListStep = createStep(
           quantity: isNaN(quantity) ? 1 : quantity,
           lead_time_days: isNaN(leadTimeDays!) ? undefined : leadTimeDays,
           notes: mappedRow.notes?.trim() || undefined,
+          
+          // Metadata for additional supplier-specific fields
+          metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
         }
 
         processedItems.push(processedItem)

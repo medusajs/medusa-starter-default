@@ -20,7 +20,9 @@ export const FIELD_ALIASES = {
     "onderdeelnummer",
     "supplier_part",
     "supplier_sku",
-    "part_id"
+    "part_id",
+    "artikel",
+    "artikelnummer"
   ],
   variant_sku: [
     "variant_sku",
@@ -114,6 +116,7 @@ export const FIELD_ALIASES = {
     "product_description",
     "desc",
     "omschrijving",
+    "omschrijving onderdeel",
     "beschrijving",
     "product description",
     "product_desc",
