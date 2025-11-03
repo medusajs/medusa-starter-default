@@ -24,6 +24,7 @@ const Invoice = model.define("invoice", {
   customer_id: model.text().searchable(), // Links to Customer module
   order_id: model.text().nullable(), // Links to Order module (for regular orders)
   service_order_id: model.text().nullable(), // Links to Service Orders module
+  rental_id: model.text().nullable(), // TEM-206: Links to Rentals module
   
   // Invoice Details
   invoice_type: model.enum(InvoiceType).default(InvoiceType.PRODUCT_SALE),

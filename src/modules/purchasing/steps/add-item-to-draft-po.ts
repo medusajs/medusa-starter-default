@@ -25,20 +25,25 @@ export const addItemToDraftPurchaseOrderStep = createStep(
 
     const { supplier_id, item, type } = input
 
-    // 1. Find an existing draft purchase order for the supplier
+    // Determine the type for this item (default to STOCK if not provided)
+    const orderType = type || PurchaseOrderType.STOCK
+
+    // 1. Find an existing draft purchase order for the supplier with matching type
+    // This ensures that stock and rush orders are kept separate
     let [purchaseOrder] = await purchasingService.listPurchaseOrders({
       supplier_id: supplier_id,
       status: "draft",
+      type: orderType,
     })
 
-    // 2. If no draft exists, create one
+    // 2. If no draft exists for this supplier and type combination, create one
     if (!purchaseOrder) {
       const po_number = await purchasingService.generatePONumber()
       ;[purchaseOrder] = await purchasingService.createPurchaseOrders([
         {
           supplier_id: supplier_id,
           status: "draft",
-          type: type || PurchaseOrderType.STOCK,
+          type: orderType,
           po_number: po_number,
           order_date: new Date(),
         },

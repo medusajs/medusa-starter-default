@@ -5,6 +5,7 @@ import SupplierPriceList from "./models/supplier-price-list.model"
 import SupplierPriceListItem from "./models/supplier-price-list-item.model"
 import SupplierImportTemplate from "./models/supplier-import-template.model"
 import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus, PurchaseOrderType, PurchaseOrderPriority } from "./models/purchase-order.model"
+import { PurchaseOrderDelivery, PurchaseOrderDeliveryItem } from "./models/purchase-order-delivery.model"
 import { ParserConfig, ParserTemplate, ParserType, CsvConfig, FixedWidthConfig } from "./types/parser-types"
 import { PARSER_TEMPLATES, listParserTemplates as listTemplates } from "./config/parser-templates"
 import { FIELD_ALIASES } from "./config/field-aliases"
@@ -19,6 +20,8 @@ class PurchasingService extends MedusaService({
   SupplierImportTemplate,
   PurchaseOrder,
   PurchaseOrderItem,
+  PurchaseOrderDelivery,
+  PurchaseOrderDeliveryItem,
 }) {
   
   // ==========================================

@@ -1,308 +1,232 @@
-import {
-  Context,
-  DAL,
-  InferEntityType,
-  InternalModuleDeclaration,
-  ModuleJoinerConfig,
-  ModulesSdkTypes,
-} from "@medusajs/framework/types"
-import {
-  InjectManager,
-  InjectTransactionManager,
-  MedusaContext,
-  MedusaService,
-} from "@medusajs/framework/utils"
-import RentalOrder from "./models/rental-order"
-import RentalItem from "./models/rental-item"
+import { MedusaService } from "@medusajs/framework/utils"
+import Rental, { RentalStatus } from "./models/rental"
 import RentalStatusHistory from "./models/rental-status-history"
-import { 
-  CreateRentalOrderDTO, 
-  UpdateRentalOrderDTO,
-  CreateRentalItemDTO,
-  UpdateRentalItemDTO,
-  RentalOrderFilters,
-  RentalOrderStatus,
-  RentalOrderType
-} from "./types"
 
-type InjectedDependencies = {
-  baseRepository: DAL.RepositoryService
-  rentalOrderService: ModulesSdkTypes.IMedusaInternalService<any>
-  rentalItemService: ModulesSdkTypes.IMedusaInternalService<any>
-  rentalStatusHistoryService: ModulesSdkTypes.IMedusaInternalService<any>
+/**
+ * TEM-202: Rentals Module Service
+ *
+ * Provides data management and business logic for hour-based machine rentals.
+ * Key features:
+ * - Auto-generates rental numbers (RNT-2025-001 format)
+ * - Tracks machine hours (start/end) and calculates costs
+ * - Manages rental status with history tracking
+ */
+
+type CreateRentalInput = {
+  customer_id?: string
+  machine_id?: string
+  rental_type?: "hourly" | "daily" | "weekly" | "monthly"
+  start_machine_hours?: number
+  hourly_rate: number
+  daily_rate?: number
+  rental_start_date: Date
+  expected_return_date: Date
+  description?: string
+  pickup_notes?: string
+  deposit_amount?: number
+  deposit_paid?: boolean
+  created_by?: string
+  metadata?: Record<string, any>
 }
 
-export class RentalsModuleService
-  extends MedusaService<{
-    RentalOrder: { dto: any }
-    RentalItem: { dto: any }
-    RentalStatusHistory: { dto: any }
-  }>({
-    RentalOrder,
-    RentalItem,
-    RentalStatusHistory,
-  })
-{
-  protected baseRepository_: DAL.RepositoryService
-  protected rentalOrderService_: ModulesSdkTypes.IMedusaInternalService<
-    InferEntityType<typeof RentalOrder>
-  >
-  protected rentalItemService_: ModulesSdkTypes.IMedusaInternalService<
-    InferEntityType<typeof RentalItem>
-  >
-  protected rentalStatusHistoryService_: ModulesSdkTypes.IMedusaInternalService<
-    InferEntityType<typeof RentalStatusHistory>
-  >
+class RentalsService extends MedusaService({
+  Rental,
+  RentalStatusHistory,
+}) {
 
-  constructor(
-    {
-      baseRepository,
-      rentalOrderService,
-      rentalItemService,
-      rentalStatusHistoryService,
-    }: InjectedDependencies,
-    protected readonly moduleDeclaration: InternalModuleDeclaration
-  ) {
-    // @ts-ignore
-    super(...arguments)
-
-    this.baseRepository_ = baseRepository
-    this.rentalOrderService_ = rentalOrderService
-    this.rentalItemService_ = rentalItemService
-    this.rentalStatusHistoryService_ = rentalStatusHistoryService
-  }
-
-  // Rental Order Methods
-  @InjectManager()
-  async createRentalOrder(
-    data: CreateRentalOrderDTO,
-    @MedusaContext() sharedContext: Context = {}
-  ) {
-    // Generate rental order number
-    const orderNumber = await this.generateRentalOrderNumber(sharedContext)
-    
-    const rentalOrderData = {
-      ...data,
-      rental_order_number: orderNumber,
-      total_rental_cost: this.calculateTotalCost(data),
-    }
-
-    const rentalOrder = await this.createRentalOrders([rentalOrderData], sharedContext)
-    
-    // Create status history entry
-    await this.createRentalStatusHistories([{
-      rental_order_id: rentalOrder[0].id,
-      from_status: null,
-      to_status: RentalOrderStatus.DRAFT,
-      change_reason: "Rental order created",
-      changed_by: data.created_by,
-    }], sharedContext)
-
-    return rentalOrder[0]
-  }
-
-  @InjectManager()
-  async updateRentalOrderStatus(
-    rentalOrderId: string,
-    newStatus: keyof typeof RentalOrderStatus,
-    reason?: string,
-    changedBy?: string,
-    @MedusaContext() sharedContext: Context = {}
-  ) {
-    const currentOrder = await this.retrieveRentalOrder(rentalOrderId, {}, sharedContext)
-    
-    const updatedOrder = await this.updateRentalOrders(
-      { id: rentalOrderId },
-      { status: newStatus },
-      sharedContext
-    )
-
-    // Create status history entry
-    await this.createRentalStatusHistories([{
-      rental_order_id: rentalOrderId,
-      from_status: currentOrder.status,
-      to_status: newStatus,
-      change_reason: reason || `Status changed to ${newStatus}`,
-      changed_by: changedBy,
-    }], sharedContext)
-
-    return Array.isArray(updatedOrder) ? updatedOrder[0] : updatedOrder
-  }
-
-  @InjectManager()
-  async getRentalOrdersByCustomer(
-    customerId: string,
-    config?: any,
-    @MedusaContext() sharedContext: Context = {}
-  ) {
-    return await this.listRentalOrders(
-      { customer_id: customerId },
-      config,
-      sharedContext
-    )
-  }
-
-  @InjectManager()
-  async getRentalOrdersByMachine(
-    machineId: string,
-    config?: any,
-    @MedusaContext() sharedContext: Context = {}
-  ) {
-    return await this.listRentalOrders(
-      { machine_id: machineId },
-      config,
-      sharedContext
-    )
-  }
-
-  @InjectManager()
-  async getActiveRentals(
-    config?: any,
-    @MedusaContext() sharedContext: Context = {}
-  ) {
-    return await this.listRentalOrders(
-      { status: RentalOrderStatus.ACTIVE },
-      config,
-      sharedContext
-    )
-  }
-
-  @InjectManager()
-  async getOverdueRentals(
-    config?: any,
-    @MedusaContext() sharedContext: Context = {}
-  ) {
-    const now = new Date()
-    return await this.listRentalOrders(
-      { 
-        status: RentalOrderStatus.ACTIVE,
-        end_date: { lte: now }
-      },
-      config,
-      sharedContext
-    )
-  }
-
-  @InjectManager()
-  async returnRental(
-    rentalOrderId: string,
-    returnData: {
-      actual_return_date?: Date
-      condition_on_return?: string
-      damage_notes?: string
-      additional_charges?: number
-      returned_by?: string
-    },
-    @MedusaContext() sharedContext: Context = {}
-  ) {
-    const updatedOrder = await this.updateRentalOrders(
-      { id: rentalOrderId },
-      {
-        status: RentalOrderStatus.RETURNED,
-        actual_return_date: returnData.actual_return_date || new Date(),
-        condition_on_return: returnData.condition_on_return,
-        damage_notes: returnData.damage_notes,
-        additional_charges: returnData.additional_charges || 0,
-      },
-      sharedContext
-    )
-
-    // Create status history entry
-    await this.createRentalStatusHistories([{
-      rental_order_id: rentalOrderId,
-      from_status: RentalOrderStatus.ACTIVE,
-      to_status: RentalOrderStatus.RETURNED,
-      change_reason: "Rental returned",
-      changed_by: returnData.returned_by,
-      notes: returnData.damage_notes,
-    }], sharedContext)
-
-    return Array.isArray(updatedOrder) ? updatedOrder[0] : updatedOrder
-  }
-
-  // Rental Item Methods
-  @InjectManager()
-  async addItemToRental(
-    data: CreateRentalItemDTO,
-    @MedusaContext() sharedContext: Context = {}
-  ) {
-    const itemData = {
-      ...data,
-      line_total: this.calculateItemTotal(data),
-    }
-
-    return await this.createRentalItems([itemData], sharedContext)
-  }
-
-  @InjectManager()
-  async getRentalItems(
-    rentalOrderId: string,
-    config?: any,
-    @MedusaContext() sharedContext: Context = {}
-  ) {
-    return await this.listRentalItems(
-      { rental_order_id: rentalOrderId },
-      config,
-      sharedContext
-    )
-  }
-
-  // Status History Methods
-  @InjectManager()
-  async getRentalStatusHistory(
-    rentalOrderId: string,
-    config?: any,
-    @MedusaContext() sharedContext: Context = {}
-  ) {
-    return await this.listRentalStatusHistories(
-      { rental_order_id: rentalOrderId },
-      { 
-        ...config,
-        order: { change_timestamp: "DESC" }
-      },
-      sharedContext
-    )
-  }
-
-  // Utility Methods
-  private async generateRentalOrderNumber(
-    @MedusaContext() sharedContext: Context = {}
-  ): Promise<string> {
+  /**
+   * TEM-202: Generate auto-incrementing rental number
+   * Format: RNT-YYYY-XXX (e.g., RNT-2025-001)
+   */
+  async generateRentalNumber(): Promise<string> {
     const year = new Date().getFullYear()
-    const count = await this.listAndCountRentalOrders(
-      { 
-        created_at: { 
-          gte: new Date(`${year}-01-01`),
-          lte: new Date(`${year}-12-31`)
-        }
-      },
-      {},
-      sharedContext
+    const rentals = await this.listRentals({})
+    const yearlyRentals = rentals.filter(rental =>
+      rental.rental_number?.startsWith(`RNT-${year}`)
     )
-    
-    const nextNumber = (count[1] + 1).toString().padStart(3, '0')
-    return `RO-${year}-${nextNumber}`
+    return `RNT-${year}-${String(yearlyRentals.length + 1).padStart(3, '0')}`
   }
 
-  private calculateTotalCost(data: CreateRentalOrderDTO): number {
-    const days = Math.ceil(
-      (data.end_date.getTime() - data.start_date.getTime()) / (1000 * 60 * 60 * 24)
-    )
-    
-    let totalCost = days * data.daily_rate
-    totalCost += data.security_deposit || 0
-    totalCost += data.delivery_cost || 0
-    totalCost += data.pickup_cost || 0
-    totalCost += data.insurance_cost || 0
-    
-    return totalCost
+  /**
+   * TEM-202: Create rental with auto-generated number and status history
+   */
+  async createRentalWithNumber(data: CreateRentalInput) {
+    const rentalNumber = await this.generateRentalNumber()
+
+    const rental = await this.createRentals({
+      ...data,
+      rental_number: rentalNumber,
+      status: RentalStatus.DRAFT,
+      total_hours_used: 0,
+      total_rental_cost: 0,
+    })
+
+    // Create initial status history entry
+    await this.createRentalStatusHistories({
+      rental_id: rental.id,
+      from_status: null,
+      to_status: RentalStatus.DRAFT,
+      changed_by: data.created_by || "system",
+      changed_at: new Date(),
+      reason: "Rental created",
+    })
+
+    return rental
   }
 
-  private calculateItemTotal(data: CreateRentalItemDTO): number {
-    // This would typically calculate based on rental period
-    // For now, just return the daily rate
-    return data.daily_rate * (data.quantity || 1)
+  /**
+   * TEM-202: Update rental status with automatic history tracking
+   */
+  async updateRentalStatus(
+    id: string,
+    newStatus: typeof RentalStatus[keyof typeof RentalStatus],
+    userId: string,
+    reason?: string
+  ) {
+    // Get current rental
+    const rental = await this.retrieveRental(id)
+    if (!rental) {
+      throw new Error("Rental not found")
+    }
+
+    const oldStatus = rental.status
+
+    // Update rental status
+    const updatedRental = await this.updateRentals({
+      id: id,
+      status: newStatus,
+      updated_by: userId,
+    })
+
+    // Create status history entry
+    await this.createRentalStatusHistories({
+      rental_id: id,
+      from_status: oldStatus,
+      to_status: newStatus,
+      changed_by: userId,
+      changed_at: new Date(),
+      reason,
+    })
+
+    return updatedRental
+  }
+
+  /**
+   * TEM-205: Calculate total hours used for a rental
+   * Returns 0 if end_machine_hours is not set yet
+   */
+  async calculateTotalHours(rentalId: string): Promise<number> {
+    const rental = await this.retrieveRental(rentalId)
+
+    if (!rental.end_machine_hours || !rental.start_machine_hours) {
+      return 0 // No end hours yet, no calculation
+    }
+
+    const totalHours = rental.end_machine_hours - rental.start_machine_hours
+
+    if (totalHours < 0) {
+      throw new Error("End hours cannot be less than start hours")
+    }
+
+    return totalHours
+  }
+
+  /**
+   * TEM-205: Calculate rental cost based on machine hours used and rental type
+   * Supports hourly and daily rental types
+   * All monetary values stored in cents for precision
+   */
+  async calculateRentalCost(rentalId: string): Promise<{
+    total_hours_used: number
+    total_rental_cost: number
+  }> {
+    const rental = await this.retrieveRental(rentalId)
+
+    if (!rental.end_machine_hours || !rental.start_machine_hours) {
+      return {
+        total_hours_used: 0,
+        total_rental_cost: 0,
+      } // No end hours yet, no calculation
+    }
+
+    const totalHours = rental.end_machine_hours - rental.start_machine_hours
+
+    if (totalHours < 0) {
+      throw new Error("End hours cannot be less than start hours")
+    }
+
+    let totalCost = 0
+
+    // Calculate cost based on rental type
+    if (rental.rental_type === 'hourly' && rental.hourly_rate) {
+      totalCost = totalHours * rental.hourly_rate
+    } else if (rental.rental_type === 'daily' && rental.daily_rate) {
+      // For daily rentals, round up to full days
+      const days = Math.ceil(totalHours / 24)
+      totalCost = days * rental.daily_rate
+    }
+
+    return {
+      total_hours_used: totalHours,
+      total_rental_cost: totalCost,
+    }
+  }
+
+  /**
+   * TEM-205: Update rental totals based on calculated hours and costs
+   * Called automatically when end_machine_hours is updated
+   * Ensures atomic update of all calculated fields
+   */
+  async updateRentalTotals(rentalId: string) {
+    const { total_hours_used, total_rental_cost } =
+      await this.calculateRentalCost(rentalId)
+
+    await this.updateRentals(
+      { id: rentalId },
+      {
+        total_hours_used,
+        total_rental_cost,
+      }
+    )
+  }
+
+  /**
+   * TEM-205: Update end machine hours and recalculate total cost
+   * Called when rental is returned or hours are logged
+   * Automatically triggers updateRentalTotals() for cost calculation
+   */
+  async updateRentalHours(
+    rentalId: string,
+    endMachineHours: number,
+    userId?: string
+  ) {
+    const rental = await this.retrieveRental(rentalId)
+    if (!rental) {
+      throw new Error("Rental not found")
+    }
+
+    if (!rental.start_machine_hours) {
+      throw new Error("Start machine hours not set")
+    }
+
+    // TEM-205: Validation for end_hours >= start_hours
+    if (endMachineHours < rental.start_machine_hours) {
+      throw new Error("End hours cannot be less than start hours")
+    }
+
+    // Update end hours
+    await this.updateRentals({
+      id: rentalId,
+      end_machine_hours: endMachineHours,
+      updated_by: userId,
+    })
+
+    // TEM-205: Automatically recalculate totals when hours are updated
+    await this.updateRentalTotals(rentalId)
+
+    // Return updated rental
+    return await this.retrieveRental(rentalId)
   }
 }
 
-export default RentalsModuleService
+export default RentalsService

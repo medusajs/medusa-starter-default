@@ -1,34 +1,31 @@
 import { model } from "@medusajs/framework/utils"
 
+/**
+ * TEM-202: Rental Status History model
+ *
+ * Tracks all status changes for rentals, providing an audit trail
+ * of status transitions with reasons and timestamps.
+ */
+
 const RentalStatusHistory = model.define("rental_status_history", {
-  id: model.id({ prefix: "rental_history" }).primaryKey(),
-  
-  // Links
-  rental_order_id: model.text(),
-  
-  // Status Change Details
-  from_status: model.text().nullable(),
+  id: model.id().primaryKey(),
+  rental_id: model.text(), // Foreign key to rental
+
+  // Status transition tracking
+  from_status: model.text().nullable(), // null for initial creation
   to_status: model.text(),
-  change_reason: model.text().nullable(),
-  notes: model.text().nullable(),
-  
-  // User Information
-  changed_by: model.text().nullable(),
-  change_timestamp: model.dateTime().default(() => new Date()),
-  
-  // Additional tracking
-  metadata: model.json().nullable(),
+
+  // Audit fields
+  changed_by: model.text(),
+  changed_at: model.dateTime(),
+  reason: model.text().nullable(),
 })
 .indexes([
   {
-    name: "IDX_rental_status_history_rental_order_id",
-    on: ["rental_order_id"],
-    where: "deleted_at IS NULL",
+    on: ["rental_id"],
   },
   {
-    name: "IDX_rental_status_history_timestamp",
-    on: ["change_timestamp"],
-    where: "deleted_at IS NULL",
+    on: ["changed_at"],
   },
 ])
 

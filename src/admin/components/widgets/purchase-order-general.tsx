@@ -1,4 +1,4 @@
-import { Container, Heading, Text, Label } from "@medusajs/ui"
+import { Container, Heading, Text } from "@medusajs/ui"
 
 interface PurchaseOrder {
   id: string
@@ -13,58 +13,48 @@ interface PurchaseOrderGeneralProps {
   data: PurchaseOrder
 }
 
+const SectionRow = ({ label, value }: { label: string; value: string | undefined | null }) => {
+  return (
+    <div className="grid grid-cols-2 items-center px-6 py-4">
+      <Text size="small" weight="plus" leading="compact" className="text-ui-fg-subtle">
+        {label}
+      </Text>
+      <Text size="small" leading="compact">
+        {value || "—"}
+      </Text>
+    </div>
+  )
+}
+
+const formatDate = (date?: string) => {
+  if (!date) return null
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
+}
+
 export const PurchaseOrderGeneral = ({ data: purchaseOrder }: PurchaseOrderGeneralProps) => {
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
         <Heading level="h2">Order Details</Heading>
       </div>
-      <div className="px-6 py-4">
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <Label size="small" weight="plus" className="mb-2">
-              Order Date
-            </Label>
-            <Text size="small">
-              {new Date(purchaseOrder.order_date).toLocaleDateString()}
-            </Text>
-          </div>
-          {purchaseOrder.expected_delivery_date && (
-            <div>
-              <Label size="small" weight="plus" className="mb-2">
-                Expected Delivery
-              </Label>
-              <Text size="small">
-                {new Date(purchaseOrder.expected_delivery_date).toLocaleDateString()}
-              </Text>
-            </div>
-          )}
-          {purchaseOrder.actual_delivery_date && (
-            <div>
-              <Label size="small" weight="plus" className="mb-2">
-                Actual Delivery
-              </Label>
-              <Text size="small">
-                {new Date(purchaseOrder.actual_delivery_date).toLocaleDateString()}
-              </Text>
-            </div>
-          )}
-          {purchaseOrder.payment_terms && (
-            <div>
-              <Label size="small" weight="plus" className="mb-2">
-                Payment Terms
-              </Label>
-              <Text size="small">{purchaseOrder.payment_terms}</Text>
-            </div>
-          )}
-        </div>
-      </div>
+      <SectionRow label="Order Date" value={formatDate(purchaseOrder.order_date)} />
+      {purchaseOrder.expected_delivery_date && (
+        <SectionRow label="Expected Delivery" value={formatDate(purchaseOrder.expected_delivery_date)} />
+      )}
+      {purchaseOrder.actual_delivery_date && (
+        <SectionRow label="Actual Delivery" value={formatDate(purchaseOrder.actual_delivery_date)} />
+      )}
+      {purchaseOrder.payment_terms && (
+        <SectionRow label="Payment Terms" value={purchaseOrder.payment_terms} />
+      )}
       {purchaseOrder.notes && (
         <div className="px-6 py-4">
-          <Label size="small" weight="plus" className="mb-2">
-            Notes
-          </Label>
-          <Text size="small">{purchaseOrder.notes}</Text>
+          <Text size="small" weight="plus" className="text-ui-fg-subtle mb-2">Notes</Text>
+          <Text size="small" className="whitespace-pre-line">{purchaseOrder.notes}</Text>
         </div>
       )}
     </Container>

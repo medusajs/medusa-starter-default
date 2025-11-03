@@ -1,12 +1,25 @@
 import { Module } from "@medusajs/framework/utils"
-import RentalsModuleService from "./service"
+import RentalsService from "./service"
+import Rental from "./models/rental"
+import RentalStatusHistory from "./models/rental-status-history"
+
+/**
+ * TEM-202: Rentals Module
+ *
+ * Exports the rentals module for hour-based machine rental management.
+ * Module is registered in medusa-config.ts under custom modules.
+ */
 
 export const RENTALS_MODULE = "rentals"
 
-export default Module(RENTALS_MODULE, {
-  service: RentalsModuleService
+const RentalsModule = Module(RENTALS_MODULE, {
+  service: RentalsService
 })
 
-export * from "./types"
-export * from "./workflows"
-export { RentalsModuleService }
+export default RentalsModule
+
+export {
+  RentalsService,
+  Rental,
+  RentalStatusHistory,
+}
