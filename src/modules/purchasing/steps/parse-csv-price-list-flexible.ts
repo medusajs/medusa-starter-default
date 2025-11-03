@@ -381,13 +381,11 @@ export const parseCsvPriceListStep = createStep(
 
         // Parse optional fields
         const quantity = mappedRow.quantity ? parseInt(String(mappedRow.quantity)) : 1
-        const leadTimeDays = mappedRow.lead_time_days ? parseInt(String(mappedRow.lead_time_days)) : undefined
 
         // TEM-173: Create processed item with new discount and product information fields
         const processedItem: ParsedPriceListItem = {
           product_variant_id: productVariant.id,
           product_id: product.id,
-          supplier_sku: mappedRow.supplier_sku || undefined,
           variant_sku: productVariant.sku || undefined,
 
           // Pricing fields (TEM-173)
@@ -402,7 +400,6 @@ export const parseCsvPriceListStep = createStep(
 
           // Other fields
           quantity: isNaN(quantity) ? 1 : quantity,
-          lead_time_days: isNaN(leadTimeDays!) ? undefined : leadTimeDays,
           notes: mappedRow.notes || undefined,
         }
 

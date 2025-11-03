@@ -8,11 +8,9 @@ type ProcessPriceListItemsStepInput = {
   items: Array<{
     product_variant_id: string
     product_id: string
-    supplier_sku?: string
     variant_sku?: string
     cost_price: number
     quantity?: number
-    lead_time_days?: number
     notes?: string
   }>
 }
@@ -29,12 +27,10 @@ export const processPriceListItemsStep = createStep(
       price_list_id: input.price_list_id,
       product_variant_id: item.product_variant_id,
       product_id: item.product_id,
-      supplier_sku: item.supplier_sku ?? undefined,
       variant_sku: item.variant_sku ?? undefined,
       // Map legacy CSV field cost_price to model field net_price
       net_price: item.cost_price,
       quantity: item.quantity ?? 1,
-      lead_time_days: item.lead_time_days ?? undefined,
       notes: item.notes ?? undefined,
       is_active: true
     }))

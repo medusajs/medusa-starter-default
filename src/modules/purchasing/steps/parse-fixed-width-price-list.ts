@@ -189,11 +189,10 @@ export const parseFixedWidthPriceListStep = createStep(
 
         // Validate required fields
         const hasIdentifier = (mappedRow.variant_sku && mappedRow.variant_sku.trim()) ||
-                             (mappedRow.supplier_sku && mappedRow.supplier_sku.trim()) ||
                              (mappedRow.product_id && mappedRow.product_id.trim())
 
         if (!hasIdentifier) {
-          errors.push(`Row ${rowNum}: Either variant_sku, supplier_sku, or product_id is required`)
+          errors.push(`Row ${rowNum}: Either variant_sku or product_id is required`)
           continue
         }
 
@@ -233,34 +232,9 @@ export const parseFixedWidthPriceListStep = createStep(
           if (variants.length > 0) {
             productVariant = variants[0]
             product = productVariant.product
-          } else if (!mappedRow.supplier_sku) {
-            // Only error if we don't have supplier_sku to try
+          } else {
             const brandMsg = featureFlag ? " for supplier's allowed brands" : ""
             errors.push(`Row ${rowNum}: Product variant with SKU "${mappedRow.variant_sku.trim()}" not found${brandMsg}`)
-            continue
-          }
-        }
-
-        // Try by supplier_sku if not found by variant_sku
-        if (!productVariant && mappedRow.supplier_sku && mappedRow.supplier_sku.trim()) {
-          const supplierProducts = await purchasingService.listSupplierProducts({
-            supplier_id: supplier_id,
-            supplier_sku: mappedRow.supplier_sku.trim()
-          })
-
-          if (supplierProducts.length > 0) {
-            const supplierProduct = supplierProducts[0]
-            const variants = await productModuleService.listProductVariants({
-              id: supplierProduct.product_variant_id
-            }, { select: ["id", "product_id", "sku"], relations: ["product"] })
-
-            if (variants.length > 0) {
-              productVariant = variants[0]
-              product = productVariant.product
-            }
-          } else if (!mappedRow.product_id) {
-            // Only error if we don't have product_id to try
-            errors.push(`Row ${rowNum}: Supplier SKU "${mappedRow.supplier_sku.trim()}" not found in supplier products`)
             continue
           }
         }
@@ -301,21 +275,20 @@ export const parseFixedWidthPriceListStep = createStep(
         }
 
         if (!productVariant || !product) {
-          const identifier = mappedRow.variant_sku?.trim() || mappedRow.supplier_sku?.trim() || mappedRow.product_id?.trim()
+          const identifier = mappedRow.variant_sku?.trim() || mappedRow.product_id?.trim()
           errors.push(`Row ${rowNum}: Could not resolve product variant (identifier: ${identifier})`)
           continue
         }
 
         // Parse optional fields
         const quantity = mappedRow.quantity ? parseInt(String(mappedRow.quantity)) : 1
-        const leadTimeDays = mappedRow.lead_time_days ? parseInt(String(mappedRow.lead_time_days)) : undefined
 
         // Collect unmapped fields into metadata
         // Standard fields that are directly mapped to ParsedPriceListItem properties
         const standardFields = new Set([
-          'product_variant_id', 'product_id', 'supplier_sku', 'variant_sku',
+          'product_variant_id', 'product_id', 'variant_sku',
           'gross_price', 'discount_code', 'discount_percentage', 'net_price',
-          'description', 'category', 'quantity', 'lead_time_days', 'notes',
+          'description', 'category', 'quantity', 'notes',
           'cost_price' // Legacy field alias
         ])
         
@@ -330,7 +303,6 @@ export const parseFixedWidthPriceListStep = createStep(
         const processedItem: ParsedPriceListItem = {
           product_variant_id: productVariant.id,
           product_id: product.id,
-          supplier_sku: mappedRow.supplier_sku?.trim() || undefined,
           variant_sku: productVariant.sku || undefined,
 
           // Pricing fields
@@ -345,7 +317,6 @@ export const parseFixedWidthPriceListStep = createStep(
 
           // Other fields
           quantity: isNaN(quantity) ? 1 : quantity,
-          lead_time_days: isNaN(leadTimeDays!) ? undefined : leadTimeDays,
           notes: mappedRow.notes?.trim() || undefined,
           
           // Metadata for additional supplier-specific fields

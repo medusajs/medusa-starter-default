@@ -12,7 +12,6 @@ type GetAdminPriceListItemParams = {
 }
 
 type PutAdminUpdatePriceListItemType = {
-  supplier_sku?: string
   variant_sku?: string
   gross_price?: number
   discount_amount?: number
@@ -21,7 +20,6 @@ type PutAdminUpdatePriceListItemType = {
   quantity?: number
   description?: string
   category?: string
-  lead_time_days?: number
   notes?: string
   is_active?: boolean
 }
@@ -69,7 +67,7 @@ export const PUT = async (
     }])
 
     // Update supplier-product relationship if net_price or other relevant fields changed
-    if (updateData.net_price || updateData.quantity || updateData.lead_time_days) {
+    if (updateData.net_price || updateData.quantity) {
       const supplierProduct = await purchasingService.upsertSupplierProductFromPriceList(item)
       res.json({ item, supplier_product: supplierProduct })
     } else {

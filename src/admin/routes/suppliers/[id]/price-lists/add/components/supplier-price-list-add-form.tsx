@@ -34,23 +34,19 @@ interface SelectedVariantForPricing {
 
 interface SupplierPriceListAddFormData {
   variant_id: string
-  supplier_sku?: string
   gross_price?: number
   discount_percentage?: number
   net_price: number
   quantity: number
-  lead_time_days?: number
   notes?: string
 }
 
 const addItemSchema = zod.object({
   variant_id: zod.string().min(1, "Please select a product variant"),
-  supplier_sku: zod.string().optional(),
   gross_price: zod.number().min(0, "Gross price must be 0 or greater").optional(),
   discount_percentage: zod.number().min(0, "Discount percentage must be 0 or greater").max(100, "Discount percentage cannot exceed 100").optional(),
   net_price: zod.number().min(0, "Net price must be 0 or greater").refine(val => val > 0, "Net price is required"),
   quantity: zod.number().min(1, "Quantity must be at least 1").default(1),
-  lead_time_days: zod.number().min(0, "Lead time must be 0 or greater").optional(),
   notes: zod.string().optional()
 }).refine((data) => {
   // If both gross and discount are provided, ensure net price makes sense
@@ -122,12 +118,10 @@ export const SupplierPriceListAddForm = ({ supplierId }: SupplierPriceListAddFor
     resolver: zodResolver(addItemSchema),
     defaultValues: {
       variant_id: "",
-      supplier_sku: "",
       gross_price: undefined,
       discount_percentage: undefined,
       net_price: 0,
       quantity: 1,
-      lead_time_days: 0,
       notes: ""
     }
   })
@@ -149,11 +143,9 @@ export const SupplierPriceListAddForm = ({ supplierId }: SupplierPriceListAddFor
         body: JSON.stringify({
           product_variant_id: data.variant_id,
           product_id: selectedVariant.product_id,
-          supplier_sku: data.supplier_sku,
           // gross_price not persisted in current schema; keep client-side only
           net_price: data.net_price && !isNaN(data.net_price) ? Math.round(data.net_price * 100) : 0,
           quantity: data.quantity || 1,
-          lead_time_days: data.lead_time_days,
           notes: data.notes
         }),
       })
@@ -394,51 +386,6 @@ export const SupplierPriceListAddForm = ({ supplierId }: SupplierPriceListAddFor
                       </div>
                     </div>
                   )}
-                  {/* Product Information Section */}
-                  <div className="space-y-4">
-                    <div>
-                      <Text size="large" weight="plus" className="text-ui-fg-base">
-                        Product Information
-                      </Text>
-                      <Text size="small" className="text-ui-fg-subtle">
-                        Additional product details from the supplier.
-                      </Text>
-                    </div>
-                    
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="flex flex-col gap-y-2">
-                        <div className="flex items-center gap-x-1">
-                          <Label size="small" weight="plus">
-                            Supplier SKU
-                          </Label>
-                          <Text size="small" className="text-ui-fg-muted">
-                            (optional)
-                          </Text>
-                        </div>
-                        <Controller
-                          name="supplier_sku"
-                          control={form.control}
-                          render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-y-1">
-                              <Input
-                                {...field}
-                                placeholder="Enter supplier SKU (optional)"
-                              />
-                              <Hint className="text-ui-fg-subtle">
-                                The supplier's SKU for this product variant
-                              </Hint>
-                              {fieldState.error && (
-                                <Hint variant="error">
-                                  {fieldState.error.message}
-                                </Hint>
-                              )}
-                            </div>
-                          )}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
                   {/* Pricing Section */}
                   <div className="space-y-4">
                     <div>
@@ -628,42 +575,6 @@ export const SupplierPriceListAddForm = ({ supplierId }: SupplierPriceListAddFor
                         />
                       </div>
                       
-                      <div className="flex flex-col gap-y-2">
-                        <div className="flex items-center gap-x-1">
-                          <Label size="small" weight="plus">
-                            Lead Time (Days)
-                          </Label>
-                          <Text size="small" className="text-ui-fg-muted">
-                            (optional)
-                          </Text>
-                          <Tooltip content="Expected delivery time in business days">
-                            <InformationCircleSolid className="h-4 w-4 text-ui-fg-muted" />
-                          </Tooltip>
-                        </div>
-                        <Controller
-                          name="lead_time_days"
-                          control={form.control}
-                          render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-y-1">
-                              <Input
-                                {...field}
-                                type="number"
-                                min="0"
-                                placeholder="0"
-                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                              />
-                              <Hint className="text-ui-fg-subtle">
-                                How many days until delivery after placing order
-                              </Hint>
-                              {fieldState.error && (
-                                <Hint variant="error">
-                                  {fieldState.error.message}
-                                </Hint>
-                              )}
-                            </div>
-                          )}
-                        />
-                      </div>
                     </div>
                   </div>
                   

@@ -44,11 +44,10 @@ const createTemplateSchema = z.object({
   column_mapping: z.record(z.string(), z.string()).refine(
     (mapping) => {
       const values = Object.values(mapping)
-      return values.includes('supplier_sku') ||
-             values.includes('variant_sku') ||
+      return values.includes('variant_sku') ||
              values.includes('product_id')
     },
-    { message: 'Column mapping must include at least one of: supplier_sku, variant_sku, or product_id' }
+    { message: 'Column mapping must include at least one of: variant_sku or product_id' }
   ),
 })
 

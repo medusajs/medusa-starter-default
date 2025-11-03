@@ -30,11 +30,9 @@ type PostAdminCreatePriceListType = {
   items: Array<{
     product_variant_id: string
     product_id: string
-    supplier_sku?: string
     variant_sku?: string
     cost_price: number
     quantity?: number
-    lead_time_days?: number
     notes?: string
   }>
 }

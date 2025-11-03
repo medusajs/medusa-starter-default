@@ -9,11 +9,9 @@ type PriceListItem = {
   id: string
   product_variant_id: string
   product_id: string
-  supplier_sku?: string
   variant_sku?: string
   cost_price: number
   quantity: number
-  lead_time_days?: number
   notes?: string
   created_at: string
   updated_at: string
@@ -53,11 +51,9 @@ type SupplierPriceListWidgetProps = {
 const addItemSchema = zod.object({
   product_variant_id: zod.string().min(1, "Product variant ID is required"),
   product_id: zod.string().min(1, "Product ID is required"),
-  supplier_sku: zod.string().optional(),
   variant_sku: zod.string().optional(),
   cost_price: zod.number().min(0, "Cost price must be 0 or greater"),
   quantity: zod.number().min(1, "Quantity must be at least 1").default(1),
-  lead_time_days: zod.number().min(0).optional(),
   notes: zod.string().optional()
 })
 
@@ -87,11 +83,9 @@ const SupplierPriceListWidget = ({
     defaultValues: {
       product_variant_id: "",
       product_id: "",
-      supplier_sku: "",
       variant_sku: "",
       cost_price: 0,
       quantity: 1,
-      lead_time_days: 0,
       notes: ""
     }
   })
@@ -213,10 +207,8 @@ const SupplierPriceListWidget = ({
           <Table.Header>
             <Table.Row>
               <Table.HeaderCell>Product SKU</Table.HeaderCell>
-              <Table.HeaderCell>Supplier SKU</Table.HeaderCell>
               <Table.HeaderCell>Cost Price</Table.HeaderCell>
               <Table.HeaderCell>Quantity</Table.HeaderCell>
-              <Table.HeaderCell>Lead Time</Table.HeaderCell>
               <Table.HeaderCell>Actions</Table.HeaderCell>
             </Table.Row>
           </Table.Header>
@@ -224,10 +216,7 @@ const SupplierPriceListWidget = ({
             {items.map((item) => (
               <Table.Row key={item.id}>
                 <Table.Cell>
-                  <Text className="font-mono text-sm">{item.variant_sku}</Text>
-                </Table.Cell>
-                <Table.Cell>
-                  <Text className="font-mono text-sm">{item.supplier_sku}</Text>
+                  <Text className="font-mono text-sm">{item.variant_sku || "—"}</Text>
                 </Table.Cell>
                 <Table.Cell>
                   <Text className="font-medium">
@@ -236,9 +225,6 @@ const SupplierPriceListWidget = ({
                 </Table.Cell>
                 <Table.Cell>
                   <Text>{item.quantity}</Text>
-                </Table.Cell>
-                <Table.Cell>
-                  <Text>{item.lead_time_days ? `${item.lead_time_days} days` : "—"}</Text>
                 </Table.Cell>
                 <Table.Cell>
                   <div className="flex gap-2">
@@ -316,21 +302,6 @@ const SupplierPriceListWidget = ({
                   />
                 </div>
                 <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="supplier_sku">Supplier SKU</Label>
-                  <Controller
-                    name="supplier_sku"
-                    control={addItemForm.control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="supplier_sku"
-                        placeholder="Enter supplier SKU"
-                        size="small"
-                      />
-                    )}
-                  />
-                </div>
-                <div className="flex flex-col gap-y-2">
                   <Label htmlFor="variant_sku">Variant SKU</Label>
                   <Controller
                     name="variant_sku"
@@ -386,31 +357,6 @@ const SupplierPriceListWidget = ({
                           placeholder="1"
                           size="small"
                           onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                        />
-                        {fieldState.error && (
-                          <Text size="xsmall" className="text-ui-fg-error">
-                            {fieldState.error.message}
-                          </Text>
-                        )}
-                      </div>
-                    )}
-                  />
-                </div>
-                <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="lead_time_days">Lead Time (Days)</Label>
-                  <Controller
-                    name="lead_time_days"
-                    control={addItemForm.control}
-                    render={({ field, fieldState }) => (
-                      <div className="flex flex-col gap-y-1">
-                        <Input
-                          {...field}
-                          id="lead_time_days"
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          size="small"
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                         />
                         {fieldState.error && (
                           <Text size="xsmall" className="text-ui-fg-error">

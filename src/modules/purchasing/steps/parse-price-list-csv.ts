@@ -10,11 +10,9 @@ type ParsePriceListCsvStepInput = {
 type ParsedPriceListItem = {
   product_variant_id: string
   product_id: string
-  supplier_sku?: string
   variant_sku?: string
   cost_price: number
   quantity?: number
-  lead_time_days?: number
   notes?: string
 }
 
@@ -201,16 +199,13 @@ export const parsePriceListCsvStep = createStep(
         
         // Parse optional fields
         const quantity = row.quantity ? parseInt(row.quantity) : 1
-        const leadTimeDays = row.lead_time_days ? parseInt(row.lead_time_days) : undefined
         
         const processedItem: ParsedPriceListItem = {
           product_variant_id: productVariant.id,
           product_id: product.id,
-          supplier_sku: row.supplier_sku || undefined,
           variant_sku: productVariant.sku || undefined,
           cost_price: costPrice,
           quantity: isNaN(quantity) ? 1 : quantity,
-          lead_time_days: leadTimeDays,
           notes: row.notes || undefined,
         }
         

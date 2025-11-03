@@ -13,26 +13,22 @@ type GetAdminSupplierPriceListItemsParams = {
 type PostAdminCreatePriceListItemType = {
   product_variant_id: string
   product_id: string
-  supplier_sku?: string
   variant_sku?: string
   gross_price?: number
   discount_amount?: number
   discount_percentage?: number
   net_price: number
   quantity?: number
-  lead_time_days?: number
   notes?: string
 }
 
 type PutAdminUpdatePriceListItemType = {
-  supplier_sku?: string
   variant_sku?: string
   gross_price?: number
   discount_amount?: number
   discount_percentage?: number
   net_price: number
   quantity?: number
-  lead_time_days?: number
   notes?: string
 }
 

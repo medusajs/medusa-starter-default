@@ -65,7 +65,6 @@ export type Transformation =
 export type ParsedPriceListItem = {
   product_variant_id?: string
   product_id?: string
-  supplier_sku?: string
   variant_sku?: string
 
   // Pricing fields
@@ -78,7 +77,6 @@ export type ParsedPriceListItem = {
   description?: string // Product description from supplier
   category?: string // Supplier's product category
   quantity?: number
-  lead_time_days?: number
   notes?: string
   metadata?: Record<string, any> // Additional supplier-specific data
 }

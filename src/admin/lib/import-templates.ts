@@ -62,7 +62,7 @@ export const IMPORT_TEMPLATES: Record<string, ImportTemplate> = {
       },
     },
     column_mapping: {
-      "onderdeelnummer": "supplier_sku",
+      "onderdeelnummer": "variant_sku", // Map to variant_sku instead of supplier_sku
       "omschrijving": "description",
       "lijstprijs": "net_price",
       "gewicht_kg": "weight",

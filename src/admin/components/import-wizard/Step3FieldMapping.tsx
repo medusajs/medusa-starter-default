@@ -39,7 +39,6 @@ interface TargetField {
 
 // Field aliases for auto-suggestion
 const FIELD_ALIASES: Record<string, string[]> = {
-  supplier_sku: ["sku", "part_number", "part_no", "partnumber", "onderdeelnummer", "supplier_part", "supplier_sku", "part_id"],
   variant_sku: ["variant_sku", "internal_sku", "our_sku", "product_sku", "item_sku"],
   gross_price: ["gross_price", "gross price", "list_price", "list price", "listprice", "lijstprijs", "bruto prijs", "gross", "msrp", "retail_price"],
   discount_code: ["discount_code", "discount code", "discount_cd", "disc_code", "kortingscode", "code"],
@@ -50,7 +49,6 @@ const FIELD_ALIASES: Record<string, string[]> = {
   description: ["description", "product_description", "desc", "omschrijving", "beschrijving", "product_desc", "item_description"],
   category: ["category", "product_category", "cat", "categorie", "productcategorie", "product category", "item_category", "group"],
   quantity: ["quantity", "qty", "amount", "stock", "available"],
-  lead_time_days: ["lead_time", "lead_time_days", "delivery_time", "days"],
   notes: ["notes", "comment", "remarks", "info"],
 }
 
@@ -127,13 +125,6 @@ const getRequiredFieldsForMode = (pricingMode: PricingMode): TargetField[] => {
 // Optional fields - available for all modes
 const OPTIONAL_FIELDS: TargetField[] = [
   {
-    value: "supplier_sku",
-    label: "Supplier SKU",
-    description: "Supplier's part number (optional)",
-    required: false,
-    group: "identifiers"
-  },
-  {
     value: "net_price",
     label: "Net Price",
     description: "Final price after discounts (optional for most modes)",
@@ -151,13 +142,6 @@ const OPTIONAL_FIELDS: TargetField[] = [
     value: "quantity",
     label: "Quantity",
     description: "Available quantity or stock level",
-    required: false,
-    group: "other"
-  },
-  {
-    value: "lead_time_days",
-    label: "Lead Time (Days)",
-    description: "Delivery or fulfillment time",
     required: false,
     group: "other"
   },

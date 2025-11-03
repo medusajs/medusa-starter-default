@@ -21,7 +21,7 @@ import {
   ProgressStatus,
   FocusModal,
 } from "@medusajs/ui"
-import { Plus, DocumentText, ArrowUpTray, PencilSquare, Trash, ArrowDownTray, EllipsisHorizontal, MagnifyingGlass } from "@medusajs/icons"
+import { Plus, DocumentText, ArrowUpTray, PencilSquare, Trash, EllipsisHorizontal, MagnifyingGlass } from "@medusajs/icons"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as zod from "zod"
@@ -56,7 +56,6 @@ interface PriceListItem {
   price_list_id: string
   product_id: string
   product_variant_id: string
-  supplier_sku?: string
   variant_sku?: string
   product?: {
     id: string
@@ -72,7 +71,6 @@ interface PriceListItem {
   discount_percentage?: number
   net_price: number
   quantity?: number
-  lead_time_days?: number
   notes?: string
   description?: string
   category?: string
@@ -126,7 +124,6 @@ interface SelectedVariantForPricing {
 }
 
 const addItemSchema = zod.object({
-  supplier_sku: zod.string().optional(),
   variant_sku: zod.string().optional(),
   product_name: zod.string().optional(),
   description: zod.string().optional(),
@@ -134,7 +131,6 @@ const addItemSchema = zod.object({
   gross_price: zod.number().min(0, "Gross price must be 0 or greater").optional(),
   discount_percentage: zod.number().min(0, "Discount percentage must be 0 or greater").max(100, "Discount percentage cannot exceed 100").default(0),
   quantity: zod.number().min(1, "Quantity must be at least 1").default(1),
-  lead_time_days: zod.number().min(0).optional(),
   notes: zod.string().optional()
 })
 
@@ -169,7 +165,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
   const editItemForm = useForm<AddItemFormData>({
     resolver: zodResolver(addItemSchema),
     defaultValues: {
-      supplier_sku: "",
       variant_sku: "",
       product_name: "",
       description: "",
@@ -177,7 +172,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
       gross_price: undefined,
       discount_percentage: 0,
       quantity: 1,
-      lead_time_days: 0,
       notes: ""
     }
   })
@@ -283,7 +277,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
   const addItemForm = useForm<AddItemFormData>({
     resolver: zodResolver(addItemSchema),
     defaultValues: {
-      supplier_sku: "",
       variant_sku: "",
       product_name: "",
       description: "",
@@ -291,7 +284,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
       gross_price: undefined,
       discount_percentage: 0,
       quantity: 1,
-      lead_time_days: 0,
       notes: ""
     }
   })
@@ -328,16 +320,16 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
         productId = selectedVariantForAdd.product_id
         variantSku = data.variant_sku || selectedVariantForAdd.sku
       } else {
-        // Manual entry - require product name and use supplier SKU as identifier
+        // Manual entry - require product name and variant SKU
         if (!data.product_name || data.product_name.trim() === "") {
           throw new Error("Product name is required for manual entries")
         }
-        if (!data.supplier_sku || data.supplier_sku.trim() === "") {
-          throw new Error("Supplier SKU is required for manual entries")
+        if (!data.variant_sku || data.variant_sku.trim() === "") {
+          throw new Error("Variant SKU is required for manual entries")
         }
-        // Use supplier_sku as the unique identifier for both product and variant
-        productVariantId = `manual-${data.supplier_sku}`
-        productId = `manual-${data.supplier_sku}`
+        // Use variant_sku as the unique identifier for both product and variant
+        productVariantId = `manual-${data.variant_sku}`
+        productId = `manual-${data.variant_sku}`
         variantSku = data.variant_sku
       }
 
@@ -348,7 +340,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          supplier_sku: data.supplier_sku,
           variant_sku: variantSku,
           description: data.description,
           category: data.category,
@@ -356,7 +347,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
           discount_percentage: data.discount_percentage,
           net_price: netPrice,
           quantity: data.quantity,
-          lead_time_days: data.lead_time_days,
           notes: data.notes,
           product_variant_id: productVariantId,
           product_id: productId,
@@ -404,8 +394,8 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
         toast.error("Product name is required for manual entries")
         return
       }
-      if (!data.supplier_sku || data.supplier_sku.trim() === "") {
-        toast.error("Supplier SKU is required for manual entries")
+      if (!data.variant_sku || data.variant_sku.trim() === "") {
+        toast.error("Variant SKU is required for manual entries")
         return
       }
       if (!data.gross_price || data.gross_price <= 0) {
@@ -425,14 +415,12 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
   const handleEditItem = (item: PriceListItem) => {
     setEditingItem(item)
     editItemForm.reset({
-      supplier_sku: item.supplier_sku || "",
       variant_sku: item.variant_sku || "",
       description: item.description || "",
       category: item.category || "",
       gross_price: item.gross_price ? item.gross_price / 100 : undefined,
       discount_percentage: item.discount_percentage || 0,
       quantity: item.quantity || 1,
-      lead_time_days: item.lead_time_days || 0,
       notes: item.notes || ""
     })
     setShowEditDrawer(true)
@@ -507,10 +495,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
       setUploadFile(file)
       toast.error('Preview failed, file selected for direct upload')
     }
-  }
-
-  const handleDownloadTemplate = () => {
-    window.open(`/admin/suppliers/${supplier.id}/price-lists/template`, "_blank")
   }
 
   const handleManualSync = async () => {
@@ -645,9 +629,10 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
     if (!tableSearch) return true
     const search = tableSearch.toLowerCase()
     return (
-      item.supplier_sku?.toLowerCase().includes(search) ||
       item.notes?.toLowerCase().includes(search) ||
-      item.product?.title?.toLowerCase().includes(search)
+      item.product?.title?.toLowerCase().includes(search) ||
+      item.variant_sku?.toLowerCase().includes(search) ||
+      item.variant?.sku?.toLowerCase().includes(search)
     )
   })
 
@@ -683,12 +668,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
         <Text className="font-mono text-sm">
           {getValue() || row.original.variant?.sku || "—"}
         </Text>
-      ),
-    }),
-    columnHelper.accessor("supplier_sku", {
-      header: "Supplier SKU",
-      cell: ({ getValue }) => (
-        <Text className="font-mono text-sm">{getValue() || "—"}</Text>
       ),
     }),
     columnHelper.accessor("gross_price", {
@@ -734,12 +713,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
         <Text className="font-medium text-green-600">
           {priceList?.currency_code || "USD"} {(getValue() / 100).toFixed(2)}
         </Text>
-      ),
-    }),
-    columnHelper.accessor("lead_time_days", {
-      header: "Lead Time",
-      cell: ({ getValue }) => (
-        <Text>{getValue() ? `${getValue()}d` : "—"}</Text>
       ),
     }),
     columnHelper.display({
@@ -819,28 +792,14 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
           <div className="flex items-center justify-between w-full">
             <div>
               <Heading level="h2">Price List</Heading>
-              {priceList && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge color={priceList.is_active ? "green" : "red"}>
-                    {priceList.is_active ? "Active" : "Inactive"}
-                  </Badge>
-                  {priceList.brand && (
-                    <Badge color="grey">
-                      {priceList.brand.name} ({priceList.brand.code})
-                    </Badge>
-                  )}
-                  <Text size="small" className="text-ui-fg-subtle">
-                    Version {priceList.version || 1} • {filteredItems.length} items
-                  </Text>
-                </div>
+              {priceList && priceList.brand && (
+                <Badge color="grey" className="mt-1">
+                  {priceList.brand.name} ({priceList.brand.code})
+                </Badge>
               )}
             </div>
             <div className="flex items-center gap-2">
               <DataTable.Search placeholder="Search price list items..." />
-              <Button variant="secondary" size="small" onClick={handleDownloadTemplate}>
-                <ArrowDownTray />
-                Template
-              </Button>
               <Button variant="secondary" size="small" onClick={() => setShowUploadModal(true)}>
                 <ArrowUpTray />
                 Upload CSV
@@ -1191,35 +1150,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-y-2">
-                    <Label htmlFor="add_supplier_sku">
-                      Supplier SKU {itemEntryType === 'manual' && '*'}
-                    </Label>
-                    <Controller
-                      name="supplier_sku"
-                      control={addItemForm.control}
-                      render={({ field, fieldState }) => (
-                        <div className="flex flex-col gap-y-1">
-                          <Input
-                            {...field}
-                            id="add_supplier_sku"
-                            placeholder={itemEntryType === 'manual' ? 'Required: Supplier part number' : 'Enter supplier SKU (optional)'}
-                          />
-                          {fieldState.error && (
-                            <Text size="xsmall" className="text-ui-fg-error">
-                              {fieldState.error.message}
-                            </Text>
-                          )}
-                        </div>
-                      )}
-                    />
-                    {itemEntryType === 'manual' && (
-                      <Text size="xsmall" className="text-ui-fg-subtle">
-                        Used as unique identifier for this item
-                      </Text>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-y-2">
                     <Label htmlFor="add_gross_price">
                       Gross Price (RRP) {itemEntryType === 'manual' && '*'}
                     </Label>
@@ -1391,20 +1321,6 @@ export const SupplierPriceLists = ({ data: supplier }: SupplierPriceListsProps) 
           <Drawer.Body className="p-6">
             <form onSubmit={handleUpdateItem} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-y-2">
-                  <Label htmlFor="edit_supplier_sku">Supplier SKU</Label>
-                  <Controller
-                    name="supplier_sku"
-                    control={editItemForm.control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="edit_supplier_sku"
-                        placeholder="Enter supplier SKU (optional)"
-                      />
-                    )}
-                  />
-                </div>
                 <div className="flex flex-col gap-y-2">
                   <Label htmlFor="edit_gross_price">Gross Price (RRP)</Label>
                   <Controller

@@ -33,12 +33,11 @@ const columnMappingSchema = z.record(z.string(), z.string()).refine(
     }
 
     // Must have at least one identifier
-    return values.includes('supplier_sku') ||
-           values.includes('variant_sku') ||
+    return values.includes('variant_sku') ||
            values.includes('product_id')
   },
   {
-    message: "Column mapping must include 'net_price' and at least one identifier (supplier_sku, variant_sku, or product_id)",
+    message: "Column mapping must include 'net_price' and at least one identifier (variant_sku or product_id)",
   }
 )
 

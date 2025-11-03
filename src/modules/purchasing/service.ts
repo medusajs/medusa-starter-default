@@ -438,11 +438,9 @@ class PurchasingService extends MedusaService({
   async processPriceListItems(priceListId: string, items: Array<{
     product_variant_id: string
     product_id: string
-    supplier_sku?: string
     variant_sku?: string
     cost_price: number
     quantity?: number
-    lead_time_days?: number
     notes?: string
   }>, overwriteExisting: boolean = false) {
     const priceList = await this.retrieveSupplierPriceList(priceListId)
@@ -464,12 +462,10 @@ class PurchasingService extends MedusaService({
       price_list_id: priceListId,
       product_variant_id: item.product_variant_id,
       product_id: item.product_id,
-      supplier_sku: item.supplier_sku ?? undefined,
       variant_sku: item.variant_sku ?? undefined,
       // Map legacy cost_price input to net_price field on the model
       net_price: item.cost_price,
       quantity: item.quantity ?? 1,
-      lead_time_days: item.lead_time_days ?? undefined,
       notes: item.notes ?? undefined
     }))
     
@@ -489,11 +485,9 @@ class PurchasingService extends MedusaService({
       // Update existing relationship with price list data
       return await this.updateSupplierProducts([{
         id: existing.id,
-        supplier_sku: priceListItem.supplier_sku || existing.supplier_sku,
         cost_price: priceListItem.net_price,
         currency_code: priceList.currency_code,
         minimum_order_quantity: priceListItem.quantity || existing.minimum_order_quantity,
-        lead_time_days: priceListItem.lead_time_days || existing.lead_time_days,
         last_cost_update: new Date(),
         is_active: true
       }])
@@ -502,11 +496,9 @@ class PurchasingService extends MedusaService({
       return await this.createSupplierProducts([{
         supplier_id: priceList.supplier_id,
         product_variant_id: priceListItem.product_variant_id,
-        supplier_sku: priceListItem.supplier_sku,
         cost_price: priceListItem.net_price,
         currency_code: priceList.currency_code,
         minimum_order_quantity: priceListItem.quantity || 1,
-        lead_time_days: priceListItem.lead_time_days,
         is_active: true,
         last_cost_update: new Date()
       }])
@@ -575,7 +567,6 @@ class PurchasingService extends MedusaService({
   async upsertPriceListItem(supplierId: string, itemData: {
     product_variant_id: string
     product_id: string
-    supplier_sku?: string
     variant_sku?: string
     gross_price?: number
     discount_code?: string // TEM-170: Original supplier discount code
@@ -584,7 +575,6 @@ class PurchasingService extends MedusaService({
     description?: string // TEM-170: Product description from supplier
     category?: string // TEM-170: Supplier's product category
     quantity?: number
-    lead_time_days?: number
     notes?: string
   }) {
     const activeList = await this.getActivePriceListForSupplier(supplierId)
@@ -604,7 +594,6 @@ class PurchasingService extends MedusaService({
       return await this.updateSupplierPriceListItems(
         { id: existingItem.id },
         {
-          supplier_sku: itemData.supplier_sku,
           variant_sku: itemData.variant_sku,
           gross_price: itemData.gross_price,
           discount_code: itemData.discount_code,
@@ -613,7 +602,6 @@ class PurchasingService extends MedusaService({
           description: itemData.description,
           category: itemData.category,
           quantity: itemData.quantity || 1,
-          lead_time_days: itemData.lead_time_days,
           notes: itemData.notes
         }
       )
@@ -623,7 +611,6 @@ class PurchasingService extends MedusaService({
         price_list_id: activeList.id,
         product_variant_id: itemData.product_variant_id,
         product_id: itemData.product_id,
-        supplier_sku: itemData.supplier_sku,
         variant_sku: itemData.variant_sku,
         gross_price: itemData.gross_price,
         discount_code: itemData.discount_code,
@@ -632,7 +619,6 @@ class PurchasingService extends MedusaService({
         description: itemData.description,
         category: itemData.category,
         quantity: itemData.quantity || 1,
-        lead_time_days: itemData.lead_time_days,
         notes: itemData.notes
       }])
     }
@@ -695,9 +681,7 @@ class PurchasingService extends MedusaService({
         supplier_id: item.price_list.supplier_id,
         cost_price: item.net_price,
         is_preferred_supplier: false, // Price lists don't have preferred status
-        supplier_sku: item.supplier_sku,
         minimum_order_quantity: item.quantity,
-        lead_time_days: item.lead_time_days,
         data: item
       })
     }
@@ -1156,12 +1140,11 @@ class PurchasingService extends MedusaService({
     // Validate required fields in column_mapping
     const mappedFields = Object.values(data.column_mapping)
     const hasIdentifier =
-      mappedFields.includes('supplier_sku') ||
       mappedFields.includes('variant_sku') ||
       mappedFields.includes('product_id')
 
     if (!hasIdentifier) {
-      throw new Error('Column mapping must include at least one of: supplier_sku, variant_sku, or product_id')
+      throw new Error('Column mapping must include at least one of: variant_sku or product_id')
     }
 
     // Check for duplicate template name for this supplier
@@ -1248,12 +1231,11 @@ class PurchasingService extends MedusaService({
     if (data.column_mapping) {
       const mappedFields = Object.values(data.column_mapping)
       const hasIdentifier =
-        mappedFields.includes('supplier_sku') ||
         mappedFields.includes('variant_sku') ||
         mappedFields.includes('product_id')
 
       if (!hasIdentifier) {
-        throw new Error('Column mapping must include at least one of: supplier_sku, variant_sku, or product_id')
+        throw new Error('Column mapping must include at least one of: variant_sku or product_id')
       }
     }
 

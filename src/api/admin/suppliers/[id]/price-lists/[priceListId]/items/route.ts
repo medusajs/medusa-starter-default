@@ -15,14 +15,12 @@ type GetAdminPriceListItemsQuery = {
   offset?: number
   product_id?: string
   product_variant_id?: string
-  supplier_sku?: string
   is_active?: boolean
 }
 
 type PostAdminCreatePriceListItemType = {
   product_variant_id: string
   product_id: string
-  supplier_sku?: string
   variant_sku?: string
   gross_price?: number
   discount_percentage?: number
@@ -30,16 +28,13 @@ type PostAdminCreatePriceListItemType = {
   quantity?: number
   description?: string
   category?: string
-  lead_time_days?: number
   notes?: string
 }
 
 type PutAdminUpdatePriceListItemType = {
-  supplier_sku?: string
   variant_sku?: string
   cost_price?: number
   quantity?: number
-  lead_time_days?: number
   notes?: string
   is_active?: boolean
 }
@@ -59,7 +54,6 @@ export const GET = async (
     offset = 0, 
     product_id,
     product_variant_id,
-    supplier_sku,
     is_active 
   } = req.query
 
@@ -72,10 +66,6 @@ export const GET = async (
     
     if (product_variant_id) {
       filters.product_variant_id = product_variant_id
-    }
-    
-    if (supplier_sku) {
-      filters.supplier_sku = { $ilike: `%${supplier_sku}%` }
     }
     
     if (is_active !== undefined) {
@@ -121,7 +111,6 @@ export const POST = async (
       price_list_id: priceListId,
       product_variant_id: req.body.product_variant_id,
       product_id: req.body.product_id,
-      supplier_sku: req.body.supplier_sku,
       variant_sku: req.body.variant_sku,
       gross_price: req.body.gross_price,
       discount_percentage: req.body.discount_percentage,
@@ -129,7 +118,6 @@ export const POST = async (
       quantity: req.body.quantity || 1,
       description: req.body.description,
       category: req.body.category,
-      lead_time_days: req.body.lead_time_days,
       notes: req.body.notes
     }
 

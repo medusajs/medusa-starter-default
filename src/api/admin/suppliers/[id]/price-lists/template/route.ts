@@ -17,10 +17,10 @@ export async function GET(
 
     // CSV template with headers and example data
     const csvTemplate = [
-      "variant_sku,product_id,supplier_sku,cost_price,quantity,lead_time_days,notes",
-      "PROD-001-VAR,prod_01234567890123456789,SUP-SKU-001,25.50,1,14,Example product variant",
-      "PROD-002-VAR,,SUP-SKU-002,15.75,5,7,Another example with quantity",
-      ",,SUP-SKU-003,30.00,1,21,Example with notes only"
+      "variant_sku,product_id,cost_price,quantity,notes",
+      "PROD-001-VAR,prod_01234567890123456789,25.50,1,Example product variant",
+      "PROD-002-VAR,,15.75,5,Another example with quantity",
+      ",,30.00,1,Example with notes only"
     ].join('\n')
 
     res.setHeader('Content-Type', 'text/csv')
