@@ -49,6 +49,7 @@ export type PurchaseOrderDTO = {
   po_number: string
   supplier_id: string
   status: "draft" | "sent" | "confirmed" | "partially_received" | "received" | "cancelled"
+  type: "stock" | "rush"
   order_date: Date
   expected_delivery_date?: Date | null
   actual_delivery_date?: Date | null

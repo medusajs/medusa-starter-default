@@ -4,7 +4,7 @@ import SupplierProduct from "./models/supplier-product.model"
 import SupplierPriceList from "./models/supplier-price-list.model"
 import SupplierPriceListItem from "./models/supplier-price-list-item.model"
 import SupplierImportTemplate from "./models/supplier-import-template.model"
-import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus } from "./models/purchase-order.model"
+import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus, PurchaseOrderType, PurchaseOrderPriority } from "./models/purchase-order.model"
 import { ParserConfig, ParserTemplate, ParserType, CsvConfig, FixedWidthConfig } from "./types/parser-types"
 import { PARSER_TEMPLATES, listParserTemplates as listTemplates } from "./config/parser-templates"
 import { FIELD_ALIASES } from "./config/field-aliases"
@@ -102,6 +102,7 @@ class PurchasingService extends MedusaService({
       po_number?: string
       status?: string
       priority?: string
+      type?: string
       order_date?: Date
       expected_delivery_date?: Date
       currency_code?: string
@@ -131,6 +132,7 @@ class PurchasingService extends MedusaService({
       supplier_id: data.supplier_id,
       status: data.status || PurchaseOrderStatus.DRAFT,
       priority: data.priority || PurchaseOrderPriority.NORMAL,
+      type: data.type || PurchaseOrderType.STOCK,
       order_date: data.order_date || new Date(),
       expected_delivery_date: data.expected_delivery_date,
       currency_code: data.currency_code || "USD",

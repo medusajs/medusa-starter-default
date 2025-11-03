@@ -2,9 +2,11 @@ import { createStep, StepResponse } from "@medusajs/workflows-sdk"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { PURCHASING_MODULE } from ".."
 import PurchasingService from "../service"
+import { PurchaseOrderType } from "../models/purchase-order.model"
 
 type AddItemToDraftPurchaseOrderStepInput = {
   supplier_id: string
+  type?: "stock" | "rush"
   item: {
     product_variant_id: string
     quantity: number
@@ -21,7 +23,7 @@ export const addItemToDraftPurchaseOrderStep = createStep(
 
     const query = container.resolve(ContainerRegistrationKeys.QUERY)
 
-    const { supplier_id, item } = input
+    const { supplier_id, item, type } = input
 
     // 1. Find an existing draft purchase order for the supplier
     let [purchaseOrder] = await purchasingService.listPurchaseOrders({
@@ -36,6 +38,7 @@ export const addItemToDraftPurchaseOrderStep = createStep(
         {
           supplier_id: supplier_id,
           status: "draft",
+          type: type || PurchaseOrderType.STOCK,
           po_number: po_number,
           order_date: new Date(),
         },

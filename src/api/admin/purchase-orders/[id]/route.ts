@@ -11,6 +11,7 @@ type GetAdminPurchaseOrderParams = {
 
 type PostAdminUpdatePurchaseOrderType = {
   status?: "draft" | "sent" | "confirmed" | "partially_received" | "received" | "cancelled"
+  type?: "stock" | "rush"
   expected_delivery_date?: Date
   payment_terms?: string
   delivery_address?: any

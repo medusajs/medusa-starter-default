@@ -33,6 +33,7 @@ interface PurchaseOrder {
   supplier?: { name: string }
   status: string
   priority: string
+  type: string
   order_date: Date
   items_count?: number
   total_amount: number
@@ -83,6 +84,14 @@ const getPriorityColor = (priority: string) => {
   }
 }
 
+const getTypeColor = (type: string) => {
+  switch (type) {
+    case 'rush': return 'red'
+    case 'stock': return 'blue'
+    default: return 'blue'
+  }
+}
+
 const formatCurrency = (amount: number, currency: string) => {
   if (amount === null || amount === undefined) return "N/A"
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(amount / 100)
@@ -112,6 +121,14 @@ const usePurchaseOrderFilters = () => {
         { label: t("custom.purchaseOrders.priorities.high"), value: "high" },
         { label: t("custom.purchaseOrders.priorities.normal"), value: "normal" }, 
         { label: t("custom.purchaseOrders.priorities.low"), value: "low" },
+      ]
+    }),
+    filterHelper.accessor("type", { 
+      label: "Type", 
+      type: "select", 
+      options: [
+        { label: "Stock", value: "stock" }, 
+        { label: "Rush", value: "rush" },
       ]
     }),
   ]
@@ -172,6 +189,21 @@ const PurchaseOrdersPage = () => {
     )
   }
 
+  const getTypeBadge = (type: string) => {
+    const typeConfig = {
+      stock: { color: "blue" as const, label: "Stock" },
+      rush: { color: "red" as const, label: "Rush" },
+    } as const
+
+    const config = typeConfig[type as keyof typeof typeConfig] || { color: "blue" as const, label: type }
+    
+    return (
+      <StatusBadge color={config.color}>
+        {config.label}
+      </StatusBadge>
+    )
+  }
+
   const columnHelper = createDataTableColumnHelper<PurchaseOrder>()
 
   const columns = [
@@ -203,6 +235,10 @@ const PurchaseOrdersPage = () => {
     columnHelper.accessor("priority", { 
       header: t("custom.purchaseOrders.priority"),
       cell: ({ getValue }) => getPriorityBadge(getValue()),
+    }),
+    columnHelper.accessor("type", { 
+      header: "Type",
+      cell: ({ getValue }) => getTypeBadge(getValue()),
     }),
     columnHelper.accessor("total_amount", { 
       header: t("custom.purchaseOrders.amount"),

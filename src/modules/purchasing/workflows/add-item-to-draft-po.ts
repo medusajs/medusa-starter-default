@@ -3,6 +3,7 @@ import { addItemToDraftPurchaseOrderStep } from "../steps/add-item-to-draft-po"
 
 type WorkflowInput = {
   supplier_id: string
+  type?: "stock" | "rush"
   item: {
     product_variant_id: string
     quantity: number

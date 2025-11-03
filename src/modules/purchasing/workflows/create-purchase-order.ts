@@ -5,6 +5,7 @@ type CreatePurchaseOrderWorkflowInput = {
   supplier_id: string
   expected_delivery_date?: Date
   priority?: "low" | "normal" | "high" | "urgent"
+  type?: "stock" | "rush"
   payment_terms?: string
   delivery_address?: any
   billing_address?: any

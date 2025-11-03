@@ -18,6 +18,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 interface PurchaseOrderFormData {
   supplier_id: string
   priority: "low" | "normal" | "high" | "urgent"
+  type: "stock" | "rush"
   expected_delivery_date?: string
   payment_terms?: string
   notes?: string
@@ -111,6 +112,7 @@ const EditPurchaseOrderPage = () => {
   const [formData, setFormData] = useState<PurchaseOrderFormData>({
     supplier_id: "",
     priority: "normal",
+    type: "stock",
     expected_delivery_date: "",
     payment_terms: "",
     notes: "",
@@ -125,6 +127,7 @@ const EditPurchaseOrderPage = () => {
       setFormData({
         supplier_id: purchaseOrder.supplier_id || "",
         priority: purchaseOrder.priority || "normal",
+        type: purchaseOrder.type || "stock",
         expected_delivery_date: purchaseOrder.expected_delivery_date 
           ? new Date(purchaseOrder.expected_delivery_date).toISOString().split('T')[0] 
           : "",
@@ -362,6 +365,24 @@ const EditPurchaseOrderPage = () => {
                           <Select.Item value="normal">Normal</Select.Item>
                           <Select.Item value="high">High</Select.Item>
                           <Select.Item value="urgent">Urgent</Select.Item>
+                        </Select.Content>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label size="small" weight="plus">
+                        Type
+                      </Label>
+                      <Select
+                        value={formData.type}
+                        onValueChange={(value) => handleInputChange("type", value)}
+                      >
+                        <Select.Trigger>
+                          <Select.Value />
+                        </Select.Trigger>
+                        <Select.Content>
+                          <Select.Item value="stock">Stock</Select.Item>
+                          <Select.Item value="rush">Rush</Select.Item>
                         </Select.Content>
                       </Select>
                     </div>

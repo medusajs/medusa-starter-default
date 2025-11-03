@@ -16,12 +16,18 @@ export const PurchaseOrderPriority = {
   URGENT: "urgent"
 } as const
 
+export const PurchaseOrderType = {
+  STOCK: "stock",
+  RUSH: "rush"
+} as const
+
 export const PurchaseOrder = model.define("purchase_order", {
   id: model.id().primaryKey(),
   po_number: model.text().unique().searchable(),
   supplier_id: model.text().searchable(),
   status: model.enum(PurchaseOrderStatus).default(PurchaseOrderStatus.DRAFT),
   priority: model.enum(PurchaseOrderPriority).default(PurchaseOrderPriority.NORMAL),
+  type: model.enum(PurchaseOrderType).default(PurchaseOrderType.STOCK),
   order_date: model.dateTime(),
   expected_delivery_date: model.dateTime().nullable(),
   actual_delivery_date: model.dateTime().nullable(),

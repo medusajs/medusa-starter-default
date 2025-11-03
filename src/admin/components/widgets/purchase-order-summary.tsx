@@ -9,6 +9,7 @@ interface PurchaseOrder {
   po_number: string
   status: string
   priority: string
+  type: string
   order_date: string
   expected_delivery_date?: string
   actual_delivery_date?: string
@@ -37,6 +38,14 @@ const getPriorityColor = (priority: string) => {
     case 'high': return 'orange'
     case 'normal': return 'blue'
     case 'low': return 'grey'
+    default: return 'blue'
+  }
+}
+
+const getTypeColor = (type: string) => {
+  switch (type) {
+    case 'rush': return 'red'
+    case 'stock': return 'blue'
     default: return 'blue'
   }
 }
@@ -128,6 +137,11 @@ export const PurchaseOrderSummary = ({ data: purchaseOrder }: PurchaseOrderSumma
             <Badge color={getPriorityColor(purchaseOrder.priority) as any}>
               {purchaseOrder.priority.toUpperCase()}
             </Badge>
+            {purchaseOrder.type && (
+              <Badge color={getTypeColor(purchaseOrder.type) as any}>
+                {purchaseOrder.type.toUpperCase()}
+              </Badge>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">

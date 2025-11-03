@@ -10,6 +10,7 @@ import {
   DataTable,
   useDataTable,
   createDataTableColumnHelper,
+  Select,
 } from "@medusajs/ui"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
@@ -40,7 +41,7 @@ type VariantWithSourcing = {
     discount_amount?: number
     discount_percentage?: number
     net_price: number
-    supplier_sku: string | null
+    supplier_sku?: string | null // Only from supplier_product, not price_list
     price_list_name?: string | null
     source_type?: 'supplier_product' | 'price_list'
   }[]
@@ -53,7 +54,7 @@ type FlatSourcingRow = {
   variant_sku: string | null
   supplier_id: string
   supplier_name: string
-  supplier_sku: string | null
+  supplier_sku?: string | null // Only from supplier_product, not price_list
   price: number
   gross_price?: number
   discount_amount?: number
@@ -66,6 +67,7 @@ type FlatSourcingRow = {
 const ProductSourcingWidget = ({ data: product }: WidgetProps) => {
   const queryClient = useQueryClient()
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({})
+  const [types, setTypes] = useState<{ [key: string]: "stock" | "rush" }>({})
   const [searchValue, setSearchValue] = useState("")
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -113,6 +115,7 @@ const ProductSourcingWidget = ({ data: product }: WidgetProps) => {
   const addItemMutation = useMutation({
     mutationFn: async (data: {
       supplier_id: string
+      type?: "stock" | "rush"
       item: {
         product_variant_id: string
         quantity: number
@@ -153,6 +156,7 @@ const ProductSourcingWidget = ({ data: product }: WidgetProps) => {
 
     addItemMutation.mutate({
       supplier_id: row.supplier_id,
+      type: types[row.id] || "stock",
       item: {
         product_variant_id: row.variant_id,
         quantity: quantity,
@@ -191,13 +195,6 @@ const ProductSourcingWidget = ({ data: product }: WidgetProps) => {
       enableSorting: true,
       cell: ({ getValue }) => (
         <Text weight="plus">{getValue()}</Text>
-      ),
-    }),
-    columnHelper.accessor("supplier_sku", {
-      header: "Supplier SKU",
-      enableSorting: true,
-      cell: ({ getValue }) => (
-        <Text className="text-ui-fg-muted">{getValue() || "-"}</Text>
       ),
     }),
     columnHelper.accessor("gross_price", {
@@ -247,6 +244,29 @@ const ProductSourcingWidget = ({ data: product }: WidgetProps) => {
             })
           }}
         />
+      ),
+    }),
+    columnHelper.display({
+      id: "type",
+      header: "Type",
+      cell: ({ row }) => (
+        <Select
+          value={types[row.original.id] || "stock"}
+          onValueChange={(value) => {
+            setTypes({
+              ...types,
+              [row.original.id]: value as "stock" | "rush",
+            })
+          }}
+        >
+          <Select.Trigger className="w-24">
+            <Select.Value />
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Item value="stock">Stock</Select.Item>
+            <Select.Item value="rush">Rush</Select.Item>
+          </Select.Content>
+        </Select>
       ),
     }),
     columnHelper.display({

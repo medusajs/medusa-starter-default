@@ -2,7 +2,7 @@ import { createStep, StepResponse } from "@medusajs/workflows-sdk"
 import { Modules, ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { PURCHASING_MODULE } from ".."
 import PurchasingService from "../service"
-import { PurchaseOrderStatus } from "../models/purchase-order.model"
+import { PurchaseOrderStatus, PurchaseOrderType } from "../models/purchase-order.model"
 
 type CreatePurchaseOrderStepInput = {
   supplier_id: string
@@ -10,6 +10,7 @@ type CreatePurchaseOrderStepInput = {
   payment_terms?: string
   delivery_address?: any
   notes?: string
+  type?: "stock" | "rush"
   items: {
     product_variant_id: string
     supplier_product_id?: string
@@ -81,6 +82,7 @@ export const createPurchaseOrderStep = createStep(
       po_number: poNumber,
       order_date: currentDate,
       status: PurchaseOrderStatus.DRAFT,
+      type: input.type || PurchaseOrderType.STOCK,
       subtotal,
       total_amount: subtotal, // For now, no tax or shipping
     }])

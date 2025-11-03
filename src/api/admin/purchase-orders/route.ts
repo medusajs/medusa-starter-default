@@ -13,6 +13,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     offset = 0, 
     status,
     priority,
+    type,
     supplier_id,
     expand = ""
   } = req.query
@@ -20,6 +21,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const filters: any = {}
   if (status) filters.status = status
   if (priority) filters.priority = priority
+  if (type) filters.type = type
   if (supplier_id) filters.supplier_id = supplier_id
 
   // Ensure expand is a string

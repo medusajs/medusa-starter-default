@@ -112,7 +112,6 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
             existing.discount_amount = item.discount_amount
             existing.discount_percentage = item.discount_percentage
             existing.net_price = item.net_price
-            existing.supplier_sku = item.supplier_sku || existing.supplier_sku
             existing.price_list_name = priceList.name
             existing.source_type = 'price_list'
           }
@@ -129,7 +128,6 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
             discount_amount: item.discount_amount,
             discount_percentage: item.discount_percentage,
             net_price: item.net_price,
-            supplier_sku: item.supplier_sku,
             price_list_name: priceList.name,
             source_type: 'price_list'
           })

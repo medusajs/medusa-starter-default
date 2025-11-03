@@ -28,6 +28,7 @@ const itemSchema = zod.object({
 const schema = zod.object({
   supplier_id: zod.string().min(1, "Supplier is required"),
   priority: zod.enum(["low", "normal", "high", "urgent"]).default("normal"),
+  type: zod.enum(["stock", "rush"]).default("stock"),
   notes: zod.string().optional(),
   items: zod.array(itemSchema).min(1, "At least one item is required"),
 })
@@ -60,6 +61,7 @@ export const CreatePurchaseOrderModal = ({ onSuccess }: CreatePurchaseOrderModal
     defaultValues: {
       supplier_id: "",
       priority: "normal",
+      type: "stock",
       notes: "",
       items: [{ product_variant_id: "", product_title: "", quantity_ordered: 1, unit_cost: 0 }],
     },
@@ -212,6 +214,30 @@ export const CreatePurchaseOrderModal = ({ onSuccess }: CreatePurchaseOrderModal
                         </Select>
                         <Text size="xsmall" className="text-ui-fg-subtle">
                           Set the priority level for this order
+                        </Text>
+                      </div>
+                    )}
+                  />
+                  
+                  <Controller
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                      <div className="space-y-2">
+                        <Label size="small" weight="plus">
+                          Type
+                        </Label>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <Select.Trigger>
+                            <Select.Value />
+                          </Select.Trigger>
+                          <Select.Content>
+                            <Select.Item value="stock">Stock</Select.Item>
+                            <Select.Item value="rush">Rush</Select.Item>
+                          </Select.Content>
+                        </Select>
+                        <Text size="xsmall" className="text-ui-fg-subtle">
+                          Set the order type (urgency)
                         </Text>
                       </div>
                     )}
