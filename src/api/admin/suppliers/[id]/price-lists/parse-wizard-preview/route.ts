@@ -17,12 +17,21 @@ const fixedWidthColumnSchema = z.object({
   width: z.number().min(1),
 })
 
+const transformationSchema = z.object({
+  type: z.enum(['divide', 'date', 'substring', 'trim_zeros']),
+  divisor: z.number().optional(),
+  input_format: z.string().optional(),
+  start: z.number().optional(),
+  length: z.number().optional(),
+})
+
 const parseConfigSchema = z.object({
   delimiter: z.string().length(1).optional(),
   quote_char: z.string().length(1).optional(),
   has_header: z.boolean().optional(),
   skip_rows: z.number().min(0).optional(),
   fixed_width_columns: z.array(fixedWidthColumnSchema).optional(),
+  transformations: z.record(z.string(), transformationSchema).optional(),
 })
 
 const previewRequestSchema = z.object({

@@ -24,6 +24,13 @@ type ParseWizardPreviewInput = {
       start: number
       width: number
     }>
+    transformations?: Record<string, {
+      type: 'divide' | 'date' | 'substring' | 'trim_zeros'
+      divisor?: number
+      input_format?: string
+      start?: number
+      length?: number
+    }>
   }
   column_mapping?: Record<string, string>
 }

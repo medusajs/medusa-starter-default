@@ -3,17 +3,33 @@
  *
  * Handles file selection via drag-and-drop or click-to-browse.
  * Validates file type, size, and content before proceeding.
+ * Fetches supplier defaults to pre-populate wizard settings.
+ *
+ * Performance optimizations:
+ * - useCallback wrapping for all event handlers to prevent re-renders
+ * - useMemo for badge label computations
+ * - Stable useEffect dependencies (only supplierId)
+ * - Helper functions extracted outside component
  *
  * @see TEM-302 - Frontend: Build Step 1 - File Upload Component
  */
 
-import { useState, useRef, DragEvent } from "react"
-import { Button, Text, Badge, toast } from "@medusajs/ui"
-import { ArrowUpTray, XCircle, CheckCircle, ArrowPath } from "@medusajs/icons"
+import { useState, useRef, useEffect, useCallback, useMemo, DragEvent } from "react"
+import { Button, Text, toast, Badge } from "@medusajs/ui"
+import { ArrowUpTray, CheckCircle, ArrowPath } from "@medusajs/icons"
+
+export interface SupplierImportDefaults {
+  pricing_mode: "net_only" | "calculated" | "percentage" | "code_mapping"
+  parsing_method: "template" | "delimited" | "fixed-width"
+  template_id?: string
+  delimiter?: string
+}
 
 interface Step1FileUploadProps {
+  supplierId: string
   onFileSelected: (file: File, content: string) => void
   onNext: () => void
+  onSupplierDefaultsLoaded?: (defaults: SupplierImportDefaults | null) => void
   selectedFile: File | null
   fileContent: string | null
 }
@@ -29,16 +45,94 @@ interface FileInfo {
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ACCEPTED_EXTENSIONS = ['.csv', '.txt']
 
+/**
+ * Helper functions to format badge labels
+ * Extracted to prevent re-computation on every render
+ */
+const getParsingMethodLabel = (method: SupplierImportDefaults['parsing_method'], delimiter?: string): string => {
+  switch (method) {
+    case 'template':
+      return 'Template'
+    case 'delimited':
+      return `Delimited (${delimiter || ','})`
+    case 'fixed-width':
+      return 'Fixed-width'
+    default:
+      return 'Unknown'
+  }
+}
+
+const getPricingModeLabel = (mode: SupplierImportDefaults['pricing_mode']): string => {
+  switch (mode) {
+    case 'net_only':
+      return 'Net only'
+    case 'calculated':
+      return 'Gross+Net'
+    case 'percentage':
+      return 'Discount %'
+    case 'code_mapping':
+      return 'Discount codes'
+    default:
+      return 'Unknown'
+  }
+}
+
 export function Step1FileUpload({
+  supplierId,
   onFileSelected,
   onNext,
+  onSupplierDefaultsLoaded,
   selectedFile,
   fileContent,
 }: Step1FileUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false)
   const [isReading, setIsReading] = useState(false)
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null)
+  const [supplierDefaults, setSupplierDefaults] = useState<SupplierImportDefaults | null>(null)
+  const [supplierName, setSupplierName] = useState<string>("")
+  const [isLoadingDefaults, setIsLoadingDefaults] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Fetch supplier import defaults on mount
+  // Only depends on supplierId - callback is now stable via useCallback in parent
+  useEffect(() => {
+    const fetchSupplierDefaults = async () => {
+      setIsLoadingDefaults(true)
+      try {
+        const response = await fetch(`/admin/suppliers/${supplierId}/import-defaults`, {
+          credentials: 'include'
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setSupplierDefaults(data.import_defaults)
+          setSupplierName(data.supplier_name || "")
+          onSupplierDefaultsLoaded?.(data.import_defaults)
+        }
+      } catch (error) {
+        console.error('Failed to fetch supplier defaults:', error)
+        // Silently fail - defaults are optional
+      } finally {
+        setIsLoadingDefaults(false)
+      }
+    }
+
+    if (supplierId) {
+      fetchSupplierDefaults()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supplierId])
+
+  // Memoize badge labels to prevent recalculation on every render
+  const parsingMethodLabel = useMemo(() => {
+    if (!supplierDefaults) return null
+    return getParsingMethodLabel(supplierDefaults.parsing_method, supplierDefaults.delimiter)
+  }, [supplierDefaults])
+
+  const pricingModeLabel = useMemo(() => {
+    if (!supplierDefaults) return null
+    return getPricingModeLabel(supplierDefaults.pricing_mode)
+  }, [supplierDefaults])
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`
@@ -46,7 +140,8 @@ export function Step1FileUpload({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
-  const validateFile = (file: File): boolean => {
+  // Wrap validation in useCallback for stability
+  const validateFile = useCallback((file: File): boolean => {
     // Check file extension
     const hasValidExtension = ACCEPTED_EXTENSIONS.some(ext =>
       file.name.toLowerCase().endsWith(ext)
@@ -76,9 +171,9 @@ export function Step1FileUpload({
     }
 
     return true
-  }
+  }, [])
 
-  const readFile = async (file: File) => {
+  const readFile = useCallback(async (file: File) => {
     setIsReading(true)
 
     try {
@@ -138,36 +233,37 @@ export function Step1FileUpload({
       })
       setIsReading(false)
     }
-  }
+  }, [onFileSelected])
 
-  const handleFileSelect = async (file: File) => {
+  const handleFileSelect = useCallback(async (file: File) => {
     if (!validateFile(file)) {
       return
     }
 
     await readFile(file)
-  }
+  }, [validateFile, readFile])
 
-  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Wrap event handlers in useCallback to prevent unnecessary re-renders
+  const handleFileInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
       handleFileSelect(file)
     }
-  }
+  }, [handleFileSelect])
 
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragOver(true)
-  }
+  }, [])
 
-  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragOver(false)
-  }
+  }, [])
 
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+  const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragOver(false)
@@ -176,26 +272,26 @@ export function Step1FileUpload({
     if (file) {
       handleFileSelect(file)
     }
-  }
+  }, [handleFileSelect])
 
-  const handleBrowseClick = () => {
+  const handleBrowseClick = useCallback(() => {
     fileInputRef.current?.click()
-  }
+  }, [])
 
-  const handleRemoveFile = () => {
+  const handleRemoveFile = useCallback(() => {
     setFileInfo(null)
     onFileSelected(null as any, null as any)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
-  }
+  }, [onFileSelected])
 
-  const handleChangeFile = () => {
+  const handleChangeFile = useCallback(() => {
     handleRemoveFile()
     setTimeout(() => {
       fileInputRef.current?.click()
     }, 100)
-  }
+  }, [handleRemoveFile])
 
   return (
     <div className="flex flex-col gap-6">
@@ -207,6 +303,21 @@ export function Step1FileUpload({
         <Text size="small" className="text-ui-fg-subtle">
           Select a CSV or TXT file containing your price list data
         </Text>
+
+        {/* Supplier Defaults Info */}
+        {!isLoadingDefaults && supplierDefaults && parsingMethodLabel && pricingModeLabel && (
+          <div className="mt-3 flex items-center gap-2">
+            <Text size="xsmall" className="text-ui-fg-subtle">
+              Using configured defaults for {supplierName}:
+            </Text>
+            <Badge size="small" color="blue">
+              {parsingMethodLabel}
+            </Badge>
+            <Badge size="small" color="purple">
+              {pricingModeLabel}
+            </Badge>
+          </div>
+        )}
       </div>
 
       {/* File Upload Area */}
@@ -273,72 +384,21 @@ export function Step1FileUpload({
       {/* File Info Display */}
       {selectedFile && fileInfo && (
         <div className="border border-ui-border-base rounded-lg p-4 bg-ui-bg-subtle">
-          <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0">
                 <CheckCircle className="text-ui-fg-on-color bg-ui-tag-green-icon rounded-full" />
               </div>
-              <div>
-                <Text weight="plus" className="mb-1">
-                  {fileInfo.name}
-                </Text>
-                <Badge size="small" color="green">
-                  Ready
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div>
-              <Text size="xsmall" className="text-ui-fg-subtle mb-1">
-                Size
-              </Text>
-              <Text size="small">
-                {formatFileSize(fileInfo.size)}
+              <Text weight="plus">
+                {fileInfo.name}
               </Text>
             </div>
-            <div>
-              <Text size="xsmall" className="text-ui-fg-subtle mb-1">
-                Type
-              </Text>
-              <Text size="small">
-                {fileInfo.type || 'text/plain'}
-              </Text>
-            </div>
-            <div>
-              <Text size="xsmall" className="text-ui-fg-subtle mb-1">
-                Lines
-              </Text>
-              <Text size="small">
-                ~{fileInfo.lineCount.toLocaleString()}
-              </Text>
-            </div>
-            <div>
-              <Text size="xsmall" className="text-ui-fg-subtle mb-1">
-                Encoding
-              </Text>
-              <Text size="small">
-                {fileInfo.encoding}
-              </Text>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
             <Button
               size="small"
               variant="secondary"
               onClick={handleChangeFile}
             >
               Change File
-            </Button>
-            <Button
-              size="small"
-              variant="danger"
-              onClick={handleRemoveFile}
-            >
-              <XCircle />
-              Remove
             </Button>
           </div>
         </div>

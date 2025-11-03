@@ -4,12 +4,16 @@
  * Orchestrates the 3-step import flow using Medusa's FocusModal and ProgressTabs.
  * Manages wizard state and coordinates between steps.
  *
+ * Performance optimizations:
+ * - useCallback wrapping for all child callbacks to prevent unnecessary re-renders
+ * - Stable callback references passed to Step components
+ *
  * @see TEM-305 - Frontend: Build Main Wizard Container with ProgressTabs
  */
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { FocusModal, Heading, ProgressTabs, toast } from "@medusajs/ui"
-import { Step1FileUpload } from "./Step1FileUpload"
+import { Step1FileUpload, SupplierImportDefaults } from "./Step1FileUpload"
 import { Step2ParseConfiguration, ParseConfig, PreviewData } from "./Step2ParseConfiguration"
 import { Step3FieldMapping, ColumnMapping } from "./Step3FieldMapping"
 
@@ -27,6 +31,7 @@ interface WizardState {
   file: File | null
   fileContent: string | null
   fileName: string
+  supplierDefaults: SupplierImportDefaults | null
 
   // Step 2 data
   parseConfig: ParseConfig | null
@@ -34,6 +39,7 @@ interface WizardState {
 
   // Step 3 data
   columnMapping: ColumnMapping | null
+  pricingMode: string | null
   saveAsTemplate: boolean
   templateName: string
   templateDescription: string
@@ -52,9 +58,11 @@ export function PriceListImportWizard({
     file: null,
     fileContent: null,
     fileName: '',
+    supplierDefaults: null,
     parseConfig: null,
     previewData: null,
     columnMapping: null,
+    pricingMode: null,
     saveAsTemplate: false,
     templateName: '',
     templateDescription: '',
@@ -78,15 +86,26 @@ export function PriceListImportWizard({
     return 'not-started'
   }
 
+  // Step 1: Supplier defaults loaded
+  // Wrapped in useCallback to prevent unnecessary re-renders in Step1FileUpload
+  const handleSupplierDefaultsLoaded = useCallback((defaults: SupplierImportDefaults | null) => {
+    setWizardState(prev => ({
+      ...prev,
+      supplierDefaults: defaults,
+      pricingMode: defaults?.pricing_mode || null,
+    }))
+  }, [])
+
   // Step 1: File uploaded
-  const handleFileSelected = (file: File, content: string) => {
+  // Wrapped in useCallback to prevent unnecessary re-renders in Step1FileUpload
+  const handleFileSelected = useCallback((file: File, content: string) => {
     setWizardState(prev => ({
       ...prev,
       file,
       fileContent: content,
       fileName: file.name,
     }))
-  }
+  }, [])
 
   const handleStep1Next = () => {
     if (!wizardState.file || !wizardState.fileContent) {
@@ -124,6 +143,7 @@ export function PriceListImportWizard({
 
   const handleStep3Complete = async (
     mapping: ColumnMapping,
+    pricingMode: string,
     saveAsTemplate: boolean,
     templateName?: string,
     templateDescription?: string
@@ -131,18 +151,20 @@ export function PriceListImportWizard({
     setWizardState(prev => ({
       ...prev,
       columnMapping: mapping,
+      pricingMode,
       saveAsTemplate,
       templateName: templateName || '',
       templateDescription: templateDescription || '',
     }))
 
     // Perform import immediately after saving state
-    await performImport(mapping, saveAsTemplate, templateName, templateDescription)
+    await performImport(mapping, pricingMode, saveAsTemplate, templateName, templateDescription)
   }
 
   // Execute the import
   const performImport = async (
     mapping: ColumnMapping,
+    pricingMode: string,
     saveAsTemplate: boolean,
     templateName?: string,
     templateDescription?: string
@@ -200,6 +222,7 @@ export function PriceListImportWizard({
             file_name: wizardState.fileName,
             parse_config: wizardState.parseConfig,
             column_mapping: mapping,
+            pricing_mode: pricingMode,
             currency_code: 'USD',
           }),
         }
@@ -238,9 +261,11 @@ export function PriceListImportWizard({
       file: null,
       fileContent: null,
       fileName: '',
+      supplierDefaults: null,
       parseConfig: null,
       previewData: null,
       columnMapping: null,
+      pricingMode: null,
       saveAsTemplate: false,
       templateName: '',
       templateDescription: '',
@@ -278,41 +303,50 @@ export function PriceListImportWizard({
     <FocusModal open={open} onOpenChange={handleClose}>
       <FocusModal.Content>
         <FocusModal.Header>
-          <div className="flex flex-col gap-4">
-            <Heading>Import Price List</Heading>
-            <ProgressTabs value={wizardState.currentStep} onValueChange={handleTabChange}>
-              <ProgressTabs.List>
-                <ProgressTabs.Trigger
-                  value="upload"
-                  status={getStepStatus('upload')}
-                  disabled={getStepStatus('upload') === 'not-started'}
-                >
-                  1. Upload File
-                </ProgressTabs.Trigger>
-                <ProgressTabs.Trigger
-                  value="configure"
-                  status={getStepStatus('configure')}
-                  disabled={getStepStatus('configure') === 'not-started'}
-                >
-                  2. Configure Format
-                </ProgressTabs.Trigger>
-                <ProgressTabs.Trigger
-                  value="mapping"
-                  status={getStepStatus('mapping')}
-                  disabled={getStepStatus('mapping') === 'not-started'}
-                >
-                  3. Map Fields
-                </ProgressTabs.Trigger>
-              </ProgressTabs.List>
-            </ProgressTabs>
+          <div className="flex w-full items-center justify-between gap-x-4">
+            <div className="-my-2 w-full max-w-[600px] border-l">
+              <ProgressTabs value={wizardState.currentStep} onValueChange={handleTabChange}>
+                <ProgressTabs.List className="grid w-full grid-cols-3">
+                  <ProgressTabs.Trigger
+                    className="w-full"
+                    value="upload"
+                    status={getStepStatus('upload')}
+                    disabled={getStepStatus('upload') === 'not-started'}
+                  >
+                    Upload File
+                  </ProgressTabs.Trigger>
+                  <ProgressTabs.Trigger
+                    className="w-full"
+                    value="configure"
+                    status={getStepStatus('configure')}
+                    disabled={getStepStatus('configure') === 'not-started'}
+                  >
+                    Configure Format
+                  </ProgressTabs.Trigger>
+                  <ProgressTabs.Trigger
+                    className="w-full"
+                    value="mapping"
+                    status={getStepStatus('mapping')}
+                    disabled={getStepStatus('mapping') === 'not-started'}
+                  >
+                    Map Fields
+                  </ProgressTabs.Trigger>
+                </ProgressTabs.List>
+              </ProgressTabs>
+            </div>
           </div>
         </FocusModal.Header>
+        <FocusModal.Description className="sr-only">
+          Import price list wizard - configure file format and map data fields in 3 steps
+        </FocusModal.Description>
 
         <FocusModal.Body className="flex flex-1 flex-col overflow-y-auto">
           <div className="flex-1 p-6">
             {wizardState.currentStep === 'upload' && (
               <Step1FileUpload
+                supplierId={supplierId}
                 onFileSelected={handleFileSelected}
+                onSupplierDefaultsLoaded={handleSupplierDefaultsLoaded}
                 onNext={handleStep1Next}
                 selectedFile={wizardState.file}
                 fileContent={wizardState.fileContent}
@@ -324,6 +358,7 @@ export function PriceListImportWizard({
                 fileContent={wizardState.fileContent}
                 fileName={wizardState.fileName}
                 supplierId={supplierId}
+                supplierDefaults={wizardState.supplierDefaults}
                 onConfigured={handleParseConfigured}
                 onBack={handleStep2Back}
                 onNext={handleStep2Next}
@@ -339,6 +374,7 @@ export function PriceListImportWizard({
                 parseConfig={wizardState.parseConfig}
                 previewRows={wizardState.previewData.preview_rows}
                 supplierId={supplierId}
+                defaultPricingMode={wizardState.pricingMode}
                 onComplete={handleStep3Complete}
                 onBack={handleStep3Back}
               />

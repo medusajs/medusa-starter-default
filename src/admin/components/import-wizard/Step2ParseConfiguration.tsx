@@ -1,39 +1,24 @@
 /**
- * Step 2: Parse Configuration Component
+ * Step 2: Parse Configuration Component (Refactored)
  *
- * Allows users to configure how the file should be parsed:
- * - CSV: Select delimiter, quote char, header settings
- * - Fixed-width: Define column boundaries visually
- *
- * Integrates with parse preview API to show real-time parsed data.
+ * Simplified, user-friendly interface for configuring file parsing.
+ * - Choose parsing method (Delimited or Fixed-Width)
+ * - Select delimiter (for CSV)
+ * - Interactive file preview showing parsed results
  *
  * @see TEM-303 - Frontend: Build Step 2 - Parse Configuration Component
  */
 
-import { useState, useEffect, useCallback, useRef } from "react"
-import { Button, Text, Input, Label, Switch, Badge, toast, Tabs } from "@medusajs/ui"
-
-// Custom debounce hook
-function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: number) {
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  return useCallback(
-    (...args: Parameters<T>) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-      timeoutRef.current = setTimeout(() => {
-        callback(...args)
-      }, delay)
-    },
-    [callback, delay]
-  )
-}
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
+import { Button, Text, Heading, Label, RadioGroup, Input, Select, toast } from "@medusajs/ui"
+import { IMPORT_TEMPLATES, ImportTemplate } from "../../lib/import-templates"
+import { SupplierImportDefaults } from "./Step1FileUpload"
 
 interface Step2ParseConfigurationProps {
   fileContent: string
   fileName: string
   supplierId: string
+  supplierDefaults: SupplierImportDefaults | null
   onConfigured: (config: ParseConfig, preview: PreviewData) => void
   onBack: () => void
   onNext: () => void
@@ -51,6 +36,13 @@ export interface ParseConfig {
     start: number
     width: number
   }>
+  transformations?: Record<string, {
+    type: 'divide' | 'date' | 'substring' | 'trim_zeros'
+    divisor?: number
+    input_format?: string
+    start?: number
+    length?: number
+  }>
 }
 
 export interface PreviewData {
@@ -64,73 +56,87 @@ export interface PreviewData {
   }
 }
 
-const DELIMITERS = [
-  { value: ',', label: 'Comma (,)' },
-  { value: ';', label: 'Semicolon (;)' },
-  { value: '\t', label: 'Tab' },
-  { value: '|', label: 'Pipe (|)' },
-]
-
 export function Step2ParseConfiguration({
   fileContent,
   fileName,
   supplierId,
+  supplierDefaults,
   onConfigured,
   onBack,
   onNext,
   initialConfig,
 }: Step2ParseConfigurationProps) {
+  // Determine initial parsing method from supplier defaults or config
   const fileType = fileName.toLowerCase().endsWith('.csv') ? 'csv' : 'txt'
+  const initialParsingMethod = initialConfig?.format_type === 'fixed-width'
+    ? 'fixed-width'
+    : supplierDefaults?.parsing_method || 'delimited'
 
-  const [selectedTab, setSelectedTab] = useState<'csv' | 'fixed-width'>(
-    initialConfig?.format_type || (fileType === 'csv' ? 'csv' : 'fixed-width')
+  const [parsingMethod, setParsingMethod] = useState<'template' | 'delimited' | 'fixed-width'>(
+    initialParsingMethod
   )
 
-  // CSV configuration state
-  const [csvConfig, setCsvConfig] = useState({
-    delimiter: initialConfig?.delimiter || ',',
-    quote_char: initialConfig?.quote_char || '"',
-    has_header: initialConfig?.has_header ?? true,
-    skip_rows: initialConfig?.skip_rows || 0,
-  })
+  // Template state (code-based templates from registry)
+  // useMemo to prevent recreating the array on every render
+  const templates = useMemo(() => Object.values(IMPORT_TEMPLATES), [])
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
+    supplierDefaults?.template_id || ''
+  )
 
-  // Fixed-width configuration state
+  // Delimiter state (for delimited mode) - Use supplier defaults if available
+  const [delimiter, setDelimiter] = useState(
+    initialConfig?.delimiter || supplierDefaults?.delimiter || ','
+  )
+  const [customDelimiter, setCustomDelimiter] = useState('')
+
+  // Determine if current delimiter is a standard one
+  const standardDelimiters = [',', ';', '\t']
+  const isCustomDelimiter = !standardDelimiters.includes(delimiter)
+  const [delimiterChoice, setDelimiterChoice] = useState<string>(
+    isCustomDelimiter ? 'custom' : delimiter
+  )
+
+  // Fixed-width columns state
   const [fixedWidthColumns, setFixedWidthColumns] = useState<Array<{
     name: string
     start: number
     width: number
   }>>(initialConfig?.fixed_width_columns || [])
 
-  const [skipRowsFixedWidth, setSkipRowsFixedWidth] = useState(initialConfig?.skip_rows || 0)
-
   // Preview state
   const [previewData, setPreviewData] = useState<PreviewData | null>(null)
   const [isLoadingPreview, setIsLoadingPreview] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
 
-  // Auto-detect delimiter for CSV
+  // Use ref to store the latest onConfigured callback
+  const onConfiguredRef = useRef(onConfigured)
+  useEffect(() => {
+    onConfiguredRef.current = onConfigured
+  }, [onConfigured])
+
+  // Auto-detect delimiter on mount
   const autoDetectDelimiter = useCallback((content: string): string => {
     const lines = content.split('\n').slice(0, 3).filter(line => line.trim())
-    const delimiters = [',', ';', '\t', '|']
+    const delimiters = [',', ';', '\t']
     const counts: Record<string, number[]> = {}
 
-    for (const delimiter of delimiters) {
-      counts[delimiter] = lines.map(line =>
-        (line.match(new RegExp(`\\${delimiter}`, 'g')) || []).length
+    for (const delim of delimiters) {
+      counts[delim] = lines.map(line =>
+        (line.match(new RegExp(`\\${delim}`, 'g')) || []).length
       )
     }
 
     let bestDelimiter = ','
     let bestScore = 0
 
-    for (const delimiter of delimiters) {
-      const lineCounts = counts[delimiter]
+    for (const delim of delimiters) {
+      const lineCounts = counts[delim]
       const avg = lineCounts.reduce((a, b) => a + b, 0) / lineCounts.length
       const isConsistent = lineCounts.every(count => count === lineCounts[0])
 
       if (isConsistent && avg > 0 && avg > bestScore) {
         bestScore = avg
-        bestDelimiter = delimiter
+        bestDelimiter = delim
       }
     }
 
@@ -139,13 +145,60 @@ export function Step2ParseConfiguration({
 
   // Auto-detect on mount for CSV
   useEffect(() => {
-    if (fileType === 'csv' && !initialConfig) {
+    if (!initialConfig) {
       const detected = autoDetectDelimiter(fileContent)
-      setCsvConfig(prev => ({ ...prev, delimiter: detected }))
+      setDelimiter(detected)
+      setDelimiterChoice(detected)
     }
-  }, [fileType, fileContent, autoDetectDelimiter, initialConfig])
+  }, [fileContent, autoDetectDelimiter, initialConfig])
 
-  // Fetch preview from API
+  // Handle delimiter choice change
+  const handleDelimiterChoiceChange = (value: string) => {
+    setDelimiterChoice(value)
+    if (value === 'custom') {
+      // If switching to custom, use the custom delimiter if set, otherwise empty
+      if (customDelimiter) {
+        setDelimiter(customDelimiter)
+      }
+    } else {
+      // Standard delimiter selected
+      setDelimiter(value)
+    }
+  }
+
+  // Handle custom delimiter input change
+  const handleCustomDelimiterChange = (value: string) => {
+    // Only take the first character
+    const char = value.charAt(0)
+    setCustomDelimiter(char)
+    if (char) {
+      setDelimiter(char)
+    }
+  }
+
+  // Handle template selection
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplateId(templateId)
+
+    const template = templates.find(t => t.id === templateId)
+    if (!template) return
+
+    // Apply template configuration
+    const config = template.parse_config
+
+    if (config.format_type === 'csv') {
+      setDelimiter(config.delimiter || ',')
+      setDelimiterChoice(config.delimiter || ',')
+    } else if (config.format_type === 'fixed-width') {
+      setFixedWidthColumns(config.fixed_width_columns || [])
+    }
+
+    toast.success('Template applied', {
+      description: `Using "${template.name}" configuration`,
+    })
+  }
+
+  // Fetch preview from API (stable function that doesn't change on every render)
   const fetchPreview = useCallback(async (config: ParseConfig) => {
     setIsLoadingPreview(true)
     setPreviewError(null)
@@ -176,8 +229,8 @@ export function Step2ParseConfiguration({
         setPreviewError(data.errors[0])
       }
 
-      // Call parent with config and preview
-      onConfigured(config, data)
+      // Call parent with config and preview using the ref
+      onConfiguredRef.current(config, data)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to fetch preview'
       setPreviewError(message)
@@ -185,36 +238,62 @@ export function Step2ParseConfiguration({
     } finally {
       setIsLoadingPreview(false)
     }
-  }, [fileContent, supplierId, onConfigured])
+  }, [fileContent, supplierId]) // Removed onConfigured from dependencies
 
-  // Debounce preview fetch
-  const debouncedFetchPreview = useDebounce(fetchPreview, 500)
-
-  // Fetch preview when CSV config changes
+  // Fetch preview when template is selected
   useEffect(() => {
-    if (selectedTab === 'csv') {
+    if (parsingMethod === 'template' && selectedTemplateId) {
+      const template = templates.find(t => t.id === selectedTemplateId)
+      if (!template) return
+
+      const config = template.parse_config
+
+      // Fetch preview with template config
+      const timeoutId = setTimeout(() => {
+        fetchPreview(config)
+      }, 500)
+
+      return () => clearTimeout(timeoutId)
+    }
+  }, [parsingMethod, selectedTemplateId, templates, fetchPreview])
+
+  // Fetch preview when delimited config changes
+  useEffect(() => {
+    if (parsingMethod === 'delimited') {
       const config: ParseConfig = {
         format_type: 'csv',
-        delimiter: csvConfig.delimiter,
-        quote_char: csvConfig.quote_char,
-        has_header: csvConfig.has_header,
-        skip_rows: csvConfig.skip_rows,
+        delimiter,
+        quote_char: '"',
+        has_header: true,
+        skip_rows: 0,
       }
-      debouncedFetchPreview(config)
+
+      // Debounce the fetch
+      const timeoutId = setTimeout(() => {
+        fetchPreview(config)
+      }, 500)
+
+      return () => clearTimeout(timeoutId)
     }
-  }, [selectedTab, csvConfig, debouncedFetchPreview])
+  }, [parsingMethod, delimiter, fetchPreview])
 
   // Fetch preview when fixed-width config changes
   useEffect(() => {
-    if (selectedTab === 'fixed-width' && fixedWidthColumns.length > 0) {
+    if (parsingMethod === 'fixed-width' && fixedWidthColumns.length > 0) {
       const config: ParseConfig = {
         format_type: 'fixed-width',
-        skip_rows: skipRowsFixedWidth,
+        skip_rows: 0,
         fixed_width_columns: fixedWidthColumns,
       }
-      debouncedFetchPreview(config)
+
+      // Debounce the fetch
+      const timeoutId = setTimeout(() => {
+        fetchPreview(config)
+      }, 500)
+
+      return () => clearTimeout(timeoutId)
     }
-  }, [selectedTab, fixedWidthColumns, skipRowsFixedWidth, debouncedFetchPreview])
+  }, [parsingMethod, fixedWidthColumns, fetchPreview])
 
   const handleNext = () => {
     if (!previewData || previewData.errors.length > 0) {
@@ -229,51 +308,184 @@ export function Step2ParseConfiguration({
   const isValidConfig = previewData && previewData.errors.length === 0
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
+    <div className="flex flex-col gap-y-8">
+      {/* Parsing Method Selection */}
       <div>
-        <Text size="large" weight="plus" className="mb-2">
-          Configure File Format
-        </Text>
-        <Text size="small" className="text-ui-fg-subtle">
-          Choose how your file should be parsed
-        </Text>
+        <Heading level="h2" className="mb-4">
+          Choose Parsing Method
+        </Heading>
+        <RadioGroup
+          value={parsingMethod}
+          onValueChange={(value) => setParsingMethod(value as 'template' | 'delimited' | 'fixed-width')}
+          className="grid grid-cols-2 gap-3"
+        >
+          <RadioGroup.ChoiceBox
+            value="template"
+            label="Use Template"
+            description="Load a saved configuration"
+          />
+          <RadioGroup.ChoiceBox
+            value="delimited"
+            label="Delimited File (CSV)"
+            description="Comma, tab, or custom delimiter"
+          />
+          <RadioGroup.ChoiceBox
+            value="fixed-width"
+            label="Fixed-Width Columns"
+            description="Text files with aligned columns"
+            className="col-span-2"
+          />
+        </RadioGroup>
       </div>
 
-      {/* Tabs */}
-      <Tabs
-        value={selectedTab}
-        onValueChange={(value) => setSelectedTab(value as 'csv' | 'fixed-width')}
-      >
-        <Tabs.List>
-          <Tabs.Trigger value="csv">CSV/Delimited</Tabs.Trigger>
-          <Tabs.Trigger value="fixed-width">Fixed-Width (TXT)</Tabs.Trigger>
-        </Tabs.List>
+      {/* Template Selection */}
+      {parsingMethod === 'template' && (
+        <div>
+          <Label className="mb-3">Select Template</Label>
+          {templates.length === 0 ? (
+            <div className="bg-ui-bg-subtle border border-ui-border-base rounded-lg p-4">
+              <Text size="small" className="text-ui-fg-subtle">
+                No templates available. Contact your administrator to add import templates.
+              </Text>
+            </div>
+          ) : (
+            <Select value={selectedTemplateId} onValueChange={handleTemplateSelect}>
+              <Select.Trigger>
+                <Select.Value placeholder="Choose a template" />
+              </Select.Trigger>
+              <Select.Content>
+                {templates.map((template) => (
+                  <Select.Item key={template.id} value={template.id}>
+                    <div className="flex flex-col">
+                      <Text weight="plus">{template.name}</Text>
+                      {template.description && (
+                        <Text size="xsmall" className="text-ui-fg-subtle">
+                          {template.description}
+                        </Text>
+                      )}
+                    </div>
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select>
+          )}
+        </div>
+      )}
 
-        <Tabs.Content value="csv">
-          <CSVConfiguration
-            config={csvConfig}
-            onChange={setCsvConfig}
-            fileContent={fileContent}
-            previewData={previewData}
-            isLoading={isLoadingPreview}
-            error={previewError}
-          />
-        </Tabs.Content>
+      {/* Delimiter Selection (for delimited mode) */}
+      {parsingMethod === 'delimited' && (
+        <div>
+          <Label className="mb-3">Select Delimiter</Label>
+          <RadioGroup
+            value={delimiterChoice}
+            onValueChange={handleDelimiterChoiceChange}
+            className="grid grid-cols-2 gap-3"
+          >
+            <RadioGroup.ChoiceBox
+              value=","
+              label="Comma (,)"
+              description="Most common for CSV files"
+            />
+            <RadioGroup.ChoiceBox
+              value=";"
+              label="Semicolon (;)"
+              description="Common in European formats"
+            />
+            <RadioGroup.ChoiceBox
+              value={'\t'}
+              label="Tab"
+              description="Tab-separated values"
+            />
+            <RadioGroup.ChoiceBox
+              value="custom"
+              label="Custom"
+              description="Enter your own delimiter character"
+            />
+          </RadioGroup>
 
-        <Tabs.Content value="fixed-width">
-          <FixedWidthConfiguration
-            columns={fixedWidthColumns}
-            onColumnsChange={setFixedWidthColumns}
-            skipRows={skipRowsFixedWidth}
-            onSkipRowsChange={setSkipRowsFixedWidth}
-            fileContent={fileContent}
-            previewData={previewData}
-            isLoading={isLoadingPreview}
-            error={previewError}
-          />
-        </Tabs.Content>
-      </Tabs>
+          {/* Custom Delimiter Input */}
+          {delimiterChoice === 'custom' && (
+            <div className="mt-4 max-w-xs">
+              <Label htmlFor="custom-delimiter" className="mb-2">
+                Custom Delimiter Character
+              </Label>
+              <Input
+                id="custom-delimiter"
+                value={customDelimiter}
+                onChange={(e) => handleCustomDelimiterChange(e.target.value)}
+                placeholder="Enter single character"
+                maxLength={1}
+                className="font-mono"
+              />
+              <Text size="xsmall" className="text-ui-fg-subtle mt-1">
+                Enter a single character to use as delimiter
+              </Text>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Fixed-Width Column Configuration */}
+      {parsingMethod === 'fixed-width' && (
+        <FixedWidthColumnSelector
+          fileContent={fileContent}
+          columns={fixedWidthColumns}
+          onColumnsChange={setFixedWidthColumns}
+        />
+      )}
+
+      {/* Interactive Preview */}
+      <div>
+        <Label className="mb-3">File Preview</Label>
+
+        {isLoadingPreview && (
+          <div className="flex items-center justify-center py-8 border border-ui-border-base rounded-lg bg-ui-bg-subtle">
+            <Text size="small" className="text-ui-fg-subtle">Loading preview...</Text>
+          </div>
+        )}
+
+        {previewError && (
+          <div className="bg-ui-bg-error-subtle border border-ui-border-error p-4 rounded-lg">
+            <Text size="small" className="text-ui-fg-error">{previewError}</Text>
+          </div>
+        )}
+
+        {previewData && !previewError && !isLoadingPreview && (
+          <div className="overflow-x-auto border border-ui-border-base rounded-lg">
+            <table className="w-full text-sm">
+              <thead className="bg-ui-bg-subtle">
+                <tr>
+                  {previewData.detected_columns.map((col, idx) => (
+                    <th key={idx} className="px-4 py-3 text-left font-medium border-b border-ui-border-base">
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {previewData.preview_rows.slice(0, 10).map((row, rowIdx) => (
+                  <tr key={rowIdx} className="border-b border-ui-border-base last:border-b-0 hover:bg-ui-bg-subtle-hover">
+                    {previewData.detected_columns.map((col, colIdx) => (
+                      <td key={colIdx} className="px-4 py-3">
+                        {row[col] || ''}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {previewData && !isLoadingPreview && (
+          <div className="flex items-center gap-2 mt-3">
+            <Text size="xsmall" className="text-ui-fg-subtle">
+              {previewData.detected_columns.length} columns detected •
+              Showing {Math.min(10, previewData.preview_rows.length)} of {previewData.stats.total_rows_in_file} rows
+            </Text>
+          </div>
+        )}
+      </div>
 
       {/* Footer Navigation */}
       <div className="flex justify-between pt-4 border-t border-ui-border-base">
@@ -292,225 +504,22 @@ export function Step2ParseConfiguration({
   )
 }
 
-// CSV Configuration Sub-component
-interface CSVConfigurationProps {
-  config: {
-    delimiter: string
-    quote_char: string
-    has_header: boolean
-    skip_rows: number
-  }
-  onChange: (config: any) => void
+// Fixed-Width Column Selector Component
+interface FixedWidthColumnSelectorProps {
   fileContent: string
-  previewData: PreviewData | null
-  isLoading: boolean
-  error: string | null
-}
-
-function CSVConfiguration({
-  config,
-  onChange,
-  fileContent,
-  previewData,
-  isLoading,
-  error,
-}: CSVConfigurationProps) {
-  const rawPreview = fileContent.split('\n').slice(0, 3).join('\n')
-
-  return (
-    <div className="flex flex-col gap-6 py-6">
-      {/* Raw File Preview */}
-      <div>
-        <Label className="mb-2">Raw File Preview (First 3 Lines)</Label>
-        <pre className="bg-ui-bg-subtle p-4 rounded-lg text-xs font-mono overflow-x-auto border border-ui-border-base">
-          {rawPreview}
-        </pre>
-      </div>
-
-      {/* Delimiter Selection */}
-      <div>
-        <Label className="mb-3">Delimiter</Label>
-        <div className="flex flex-col gap-2">
-          {DELIMITERS.map(({ value, label }) => (
-            <label key={value} className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="delimiter"
-                value={value}
-                checked={config.delimiter === value}
-                onChange={(e) => onChange({ ...config, delimiter: e.target.value })}
-                className="cursor-pointer"
-              />
-              <Text size="small">{label}</Text>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Options */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="quote_char" className="mb-2">
-            Quote Character
-          </Label>
-          <Input
-            id="quote_char"
-            value={config.quote_char}
-            onChange={(e) => onChange({ ...config, quote_char: e.target.value })}
-            maxLength={1}
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="skip_rows" className="mb-2">
-            Skip Rows
-          </Label>
-          <Input
-            id="skip_rows"
-            type="number"
-            min={0}
-            value={config.skip_rows}
-            onChange={(e) => onChange({ ...config, skip_rows: parseInt(e.target.value) || 0 })}
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Switch
-          id="has_header"
-          checked={config.has_header}
-          onCheckedChange={(checked) => onChange({ ...config, has_header: checked })}
-        />
-        <Label htmlFor="has_header" className="cursor-pointer">
-          File has header row
-        </Label>
-      </div>
-
-      {/* Parsed Preview */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <Label>Parsed Preview (First 5 Rows)</Label>
-          {isLoading && (
-            <Badge size="small" color="blue">Loading...</Badge>
-          )}
-        </div>
-
-        {error && (
-          <div className="bg-ui-bg-error-subtle border border-ui-border-error p-3 rounded-lg mb-3">
-            <Text size="small" className="text-ui-fg-error">{error}</Text>
-          </div>
-        )}
-
-        {previewData && !error && (
-          <>
-            <div className="overflow-x-auto border border-ui-border-base rounded-lg">
-              <table className="w-full text-sm">
-                <thead className="bg-ui-bg-subtle">
-                  <tr>
-                    {previewData.detected_columns.map((col, idx) => (
-                      <th key={idx} className="px-4 py-2 text-left font-medium border-b border-ui-border-base">
-                        {col}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {previewData.preview_rows.map((row, rowIdx) => (
-                    <tr key={rowIdx} className="border-b border-ui-border-base last:border-b-0">
-                      {previewData.detected_columns.map((col, colIdx) => (
-                        <td key={colIdx} className="px-4 py-2">
-                          {row[col] || ''}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex items-center gap-4 mt-3">
-              <Badge size="small" color="green">
-                {previewData.detected_columns.length} columns detected
-              </Badge>
-              {previewData.warnings.length > 0 && (
-                <Badge size="small" color="orange">
-                  {previewData.warnings.length} warnings
-                </Badge>
-              )}
-            </div>
-
-            {previewData.warnings.length > 0 && (
-              <details className="mt-3">
-                <summary className="cursor-pointer text-sm text-ui-fg-subtle hover:text-ui-fg-base">
-                  View warnings
-                </summary>
-                <div className="mt-2 space-y-1">
-                  {previewData.warnings.map((warning, idx) => (
-                    <Text key={idx} size="xsmall" className="text-ui-fg-subtle">
-                      • {warning}
-                    </Text>
-                  ))}
-                </div>
-              </details>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// Fixed-Width Configuration Sub-component
-interface FixedWidthConfigurationProps {
   columns: Array<{ name: string; start: number; width: number }>
   onColumnsChange: (columns: Array<{ name: string; start: number; width: number }>) => void
-  skipRows: number
-  onSkipRowsChange: (skip: number) => void
-  fileContent: string
-  previewData: PreviewData | null
-  isLoading: boolean
-  error: string | null
 }
 
-function FixedWidthConfiguration({
+function FixedWidthColumnSelector({
+  fileContent,
   columns,
   onColumnsChange,
-  skipRows,
-  onSkipRowsChange,
-  fileContent,
-  previewData,
-  isLoading,
-  error,
-}: FixedWidthConfigurationProps) {
+}: FixedWidthColumnSelectorProps) {
   const lines = fileContent.split('\n').slice(0, 5)
-
-  const addColumn = () => {
-    const newStart = columns.length > 0
-      ? columns[columns.length - 1].start + columns[columns.length - 1].width
-      : 0
-
-    onColumnsChange([
-      ...columns,
-      {
-        name: `col_${columns.length + 1}`,
-        start: newStart,
-        width: 10,
-      },
-    ])
-  }
-
-  const removeColumn = (index: number) => {
-    onColumnsChange(columns.filter((_, idx) => idx !== index))
-  }
-
-  const updateColumn = (index: number, updates: Partial<{ name: string; start: number; width: number }>) => {
-    onColumnsChange(
-      columns.map((col, idx) => (idx === index ? { ...col, ...updates } : col))
-    )
-  }
+  const maxLineLength = Math.max(...lines.map(line => line.length), 80)
 
   const autoDetectColumns = () => {
-    // Simple auto-detection: find whitespace patterns
     const firstLine = lines[0] || ''
     const segments: Array<{ start: number; width: number }> = []
     let inWord = false
@@ -546,146 +555,30 @@ function FixedWidthConfiguration({
   }
 
   return (
-    <div className="flex flex-col gap-6 py-6">
-      {/* Instructions */}
-      <div className="bg-ui-bg-subtle p-4 rounded-lg border border-ui-border-base">
-        <Text size="small" className="text-ui-fg-subtle">
-          Define column boundaries by specifying start position and width for each column.
-          You can also use auto-detection to get started.
-        </Text>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <Label>Column Breaks ({columns.length} columns)</Label>
+        <Button size="small" variant="secondary" onClick={autoDetectColumns}>
+          Auto-detect Columns
+        </Button>
       </div>
 
-      {/* File Preview */}
-      <div>
-        <Label className="mb-2">File Preview (First 5 Lines)</Label>
-        <pre className="bg-ui-bg-subtle p-4 rounded-lg text-xs font-mono overflow-x-auto border border-ui-border-base">
+      <div className="bg-ui-bg-subtle p-4 rounded-lg border border-ui-border-base">
+        <Text size="small" className="text-ui-fg-subtle mb-3">
+          Click "Auto-detect Columns" to automatically identify column boundaries based on spacing patterns.
+        </Text>
+        <pre className="text-xs font-mono overflow-x-auto">
           {lines.map((line, idx) => (
-            <div key={idx}>{line || ' '}</div>
+            <div key={idx} className="whitespace-pre">{line || ' '}</div>
           ))}
         </pre>
       </div>
 
-      {/* Skip Rows */}
-      <div className="max-w-xs">
-        <Label htmlFor="skip_rows_fw" className="mb-2">
-          Skip Rows
-        </Label>
-        <Input
-          id="skip_rows_fw"
-          type="number"
-          min={0}
-          value={skipRows}
-          onChange={(e) => onSkipRowsChange(parseInt(e.target.value) || 0)}
-        />
-      </div>
-
-      {/* Column Definitions */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <Label>Defined Columns ({columns.length})</Label>
-          <Button size="small" variant="secondary" onClick={autoDetectColumns}>
-            Auto-detect Columns
-          </Button>
-        </div>
-
-        {columns.length === 0 ? (
-          <div className="text-center py-8 border-2 border-dashed border-ui-border-base rounded-lg">
-            <Text size="small" className="text-ui-fg-subtle">
-              No columns defined yet. Click "Add Column" to start.
-            </Text>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {columns.map((col, idx) => (
-              <div key={idx} className="border border-ui-border-base rounded-lg p-4 bg-ui-bg-subtle">
-                <div className="grid grid-cols-4 gap-3 items-end">
-                  <div className="col-span-2">
-                    <Label className="mb-2">Column Name</Label>
-                    <Input
-                      value={col.name}
-                      onChange={(e) => updateColumn(idx, { name: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label className="mb-2">Start</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={col.start}
-                      onChange={(e) => updateColumn(idx, { start: parseInt(e.target.value) || 0 })}
-                    />
-                  </div>
-                  <div>
-                    <Label className="mb-2">Width</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={col.width}
-                      onChange={(e) => updateColumn(idx, { width: parseInt(e.target.value) || 1 })}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end mt-3">
-                  <Button
-                    size="small"
-                    variant="danger"
-                    onClick={() => removeColumn(idx)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <Button className="mt-3" size="small" variant="secondary" onClick={addColumn}>
-          + Add Column
-        </Button>
-      </div>
-
-      {/* Parsed Preview */}
       {columns.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <Label>Parsed Preview (First 5 Rows)</Label>
-            {isLoading && (
-              <Badge size="small" color="blue">Loading...</Badge>
-            )}
-          </div>
-
-          {error && (
-            <div className="bg-ui-bg-error-subtle border border-ui-border-error p-3 rounded-lg mb-3">
-              <Text size="small" className="text-ui-fg-error">{error}</Text>
-            </div>
-          )}
-
-          {previewData && !error && (
-            <div className="overflow-x-auto border border-ui-border-base rounded-lg">
-              <table className="w-full text-sm">
-                <thead className="bg-ui-bg-subtle">
-                  <tr>
-                    {previewData.detected_columns.map((col, idx) => (
-                      <th key={idx} className="px-4 py-2 text-left font-medium border-b border-ui-border-base">
-                        {col}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {previewData.preview_rows.map((row, rowIdx) => (
-                    <tr key={rowIdx} className="border-b border-ui-border-base last:border-b-0">
-                      {previewData.detected_columns.map((col, colIdx) => (
-                        <td key={colIdx} className="px-4 py-2">
-                          {row[col] || ''}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+        <div className="text-ui-fg-subtle">
+          <Text size="xsmall">
+            Detected {columns.length} columns: {columns.map(c => c.name).join(', ')}
+          </Text>
         </div>
       )}
     </div>

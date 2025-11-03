@@ -1,43 +1,40 @@
 /**
- * Step 3: Field Mapping Component
+ * Step 3: Field Mapping Component (Refactored)
  *
- * Maps parsed columns to data model fields with auto-suggestions,
- * template loading, and template saving capabilities.
+ * Field-first approach: Show required/optional fields, ask users which column maps to each.
+ * Follows MedusaJS design philosophy with clear hierarchy and progressive disclosure.
  *
  * @see TEM-304 - Frontend: Build Step 3 - Field Mapping Component
  */
 
 import { useState, useEffect } from "react"
-import { Button, Text, Input, Label, Select, Checkbox, Badge, toast } from "@medusajs/ui"
-import { CheckCircle, ExclamationCircle } from "@medusajs/icons"
+import { Button, Text, Heading, Label, Select, toast } from "@medusajs/ui"
+import { CheckCircleSolid, ExclamationCircle } from "@medusajs/icons"
 import { ParseConfig } from "./Step2ParseConfiguration"
+
+type PricingMode = "net_only" | "calculated" | "percentage" | "code_mapping"
 
 interface Step3FieldMappingProps {
   parsedColumns: string[]
   parseConfig: ParseConfig
   previewRows: Array<Record<string, any>>
   supplierId: string
-  onComplete: (mapping: ColumnMapping, saveAsTemplate: boolean, templateName?: string, templateDescription?: string) => void
+  defaultPricingMode: string | null
+  onComplete: (mapping: ColumnMapping, pricingMode: string, saveAsTemplate: boolean, templateName?: string, templateDescription?: string) => void
   onBack: () => void
 }
 
+// Column mapping format expected by backend: { parsedColumn: targetField }
 export interface ColumnMapping {
   [parsedColumn: string]: string | null
 }
 
-interface ImportTemplate {
-  id: string
-  name: string
-  description?: string
-  file_type: 'csv' | 'txt'
-  parse_config: ParseConfig
-  column_mapping: ColumnMapping
-}
-
-interface ValidationResult {
-  isValid: boolean
-  errors: string[]
-  warnings: string[]
+interface TargetField {
+  value: string
+  label: string
+  description: string
+  required: boolean
+  group: 'identifiers' | 'pricing' | 'product_info' | 'other'
 }
 
 // Field aliases for auto-suggestion
@@ -57,20 +54,120 @@ const FIELD_ALIASES: Record<string, string[]> = {
   notes: ["notes", "comment", "remarks", "info"],
 }
 
-const TARGET_FIELDS = [
-  { value: "supplier_sku", label: "Supplier SKU", required: true, group: "identifiers" },
-  { value: "variant_sku", label: "Variant SKU", required: true, group: "identifiers" },
-  { value: "net_price", label: "Net Price", required: true, group: "pricing" },
-  { value: "gross_price", label: "Gross Price", required: false, group: "pricing" },
-  { value: "discount_code", label: "Discount Code", required: false, group: "pricing" },
-  { value: "discount_percentage", label: "Discount Percentage", required: false, group: "pricing" },
-  { value: "product_title", label: "Product Title", required: false, group: "product_info" },
-  { value: "variant_title", label: "Variant Title", required: false, group: "product_info" },
-  { value: "description", label: "Description", required: false, group: "product_info" },
-  { value: "category", label: "Category", required: false, group: "product_info" },
-  { value: "quantity", label: "Quantity", required: false, group: "other" },
-  { value: "lead_time_days", label: "Lead Time (Days)", required: false, group: "other" },
-  { value: "notes", label: "Notes", required: false, group: "other" },
+// Get required fields based on pricing mode
+const getRequiredFieldsForMode = (pricingMode: PricingMode): TargetField[] => {
+  const baseFields: TargetField[] = [
+    {
+      value: "product_title",
+      label: "Product Title",
+      description: "Name of the product",
+      required: true,
+      group: "product_info"
+    },
+    {
+      value: "variant_title",
+      label: "Variant Title",
+      description: "Variant details (size, color, etc.)",
+      required: true,
+      group: "product_info"
+    },
+    {
+      value: "variant_sku",
+      label: "Variant SKU",
+      description: "Your internal SKU/product code",
+      required: true,
+      group: "identifiers"
+    },
+    {
+      value: "gross_price",
+      label: "Gross Price",
+      description: "List price before discounts",
+      required: true,
+      group: "pricing"
+    },
+    {
+      value: "description",
+      label: "Description",
+      description: "Product description or details",
+      required: true,
+      group: "product_info"
+    },
+  ]
+
+  // Discount field changes based on pricing mode
+  const discountField: Record<PricingMode, TargetField | null> = {
+    net_only: null, // No discount field for net-only mode
+    calculated: {
+      value: "net_price",
+      label: "Discount (Net Price)",
+      description: "Pre-calculated net price",
+      required: true,
+      group: "pricing"
+    },
+    percentage: {
+      value: "discount_percentage",
+      label: "Discount (Percentage)",
+      description: "Discount percentage",
+      required: true,
+      group: "pricing"
+    },
+    code_mapping: {
+      value: "discount_code",
+      label: "Discount (Code)",
+      description: "Supplier discount code",
+      required: true,
+      group: "pricing"
+    }
+  }
+
+  const discount = discountField[pricingMode]
+  return discount ? [...baseFields, discount] : baseFields
+}
+
+// Optional fields - available for all modes
+const OPTIONAL_FIELDS: TargetField[] = [
+  {
+    value: "supplier_sku",
+    label: "Supplier SKU",
+    description: "Supplier's part number (optional)",
+    required: false,
+    group: "identifiers"
+  },
+  {
+    value: "net_price",
+    label: "Net Price",
+    description: "Final price after discounts (optional for most modes)",
+    required: false,
+    group: "pricing"
+  },
+  {
+    value: "category",
+    label: "Category",
+    description: "Product category or classification",
+    required: false,
+    group: "product_info"
+  },
+  {
+    value: "quantity",
+    label: "Quantity",
+    description: "Available quantity or stock level",
+    required: false,
+    group: "other"
+  },
+  {
+    value: "lead_time_days",
+    label: "Lead Time (Days)",
+    description: "Delivery or fulfillment time",
+    required: false,
+    group: "other"
+  },
+  {
+    value: "notes",
+    label: "Notes",
+    description: "Additional information or comments",
+    required: false,
+    group: "other"
+  },
 ]
 
 export function Step3FieldMapping({
@@ -78,297 +175,312 @@ export function Step3FieldMapping({
   parseConfig,
   previewRows,
   supplierId,
+  defaultPricingMode,
   onComplete,
   onBack,
 }: Step3FieldMappingProps) {
-  const [columnMapping, setColumnMapping] = useState<ColumnMapping>({})
-  const [validation, setValidation] = useState<ValidationResult>({ isValid: false, errors: [], warnings: [] })
-  const [saveAsTemplate, setSaveAsTemplate] = useState(false)
-  const [templateName, setTemplateName] = useState("")
-  const [templateDescription, setTemplateDescription] = useState("")
-  const [existingTemplates, setExistingTemplates] = useState<ImportTemplate[]>([])
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("")
-  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false)
+  // Pricing mode state
+  const [pricingMode, setPricingMode] = useState<PricingMode>(
+    (defaultPricingMode as PricingMode) || "net_only"
+  )
+  const [hasSupplierCodeMapping, setHasSupplierCodeMapping] = useState(false)
+  const [isLoadingDiscountStructure, setIsLoadingDiscountStructure] = useState(false)
 
-  // Auto-suggest mapping on mount
+  // Field-to-column mapping (1-to-1, but same column can map to multiple fields)
+  const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({})
+  const [showOptionalFields, setShowOptionalFields] = useState(false)
+
+  // Get dynamic required fields based on pricing mode
+  const requiredFields = getRequiredFieldsForMode(pricingMode)
+
+  // Fetch supplier discount structure to check if code mappings exist
   useEffect(() => {
-    const autoSuggested = autoSuggestMapping(parsedColumns)
-    setColumnMapping(autoSuggested)
-  }, [parsedColumns])
+    const fetchDiscountStructure = async () => {
+      setIsLoadingDiscountStructure(true)
+      try {
+        const response = await fetch(`/admin/suppliers/${supplierId}/discount-structure`, {
+          credentials: 'include'
+        })
 
-  // Load existing templates
-  useEffect(() => {
-    loadTemplates()
-  }, [supplierId, parseConfig.format_type])
-
-  // Validate mapping whenever it changes
-  useEffect(() => {
-    const result = validateMapping(columnMapping)
-    setValidation(result)
-  }, [columnMapping])
-
-  const autoSuggestMapping = (columns: string[]): ColumnMapping => {
-    const mapping: ColumnMapping = {}
-
-    for (const parsedCol of columns) {
-      const normalized = parsedCol.toLowerCase().trim().replace(/[_\s-]+/g, '_')
-
-      // Try exact match first
-      if (TARGET_FIELDS.some(f => f.value === normalized)) {
-        mapping[parsedCol] = normalized
-        continue
+        if (response.ok) {
+          const data = await response.json()
+          const hasCodeMappings = data.discount_structure?.type === 'code_mapping' &&
+                                  Object.keys(data.discount_structure?.mappings || {}).length > 0
+          setHasSupplierCodeMapping(hasCodeMappings)
+        }
+      } catch (error) {
+        console.error('Failed to fetch discount structure:', error)
+      } finally {
+        setIsLoadingDiscountStructure(false)
       }
+    }
 
-      // Try alias matching
-      let matched = false
-      for (const [targetField, aliases] of Object.entries(FIELD_ALIASES)) {
-        for (const alias of aliases) {
+    if (supplierId) {
+      fetchDiscountStructure()
+    }
+  }, [supplierId])
+
+  // Auto-suggest mapping on mount and when pricing mode changes
+  useEffect(() => {
+    const autoSuggested = autoSuggestMapping(parsedColumns, requiredFields)
+    setFieldMapping(autoSuggested)
+  }, [parsedColumns, pricingMode])
+
+  const autoSuggestMapping = (columns: string[], fields: TargetField[]): Record<string, string> => {
+    const mapping: Record<string, string> = {}
+    const allFields = [...fields, ...OPTIONAL_FIELDS]
+
+    for (const field of allFields) {
+      const fieldAliases = FIELD_ALIASES[field.value] || []
+
+      for (const col of columns) {
+        const normalized = col.toLowerCase().trim().replace(/[_\s-]+/g, '_')
+
+        // Try exact match
+        if (normalized === field.value) {
+          mapping[field.value] = col
+          break
+        }
+
+        // Try alias matching
+        for (const alias of fieldAliases) {
           const normalizedAlias = alias.toLowerCase().trim().replace(/[_\s-]+/g, '_')
           if (normalized === normalizedAlias || normalized.includes(normalizedAlias) || normalizedAlias.includes(normalized)) {
-            mapping[parsedCol] = targetField
-            matched = true
+            mapping[field.value] = col
             break
           }
         }
-        if (matched) break
-      }
 
-      // If no match, leave unmapped
-      if (!matched) {
-        mapping[parsedCol] = null
+        if (mapping[field.value]) break
       }
     }
 
     return mapping
   }
 
-  const validateMapping = (mapping: ColumnMapping): ValidationResult => {
-    const errors: string[] = []
-    const warnings: string[] = []
+  // Return field-to-column mapping (allows same column to be used by multiple fields)
+  const getFieldMapping = (): Record<string, string> => {
+    const mapping: Record<string, string> = {}
 
-    const mappedValues = Object.values(mapping).filter(v => v !== null)
-
-    // Check required: at least one identifier
-    const hasIdentifier = mappedValues.includes('supplier_sku') || mappedValues.includes('variant_sku')
-    if (!hasIdentifier) {
-      errors.push('Must map either Supplier SKU or Variant SKU')
-    }
-
-    // Check required: net_price
-    if (!mappedValues.includes('net_price')) {
-      errors.push('Must map Net Price field')
-    }
-
-    // Count unmapped columns
-    const unmappedCount = Object.values(mapping).filter(v => v === null).length
-    if (unmappedCount > 0) {
-      warnings.push(`${unmappedCount} column(s) will be ignored during import`)
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-      warnings,
-    }
-  }
-
-  const loadTemplates = async () => {
-    setIsLoadingTemplates(true)
-    try {
-      const fileType = parseConfig.format_type === 'csv' ? 'csv' : 'txt'
-      const response = await fetch(
-        `/admin/suppliers/${supplierId}/price-lists/import-templates?file_type=${fileType}`
-      )
-
-      if (!response.ok) {
-        throw new Error('Failed to load templates')
+    for (const [field, column] of Object.entries(fieldMapping)) {
+      if (column) {
+        mapping[field] = column
       }
-
-      const data = await response.json()
-      setExistingTemplates(data.templates || [])
-    } catch (error) {
-      console.error('Failed to load templates:', error)
-      toast.error('Failed to load templates')
-    } finally {
-      setIsLoadingTemplates(false)
-    }
-  }
-
-  const handleLoadTemplate = () => {
-    const template = existingTemplates.find(t => t.id === selectedTemplateId)
-    if (!template) {
-      toast.error('Please select a template')
-      return
     }
 
-    setColumnMapping(template.column_mapping)
-    toast.success('Template loaded', {
-      description: `Loaded mapping from "${template.name}"`,
-    })
+    return mapping
   }
 
-  const handleMappingChange = (parsedColumn: string, targetField: string | null) => {
-    setColumnMapping(prev => ({
+  // Validation
+  const requiredFieldsMapped = requiredFields.every(
+    field => !!fieldMapping[field.value]
+  )
+  const mappedRequiredCount = requiredFields.filter(
+    field => !!fieldMapping[field.value]
+  ).length
+  const mappedOptionalCount = OPTIONAL_FIELDS.filter(
+    field => !!fieldMapping[field.value]
+  ).length
+
+  const isValid = requiredFieldsMapped
+
+  const handleFieldMappingChange = (fieldValue: string, columnName: string) => {
+    setFieldMapping(prev => ({
       ...prev,
-      [parsedColumn]: targetField,
+      [fieldValue]: columnName || ''
     }))
   }
 
   const handleComplete = () => {
-    if (!validation.isValid) {
+    if (!isValid) {
       toast.error('Cannot proceed', {
-        description: validation.errors[0],
+        description: 'Please map all required fields',
       })
       return
     }
 
-    if (saveAsTemplate && !templateName.trim()) {
-      toast.error('Template name required', {
-        description: 'Please enter a name for the template',
+    // Validate code mapping mode
+    if (pricingMode === 'code_mapping' && !hasSupplierCodeMapping) {
+      toast.error('Discount code mappings required', {
+        description: 'Please configure discount code mappings in supplier settings',
       })
       return
     }
 
-    // Check for duplicate template name
-    if (saveAsTemplate && existingTemplates.some(t => t.name === templateName.trim())) {
-      toast.error('Duplicate template name', {
-        description: 'A template with this name already exists',
-      })
-      return
+    // Return field-to-column mapping (allows multiple fields to use same column)
+    const mapping = getFieldMapping()
+
+    // Convert to column-to-field format for backward compatibility
+    // Note: If multiple fields use the same column, we need to decide which field wins
+    // For now, we'll use the first occurrence
+    const columnMapping: ColumnMapping = {}
+    for (const col of parsedColumns) {
+      columnMapping[col] = null
     }
 
-    onComplete(
-      columnMapping,
-      saveAsTemplate,
-      saveAsTemplate ? templateName.trim() : undefined,
-      saveAsTemplate ? templateDescription.trim() : undefined
-    )
-  }
-
-  // Create final preview with only mapped columns
-  const mappedPreview = previewRows.map(row => {
-    const mappedRow: Record<string, any> = {}
-    for (const [parsedCol, targetField] of Object.entries(columnMapping)) {
-      if (targetField && row[parsedCol] !== undefined) {
-        mappedRow[targetField] = row[parsedCol]
+    for (const [field, column] of Object.entries(mapping)) {
+      if (column && !columnMapping[column]) {
+        columnMapping[column] = field
       }
     }
-    return mappedRow
-  })
 
-  const mappedColumns = Object.values(columnMapping).filter(v => v !== null) as string[]
+    onComplete(columnMapping, pricingMode, false)
+  }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-y-8">
       {/* Header */}
       <div>
-        <Text size="large" weight="plus" className="mb-2">
-          Map Columns to Fields
-        </Text>
+        <Heading level="h2" className="mb-2">
+          Map Your Data
+        </Heading>
         <Text size="small" className="text-ui-fg-subtle">
-          Required: At least one identifier (Supplier SKU or Variant SKU) and Net Price
+          Match your file columns to the required fields
         </Text>
       </div>
 
-      {/* Load Template */}
-      {existingTemplates.length > 0 && (
-        <div className="border border-ui-border-base rounded-lg p-4 bg-ui-bg-subtle">
-          <Label className="mb-3">Load Saved Template</Label>
-          <div className="flex gap-2">
-            <Select
-              value={selectedTemplateId}
-              onValueChange={setSelectedTemplateId}
-            >
-              <Select.Trigger>
-                <Select.Value placeholder="Select a template..." />
-              </Select.Trigger>
-              <Select.Content>
-                {existingTemplates.map(template => (
-                  <Select.Item key={template.id} value={template.id}>
-                    {template.name}
-                    {template.description && (
-                      <span className="text-xs text-ui-fg-subtle ml-2">
-                        - {template.description}
-                      </span>
-                    )}
-                  </Select.Item>
-                ))}
-              </Select.Content>
-            </Select>
-            <Button
-              variant="secondary"
-              onClick={handleLoadTemplate}
-              disabled={!selectedTemplateId}
-            >
-              Load
-            </Button>
+      {/* Pricing Mode Selection */}
+      <div className="border border-ui-border-base rounded-lg p-6 bg-ui-bg-base">
+        <div className="space-y-4">
+          <div>
+            <Label>Pricing Mode</Label>
+            <Text size="small" className="text-ui-fg-subtle mt-1">
+              Select how prices are structured in this file
+            </Text>
           </div>
-          <Text size="xsmall" className="text-ui-fg-subtle mt-2">
-            or configure mapping manually below
-          </Text>
-        </div>
-      )}
 
-      {/* Column Mapping Interface */}
-      <div>
-        <Label className="mb-3">Column Mapping</Label>
-        <div className="space-y-3">
-          {parsedColumns.map((parsedCol, idx) => {
-            const currentMapping = columnMapping[parsedCol]
-            const sampleValue = previewRows[0]?.[parsedCol] || ''
-            const targetField = TARGET_FIELDS.find(f => f.value === currentMapping)
+          <Select value={pricingMode} onValueChange={(value) => setPricingMode(value as PricingMode)}>
+            <Select.Trigger>
+              <Select.Value placeholder="Select pricing mode" />
+            </Select.Trigger>
+            <Select.Content>
+              <Select.Item value="net_only">
+                <div className="flex flex-col">
+                  <Text size="small" weight="plus">Net Price Only</Text>
+                  <Text size="xsmall" className="text-ui-fg-subtle">
+                    Supplier provides final net prices (no discount information)
+                  </Text>
+                </div>
+              </Select.Item>
+              <Select.Item value="calculated">
+                <div className="flex flex-col">
+                  <Text size="small" weight="plus">Pre-calculated (Gross + Net)</Text>
+                  <Text size="xsmall" className="text-ui-fg-subtle">
+                    Supplier provides both gross and net prices
+                  </Text>
+                </div>
+              </Select.Item>
+              <Select.Item value="percentage">
+                <div className="flex flex-col">
+                  <Text size="small" weight="plus">Gross + Discount Percentage</Text>
+                  <Text size="xsmall" className="text-ui-fg-subtle">
+                    Supplier provides gross price and discount percentage
+                  </Text>
+                </div>
+              </Select.Item>
+              <Select.Item value="code_mapping">
+                <div className="flex flex-col">
+                  <Text size="small" weight="plus">Gross + Discount Code</Text>
+                  <Text size="xsmall" className="text-ui-fg-subtle">
+                    Supplier provides gross price and discount code (e.g., A, B, C)
+                  </Text>
+                </div>
+              </Select.Item>
+            </Select.Content>
+          </Select>
+
+          {/* Warning if code mapping selected but no supplier config */}
+          {pricingMode === 'code_mapping' && !isLoadingDiscountStructure && !hasSupplierCodeMapping && (
+            <div className="p-3 bg-ui-bg-base border border-ui-border-error rounded flex items-start gap-2">
+              <ExclamationCircle className="text-ui-fg-error flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <Text size="small" className="text-ui-fg-error font-medium">
+                  No discount code mappings configured
+                </Text>
+                <Text size="xsmall" className="text-ui-fg-subtle mt-1">
+                  Configure discount code mappings in <a href={`/app/settings/suppliers/${supplierId}/configuration`} className="text-ui-fg-interactive underline">Supplier Configuration</a>
+                </Text>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Required Fields Card */}
+      <div className="border border-ui-border-base rounded-lg p-6 bg-ui-bg-base">
+        <div className="flex items-center justify-between mb-6">
+          <Heading level="h3">Required Fields</Heading>
+          <div className="flex items-center gap-2">
+            {requiredFieldsMapped ? (
+              <>
+                <CheckCircleSolid className="text-ui-fg-on-color bg-ui-tag-green-icon rounded-full" />
+                <Text size="small" className="text-ui-fg-subtle">
+                  {mappedRequiredCount}/{requiredFields.length} Complete
+                </Text>
+              </>
+            ) : (
+              <>
+                <ExclamationCircle className="text-ui-fg-error" />
+                <Text size="small" className="text-ui-fg-error">
+                  {mappedRequiredCount}/{requiredFields.length} Mapped
+                </Text>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {requiredFields.map((field) => {
+            const selectedColumn = fieldMapping[field.value] || ''
+            const hasMapping = !!selectedColumn
 
             return (
-              <div
-                key={idx}
-                className="grid grid-cols-[2fr_3fr_2fr] gap-4 items-center p-3 border border-ui-border-base rounded-lg bg-ui-bg-base"
-              >
-                {/* Source Column */}
+              <div key={field.value} className="grid grid-cols-[240px_1fr_40px] gap-4 items-start">
                 <div>
-                  <Text size="small" weight="plus">
-                    {parsedCol}
+                  <Label className="mb-1">{field.label}</Label>
+                  <Text size="xsmall" className="text-ui-fg-subtle">
+                    {field.description}
                   </Text>
-                  {targetField?.required && (
-                    <Badge size="2xsmall" color="red" className="ml-2">
-                      Required
-                    </Badge>
-                  )}
                 </div>
 
-                {/* Target Field Selector */}
-                <Select
-                  value={currentMapping || "__unmapped__"}
-                  onValueChange={(value) => handleMappingChange(parsedCol, value === "__unmapped__" ? null : value)}
-                >
-                  <Select.Trigger>
-                    <Select.Value placeholder="Select target field..." />
-                  </Select.Trigger>
-                  <Select.Content>
-                    <Select.Item value="__unmapped__">Not mapped</Select.Item>
-                    <Select.Group>
-                      <Select.Label>Required Fields</Select.Label>
-                      {TARGET_FIELDS.filter(f => f.required).map(field => (
-                        <Select.Item key={field.value} value={field.value}>
-                          {field.label}
+                <div>
+                  <Select
+                    value={selectedColumn || '__none__'}
+                    onValueChange={(value) => {
+                      if (value !== '__none__') {
+                        handleFieldMappingChange(field.value, value)
+                      } else {
+                        handleFieldMappingChange(field.value, '')
+                      }
+                    }}
+                  >
+                    <Select.Trigger className={!hasMapping ? 'border-ui-border-error' : ''}>
+                      <Select.Value placeholder="Select column..." />
+                    </Select.Trigger>
+                    <Select.Content>
+                      <Select.Item value="__none__">
+                        <Text className="text-ui-fg-subtle">-- No mapping --</Text>
+                      </Select.Item>
+                      {parsedColumns.map((col) => (
+                        <Select.Item key={col} value={col}>
+                          <div className="flex flex-col">
+                            <span>{col}</span>
+                            {previewRows[0]?.[col] && (
+                              <span className="text-xs text-ui-fg-subtle truncate max-w-xs">
+                                e.g. {String(previewRows[0][col]).substring(0, 40)}
+                              </span>
+                            )}
+                          </div>
                         </Select.Item>
                       ))}
-                    </Select.Group>
-                    <Select.Group>
-                      <Select.Label>Optional Fields</Select.Label>
-                      {TARGET_FIELDS.filter(f => !f.required).map(field => (
-                        <Select.Item key={field.value} value={field.value}>
-                          {field.label}
-                        </Select.Item>
-                      ))}
-                    </Select.Group>
-                  </Select.Content>
-                </Select>
+                    </Select.Content>
+                  </Select>
+                </div>
 
-                {/* Sample Preview */}
-                <div className="text-right">
-                  <Text size="xsmall" className="text-ui-fg-muted truncate">
-                    {sampleValue ? String(sampleValue).substring(0, 30) : '—'}
-                  </Text>
+                <div className="flex items-center justify-center pt-2">
+                  {hasMapping && (
+                    <CheckCircleSolid className="text-ui-tag-green-icon" />
+                  )}
                 </div>
               </div>
             )
@@ -376,127 +488,80 @@ export function Step3FieldMapping({
         </div>
       </div>
 
-      {/* Validation Status */}
-      <div className="border border-ui-border-base rounded-lg p-4 bg-ui-bg-subtle">
-        <Label className="mb-3">Validation Status</Label>
-
-        {/* Errors */}
-        {validation.errors.length > 0 && (
-          <div className="mb-3">
-            {validation.errors.map((error, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-ui-fg-error mb-1">
-                <ExclamationCircle className="flex-shrink-0" />
-                <Text size="small">{error}</Text>
-              </div>
-            ))}
+      {/* Optional Fields Card (Collapsible) */}
+      <div className="border border-ui-border-base rounded-lg bg-ui-bg-base">
+        <button
+          onClick={() => setShowOptionalFields(!showOptionalFields)}
+          className="w-full p-6 flex items-center justify-between hover:bg-ui-bg-subtle-hover transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Heading level="h3">Optional Fields</Heading>
+            <Text size="small" className="text-ui-fg-subtle">
+              {mappedOptionalCount} mapped
+            </Text>
           </div>
-        )}
+          <Text size="small" className="text-ui-fg-subtle">
+            {showOptionalFields ? '−' : '+'}
+          </Text>
+        </button>
 
-        {/* Success */}
-        {validation.isValid && (
-          <div className="flex items-center gap-2 text-ui-fg-on-color mb-3">
-            <CheckCircle className="flex-shrink-0 bg-ui-tag-green-icon rounded-full" />
-            <Text size="small">All required fields mapped correctly</Text>
-          </div>
-        )}
+        {showOptionalFields && (
+          <div className="px-6 pb-6 space-y-4 border-t border-ui-border-base pt-6">
+            {OPTIONAL_FIELDS.map((field) => {
+              const selectedColumn = fieldMapping[field.value] || ''
+              const hasMapping = !!selectedColumn
 
-        {/* Warnings */}
-        {validation.warnings.length > 0 && (
-          <div>
-            {validation.warnings.map((warning, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-ui-fg-subtle mb-1">
-                <ExclamationCircle className="flex-shrink-0" />
-                <Text size="xsmall">{warning}</Text>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              return (
+                <div key={field.value} className="grid grid-cols-[240px_1fr_40px] gap-4 items-start">
+                  <div>
+                    <Label className="mb-1">{field.label}</Label>
+                    <Text size="xsmall" className="text-ui-fg-subtle">
+                      {field.description}
+                    </Text>
+                  </div>
 
-      {/* Final Preview */}
-      {validation.isValid && mappedColumns.length > 0 && (
-        <div>
-          <Label className="mb-3">Final Preview (with mapped fields only)</Label>
-          <div className="overflow-x-auto border border-ui-border-base rounded-lg">
-            <table className="w-full text-sm">
-              <thead className="bg-ui-bg-subtle">
-                <tr>
-                  {mappedColumns.map((col, idx) => {
-                    const field = TARGET_FIELDS.find(f => f.value === col)
-                    return (
-                      <th key={idx} className="px-4 py-2 text-left font-medium border-b border-ui-border-base">
-                        {field?.label || col}
-                        {field?.required && (
-                          <Badge size="2xsmall" color="red" className="ml-2">
-                            Required
-                          </Badge>
-                        )}
-                      </th>
-                    )
-                  })}
-                </tr>
-              </thead>
-              <tbody>
-                {mappedPreview.slice(0, 5).map((row, rowIdx) => (
-                  <tr key={rowIdx} className="border-b border-ui-border-base last:border-b-0">
-                    {mappedColumns.map((col, colIdx) => (
-                      <td key={colIdx} className="px-4 py-2">
-                        {row[col] !== undefined ? String(row[col]) : '—'}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  <div>
+                    <Select
+                      value={selectedColumn || '__none__'}
+                      onValueChange={(value) => {
+                        if (value !== '__none__') {
+                          handleFieldMappingChange(field.value, value)
+                        } else {
+                          handleFieldMappingChange(field.value, '')
+                        }
+                      }}
+                    >
+                      <Select.Trigger>
+                        <Select.Value placeholder="Select column..." />
+                      </Select.Trigger>
+                      <Select.Content>
+                        <Select.Item value="__none__">
+                          <Text className="text-ui-fg-subtle">-- No mapping --</Text>
+                        </Select.Item>
+                        {parsedColumns.map((col) => (
+                          <Select.Item key={col} value={col}>
+                            <div className="flex flex-col">
+                              <span>{col}</span>
+                              {previewRows[0]?.[col] && (
+                                <span className="text-xs text-ui-fg-subtle truncate max-w-xs">
+                                  e.g. {String(previewRows[0][col]).substring(0, 40)}
+                                </span>
+                              )}
+                            </div>
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select>
+                  </div>
 
-          <div className="flex items-center gap-2 mt-3">
-            <Badge size="small" color="green">
-              {mappedColumns.length} fields mapped
-            </Badge>
-          </div>
-        </div>
-      )}
-
-      {/* Save as Template */}
-      <div className="border border-ui-border-base rounded-lg p-4 bg-ui-bg-base">
-        <div className="flex items-center gap-2 mb-3">
-          <Checkbox
-            id="save-template"
-            checked={saveAsTemplate}
-            onCheckedChange={(checked) => setSaveAsTemplate(checked as boolean)}
-          />
-          <Label htmlFor="save-template" className="cursor-pointer">
-            Save this configuration as a template
-          </Label>
-        </div>
-
-        {saveAsTemplate && (
-          <div className="space-y-3 mt-4">
-            <div>
-              <Label htmlFor="template-name" className="mb-2">
-                Template Name *
-              </Label>
-              <Input
-                id="template-name"
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                placeholder="e.g., Standard Price List"
-                maxLength={255}
-              />
-            </div>
-            <div>
-              <Label htmlFor="template-description" className="mb-2">
-                Description (Optional)
-              </Label>
-              <Input
-                id="template-description"
-                value={templateDescription}
-                onChange={(e) => setTemplateDescription(e.target.value)}
-                placeholder="Brief description of this template"
-                maxLength={1000}
-              />
-            </div>
+                  <div className="flex items-center justify-center pt-2">
+                    {hasMapping && (
+                      <CheckCircleSolid className="text-ui-tag-green-icon" />
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
@@ -509,7 +574,7 @@ export function Step3FieldMapping({
         <Button
           variant="primary"
           onClick={handleComplete}
-          disabled={!validation.isValid}
+          disabled={!isValid}
         >
           Import & Create Price List
         </Button>

@@ -101,10 +101,41 @@ export type DiscountStructure =
   | NetOnlyStructure
 
 /**
+ * Pricing mode types for price list imports
+ * Determines how prices are calculated from supplier data
+ */
+export type PricingMode =
+  | "net_only"       // Only net price provided
+  | "calculated"     // Both gross and net provided (pre-calculated)
+  | "percentage"     // Gross + discount percentage
+  | "code_mapping"   // Gross + discount code (needs mapping)
+
+/**
+ * Parsing method types for price list imports
+ */
+export type ParsingMethod =
+  | "template"       // Use predefined template
+  | "delimited"      // CSV/delimited file
+  | "fixed-width"    // Fixed-width text file
+
+/**
+ * Import defaults configuration
+ * Stored in supplier.metadata.import_defaults
+ * Pre-populates wizard with supplier-specific settings
+ */
+export type ImportDefaults = {
+  pricing_mode: PricingMode
+  parsing_method: ParsingMethod
+  template_id?: string      // For template mode
+  delimiter?: string         // For delimited mode (e.g., ",", ";", "\t")
+}
+
+/**
  * Extended supplier metadata type
  * This is stored in the supplier.metadata field
  */
 export type SupplierMetadata = {
   discount_structure?: DiscountStructure
+  import_defaults?: ImportDefaults
   // ... other metadata fields can be added here
 }

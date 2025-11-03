@@ -39,6 +39,7 @@ type WorkflowInput = {
   file_name: string
   parse_config: ParseConfig
   column_mapping: Record<string, string>
+  pricing_mode: "net_only" | "calculated" | "percentage" | "code_mapping"
 }
 
 export const uploadPriceListWorkflow = createWorkflow(
@@ -92,9 +93,11 @@ export const uploadPriceListWorkflow = createWorkflow(
 
     // Step 2: Calculate discounts and net prices
     // Runs after parsing, before saving to database
+    // Mode-aware processing based on pricing_mode from wizard
     const calculatedItems = calculateDiscountAndNetPriceStep({
       items: transform({ parseResult }, ({ parseResult }) => parseResult.items),
-      supplier_id: input.supplier_id
+      supplier_id: input.supplier_id,
+      pricing_mode: input.pricing_mode
     })
 
     // Step 3: Create price list with enhanced metadata

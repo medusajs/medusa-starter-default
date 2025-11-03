@@ -22,6 +22,13 @@ type ParseRawContentInput = {
       start: number
       width: number
     }>
+    transformations?: Record<string, {
+      type: 'divide' | 'date' | 'substring' | 'trim_zeros'
+      divisor?: number
+      input_format?: string
+      start?: number
+      length?: number
+    }>
   }
   column_mapping?: Record<string, string>
 }
@@ -107,6 +114,76 @@ function extractFixedWidthFields(
 }
 
 /**
+ * Apply transformations to parsed data
+ */
+function applyTransformations(
+  rows: Array<Record<string, any>>,
+  transformations: Record<string, {
+    type: 'divide' | 'date' | 'substring' | 'trim_zeros'
+    divisor?: number
+    input_format?: string
+    start?: number
+    length?: number
+  }>
+): Array<Record<string, any>> {
+  return rows.map(row => {
+    const transformedRow = { ...row }
+
+    for (const [columnName, transformation] of Object.entries(transformations)) {
+      const value = transformedRow[columnName]
+
+      if (value === undefined || value === null || value === '') {
+        continue
+      }
+
+      try {
+        switch (transformation.type) {
+          case 'divide':
+            if (transformation.divisor) {
+              const numValue = parseFloat(value)
+              if (!isNaN(numValue)) {
+                transformedRow[columnName] = (numValue / transformation.divisor).toString()
+              }
+            }
+            break
+
+          case 'substring':
+            if (transformation.start !== undefined && transformation.length !== undefined) {
+              transformedRow[columnName] = value.toString().substring(
+                transformation.start,
+                transformation.start + transformation.length
+              )
+            }
+            break
+
+          case 'date':
+            // Parse date from YYYYMMDD format to YYYY-MM-DD
+            if (transformation.input_format === 'YYYYMMDD' && value.length === 8) {
+              const year = value.substring(0, 4)
+              const month = value.substring(4, 6)
+              const day = value.substring(6, 8)
+              transformedRow[columnName] = `${year}-${month}-${day}`
+            }
+            break
+
+          case 'trim_zeros':
+            // Remove leading zeros from string
+            // "00012345" -> "12345", "00000" -> "0"
+            const trimmed = value.toString().replace(/^0+/, '')
+            transformedRow[columnName] = trimmed || '0'
+            break
+        }
+      } catch (error) {
+        // If transformation fails, keep original value
+        console.error(`Transformation failed for column ${columnName}:`, error)
+      }
+    }
+
+    return transformedRow
+  })
+}
+
+/**
  * Parse raw content step - NO database operations
  */
 export const parseRawContentStep = createStep(
@@ -164,10 +241,16 @@ export const parseRawContentStep = createStep(
         )
       }
 
+      // Apply transformations BEFORE column mapping
+      let transformedRows = parsedRows
+      if (parse_config.transformations && Object.keys(parse_config.transformations).length > 0) {
+        transformedRows = applyTransformations(parsedRows, parse_config.transformations)
+      }
+
       // Apply column mapping if provided
-      let mappedRows = parsedRows
+      let mappedRows = transformedRows
       if (column_mapping && Object.keys(column_mapping).length > 0) {
-        mappedRows = parsedRows.map(row => {
+        mappedRows = transformedRows.map(row => {
           const mappedRow: Record<string, any> = {}
 
           for (const [sourceColumn, targetField] of Object.entries(column_mapping)) {

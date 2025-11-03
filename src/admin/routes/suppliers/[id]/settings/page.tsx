@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query"
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Container, Heading } from "@medusajs/ui"
 import { SupplierPricingSettingsSection } from "../components/supplier-pricing-settings-section"
-import { SupplierParserConfigSection } from "../components/supplier-parser-config-section"
 import { SupplierDiscountConfigSection } from "../components/supplier-discount-config-section"
+import { SupplierImportDefaultsSection } from "../components/supplier-import-defaults-section"
 import { SupplierBrandsSection } from "../components/supplier-brands-section"
 import { SingleColumnPageSkeleton } from "../../../../components/common/skeleton"
 
@@ -36,10 +36,10 @@ const SupplierSettingsPage = () => {
       <Container className="p-6">
         <Heading level="h1">Supplier Configuration</Heading>
       </Container>
-      
+
       <SupplierPricingSettingsSection supplier={supplier} />
       <SupplierDiscountConfigSection supplier={supplier} />
-      <SupplierParserConfigSection supplierId={supplier.id} />
+      <SupplierImportDefaultsSection supplier={supplier} />
       <SupplierBrandsSection supplierId={supplier.id} />
     </div>
   )
