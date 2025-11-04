@@ -1,6 +1,9 @@
-import { Container, Heading, Text, Label, Skeleton, Button } from "@medusajs/ui"
+import { Skeleton, Text } from "@medusajs/ui"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router-dom"
+import { Container } from "../common/container"
+import { Header } from "../common/header"
+import { SectionRow } from "../common/section-row"
 
 interface Supplier {
   id: string
@@ -29,55 +32,32 @@ export const PurchaseOrderSupplier = ({ data }: PurchaseOrderSupplierProps) => {
   })
 
   return (
-    <Container className="divide-y p-0">
-      <div className="flex items-center justify-between px-6 py-4">
-        <Heading level="h2">Supplier</Heading>
-        {supplier && (
-          <Button variant="secondary" size="small" asChild>
-            <Link to={`/suppliers/${supplier.id}`}>View Details</Link>
-          </Button>
-        )}
-      </div>
-      <div className="px-6 py-4">
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <Label size="small" weight="plus" className="mb-2">
-              Name
-            </Label>
-            {isLoading ? (
-              <Skeleton className="h-5 w-48" />
-            ) : (
-              <Text size="small" className="font-medium">
-                {supplier?.name || 'N/A'}
+    <Container>
+      <Header title="Supplier" />
+      <SectionRow
+        title="Name"
+        value={
+          isLoading ? (
+            <Skeleton className="h-5 w-48" />
+          ) : supplier ? (
+            <Link 
+              to={`/suppliers/${supplier.id}`}
+              className="text-ui-fg-interactive hover:text-ui-fg-interactive-hover"
+            >
+              <Text size="small" weight="plus" className="hover:underline">
+                {supplier.name}
               </Text>
-            )}
-          </div>
-          {supplier?.contact_person && (
-            <div>
-              <Label size="small" weight="plus" className="mb-2">
-                Contact Person
-              </Label>
-              <Text size="small">{supplier.contact_person}</Text>
-            </div>
-          )}
-          {supplier?.email && (
-            <div>
-              <Label size="small" weight="plus" className="mb-2">
-                Email
-              </Label>
-              <Text size="small">{supplier.email}</Text>
-            </div>
-          )}
-          {supplier?.phone && (
-            <div>
-              <Label size="small" weight="plus" className="mb-2">
-                Phone
-              </Label>
-              <Text size="small">{supplier.phone}</Text>
-            </div>
-          )}
-        </div>
-      </div>
+            </Link>
+          ) : (
+            "N/A"
+          )
+        }
+      />
+      {supplier?.contact_person && (
+        <SectionRow title="Contact Person" value={supplier.contact_person} />
+      )}
+      {supplier?.email && <SectionRow title="Email" value={supplier.email} />}
+      {supplier?.phone && <SectionRow title="Phone" value={supplier.phone} />}
     </Container>
   )
 }

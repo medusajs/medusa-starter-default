@@ -4,7 +4,6 @@ import { useParams } from "react-router-dom"
 import { useState } from "react"
 import { SingleColumnPageSkeleton } from "../../../components/common/skeleton"
 import { PurchaseOrderHeader } from "../../../components/widgets/purchase-order-header"
-import { PurchaseOrderGeneral } from "../../../components/widgets/purchase-order-general"
 import { PurchaseOrderTimeline } from "../../../components/widgets/purchase-order-timeline"
 import { PurchaseOrderItems } from "../../../components/widgets/purchase-order-items"
 import { DeliveryHistory } from "../../../components/widgets/delivery-history"
@@ -57,9 +56,6 @@ const PurchaseOrderDetailPage = () => {
       <div className="flex flex-col gap-x-4 gap-y-3 xl:flex-row xl:items-start">
         {/* Main content */}
         <div className="flex w-full flex-col gap-y-3">
-          {/* General info */}
-          <PurchaseOrderGeneral data={purchaseOrder} />
-
           {/* Backorders Alert (only show if backorders exist) */}
           <BackordersWidget
             purchaseOrderId={purchaseOrder.id}

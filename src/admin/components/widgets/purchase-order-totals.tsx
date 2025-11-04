@@ -1,5 +1,7 @@
-import { Container, Heading, Text } from "@medusajs/ui"
+import { Text } from "@medusajs/ui"
 import { useMemo } from "react"
+import { Container } from "../common/container"
+import { Header } from "../common/header"
 
 interface PurchaseOrderItem {
   id: string
@@ -38,10 +40,8 @@ export const PurchaseOrderTotals = ({ data: purchaseOrder }: PurchaseOrderTotals
   }, [subtotal, purchaseOrder.tax_amount, purchaseOrder.shipping_amount, purchaseOrder.discount_amount])
 
   return (
-    <Container className="divide-y p-0">
-      <div className="flex items-center justify-between px-6 py-4">
-        <Heading level="h2">Summary</Heading>
-      </div>
+    <Container>
+      <Header title="Summary" />
       <div className="px-6 py-4">
         <div className="flex flex-col gap-y-2">
           <div className="flex items-center justify-between">
@@ -77,7 +77,7 @@ export const PurchaseOrderTotals = ({ data: purchaseOrder }: PurchaseOrderTotals
               <Text size="small" className="text-ui-fg-subtle">
                 Discount
               </Text>
-              <Text size="small" className="text-green-600">
+              <Text size="small" className="text-ui-fg-success">
                 -{formatCurrency(purchaseOrder.discount_amount, purchaseOrder.currency_code)}
               </Text>
             </div>

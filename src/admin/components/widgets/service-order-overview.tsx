@@ -1,8 +1,9 @@
 import { Container, Heading, Text, Badge, Skeleton, Button, Input, Select, Textarea, Label, StatusBadge, Tooltip, toast } from "@medusajs/ui"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { PencilSquare, ArrowLeft, ArrowRight } from "@medusajs/icons"
+import { PencilSquare, ArrowLeft, ArrowRight, ArrowUpRightOnBox } from "@medusajs/icons"
 import { useState } from "react"
 import { useForm, Controller } from "react-hook-form"
+import { useNavigate } from "react-router-dom"
 import { ServiceTypeLabel } from "../../components/common/service-type-label"
 
 interface ServiceOrder {
@@ -42,6 +43,7 @@ interface ServiceOrderOverviewWidgetProps {
 const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverviewWidgetProps) => {
   const [isEditing, setIsEditing] = useState(false)
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const { data: customer, isLoading: customerLoading } = useQuery({
     queryKey: ['customer', serviceOrder?.customer_id],
@@ -98,6 +100,21 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
       return data.technicians
     },
     enabled: isEditing,
+  })
+
+  // Fetch invoice for this service order
+  const { data: invoiceData, isLoading: invoiceLoading } = useQuery({
+    queryKey: ['invoice', 'service-order', serviceOrder?.id],
+    queryFn: async () => {
+      if (!serviceOrder?.id) return null
+      // Query invoices where service_order_id matches
+      const response = await fetch(`/admin/invoices?service_order_id=${serviceOrder.id}`)
+      if (!response.ok) throw new Error('Failed to fetch invoice')
+      const data = await response.json()
+      // Return the first invoice if any exist
+      return data.invoices && data.invoices.length > 0 ? data.invoices[0] : null
+    },
+    enabled: !!serviceOrder?.id,
   })
 
   const form = useForm({
@@ -511,6 +528,23 @@ const ServiceOrderOverviewWidget = ({ data: serviceOrder }: ServiceOrderOverview
               </StatusBadge>
             </div>
           </div>
+          {invoiceData && (
+            <div className="px-6 py-4 border-t">
+              <div className="flex flex-col">
+                <Label size="small" weight="plus" className="text-ui-fg-subtle mb-2">
+                  Invoice
+                </Label>
+                <Button
+                  variant="secondary"
+                  size="small"
+                  onClick={() => navigate(`/invoices/${invoiceData.id}`)}
+                >
+                  <ArrowUpRightOnBox />
+                  {invoiceData.invoice_number || 'View Invoice'}
+                </Button>
+              </div>
+            </div>
+          )}
         </>
       )}
     </Container>

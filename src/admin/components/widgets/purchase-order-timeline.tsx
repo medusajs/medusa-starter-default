@@ -1,168 +1,167 @@
-import { Container, Heading, Badge, clx } from "@medusajs/ui"
-import { CheckCircleSolid, EllipseMiniSolid } from "@medusajs/icons"
+import { StatusBadge, Text, Select, toast } from "@medusajs/ui"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Container } from "../common/container"
+import { Header } from "../common/header"
+import { SectionRow } from "../common/section-row"
 
 interface PurchaseOrderTimelineProps {
   data: {
+    id: string
     status: string
-    order_date?: Date
+    order_date?: Date | string
+    expected_delivery_date?: Date | string
+    actual_delivery_date?: Date | string
+    payment_terms?: string
+    notes?: string
     metadata?: {
       confirmed_at?: string
     }
-    actual_delivery_date?: Date
   }
 }
 
-const STATUS_CONFIG = {
-  draft: {
-    label: "Draft",
-    variant: "default" as const,
-    order: 0,
-  },
-  sent: {
-    label: "Sent",
-    variant: "blue" as const,
-    order: 1,
-  },
-  confirmed: {
-    label: "Confirmed",
-    variant: "purple" as const,
-    order: 2,
-  },
-  partially_received: {
-    label: "Partially Received",
-    variant: "orange" as const,
-    order: 3,
-  },
-  received: {
-    label: "Received",
-    variant: "green" as const,
-    order: 4,
-  },
-  cancelled: {
-    label: "Cancelled",
-    variant: "red" as const,
-    order: -1,
-  },
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'draft': return 'grey'
+    case 'sent': return 'blue'
+    case 'confirmed': return 'orange'
+    case 'partially_received': return 'purple'
+    case 'received': return 'green'
+    case 'cancelled': return 'red'
+    default: return 'grey'
+  }
 }
 
-const TIMELINE_STEPS = [
-  { key: "draft", label: "Draft" },
-  { key: "sent", label: "Sent" },
-  { key: "confirmed", label: "Confirmed" },
-  { key: "partially_received", label: "Receiving" },
-  { key: "received", label: "Complete" },
+const getStatusLabel = (status: string) => {
+  return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+}
+
+const formatDate = (date?: Date | string) => {
+  if (!date) return null
+  const d = typeof date === "string" ? new Date(date) : date
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
+}
+
+const STATUS_OPTIONS = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'sent', label: 'Sent' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'partially_received', label: 'Partially Received' },
+  { value: 'received', label: 'Received' },
+  { value: 'cancelled', label: 'Cancelled' },
 ]
 
 export const PurchaseOrderTimeline = ({ data }: PurchaseOrderTimelineProps) => {
+  const queryClient = useQueryClient()
   const currentStatus = data.status
-  const currentOrder = STATUS_CONFIG[currentStatus]?.order ?? 0
 
-  // Don't show timeline for cancelled orders
-  if (currentStatus === "cancelled") {
-    return (
-      <Container className="divide-y p-0">
-        <div className="flex items-center justify-between px-6 py-4">
-          <Heading level="h2">Status</Heading>
-        </div>
-        <div className="px-6 py-4">
-          <Badge color="red" size="large">
-            Cancelled
-          </Badge>
-        </div>
-      </Container>
-    )
-  }
+  const updateStatusMutation = useMutation({
+    mutationFn: async (status: string) => {
+      const response = await fetch(`/admin/purchase-orders/${data.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.details || "Failed to update status")
+      }
+      
+      return response.json()
+    },
+    onSuccess: (response) => {
+      // Update the cache immediately with the response data
+      queryClient.setQueryData(["purchase-order", data.id], response.purchase_order)
+      
+      // Invalidate queries to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ["purchase-order", data.id] })
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] })
+      
+      toast.success("Status updated successfully")
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update status: ${error.message}`)
+    }
+  })
 
-  const getStepStatus = (stepOrder: number) => {
-    if (stepOrder < currentOrder) return "completed"
-    if (stepOrder === currentOrder) return "current"
-    return "upcoming"
-  }
-
-  const formatDate = (date?: Date | string) => {
-    if (!date) return null
-    const d = typeof date === "string" ? new Date(date) : date
-    return d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })
-  }
-
-  const getStepDate = (stepKey: string) => {
-    switch (stepKey) {
-      case "draft":
-        return formatDate(data.order_date)
-      case "confirmed":
-        return formatDate(data.metadata?.confirmed_at)
-      case "received":
-        return formatDate(data.actual_delivery_date)
-      default:
-        return null
+  const handleStatusChange = (newStatus: string) => {
+    if (newStatus !== currentStatus && !updateStatusMutation.isPending) {
+      updateStatusMutation.mutate(newStatus)
     }
   }
 
   return (
-    <Container className="divide-y p-0">
-      <div className="flex items-center justify-between px-6 py-4">
-        <Heading level="h2">Progress</Heading>
-      </div>
-      <div className="px-6 py-4">
-        <div className="flex flex-col gap-3">
-          {TIMELINE_STEPS.map((step, index) => {
-            const stepOrder = STATUS_CONFIG[step.key]?.order ?? 0
-            const status = getStepStatus(stepOrder)
-            const stepDate = getStepDate(step.key)
-
-            return (
-              <div key={step.key} className="flex items-start gap-3">
-                {/* Step Icon */}
-                <div
-                  className={clx(
-                    "flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors flex-shrink-0",
-                    {
-                      "border-green-500 bg-green-500 text-white":
-                        status === "completed",
-                      "border-blue-500 bg-blue-500 text-white":
-                        status === "current",
-                      "border-gray-300 bg-white text-gray-400":
-                        status === "upcoming",
-                    }
-                  )}
-                >
-                  {status === "completed" ? (
-                    <CheckCircleSolid className="text-white w-3 h-3" />
-                  ) : (
-                    <EllipseMiniSolid
-                      className={clx("w-2 h-2", {
-                        "text-white": status === "current",
-                        "text-gray-400": status === "upcoming",
-                      })}
-                    />
-                  )}
-                </div>
-
-                {/* Step Label and Date */}
-                <div className="flex flex-col min-w-0 flex-1">
-                  <div
-                    className={clx("text-sm font-medium", {
-                      "text-gray-900": status !== "upcoming",
-                      "text-gray-500": status === "upcoming",
-                    })}
-                  >
-                    {step.label}
+    <Container>
+      <Header title="Order Details" />
+      <SectionRow 
+        title="Status" 
+        value={
+          <Select 
+            value={currentStatus}
+            onValueChange={handleStatusChange}
+            disabled={updateStatusMutation.isPending}
+          >
+            <Select.Trigger className="w-[180px]">
+              <Select.Value>
+                <StatusBadge color={getStatusColor(currentStatus) as any}>
+                  {getStatusLabel(currentStatus)}
+                </StatusBadge>
+              </Select.Value>
+            </Select.Trigger>
+            <Select.Content>
+              {STATUS_OPTIONS.map(status => (
+                <Select.Item key={status.value} value={status.value}>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge color={getStatusColor(status.value) as any} size="small">
+                      {status.label}
+                    </StatusBadge>
                   </div>
-                  {stepDate && (
-                    <div className="text-xs text-gray-500">
-                      {stepDate}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select>
+        } 
+      />
+      {data.order_date && (
+        <SectionRow 
+          title="Order Date" 
+          value={formatDate(data.order_date)} 
+        />
+      )}
+      {data.metadata?.confirmed_at && (
+        <SectionRow 
+          title="Confirmed Date" 
+          value={formatDate(data.metadata.confirmed_at)} 
+        />
+      )}
+      {data.expected_delivery_date && (
+        <SectionRow 
+          title="Expected Delivery" 
+          value={formatDate(data.expected_delivery_date)} 
+        />
+      )}
+      {data.actual_delivery_date && (
+        <SectionRow 
+          title="Actual Delivery" 
+          value={formatDate(data.actual_delivery_date)} 
+        />
+      )}
+      {data.payment_terms && (
+        <SectionRow 
+          title="Payment Terms" 
+          value={data.payment_terms} 
+        />
+      )}
+      {data.notes && (
+        <SectionRow
+          title="Notes"
+          value={<Text size="small" className="whitespace-pre-line">{data.notes}</Text>}
+        />
+      )}
     </Container>
   )
 }

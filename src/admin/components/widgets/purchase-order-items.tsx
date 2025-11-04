@@ -1,14 +1,13 @@
 import {
-  Container,
-  Heading,
   Text,
   DataTable,
   useDataTable,
   createDataTableColumnHelper,
-  Badge,
+  StatusBadge,
 } from "@medusajs/ui"
 import { useMemo } from "react"
-import { CheckCircleSolid, Clock, ExclamationCircle } from "@medusajs/icons"
+import { Container } from "../common/container"
+import { Header } from "../common/header"
 
 interface PurchaseOrderItem {
   id: string
@@ -125,45 +124,44 @@ export const PurchaseOrderItems = ({ data: purchaseOrder }: PurchaseOrderItemsPr
       cell: ({ getValue }) => <Text size="small">{getValue()}</Text>,
     }),
     columnHelper.accessor("quantity_received", {
-      header: "Status",
+      header: "Qty Received",
       cell: ({ getValue, row }) => {
         const received = getValue()
         const ordered = row.original.quantity_ordered
         const backorder = ordered - received
 
+        return (
+          <div className="flex flex-col gap-1">
+            <Text size="small" weight="plus">
+              {received} / {ordered}
+            </Text>
+            {backorder > 0 && (
+              <Text size="xsmall" className="text-ui-fg-subtle">
+                {backorder} backorder
+              </Text>
+            )}
+          </div>
+        )
+      },
+    }),
+    columnHelper.display({
+      id: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const received = row.original.quantity_received
+        const ordered = row.original.quantity_ordered
+
         const isFullyReceived = received >= ordered
         const isPartiallyReceived = received > 0 && received < ordered
         const isPending = received === 0
 
-        return (
-          <div className="flex items-center gap-2">
-            {/* Status Icon */}
-            {isFullyReceived && (
-              <CheckCircleSolid className="text-green-500" />
-            )}
-            {isPartiallyReceived && (
-              <ExclamationCircle className="text-orange-500" />
-            )}
-            {isPending && <Clock className="text-gray-400" />}
-
-            {/* Quantity Info */}
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1">
-                <Text size="small" weight="plus">
-                  {received}
-                </Text>
-                <Text size="small" className="text-ui-fg-subtle">
-                  / {ordered}
-                </Text>
-              </div>
-              {backorder > 0 && (
-                <Badge color="orange" size="small" className="mt-1">
-                  {backorder} backorder
-                </Badge>
-              )}
-            </div>
-          </div>
-        )
+        if (isFullyReceived) {
+          return <StatusBadge color="green">Received</StatusBadge>
+        }
+        if (isPartiallyReceived) {
+          return <StatusBadge color="orange">Partial</StatusBadge>
+        }
+        return <StatusBadge color="grey">Pending</StatusBadge>
       },
     }),
     columnHelper.accessor("unit_cost", {
@@ -192,10 +190,8 @@ export const PurchaseOrderItems = ({ data: purchaseOrder }: PurchaseOrderItemsPr
   })
 
   return (
-    <Container className="divide-y p-0">
-      <div className="flex items-center justify-between px-6 py-4">
-        <Heading level="h2">Items ({groupedItems.length})</Heading>
-      </div>
+    <Container>
+      <Header title={`Items (${groupedItems.length})`} />
       <DataTable instance={table}>
         <DataTable.Table />
       </DataTable>

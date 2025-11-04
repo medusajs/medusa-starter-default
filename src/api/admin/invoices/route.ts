@@ -23,6 +23,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       status, 
       invoice_type,
       customer_id,
+      service_order_id,
+      order_id,
       q,
       limit = 50, 
       offset = 0,
@@ -35,6 +37,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     if (status) filters.status = status
     if (invoice_type) filters.invoice_type = invoice_type
     if (customer_id) filters.customer_id = customer_id
+    if (service_order_id) filters.service_order_id = service_order_id
+    if (order_id) filters.order_id = order_id
     
     // Add search functionality
     if (q) {
