@@ -198,6 +198,37 @@ const useServiceOrderTableQuery = ({
 const ServiceOrderActions = ({ serviceOrder }: { serviceOrder: ServiceOrder }) => {
   const { t } = useCustomTranslation()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/admin/service-orders/${id}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) {
+        throw new Error('Failed to delete service order')
+      }
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-orders'] })
+      toast.success('Success', {
+        description: 'Service order deleted successfully',
+      })
+    },
+    onError: (error) => {
+      toast.error('Error', {
+        description: error instanceof Error ? error.message : 'Failed to delete service order',
+      })
+    },
+  })
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (window.confirm(`Are you sure you want to delete service order ${serviceOrder.service_order_number}?`)) {
+      deleteMutation.mutate(serviceOrder.id)
+    }
+  }
 
   return (
     <DropdownMenu>
@@ -207,8 +238,8 @@ const ServiceOrderActions = ({ serviceOrder }: { serviceOrder: ServiceOrder }) =
         </IconButton>
       </DropdownMenu.Trigger>
       <DropdownMenu.Content side="bottom">
-        <EditServiceOrderForm 
-          serviceOrder={serviceOrder} 
+        <EditServiceOrderForm
+          serviceOrder={serviceOrder}
           trigger={
             <DropdownMenu.Item
               onSelect={(e) => {
@@ -222,15 +253,12 @@ const ServiceOrderActions = ({ serviceOrder }: { serviceOrder: ServiceOrder }) =
           }
         />
         <DropdownMenu.Item
-          onClick={(e) => {
-            e.stopPropagation()
-            // TODO: Add delete service order functionality
-            console.log('Delete service order:', serviceOrder.id)
-          }}
+          onClick={handleDelete}
+          disabled={deleteMutation.isPending}
           className="[&>svg]:text-ui-fg-subtle flex items-center gap-2 text-ui-fg-error"
         >
           <Trash className="h-4 w-4" />
-          {t("custom.general.delete")}
+          {deleteMutation.isPending ? 'Deleting...' : t("custom.general.delete")}
         </DropdownMenu.Item>
       </DropdownMenu.Content>
     </DropdownMenu>

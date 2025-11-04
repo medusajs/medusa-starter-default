@@ -24,15 +24,15 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const serviceOrdersService: any = req.scope.resolve(SERVICE_ORDERS_MODULE)
     const { id } = req.params
     const { work_description, start_time, billable_hours, hourly_rate } = req.body as any
-    
+
     // Validate required fields
     if (!work_description || !start_time || billable_hours === undefined || !hourly_rate) {
-      return res.status(400).json({ 
-        error: "Validation failed", 
-        details: "work_description, start_time, billable_hours, and hourly_rate are required" 
+      return res.status(400).json({
+        error: "Validation failed",
+        details: "work_description, start_time, billable_hours, and hourly_rate are required"
       })
     }
-    
+
     // Convert string dates to Date objects
     const body = req.body as any
     const timeEntryData = {
@@ -42,12 +42,39 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       // Handle is_active field for timer functionality
       is_active: body.is_active ?? false,
     }
-    
+
     const timeEntry = await serviceOrdersService.addTimeEntry(id, timeEntryData)
-    
+
+    // Log event if timer is started (is_active = true)
+    if (timeEntryData.is_active) {
+      try {
+        await serviceOrdersService.createServiceOrderComment({
+          service_order_id: id,
+          message: `Timer started: ${work_description}`,
+          author_id: "system",
+          author_name: "System",
+          author_type: "system",
+          is_internal: false,
+          is_pinned: false,
+          metadata: {
+            event_type: "time_entry_started",
+            event_data: {
+              time_entry_id: timeEntry.id,
+              work_description: work_description,
+              work_category: body.work_category,
+              hourly_rate: hourly_rate
+            }
+          }
+        })
+      } catch (eventError) {
+        // Log error but don't fail the request
+        console.error("Failed to log timer start event:", eventError)
+      }
+    }
+
     res.status(201).json({ time_entry: timeEntry })
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Failed to add time entry",
       details: error instanceof Error ? error.message : "Unknown error"
     })

@@ -189,8 +189,16 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
   const [showProductSearch, setShowProductSearch] = useState(false)
   const [productSearch, setProductSearch] = useState("")
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
+
+  // Item mode: 'catalog' for product selection, 'manual' for custom entry
+  const [itemMode, setItemMode] = useState<'catalog' | 'manual'>('catalog')
+
   const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    sku: '',
     quantity_needed: 1,
+    unit_price: 0,
     notes: '',
   })
 
@@ -251,8 +259,13 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
       queryClient.invalidateQueries({ queryKey: ["service-order-comments", serviceOrder.id] })
       setShowAddModal(false)
       setSelectedVariant(null)
+      setItemMode('catalog')
       setFormData({
+        title: '',
+        description: '',
+        sku: '',
         quantity_needed: 1,
+        unit_price: 0,
         notes: '',
       })
       toast.success("Item added successfully")
@@ -287,35 +300,93 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
     setProductSearch("")
   }
 
+  const handleItemModeChange = (mode: 'catalog' | 'manual') => {
+    setItemMode(mode)
+    setSelectedVariant(null)
+    setProductSearch("")
+    // Reset form data when switching modes
+    if (mode === 'manual') {
+      setFormData({
+        title: '',
+        description: '',
+        sku: '',
+        quantity_needed: 1,
+        unit_price: 0,
+        notes: '',
+      })
+    } else {
+      setFormData({
+        title: '',
+        description: '',
+        sku: '',
+        quantity_needed: 1,
+        unit_price: 0,
+        notes: '',
+      })
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedVariant) {
-      toast.error("Please select a product variant")
-      return
-    }
-    
-    // Get the EUR price from the variant's prices array
-    const eurPrice = selectedVariant.prices?.find(price => price.currency_code === 'eur')
-    const unitPrice = eurPrice ? eurPrice.amount : 0 // Don't divide by 100
-    
-    // Check if the variant has an EUR price
-    if (!eurPrice || eurPrice.amount === 0) {
-      toast.error("This variant doesn't have an EUR price set up. Please set an EUR price for this variant first.")
-      return
-    }
-    
-    const itemData = {
-      title: `${selectedVariant.product.title}${selectedVariant.title !== 'Default' ? ` - ${selectedVariant.title}` : ''}`,
-      description: selectedVariant.product.description || '',
-      sku: selectedVariant.sku,
-      quantity_needed: formData.quantity_needed,
-      unit_price: unitPrice,
-      notes: formData.notes,
-      product_id: selectedVariant.product.id,
-      variant_id: selectedVariant.id,
-    }
 
-    addItemMutation.mutate(itemData)
+    if (itemMode === 'catalog') {
+      // Catalog mode: require selected variant
+      if (!selectedVariant) {
+        toast.error("Please select a product variant")
+        return
+      }
+
+      // Get the EUR price from the variant's prices array
+      const eurPrice = selectedVariant.prices?.find(price => price.currency_code === 'eur')
+      const unitPrice = eurPrice ? eurPrice.amount : 0
+
+      // Check if the variant has an EUR price
+      if (!eurPrice || eurPrice.amount === 0) {
+        toast.error("This variant doesn't have an EUR price set up. Please set an EUR price for this variant first.")
+        return
+      }
+
+      const itemData = {
+        title: `${selectedVariant.product.title}${selectedVariant.title !== 'Default' ? ` - ${selectedVariant.title}` : ''}`,
+        description: selectedVariant.product.description || '',
+        sku: selectedVariant.sku,
+        quantity_needed: formData.quantity_needed,
+        unit_price: unitPrice,
+        notes: formData.notes,
+        product_id: selectedVariant.product.id,
+        variant_id: selectedVariant.id,
+      }
+
+      addItemMutation.mutate(itemData)
+    } else {
+      // Manual mode: validate manual fields
+      if (!formData.title || formData.title.trim() === '') {
+        toast.error("Title is required")
+        return
+      }
+
+      if (!formData.quantity_needed || formData.quantity_needed <= 0) {
+        toast.error("Quantity must be greater than 0")
+        return
+      }
+
+      if (formData.unit_price === undefined || formData.unit_price === null) {
+        toast.error("Unit price is required")
+        return
+      }
+
+      const itemData = {
+        title: formData.title,
+        description: formData.description || '',
+        sku: formData.sku || undefined,
+        quantity_needed: formData.quantity_needed,
+        unit_price: formData.unit_price,
+        notes: formData.notes || undefined,
+        // Omit product_id and variant_id for manual items
+      }
+
+      addItemMutation.mutate(itemData)
+    }
   }
 
   const handleDeleteItem = (itemId: string, itemTitle: string) => {
@@ -425,94 +496,189 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
       <FocusModal open={showAddModal} onOpenChange={setShowAddModal}>
         <FocusModal.Content>
           <FocusModal.Header>
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-between">
+              <div>
+                <Heading level="h2">
+                  {itemMode === 'catalog' ? 'Add Item from Catalog' : 'Add Manual Item'}
+                </Heading>
+                <Text className="text-ui-fg-subtle mt-1">
+                  {itemMode === 'catalog'
+                    ? 'Select a product variant and specify the quantity needed'
+                    : 'Enter item details manually without selecting from catalog'
+                  }
+                </Text>
+              </div>
               <FocusModal.Close asChild>
                 <Button variant="secondary">Cancel</Button>
               </FocusModal.Close>
             </div>
           </FocusModal.Header>
           <FocusModal.Body>
-            <div className="flex flex-col items-center p-16">
-              <div className="w-full max-w-lg">
-                <div className="mb-8 text-center">
-                  <Heading level="h2" className="mb-2">Add Item</Heading>
-                  <Text className="text-ui-fg-subtle">
-                    Select a product variant and specify the quantity needed
-                  </Text>
-                </div>
+            <div className="flex flex-col p-6">
+              {/* Mode Toggle */}
+              <div className="flex gap-2 mb-6 pb-4 border-b border-ui-border-base">
+                <Button
+                  size="small"
+                  variant={itemMode === 'catalog' ? 'primary' : 'secondary'}
+                  onClick={() => handleItemModeChange('catalog')}
+                >
+                  From Product Catalog
+                </Button>
+                <Button
+                  size="small"
+                  variant={itemMode === 'manual' ? 'primary' : 'secondary'}
+                  onClick={() => handleItemModeChange('manual')}
+                >
+                  Manual Item
+                </Button>
+              </div>
 
+              <div className="w-full max-w-lg mx-auto">
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Product Variant Selection */}
-                  <div>
-                    <Label size="small" weight="plus">Product Variant</Label>
-                    <div className="mt-2">
-                      {selectedVariant ? (
-                        <div className="flex items-center justify-between p-3 border rounded-md bg-ui-bg-subtle">
-                          <div className="flex-1">
-                            <Text weight="plus" size="small">
-                              {selectedVariant.product.title}
-                              {selectedVariant.title !== 'Default' ? ` - ${selectedVariant.title}` : ''}
-                            </Text>
-                            <Text size="small" className="text-ui-fg-subtle">
-                              SKU: {selectedVariant.sku}
-                            </Text>
-                            {(() => {
-                              const eurPrice = selectedVariant.prices?.find(price => price.currency_code === 'eur')
-                              return eurPrice ? (
+                  {/* Catalog Mode: Product Variant Selection */}
+                  {itemMode === 'catalog' && (
+                    <>
+                      <div>
+                        <Label size="small" weight="plus">Product Variant</Label>
+                        <div className="mt-2">
+                          {selectedVariant ? (
+                            <div className="flex items-center justify-between p-3 border rounded-md bg-ui-bg-subtle">
+                              <div className="flex-1">
+                                <Text weight="plus" size="small">
+                                  {selectedVariant.product.title}
+                                  {selectedVariant.title !== 'Default' ? ` - ${selectedVariant.title}` : ''}
+                                </Text>
                                 <Text size="small" className="text-ui-fg-subtle">
-                                  €{eurPrice.amount.toFixed(2)}
+                                  SKU: {selectedVariant.sku}
                                 </Text>
-                              ) : (
-                                <Text size="small" className="text-ui-fg-subtle text-ui-fg-muted">
-                                  No EUR price set
-                                </Text>
-                              )
-                            })()}
-                          </div>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="small"
-                            onClick={() => setShowProductSearch(true)}
-                          >
-                            Change
-                          </Button>
+                                {(() => {
+                                  const eurPrice = selectedVariant.prices?.find(price => price.currency_code === 'eur')
+                                  return eurPrice ? (
+                                    <Text size="small" className="text-ui-fg-subtle">
+                                      €{eurPrice.amount.toFixed(2)}
+                                    </Text>
+                                  ) : (
+                                    <Text size="small" className="text-ui-fg-subtle text-ui-fg-muted">
+                                      No EUR price set
+                                    </Text>
+                                  )
+                                })()}
+                              </div>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="small"
+                                onClick={() => setShowProductSearch(true)}
+                              >
+                                Change
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              onClick={() => setShowProductSearch(true)}
+                              className="w-full"
+                            >
+                              <MagnifyingGlass className="w-4 h-4 mr-2" />
+                              Select Product Variant
+                            </Button>
+                          )}
                         </div>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => setShowProductSearch(true)}
-                          className="w-full"
-                        >
-                          <MagnifyingGlass className="w-4 h-4 mr-2" />
-                          Select Product Variant
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+                      </div>
 
-                  {/* Quantity */}
-                  <div>
-                    <Label size="small" weight="plus">Quantity Needed</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={formData.quantity_needed}
-                      onChange={(e) => setFormData(prev => ({ ...prev, quantity_needed: parseInt(e.target.value) || 1 }))}
-                      required
-                    />
-                  </div>
+                      <div>
+                        <Label size="small" weight="plus">Quantity Needed</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={formData.quantity_needed}
+                          onChange={(e) => setFormData(prev => ({ ...prev, quantity_needed: parseInt(e.target.value) || 1 }))}
+                          required
+                        />
+                      </div>
 
-                  {/* Notes */}
-                  <div>
-                    <Label size="small" weight="plus">Notes (optional)</Label>
-                    <Textarea
-                      placeholder="Additional notes about this item"
-                      value={formData.notes}
-                      onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                    />
-                  </div>
+                      <div>
+                        <Label size="small" weight="plus">Notes (optional)</Label>
+                        <Textarea
+                          placeholder="Additional notes about this item"
+                          value={formData.notes}
+                          onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Manual Mode: Custom Entry Form */}
+                  {itemMode === 'manual' && (
+                    <>
+                      <div>
+                        <Label size="small" weight="plus">Title *</Label>
+                        <Input
+                          type="text"
+                          placeholder="Item title"
+                          value={formData.title}
+                          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label size="small" weight="plus">Description</Label>
+                        <Textarea
+                          placeholder="Item description (optional)"
+                          value={formData.description}
+                          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                          rows={3}
+                        />
+                      </div>
+
+                      <div>
+                        <Label size="small" weight="plus">SKU</Label>
+                        <Input
+                          type="text"
+                          placeholder="SKU (optional)"
+                          value={formData.sku}
+                          onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label size="small" weight="plus">Quantity Needed *</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={formData.quantity_needed}
+                            onChange={(e) => setFormData(prev => ({ ...prev, quantity_needed: parseInt(e.target.value) || 1 }))}
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <Label size="small" weight="plus">Unit Price (€) *</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={formData.unit_price}
+                            onChange={(e) => setFormData(prev => ({ ...prev, unit_price: parseFloat(e.target.value) || 0 }))}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label size="small" weight="plus">Notes</Label>
+                        <Textarea
+                          placeholder="Additional notes about this item (optional)"
+                          value={formData.notes}
+                          onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                          rows={2}
+                        />
+                      </div>
+                    </>
+                  )}
 
                   <div className="flex justify-end gap-2 pt-4">
                     <Button
@@ -523,9 +689,9 @@ const ServiceOrderItemsWidget = ({ data: serviceOrder }: ServiceOrderItemsWidget
                     >
                       Cancel
                     </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={addItemMutation.isPending || !selectedVariant}
+                    <Button
+                      type="submit"
+                      disabled={addItemMutation.isPending || (itemMode === 'catalog' && !selectedVariant)}
                     >
                       {addItemMutation.isPending ? "Adding..." : "Add Item"}
                     </Button>

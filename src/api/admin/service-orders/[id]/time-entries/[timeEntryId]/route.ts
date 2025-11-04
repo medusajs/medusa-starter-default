@@ -7,7 +7,18 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
     const { id } = req.params
     let { timeEntryId } = req.params as any
     const body = req.body as any
-    
+
+    // Get the existing entry before updating to check if timer is being stopped
+    let existingEntry = null
+    try {
+      const entries = await serviceOrdersService.listServiceOrderTimeEntries({
+        id: timeEntryId
+      })
+      existingEntry = entries?.[0]
+    } catch (e) {
+      // Continue without existing entry
+    }
+
     // Resolve missing/invalid timeEntryId by finding the active entry for this service order
     const isInvalidParam = !timeEntryId || timeEntryId === "undefined" || timeEntryId === "null"
     if (isInvalidParam) {
@@ -24,6 +35,7 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
       }
 
       timeEntryId = activeEntries[0].id
+      existingEntry = activeEntries[0]
     }
 
     // Convert string dates to Date objects if they exist
@@ -32,27 +44,57 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
       start_time: body.start_time ? new Date(body.start_time) : undefined,
       end_time: body.end_time ? new Date(body.end_time) : undefined,
     }
-    
+
     // Remove undefined values to avoid overwriting with undefined
     Object.keys(updateData).forEach(key => {
       if (updateData[key] === undefined) {
         delete updateData[key]
       }
     })
-    
-    const updated = await serviceOrdersService.updateServiceOrderTimeEntry(timeEntryId, updateData)
-    const timeEntry = Array.isArray(updated) ? updated[0] : updated
-    
-    // Update service order totals after time entry update
-    try {
-      await serviceOrdersService.updateServiceOrderTotals(id)
-    } catch (totalsError) {
-      // Don't fail the main operation if totals update fails
+
+    const timeEntry = await serviceOrdersService.updateServiceOrderTimeEntry(timeEntryId, updateData)
+
+    // Log event if timer is being stopped (was active, now inactive)
+    const isStoppingTimer = existingEntry?.is_active === true && updateData.is_active === false
+    if (isStoppingTimer) {
+      try {
+        // Calculate duration
+        const durationHours = timeEntry.billable_hours || 0
+        const hours = Math.floor(durationHours)
+        const minutes = Math.round((durationHours - hours) * 60)
+        const durationText = hours > 0
+          ? `${hours}h ${minutes}m`
+          : `${minutes}m`
+
+        await serviceOrdersService.createServiceOrderComment({
+          service_order_id: id,
+          message: `Timer stopped: ${timeEntry.work_description} (${durationText})`,
+          author_id: "system",
+          author_name: "System",
+          author_type: "system",
+          is_internal: false,
+          is_pinned: false,
+          metadata: {
+            event_type: "time_entry_stopped",
+            event_data: {
+              time_entry_id: timeEntry.id,
+              work_description: timeEntry.work_description,
+              work_category: timeEntry.work_category,
+              duration_hours: durationHours,
+              duration_text: durationText,
+              total_cost: timeEntry.total_cost
+            }
+          }
+        })
+      } catch (eventError) {
+        // Log error but don't fail the request
+        console.error("Failed to log timer stop event:", eventError)
+      }
     }
-    
+
     res.json({ time_entry: timeEntry })
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Failed to update time entry",
       details: error instanceof Error ? error.message : "Unknown error"
     })

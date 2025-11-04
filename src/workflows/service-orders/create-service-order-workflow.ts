@@ -4,13 +4,24 @@ import { SERVICE_ORDERS_MODULE } from "../../modules/service-orders"
 // Type definitions
 export interface CreateServiceOrderInput {
   description: string
-  service_type?: "normal" | "warranty" | "setup" | "emergency" | "preventive"
+  customer_id: string
+  machine_id: string
+  technician_id?: string | null
+  service_type?: "insurance" | "warranty" | "internal" | "standard" | "sales_prep" | "quote"
   priority?: "low" | "normal" | "high" | "urgent"
+  service_location?: "workshop" | "customer_location"
   customer_complaint?: string
-  scheduled_start_date?: Date
-  scheduled_end_date?: Date
+  scheduled_start_date?: Date | string
+  scheduled_end_date?: Date | string
   estimated_hours?: number
   labor_rate?: number
+  diagnosis?: string
+  notes?: string
+  service_address_line_1?: string
+  service_address_line_2?: string
+  service_city?: string
+  service_postal_code?: string
+  service_country?: string
   created_by?: string
   metadata?: Record<string, any>
 }

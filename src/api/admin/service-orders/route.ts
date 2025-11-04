@@ -139,24 +139,28 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     // Validate required fields
     const { description, customer_id, machine_id, technician_id, ...rest } = req.body as any
+
+    console.log('=== CREATE SERVICE ORDER DEBUG ===')
+    console.log('Request body:', JSON.stringify(req.body, null, 2))
+
     if (!description) {
-      return res.status(400).json({ 
-        error: "Validation failed", 
-        details: "Description is required" 
+      return res.status(400).json({
+        error: "Validation failed",
+        details: "Description is required"
       })
     }
-    
+
     if (!customer_id) {
-      return res.status(400).json({ 
-        error: "Validation failed", 
-        details: "Customer is required" 
+      return res.status(400).json({
+        error: "Validation failed",
+        details: "Customer is required"
       })
     }
 
     if (!machine_id) {
-      return res.status(400).json({ 
-        error: "Validation failed", 
-        details: "Machine is required" 
+      return res.status(400).json({
+        error: "Validation failed",
+        details: "Machine is required"
       })
     }
 
@@ -166,18 +170,30 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       description,
       customer_id,
       machine_id,
-      technician_id: technician_id === "unassigned" ? null : technician_id,
+      technician_id: technician_id === "unassigned" || !technician_id ? null : technician_id,
     }
+
+    console.log('Processed data:', JSON.stringify(processedData, null, 2))
 
     const { result } = await createServiceOrderWorkflow(req.scope).run({
       input: processedData
     })
-    
+
+    console.log('Created service order:', result)
+    console.log('=== END DEBUG ===')
+
     res.status(201).json({ service_order: result })
   } catch (error) {
-    res.status(500).json({ 
+    console.error('=== CREATE SERVICE ORDER ERROR ===')
+    console.error('Error:', error)
+    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error')
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+    console.error('=== END ERROR ===')
+
+    res.status(500).json({
       error: "Failed to create service order",
-      details: error instanceof Error ? error.message : "Unknown error"
+      details: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined
     })
   }
 } 

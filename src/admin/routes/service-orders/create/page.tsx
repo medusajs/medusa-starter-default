@@ -19,7 +19,7 @@ const CreateServiceOrder = () => {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
     description: '',
-    service_type: 'normal',
+    service_type: 'standard',
     priority: 'normal',
     service_location: 'workshop',
     customer_id: '',
@@ -86,23 +86,36 @@ const CreateServiceOrder = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      // Clean up the data - convert empty strings to undefined
       const payload = {
         ...data,
         scheduled_start_date: data.scheduled_start_date ? new Date(data.scheduled_start_date).toISOString() : undefined,
         scheduled_end_date: data.scheduled_end_date ? new Date(data.scheduled_end_date).toISOString() : undefined,
+        // Clean up optional fields - convert empty strings to undefined
+        diagnosis: data.diagnosis?.trim() || undefined,
+        notes: data.notes?.trim() || undefined,
+        customer_complaint: data.customer_complaint?.trim() || undefined,
+        service_address_line_1: data.service_address_line_1?.trim() || undefined,
+        service_address_line_2: data.service_address_line_2?.trim() || undefined,
+        service_city: data.service_city?.trim() || undefined,
+        service_postal_code: data.service_postal_code?.trim() || undefined,
+        service_country: data.service_country?.trim() || undefined,
       }
-      
+
+      console.log('Creating service order with payload:', payload)
+
       const response = await fetch('/admin/service-orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      
+
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.details || 'Failed to create service order')
+        console.error('Create service order error:', error)
+        throw new Error(error.details || error.error || 'Failed to create service order')
       }
-      
+
       return response.json()
     },
     onSuccess: (data) => {
@@ -494,11 +507,12 @@ const CreateServiceOrder = () => {
                       <Select.Value />
                     </Select.Trigger>
                     <Select.Content>
-                      <Select.Item value="normal">Normal Repair</Select.Item>
+                      <Select.Item value="standard">Standard Repair</Select.Item>
                       <Select.Item value="warranty">Warranty Work</Select.Item>
-                      <Select.Item value="setup">Equipment Setup</Select.Item>
-                      <Select.Item value="emergency">Emergency Repair</Select.Item>
-                      <Select.Item value="preventive">Preventive Maintenance</Select.Item>
+                      <Select.Item value="insurance">Insurance Claim</Select.Item>
+                      <Select.Item value="internal">Internal Service</Select.Item>
+                      <Select.Item value="sales_prep">Sales Preparation</Select.Item>
+                      <Select.Item value="quote">Quote/Estimate</Select.Item>
                     </Select.Content>
                   </Select>
                 </div>

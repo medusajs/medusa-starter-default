@@ -9,13 +9,24 @@ import { ServiceOrderEventLogger } from "./helpers/event-logger"
 
 type CreateServiceOrderInput = {
   description: string
+  customer_id: string
+  machine_id: string
+  technician_id?: string | null
   service_type?: "insurance" | "warranty" | "internal" | "standard" | "sales_prep" | "quote"
   priority?: "low" | "normal" | "high" | "urgent"
+  service_location?: "workshop" | "customer_location"
   customer_complaint?: string
-  scheduled_start_date?: Date
-  scheduled_end_date?: Date
+  scheduled_start_date?: Date | string
+  scheduled_end_date?: Date | string
   estimated_hours?: number
   labor_rate?: number
+  diagnosis?: string
+  notes?: string
+  service_address_line_1?: string
+  service_address_line_2?: string
+  service_city?: string
+  service_postal_code?: string
+  service_country?: string
   created_by?: string
   metadata?: Record<string, any>
 }
@@ -62,33 +73,84 @@ class ServiceOrdersService extends MedusaService({
   async generateServiceOrderNumber(): Promise<string> {
     const year = new Date().getFullYear()
     const orders = await this.listServiceOrders({})
-    const yearlyOrders = orders.filter(order => 
-      order.service_order_number?.startsWith(`SO-${year}`)
-    )
-    return `SO-${year}-${String(yearlyOrders.length + 1).padStart(3, '0')}`
+
+    // Filter orders for current year and extract their numbers
+    const yearlyOrders = orders
+      .filter(order => order.service_order_number?.startsWith(`SO-${year}`))
+      .map(order => {
+        const match = order.service_order_number?.match(/SO-\d{4}-(\d+)/)
+        return match ? parseInt(match[1], 10) : 0
+      })
+      .filter(num => !isNaN(num))
+
+    // Find the highest number and add 1
+    const nextNumber = yearlyOrders.length > 0
+      ? Math.max(...yearlyOrders) + 1
+      : 1
+
+    return `SO-${year}-${String(nextNumber).padStart(3, '0')}`
   }
   
   async createServiceOrderWithNumber(data: CreateServiceOrderInput) {
-    const serviceOrderNumber = await this.generateServiceOrderNumber()
-    
-    const serviceOrder = await this.createServiceOrders({
-      ...data,
-      service_order_number: serviceOrderNumber,
-      status: "draft",
-      total_cost: 0,
-      actual_hours: 0,
-    })
-    
-    // Create status history entry
-    await this.createServiceOrderStatusHistories({
-      service_order_id: serviceOrder.id,
-      to_status: serviceOrder.status,
-      changed_by: data.created_by || "system",
-      changed_at: new Date(),
-      reason: "Service order created",
-    })
-    
-    return serviceOrder
+    try {
+      console.log('=== createServiceOrderWithNumber ===')
+      console.log('Input data:', JSON.stringify(data, null, 2))
+
+      const serviceOrderNumber = await this.generateServiceOrderNumber()
+      console.log('Generated order number:', serviceOrderNumber)
+
+      // Convert string dates to Date objects if needed
+      const processedData = {
+        ...data,
+        scheduled_start_date: data.scheduled_start_date
+          ? (typeof data.scheduled_start_date === 'string'
+            ? new Date(data.scheduled_start_date)
+            : data.scheduled_start_date)
+          : undefined,
+        scheduled_end_date: data.scheduled_end_date
+          ? (typeof data.scheduled_end_date === 'string'
+            ? new Date(data.scheduled_end_date)
+            : data.scheduled_end_date)
+          : undefined,
+      }
+
+      console.log('Processed data before create:', JSON.stringify({
+        ...processedData,
+        service_order_number: serviceOrderNumber,
+        status: "draft",
+        total_cost: 0,
+        actual_hours: 0,
+      }, null, 2))
+
+      const serviceOrder = await this.createServiceOrders({
+        ...processedData,
+        service_order_number: serviceOrderNumber,
+        status: "draft",
+        total_cost: 0,
+        actual_hours: 0,
+      })
+
+      console.log('Created service order:', serviceOrder)
+
+      // Create status history entry
+      await this.createServiceOrderStatusHistories({
+        service_order_id: serviceOrder.id,
+        to_status: serviceOrder.status,
+        changed_by: data.created_by || "system",
+        changed_at: new Date(),
+        reason: "Service order created",
+      })
+
+      console.log('=== END createServiceOrderWithNumber ===')
+      return serviceOrder
+    } catch (error) {
+      console.error('=== ERROR in createServiceOrderWithNumber ===')
+      console.error('Error:', error)
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown')
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack')
+      console.error('=== END ERROR ===')
+      throw error
+    }
   }
   
   async updateServiceOrderStatus(
@@ -260,17 +322,24 @@ class ServiceOrdersService extends MedusaService({
     }
     const existing = existingList[0]
 
-    // Prepare update data
-    const processedData: Record<string, any> = { ...updateData }
+    // Prepare update data by merging with existing data
+    const processedData: Record<string, any> = {
+      id: timeEntryId,
+      ...updateData
+    }
 
     // If end_time is provided and is_active wasn't explicitly set, force deactivate
     if (processedData.end_time && typeof processedData.is_active === "undefined") {
       processedData.is_active = false
     }
 
-    // Determine start/end for calculations
-    const startForCalc = processedData.start_time ?? existing.start_time
-    const endForCalc = processedData.end_time ?? existing.end_time
+    // Determine start/end for calculations - ensure they're Date objects
+    const startForCalc = processedData.start_time
+      ? (processedData.start_time instanceof Date ? processedData.start_time : new Date(processedData.start_time))
+      : existing.start_time
+    const endForCalc = processedData.end_time
+      ? (processedData.end_time instanceof Date ? processedData.end_time : new Date(processedData.end_time))
+      : existing.end_time
 
     // Calculate duration if we have both times
     if (startForCalc && endForCalc) {
@@ -289,9 +358,13 @@ class ServiceOrdersService extends MedusaService({
       processedData.total_cost = processedData.billable_hours * hourlyRateForCalc
     }
 
-    // Update using selector signature to return a single updated entity
-    const timeEntry = await this.updateServiceOrderTimeEntries({ id: timeEntryId }, processedData)
-    
+    // Update using the single-record signature (object with id property)
+    // This returns a single object, not an array
+    const timeEntry = await this.updateServiceOrderTimeEntries(processedData)
+
+    // Update service order totals after time entry update
+    await this.updateServiceOrderTotals(existing.service_order_id)
+
     // Log time entry updated event
     try {
       const eventTemplate = ServiceOrderEventLogger.EventTemplates.timeEntryAdded(timeEntry)
@@ -304,7 +377,7 @@ class ServiceOrdersService extends MedusaService({
     } catch (eventError) {
       // Don't fail the main operation if event logging fails
     }
-    
+
     return timeEntry
   }
 

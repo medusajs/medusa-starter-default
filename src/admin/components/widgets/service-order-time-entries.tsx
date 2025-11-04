@@ -21,6 +21,7 @@ interface TimeEntry {
   work_description: string
   work_category: string
   billable_hours: number
+  duration_minutes: number
   hourly_rate: number
   total_cost: number
   start_time: string
@@ -70,17 +71,17 @@ const ServiceOrderTimeEntriesWidget = ({ data: serviceOrder }: ServiceOrderTimeE
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Format duration for completed entries
-  const formatTimeDisplay = (hours: number) => {
-    const wholeHours = Math.floor(hours)
-    const minutes = Math.round((hours - wholeHours) * 60)
-    
-    if (wholeHours === 0) {
+  // Format duration for completed entries from minutes
+  const formatTimeDisplay = (durationMinutes: number) => {
+    const hours = Math.floor(durationMinutes / 60)
+    const minutes = durationMinutes % 60
+
+    if (hours === 0) {
       return `${minutes}m`
     } else if (minutes === 0) {
-      return `${wholeHours}h`
+      return `${hours}h`
     } else {
-      return `${wholeHours}h ${minutes}m`
+      return `${hours}h ${minutes}m`
     }
   }
 
@@ -402,7 +403,7 @@ const ServiceOrderTimeEntriesWidget = ({ data: serviceOrder }: ServiceOrderTimeE
                       {formatTime(elapsedTime[entry.id] || 0)}
                     </Text>
                   ) : (
-                    <Text size="small">{formatTimeDisplay(entry.billable_hours)}</Text>
+                    <Text size="small">{formatTimeDisplay(entry.duration_minutes || 0)}</Text>
                   )}
                 </Table.Cell>
                 <Table.Cell>
