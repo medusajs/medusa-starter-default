@@ -26,6 +26,8 @@ import {
 } from "@medusajs/ui"
 import { EllipsisHorizontal, Trash, PencilSquare } from "@medusajs/icons"
 import { SingleColumnPageSkeleton } from "../../../components/common/skeleton"
+import RentalDepartureWidget from "../../../components/widgets/rental-departure-widget"
+import RentalArrivalWidget from "../../../components/widgets/rental-arrival-widget"
 
 // TEM-209: Rental data types based on the rental model (src/modules/rentals/models/rental.ts)
 interface Rental {
@@ -418,13 +420,36 @@ const RentalDetails = () => {
         </Container>
       </div>
 
-      {/* TEM-209: Rental Details Section - dates, type, rates */}
+      {/* TEM-209: Departure & Arrival Section - two column grid */}
+      <div className="grid grid-cols-2 gap-4">
+        <RentalDepartureWidget
+          data={{
+            rental_start_date: rental.rental_start_date,
+            start_machine_hours: rental.start_machine_hours,
+            pickup_notes: rental.pickup_notes,
+            status: rental.status,
+          }}
+        />
+        <RentalArrivalWidget
+          data={{
+            expected_return_date: rental.expected_return_date,
+            actual_return_date: rental.actual_return_date,
+            end_machine_hours: rental.end_machine_hours,
+            return_notes: rental.return_notes,
+            status: rental.status,
+            total_hours_used: rental.total_hours_used,
+          }}
+          onSetEndHours={() => setShowEndHoursModal(true)}
+        />
+      </div>
+
+      {/* TEM-209: Rental Details Section - type and description */}
       <Container className="divide-y p-0">
         <div className="px-6 py-4">
           <Heading level="h2">Rental Details</Heading>
         </div>
         <div className="px-6 py-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div>
               <Label size="small" weight="plus">
                 Rental Type
@@ -434,82 +459,26 @@ const RentalDetails = () => {
                   rental.rental_type.slice(1)}
               </Text>
             </div>
-            <div>
-              <Label size="small" weight="plus">
-                Start Date
-              </Label>
-              <Text>{formatDate(rental.rental_start_date)}</Text>
-            </div>
-            <div>
-              <Label size="small" weight="plus">
-                Expected Return
-              </Label>
-              <Text>{formatDate(rental.expected_return_date)}</Text>
-            </div>
-            <div>
-              <Label size="small" weight="plus">
-                Actual Return
-              </Label>
-              <Text>
-                {rental.actual_return_date
-                  ? formatDate(rental.actual_return_date)
-                  : "—"}
-              </Text>
-            </div>
             {rental.description && (
-              <div className="col-span-2">
+              <div>
                 <Label size="small" weight="plus">
                   Description
                 </Label>
                 <Text>{rental.description}</Text>
               </div>
             )}
-          </div>
-        </div>
-      </Container>
-
-      {/* TEM-209: Machine Hours Section - with edit capability */}
-      <Container className="divide-y p-0">
-        <div className="px-6 py-4">
-          <Heading level="h2">Machine Hours</Heading>
-        </div>
-        <div className="px-6 py-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label size="small" weight="plus">
-                Start Hours
-              </Label>
-              <Text className="text-2xl font-semibold">
-                {rental.start_machine_hours || "—"}
-              </Text>
-            </div>
-            <div>
-              <Label size="small" weight="plus">
-                End Hours
-              </Label>
-              {rental.end_machine_hours ? (
-                <Text className="text-2xl font-semibold">
-                  {rental.end_machine_hours}
-                </Text>
-              ) : (
-                <Button
-                  size="small"
-                  variant="secondary"
-                  onClick={() => setShowEndHoursModal(true)}
-                  disabled={rental.status !== "active"}
-                >
-                  Set End Hours
-                </Button>
-              )}
-            </div>
-            <div>
-              <Label size="small" weight="plus">
-                Total Hours Used
-              </Label>
-              <Text className="text-2xl font-semibold">
-                {rental.total_hours_used || "—"}
-              </Text>
-            </div>
+            {rental.internal_notes && (
+              <div>
+                <Label size="small" weight="plus">
+                  Internal Notes
+                </Label>
+                <div className="bg-ui-bg-subtle rounded-md p-3">
+                  <Text size="small" className="whitespace-pre-wrap">
+                    {rental.internal_notes}
+                  </Text>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </Container>
