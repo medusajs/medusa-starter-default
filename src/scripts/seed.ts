@@ -24,7 +24,7 @@ import {
   createWorkflow,
   transform,
   WorkflowResponse,
-} from "@medusajs/workflows-sdk";
+} from "@medusajs/framework/workflows-sdk";
 
 const updateStoreCurrencies = createWorkflow(
   "update-store-currencies",
