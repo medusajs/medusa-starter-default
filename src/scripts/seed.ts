@@ -2,6 +2,8 @@ import { ExecArgs } from '@medusajs/framework/types'
 import { ContainerRegistrationKeys } from '@medusajs/framework/utils'
 
 import {
+  cleanupExistingData,
+  createAdminUser,
   createConfigurationRules,
   createDefaultCommissionLevel,
   createInventoryItemStockLevels,
@@ -32,6 +34,11 @@ export default async function seedMarketplaceData({ container }: ExecArgs) {
   await createStore(container, salesChannel.id, region.id)
   logger.info('Creating configuration rules...')
   await createConfigurationRules(container)
+  logger.info('Creating admin user...')
+  await createAdminUser(container)
+
+  logger.info('=== Cleaning up existing example data ===')
+  await cleanupExistingData(container)
 
   logger.info('=== Example data ===')
   logger.info('Creating product categories...')
@@ -47,6 +54,9 @@ export default async function seedMarketplaceData({ container }: ExecArgs) {
     salesChannel.id
   )
   logger.info('Creating service zone...')
+  if (!stockLocation.fulfillment_sets?.[0]?.id) {
+    throw new Error('No fulfillment set found for stock location')
+  }
   const serviceZone = await createServiceZoneForFulfillmentSet(
     container,
     seller.id,
@@ -69,7 +79,10 @@ export default async function seedMarketplaceData({ container }: ExecArgs) {
 
   logger.info('=== Finished ===')
   logger.info(`Publishable api key: ${apiKey.token}`)
-  logger.info(`Vendor panel access:`)
-  logger.info(`email: seller@mercurjs.com`)
-  logger.info(`pass: secret`)
+  logger.info(`Admin dashboard access (http://localhost:9000/app):`)
+  logger.info(`  email: admin@medusa-test.com`)
+  logger.info(`  pass: supersecret`)
+  logger.info(`Vendor panel access (http://localhost:5173):`)
+  logger.info(`  email: seller@mercurjs.com`)
+  logger.info(`  pass: secret`)
 }
