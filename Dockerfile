@@ -1,13 +1,24 @@
-FROM node:20-alpine
+FROM node:18-bullseye-slim
+
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+
+RUN npm install --legacy-peer-deps
 
 COPY . .
+
+# Build the admin panel for production
 RUN npm run build
 
-EXPOSE 9000 7001
+EXPOSE 9000
 
-CMD ["npm", "run", "dev"]
+# Use production start, not dev
+CMD ["npm", "run", "start"]
