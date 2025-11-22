@@ -1,22 +1,13 @@
 FROM node:20-alpine
 
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
 COPY package*.json ./
-
-RUN npm install --legacy-peer-deps
+RUN npm install
 
 COPY . .
-
 RUN npm run build
 
-EXPOSE 9000
+EXPOSE 9000 7001
 
-CMD ["sh", "-c", "npm run start"]
+CMD ["npm", "run", "dev"]
