@@ -1,4 +1,4 @@
-FROM node:120-alpine
+FROM node:20-alpine
 
 RUN apt-get update && apt-get install -y \
     python3 \
