@@ -66,6 +66,21 @@ export default async function seedDemoData({ container }: ExecArgs) {
 
   logger.info("Seeding store data...");
   const [store] = await storeModuleService.listStores();
+  await updateStoresWorkflow(container).run({
+    input: {
+      selector: { id: store.id },
+      update: {
+        supported_locales: [
+          {
+            locale_code: "fr-FR"
+          },
+          {
+            locale_code: "es-ES"
+          }
+        ]
+      },
+    },
+  });
   let defaultSalesChannel = await salesChannelModuleService.listSalesChannels({
     name: "Default Sales Channel",
   });
