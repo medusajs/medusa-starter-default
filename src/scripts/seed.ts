@@ -5,6 +5,11 @@ import {
   ProductStatus,
 } from "@medusajs/framework/utils";
 import {
+  createWorkflow,
+  transform,
+  WorkflowResponse,
+} from "@medusajs/framework/workflows-sdk";
+import {
   createApiKeysWorkflow,
   createInventoryLevelsWorkflow,
   createProductCategoriesWorkflow,
@@ -20,11 +25,7 @@ import {
   updateStoresStep,
   updateStoresWorkflow,
 } from "@medusajs/medusa/core-flows";
-import {
-  createWorkflow,
-  transform,
-  WorkflowResponse,
-} from "@medusajs/framework/workflows-sdk";
+import { ApiKey } from "../../.medusa/types/query-entry-points";
 
 const updateStoreCurrencies = createWorkflow(
   "update-store-currencies",
@@ -72,12 +73,12 @@ export default async function seedDemoData({ container }: ExecArgs) {
       update: {
         supported_locales: [
           {
-            locale_code: "fr-FR"
+            locale_code: "fr-FR",
           },
           {
-            locale_code: "es-ES"
-          }
-        ]
+            locale_code: "es-ES",
+          },
+        ],
       },
     },
   });
@@ -347,20 +348,34 @@ export default async function seedDemoData({ container }: ExecArgs) {
   logger.info("Finished seeding stock location data.");
 
   logger.info("Seeding publishable API key data...");
-  const { result: publishableApiKeyResult } = await createApiKeysWorkflow(
-    container
-  ).run({
-    input: {
-      api_keys: [
-        {
-          title: "Webshop",
-          type: "publishable",
-          created_by: "",
-        },
-      ],
+  let publishableApiKey: ApiKey | null = null;
+  const { data } = await query.graph({
+    entity: "api_key",
+    fields: ["id"],
+    filters: {
+      type: "publishable",
     },
   });
-  const publishableApiKey = publishableApiKeyResult[0];
+
+  publishableApiKey = data?.[0];
+
+  if (!publishableApiKey) {
+    const {
+      result: [publishableApiKeyResult],
+    } = await createApiKeysWorkflow(container).run({
+      input: {
+        api_keys: [
+          {
+            title: "Webshop",
+            type: "publishable",
+            created_by: "",
+          },
+        ],
+      },
+    });
+
+    publishableApiKey = publishableApiKeyResult as ApiKey;
+  }
 
   await linkSalesChannelsToApiKeyWorkflow(container).run({
     input: {
