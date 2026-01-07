@@ -1,62 +1,152 @@
-<p align="center">
-  <a href="https://www.medusajs.com">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/59018053/229103275-b5e482bb-4601-46e6-8142-244f531cebdb.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/59018053/229103726-e5b529a3-9b3f-4970-8a1f-c6af37f087bf.svg">
-    <img alt="Medusa logo" src="https://user-images.githubusercontent.com/59018053/229103726-e5b529a3-9b3f-4970-8a1f-c6af37f087bf.svg">
-    </picture>
-  </a>
-</p>
-<h1 align="center">
-  Medusa
-</h1>
+# Ecommerce Project - Medusa v2 Backend + Next.js Storefront
 
-<h4 align="center">
-  <a href="https://docs.medusajs.com">Documentation</a> |
-  <a href="https://www.medusajs.com">Website</a>
-</h4>
+This project consists of a Medusa v2 backend with admin dashboard and a Next.js 15 storefront, deployed on VPS infrastructure.
 
-<p align="center">
-  Building blocks for digital commerce
-</p>
-<p align="center">
-  <a href="https://github.com/medusajs/medusa/blob/master/CONTRIBUTING.md">
-    <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat" alt="PRs welcome!" />
-  </a>
-    <a href="https://www.producthunt.com/posts/medusa"><img src="https://img.shields.io/badge/Product%20Hunt-%231%20Product%20of%20the%20Day-%23DA552E" alt="Product Hunt"></a>
-  <a href="https://discord.gg/xpCwq3Kfn8">
-    <img src="https://img.shields.io/badge/chat-on%20discord-7289DA.svg" alt="Discord Chat" />
-  </a>
-  <a href="https://twitter.com/intent/follow?screen_name=medusajs">
-    <img src="https://img.shields.io/twitter/follow/medusajs.svg?label=Follow%20@medusajs" alt="Follow @medusajs" />
-  </a>
-</p>
+Refer [ELO-766](https://sreterminal.atlassian.net/browse/ELO-766)
 
-## Compatibility
+## Project Structure
 
-This starter is compatible with versions >= 2 of `@medusajs/medusa`. 
+```
+ecomm/
+├── ecomm-admin/        # Medusa v2 backend + admin dashboard
+├── ecomm-storefront/   # Next.js 15 storefront
+└── CLAUDE.md          # Development guidance
+```
 
-## Getting Started
+## Deployment Setup
 
-Visit the [Quickstart Guide](https://docs.medusajs.com/learn/installation) to set up a server.
+### VPS Configuration
 
-Visit the [Docs](https://docs.medusajs.com/learn/installation#get-started) to learn more about our system requirements.
+**Services:**
+- **Admin Backend**: http://207.244.239.243:9000
+- **Admin Login**: http://207.244.239.243:9000/app/login
+- **Storefront**: http://207.244.239.243:8000
 
-## What is Medusa
+### Storefront Deployment
 
-Medusa is a set of commerce modules and tools that allow you to build rich, reliable, and performant commerce applications without reinventing core commerce logic. The modules can be customized and used to build advanced ecommerce stores, marketplaces, or any product that needs foundational commerce primitives. All modules are open-source and freely available on npm.
+1. **Repository Setup**
+   - Forked from: `https://github.com/medusajs/nextjs-starter-medusa`
+   - Repository: `https://github.com/jaichenchlani/ecomm-storefront.git`
+   - Deployed to: `/opt/ecomm` folder
 
-Learn more about [Medusa’s architecture](https://docs.medusajs.com/learn/introduction/architecture) and [commerce modules](https://docs.medusajs.com/learn/fundamentals/modules/commerce-modules) in the Docs.
+2. **Installation Steps**
+   ```bash
+   sudo npm install
+   mv .env.template .env.local
+   ```
 
-## Community & Contributions
+3. **Environment Configuration**
+   - Updated `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` in `.env.local`
+   - Key obtained from medusa_admin → Settings
 
-The community and core team are available in [GitHub Discussions](https://github.com/medusajs/medusa/discussions), where you can ask for support, discuss roadmap, and share ideas.
+4. **Start Service**
+   ```bash
+   sudo npm run dev
+   ```
+   - Accessible at: http://207.244.239.243:8000
 
-Join our [Discord server](https://discord.com/invite/medusajs) to meet other community members.
+### Admin Backend Deployment
 
-## Other channels
+1. **Repository Setup**
+   - Forked from: `https://github.com/medusajs/medusa-starter-default`
+   - Repository: `https://github.com/jaichenchlani/ecomm-admin`
+   - Deployed to: `/opt/ecomm` folder
 
-- [GitHub Issues](https://github.com/medusajs/medusa/issues)
-- [Twitter](https://twitter.com/medusajs)
-- [LinkedIn](https://www.linkedin.com/company/medusajs)
-- [Medusa Blog](https://medusajs.com/blog/)
+2. **Docker Configuration**
+   - **Port Management**: 
+     - Initially changed port from 9000 → 7000 (webhook conflict)
+     - Reverted back to 9000 after resolving conflicts
+     - Updated `docker-compose.yml` and `Dockerfile` accordingly
+   
+3. **Package Management**
+   - Switched from `yarn` to `npm` for consistency
+
+4. **Service Validation**
+   - Tested and validated: http://207.244.239.243:9000/app/login
+
+5. **Admin User Creation**
+   ```bash
+   docker compose run --rm medusa npx medusa user -e jaichenchlani@gmail.com -p password
+   ```
+
+## Key Customizations
+
+### Port Configuration
+- **Admin Backend**: Port 9000 (final configuration)
+- **Storefront**: Port 8000
+
+### Environment Integration
+- Storefront connects to admin backend via publishable key
+- Cross-service communication configured via CORS
+- Database and Redis services containerized with Docker
+
+### Package Management
+- Standardized on `npm` across both projects
+- Avoided `yarn` compatibility issues
+
+## Access Points
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| Admin Dashboard | http://207.244.239.243:9000/app/login | Backend management |
+| Admin API | http://207.244.239.243:9000 | API endpoints |
+| Storefront | http://207.244.239.243:8000 | Customer-facing site |
+
+## Admin Credentials
+- **Email**: jaichenchlani@gmail.com  
+- **Password**: password
+
+## Development Commands
+
+### Admin Backend
+```bash
+cd ecomm-admin
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run seed         # Seed database
+npm run docker:up    # Start Docker services
+```
+
+### Storefront
+```bash
+cd ecomm-storefront  
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run lint         # Run ESLint
+```
+
+## Tech Stack
+
+### Backend (ecomm-admin)
+- **Framework**: Medusa v2.12.4
+- **Language**: TypeScript
+- **Database**: PostgreSQL
+- **Cache**: Redis
+- **Containerization**: Docker + Docker Compose
+
+### Frontend (ecomm-storefront)
+- **Framework**: Next.js 15
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: @medusajs/ui
+- **Payments**: Stripe integration
+
+### Database (postgres) - Refer [ELO-774](https://sreterminal.atlassian.net/browse/ELO-774)
+- Installed postgres client. `sudo apt install postgresql-client-common postgresql-client`
+- `psql -h localhost -p 5432 -U postgres -d medusa-store` # Connect to the db medusa-store
+- Commands:
+1. `\l` List all databases:
+2. `\dt` List all tables in current database
+3. `\d` table_name Describe a specific table structure
+4. `\dt+` Show all tables with more details
+5. `\dn` List all schemas
+- `docker volume inspect ecomm-admin_postgres_data`
+- `sudo ls -la /var/lib/docker/volumes/ecomm-admin_postgres_data/_data`
+
+## Next Steps
+
+- Configure SSL certificates for HTTPS
+- Set up domain mapping
+- Implement backup strategies
+- Configure monitoring and logging
+- Set up CI/CD pipeline
