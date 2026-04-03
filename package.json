@@ -8,7 +8,8 @@
     "dev": "medusa develop",
     "start": "medusa start",
     "seed": "medusa exec ./src/scripts/seed.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "node scripts/patch-promotion.js"
   },
   "repository": {
     "type": "git",
@@ -23,16 +24,18 @@
   },
   "homepage": "https://github.com/balaste/medusa#readme",
   "dependencies": {
+    "@medusajs/admin-sdk": "2.13.5",
     "@medusajs/cache-redis": "^2.13.5",
     "@medusajs/event-bus-redis": "^2.13.5",
     "@medusajs/file-local-next": "^0.0.3",
     "@medusajs/framework": "^2.13.5",
-    "@medusajs/medusa": "^2.13.5",
+    "@medusajs/medusa": "2.13.6-preview-20260403091541",
     "@swc/core": "^1.15.21",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.0"
   },
   "devDependencies": {
-    "@medusajs/cli": "^2.13.5"
+    "@medusajs/cli": "^2.13.5",
+    "patch-package": "^8.0.1"
   }
 }
