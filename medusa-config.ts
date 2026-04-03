@@ -48,21 +48,12 @@ module.exports = defineConfig({
         redisUrl: process.env.REDIS_URL,
       },
     },
-    // File storage local (dev)
-    {
-      resolve: "@medusajs/medusa/file",
-      options: {
-        providers: [
-          {
-            resolve: "@medusajs/file-local-next",
-            id: "local",
-            options: {
-              upload_dir: "uploads",
-              backend_url: process.env.BACKEND_URL || "http://localhost:9000",
-            },
-          },
-        ],
-      },
-    },
+    // File storage local (dev) — désactivé temporairement (@medusajs/file-local-next v0.0.3 instable)
+    // {
+    //   resolve: "@medusajs/medusa/file",
+    //   options: {
+    //     providers: [{ resolve: "@medusajs/file-local-next", id: "local", options: { upload_dir: "uploads", backend_url: process.env.BACKEND_URL || "http://localhost:9000" } }],
+    //   },
+    // },
   ],
 })
