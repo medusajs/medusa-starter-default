@@ -1,10 +1,10 @@
-/dist
+dist/
 .env
 .env.staging
 .env.production
 .DS_Store
-/uploads
-/node_modules
+uploads/
+node_modules/
 yarn-error.log
 
 .idea
@@ -13,16 +13,9 @@ coverage
 
 !src/**
 
-./tsconfig.tsbuildinfo
+tsconfig.tsbuildinfo
 package-lock.json
 yarn.lock
 medusa-db.sql
-build
-.cache
-
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
+build/
+.cache/
