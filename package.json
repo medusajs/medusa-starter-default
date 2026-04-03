@@ -23,10 +23,16 @@
   },
   "homepage": "https://github.com/balaste/medusa#readme",
   "dependencies": {
+    "@medusajs/cache-redis": "^2.13.5",
+    "@medusajs/event-bus-redis": "^2.13.5",
+    "@medusajs/file-local-next": "^0.0.3",
     "@medusajs/framework": "^2.13.5",
     "@medusajs/medusa": "^2.13.5",
     "@swc/core": "^1.15.21",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.0"
+  },
+  "devDependencies": {
+    "@medusajs/cli": "^2.13.5"
   }
 }
