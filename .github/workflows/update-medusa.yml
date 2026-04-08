@@ -21,4 +21,5 @@ jobs:
         uses: medusajs/medusa-update-action@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          base-branch: master
           
