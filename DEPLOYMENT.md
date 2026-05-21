@@ -171,10 +171,10 @@ Hi <repo-name>! You've successfully authenticated, but GitHub does not provide s
 
 ```bash
 cd /opt/medusa
-git clone git@github-medusa:<GITHUB-USER>/<REPO-NAME>.git .
+git clone git@github-medusa:xxp3nxx/medusa-starter-default.git .
 ```
 
-Beispiel: `git clone git@github-medusa:meinefirma/my-medusa-store.git .`
+> Falls sich der Repo-Name später ändert, hier anpassen. Der Teil **vor** dem Doppelpunkt (`github-medusa`) ist kein Tippfehler – das ist der Alias aus der `~/.ssh/config` und muss genau so bleiben.
 
 > **Wichtig:** Der Host-Alias `github-medusa` aus der `~/.ssh/config` sorgt dafür, dass der Deploy Key verwendet wird, ohne dass der GitHub-Account des Kollegen ins Spiel kommt.
 

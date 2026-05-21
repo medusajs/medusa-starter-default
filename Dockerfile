@@ -3,6 +3,7 @@ FROM node:20-alpine
 WORKDIR /server
 
 COPY package.json yarn.lock ./
+COPY patches ./patches
 
 RUN yarn install
 
