@@ -11,6 +11,9 @@ import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import {
   UpsertPreorderVariantSchema,
 } from "./admin/variants/[id]/preorders/route"
+import {
+  AdminSetEmailVerifiedSchema,
+} from "./admin/customers/[id]/email-verified/route"
 import { verifyOrderToken } from "../utils/order-token"
 
 // Blocks cart completion for accounts that haven't verified their email yet.
@@ -137,6 +140,13 @@ export default defineMiddlewares({
       methods: ["POST"],
       middlewares: [
         validateAndTransformBody(UpsertPreorderVariantSchema),
+      ],
+    },
+    {
+      matcher: "/admin/customers/:id/email-verified",
+      methods: ["POST"],
+      middlewares: [
+        validateAndTransformBody(AdminSetEmailVerifiedSchema),
       ],
     },
     // Authorization for single-order reads. The token-issue endpoint
