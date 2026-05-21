@@ -1,6 +1,8 @@
 import { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
 import { Modules } from "@medusajs/framework/utils"
 
+import { signEmailVerifyToken } from "../utils/email-verify-token"
+
 export default async function customerCreatedHandler({
   event: { data },
   container,
@@ -11,7 +13,7 @@ export default async function customerCreatedHandler({
 
   const { data: [customer] } = await query.graph({
     entity: "customer",
-    fields: ["id", "email", "first_name", "last_name", "has_account"],
+    fields: ["id", "email", "first_name", "last_name", "has_account", "metadata"],
     filters: { id: data.id },
   })
 
@@ -31,6 +33,32 @@ export default async function customerCreatedHandler({
     channel: "email",
     template: "welcome",
     data: { customer },
+  })
+
+  // Send verification mail unless this customer was created already-verified
+  // (e.g. backfill, admin-created accounts).
+  const alreadyVerified =
+    (customer.metadata as Record<string, unknown> | null)?.email_verified === true
+  if (alreadyVerified) return
+
+  const storefrontUrl =
+    process.env.STOREFRONT_URL || "http://localhost:8000"
+  const token = signEmailVerifyToken(customer.id, customer.email)
+  const verifyUrl =
+    `${storefrontUrl}/verify-email` +
+    `?customer_id=${encodeURIComponent(customer.id)}` +
+    `&email=${encodeURIComponent(customer.email)}` +
+    `&token=${encodeURIComponent(token)}`
+
+  await notificationService.createNotifications({
+    to: customer.email,
+    channel: "email",
+    template: "email-verify",
+    data: {
+      email: customer.email,
+      verify_url: verifyUrl,
+      customer: { first_name: customer.first_name ?? "" },
+    },
   })
 }
 

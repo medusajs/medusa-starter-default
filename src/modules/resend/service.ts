@@ -12,6 +12,7 @@ import { renderShipmentCreatedEmail } from "./emails/shipment-created"
 import { renderPasswordResetEmail } from "./emails/password-reset"
 import { renderPreorderFulfilledEmail } from "./emails/preorder-fulfilled"
 import { renderWelcomeEmail } from "./emails/welcome"
+import { renderEmailVerifyEmail } from "./emails/email-verify"
 
 type ResendOptions = {
   api_key: string
@@ -33,6 +34,7 @@ const templates: Record<string, TemplateRenderer> = {
   "password-reset": renderPasswordResetEmail,
   "preorder-fulfilled": renderPreorderFulfilledEmail,
   "welcome": renderWelcomeEmail,
+  "email-verify": renderEmailVerifyEmail,
 }
 
 class ResendNotificationProviderService extends AbstractNotificationProviderService {

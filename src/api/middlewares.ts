@@ -13,6 +13,42 @@ import {
 } from "./admin/variants/[id]/preorders/route"
 import { verifyOrderToken } from "../utils/order-token"
 
+// Blocks cart completion for accounts that haven't verified their email yet.
+// Guests (no customer_id, or shadow customer with has_account=false) pass
+// through — the gate is account-only. We resolve the email-verified flag
+// from the customer attached to the cart rather than from the auth context,
+// because the cart's customer is what the resulting order is tied to.
+async function requireEmailVerified(
+  req: AuthenticatedMedusaRequest,
+  res: MedusaResponse,
+  next: MedusaNextFunction,
+) {
+  const cartId = req.params?.id
+  if (!cartId) return next()
+
+  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const { data: [cart] } = await query.graph({
+    entity: "cart",
+    fields: ["id", "customer.id", "customer.has_account", "customer.metadata"],
+    filters: { id: cartId },
+  })
+
+  const customer = (cart as { customer?: {
+    id?: string
+    has_account?: boolean | null
+    metadata?: Record<string, unknown> | null
+  } | null } | undefined)?.customer
+
+  if (!customer?.has_account) return next()
+  if (customer.metadata?.email_verified === true) return next()
+
+  return res.status(403).json({
+    type: "email_not_verified",
+    message:
+      "Bitte bestätige deine E-Mail-Adresse, bevor du die Bestellung abschließt.",
+  })
+}
+
 // Returns the customer id when the request is authenticated as a customer,
 // otherwise null. JWT/session is populated by `authenticate(...)` running
 // upstream in the same matcher — see route definitions below.
@@ -129,6 +165,26 @@ export default defineMiddlewares({
       middlewares: [
         authenticate("customer", ["session", "bearer"], { allowUnauthenticated: true }),
         verifyOrderAccess,
+      ],
+    },
+    // Email-verify gate for cart completion. Guests pass through; account
+    // holders need metadata.email_verified === true.
+    {
+      matcher: "/store/carts/:id/complete",
+      methods: ["POST"],
+      middlewares: [requireEmailVerified],
+    },
+    {
+      matcher: "/store/carts/:id/complete-preorder",
+      methods: ["POST"],
+      middlewares: [requireEmailVerified],
+    },
+    // Resend verification email needs an authenticated customer session.
+    {
+      matcher: "/store/customers/me/resend-verification",
+      methods: ["POST"],
+      middlewares: [
+        authenticate("customer", ["session", "bearer"]),
       ],
     },
   ],
