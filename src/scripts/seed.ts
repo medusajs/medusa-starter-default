@@ -11,6 +11,7 @@ import {
 } from "@medusajs/framework/workflows-sdk";
 import {
   createApiKeysWorkflow,
+  createCollectionsWorkflow,
   createInventoryLevelsWorkflow,
   createProductCategoriesWorkflow,
   createProductsWorkflow,
@@ -20,6 +21,7 @@ import {
   createShippingProfilesWorkflow,
   createStockLocationsWorkflow,
   createTaxRegionsWorkflow,
+  batchLinkProductsToCollectionWorkflow,
   linkSalesChannelsToApiKeyWorkflow,
   linkSalesChannelsToStockLocationWorkflow,
   updateStoresStep,
@@ -397,7 +399,7 @@ export default async function seedDemoData({ container }: ExecArgs) {
     },
   });
 
-  await createProductsWorkflow(container).run({
+  const { result: productsResult } = await createProductsWorkflow(container).run({
     input: {
       products: [
         {
@@ -894,6 +896,29 @@ export default async function seedDemoData({ container }: ExecArgs) {
     },
   });
   logger.info("Finished seeding product data.");
+
+  // Create test collection
+  logger.info("Seeding collection data...");
+  const { result: collectionResult } = await createCollectionsWorkflow(container).run({
+    input: {
+      collections: [{
+        title: "Medusa Collection",
+        handle: "medusa-collection",
+      }],
+    },
+  });
+  
+  const collection = collectionResult[0];
+  
+  // Link products to collection
+  await batchLinkProductsToCollectionWorkflow(container).run({
+    input: {
+      id: collection.id,
+      add: productsResult.map(product => product.id),
+    },
+  });
+  
+  logger.info("Finished seeding collection data.");
 
   logger.info("Seeding inventory levels.");
 
