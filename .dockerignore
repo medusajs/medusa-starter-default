@@ -1,0 +1,36 @@
+# Git files
+.git
+.gitignore
+
+# Node modules - will be installed in Docker
+node_modules
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files - should be passed via Coolify
+.env*
+!.env.example
+
+# Build output - will be generated in Docker
+dist
+dist-*
+tsconfig.tsbuildinfo
+
+# Test files
+src/api/routes/**/tests/*
+src/services/tests/*
+src/subscribers/tests/*
+
+# Integration tests directory
+integration-tests
+
+# Other config/temp files
+.vscode
