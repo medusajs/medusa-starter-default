@@ -190,10 +190,24 @@ const buildContext = (data: Record<string, unknown>): EmailContext => {
   const hasPreorderItems = items.some((i) => i.is_preorder)
 
   const discounts = aggregateDiscounts(order)
-  const discountTotalRaw = discounts.reduce((sum, d) => sum + d.amount, 0)
+  // Adjustments are stored net (is_tax_inclusive=false), but the email renders
+  // gross subtotal and total. Scale the per-code net amounts up to the gross
+  // discount_total so the rows reconcile (206,33 − 6,00 = 200,33), matching the
+  // storefront's cost-breakdown.ts. Without this the discount showed e.g. 5,61
+  // net against gross totals and the lines didn't sum to the total.
+  const rawDiscountTotal = discounts.reduce((sum, d) => sum + d.amount, 0)
+  const grossDiscountTotal = Math.abs(toNumber((order as any).discount_total))
+  const discountScale =
+    rawDiscountTotal > 0 &&
+    grossDiscountTotal > 0 &&
+    Math.abs(rawDiscountTotal - grossDiscountTotal) > 0.005
+      ? grossDiscountTotal / rawDiscountTotal
+      : 1
+  const discountTotalRaw =
+    grossDiscountTotal > 0 ? grossDiscountTotal : rawDiscountTotal
   const discountLines = discounts.map((d) => ({
     code: d.code,
-    amount_formatted: fmt(d.amount),
+    amount_formatted: fmt(d.amount * discountScale),
   }))
 
   const shippingMethodName =
