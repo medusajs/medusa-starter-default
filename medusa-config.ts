@@ -81,11 +81,14 @@ if (configErrors.length && !IS_BUILD) {
 // DATABASE_SSL=true   -> TLS without certificate verification (self-signed / managed DBs)
 // DATABASE_SSL=verify -> TLS with certificate verification
 // unset/false         -> no TLS (e.g. Postgres in the same Docker network)
+// The explicit `ssl: false` matters: without driver options Medusa enables TLS
+// for every DATABASE_URL whose host isn't localhost/127.0.0.1 (e.g. "postgres"
+// in Docker), and the connection then times out against a non-TLS Postgres.
 const DATABASE_SSL = env("DATABASE_SSL")
 const databaseDriverOptions =
   DATABASE_SSL === "true" || DATABASE_SSL === "verify"
     ? { connection: { ssl: { rejectUnauthorized: DATABASE_SSL === "verify" } } }
-    : undefined
+    : { connection: { ssl: false } }
 
 // ---------------------------------------------------------------------------
 // Infrastructure modules
