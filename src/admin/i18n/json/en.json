@@ -1,0 +1,80 @@
+{
+  "kiji": {
+    "common": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "unknownError": "Unknown error"
+    },
+    "preorder": {
+      "availableOn": "Available on {{date}}",
+      "status": {
+        "pending": "Pending",
+        "fulfilled": "Fulfilled",
+        "cancelled": "Cancelled"
+      },
+      "variant": {
+        "title": "Pre-order",
+        "enabled": "Enabled",
+        "loadError": "Pre-order settings could not be loaded.",
+        "emptyTitle": "This variant is not available for pre-order.",
+        "emptyDescription": "Set up a pre-order to let customers order this variant now. Their orders are fulfilled automatically once it becomes available.",
+        "actions": {
+          "add": "Set up pre-order",
+          "edit": "Edit pre-order",
+          "remove": "Remove pre-order"
+        },
+        "form": {
+          "availableDate": "Available from",
+          "availableDateHint": "Customers can pre-order this variant until this date. From then on it can be purchased normally.",
+          "dateInPast": "The date must not be in the past."
+        },
+        "removePrompt": {
+          "title": "Remove pre-order?",
+          "description": "This removes the pre-order setting for this variant. Existing pre-orders will no longer be fulfilled automatically.",
+          "confirm": "Remove"
+        },
+        "toast": {
+          "saved": "Pre-order saved.",
+          "saveError": "Pre-order could not be saved: {{message}}",
+          "removed": "Pre-order removed.",
+          "removeError": "Pre-order could not be removed: {{message}}"
+        }
+      },
+      "order": {
+        "title": "Pre-orders",
+        "description": "These items are fulfilled automatically on their availability date.",
+        "loadError": "Pre-orders could not be loaded.",
+        "unnamedVariant": "Unnamed variant",
+        "viewVariant": "View variant"
+      }
+    },
+    "emailVerify": {
+      "title": "Email verification",
+      "status": {
+        "verified": "Verified",
+        "unverified": "Not verified"
+      },
+      "description": {
+        "verified": "The customer has confirmed their email address and can complete checkout.",
+        "unverified": "The customer can't complete checkout until their email address is confirmed."
+      },
+      "actions": {
+        "markVerified": "Mark as verified",
+        "removeVerification": "Remove verification",
+        "resend": "Resend confirmation email"
+      },
+      "removePrompt": {
+        "title": "Remove verification?",
+        "description": "The customer won't be able to complete checkout until they confirm their email address again.",
+        "confirm": "Remove"
+      },
+      "toast": {
+        "markedVerified": "Email address marked as verified.",
+        "verificationRemoved": "Verification removed.",
+        "updateError": "Action failed: {{message}}",
+        "resent": "Confirmation email sent.",
+        "resendError": "Email could not be sent: {{message}}"
+      }
+    }
+  }
+}

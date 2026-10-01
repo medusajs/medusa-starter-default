@@ -1,0 +1,80 @@
+{
+  "kiji": {
+    "common": {
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "unknownError": "Unbekannter Fehler"
+    },
+    "preorder": {
+      "availableOn": "Verfügbar ab {{date}}",
+      "status": {
+        "pending": "Ausstehend",
+        "fulfilled": "Erfüllt",
+        "cancelled": "Storniert"
+      },
+      "variant": {
+        "title": "Vorbestellung",
+        "enabled": "Aktiv",
+        "loadError": "Die Vorbestellungs-Einstellungen konnten nicht geladen werden.",
+        "emptyTitle": "Diese Variante kann nicht vorbestellt werden.",
+        "emptyDescription": "Richte eine Vorbestellung ein, damit Kunden diese Variante schon jetzt bestellen können. Die Bestellungen werden automatisch erfüllt, sobald sie verfügbar ist.",
+        "actions": {
+          "add": "Vorbestellung einrichten",
+          "edit": "Vorbestellung bearbeiten",
+          "remove": "Vorbestellung entfernen"
+        },
+        "form": {
+          "availableDate": "Verfügbar ab",
+          "availableDateHint": "Bis zu diesem Datum können Kunden die Variante vorbestellen. Danach ist sie regulär erhältlich.",
+          "dateInPast": "Das Datum darf nicht in der Vergangenheit liegen."
+        },
+        "removePrompt": {
+          "title": "Vorbestellung entfernen?",
+          "description": "Die Vorbestellungs-Einstellung für diese Variante wird entfernt. Bestehende Vorbestellungen werden dann nicht mehr automatisch erfüllt.",
+          "confirm": "Entfernen"
+        },
+        "toast": {
+          "saved": "Vorbestellung gespeichert.",
+          "saveError": "Vorbestellung konnte nicht gespeichert werden: {{message}}",
+          "removed": "Vorbestellung entfernt.",
+          "removeError": "Vorbestellung konnte nicht entfernt werden: {{message}}"
+        }
+      },
+      "order": {
+        "title": "Vorbestellungen",
+        "description": "Diese Artikel werden am jeweiligen Verfügbarkeitsdatum automatisch erfüllt.",
+        "loadError": "Die Vorbestellungen konnten nicht geladen werden.",
+        "unnamedVariant": "Unbenannte Variante",
+        "viewVariant": "Variante anzeigen"
+      }
+    },
+    "emailVerify": {
+      "title": "E-Mail-Bestätigung",
+      "status": {
+        "verified": "Bestätigt",
+        "unverified": "Nicht bestätigt"
+      },
+      "description": {
+        "verified": "Der Kunde hat seine E-Mail-Adresse bestätigt und kann den Checkout abschließen.",
+        "unverified": "Der Kunde kann den Checkout erst abschließen, wenn seine E-Mail-Adresse bestätigt ist."
+      },
+      "actions": {
+        "markVerified": "Als bestätigt markieren",
+        "removeVerification": "Bestätigung zurücknehmen",
+        "resend": "Bestätigungsmail erneut senden"
+      },
+      "removePrompt": {
+        "title": "Bestätigung zurücknehmen?",
+        "description": "Der Kunde kann den Checkout erst wieder abschließen, wenn er seine E-Mail-Adresse erneut bestätigt hat.",
+        "confirm": "Zurücknehmen"
+      },
+      "toast": {
+        "markedVerified": "E-Mail-Adresse als bestätigt markiert.",
+        "verificationRemoved": "Bestätigung zurückgenommen.",
+        "updateError": "Aktion fehlgeschlagen: {{message}}",
+        "resent": "Bestätigungsmail wurde verschickt.",
+        "resendError": "E-Mail konnte nicht gesendet werden: {{message}}"
+      }
+    }
+  }
+}

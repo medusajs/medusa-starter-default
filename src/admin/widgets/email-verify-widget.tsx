@@ -1,118 +1,100 @@
 import { defineWidgetConfig } from "@medusajs/admin-sdk"
-import { DetailWidgetProps, HttpTypes } from "@medusajs/framework/types"
+import type { DetailWidgetProps, HttpTypes } from "@medusajs/framework/types"
 import {
   Button,
   Container,
   Heading,
   StatusBadge,
   Text,
-  toast,
+  usePrompt,
 } from "@medusajs/ui"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { sdk } from "../lib/sdk"
-
-type CustomerWithMetadata = HttpTypes.AdminCustomer & {
-  metadata?: Record<string, unknown> | null
-}
+import { useTranslation } from "react-i18next"
+import { useEmailVerification } from "../hooks/use-email-verification"
 
 const EmailVerifyWidget = ({
   data: customer,
 }: DetailWidgetProps<HttpTypes.AdminCustomer>) => {
-  const c = customer as CustomerWithMetadata
-  const queryClient = useQueryClient()
+  const { t } = useTranslation()
+  const prompt = usePrompt()
+  const {
+    setVerified,
+    resendVerification,
+    isSettingVerified,
+    isResending,
+  } = useEmailVerification(customer.id)
 
   // Account-less guest customers don't have a login, so the verify gate
   // doesn't apply to them — hide the widget entirely.
-  if (!c.has_account) return <></>
+  if (!customer.has_account) {
+    return null
+  }
 
-  const verified = c.metadata?.email_verified === true
+  const verified = customer.metadata?.email_verified === true
+  const isPending = isSettingVerified || isResending
 
-  const setVerified = useMutation({
-    mutationFn: (next: boolean) =>
-      sdk.client.fetch(`/admin/customers/${c.id}/email-verified`, {
-        method: "POST",
-        body: { verified: next },
-      }),
-    onSuccess: (_, next) => {
-      toast.success(
-        next
-          ? "E-Mail-Adresse als verifiziert markiert."
-          : "Verifikation entfernt.",
-      )
-      // Force the customer-detail query to refetch so the metadata reflects
-      // the new state without a manual reload.
-      queryClient.invalidateQueries({ queryKey: ["customer", c.id] })
-      queryClient.invalidateQueries({ queryKey: ["customers"] })
-    },
-    onError: (err) => {
-      toast.error(
-        `Aktion fehlgeschlagen: ${err instanceof Error ? err.message : "unbekannter Fehler"}`,
-      )
-    },
-  })
-
-  const resendMail = useMutation({
-    mutationFn: () =>
-      sdk.client.fetch(`/admin/customers/${c.id}/resend-verification`, {
-        method: "POST",
-      }),
-    onSuccess: () => {
-      toast.success("Bestätigungsmail verschickt.")
-    },
-    onError: (err) => {
-      toast.error(
-        `Mail konnte nicht gesendet werden: ${err instanceof Error ? err.message : "unbekannter Fehler"}`,
-      )
-    },
-  })
+  const handleRemoveVerification = async () => {
+    const confirmed = await prompt({
+      title: t("kiji.emailVerify.removePrompt.title"),
+      description: t("kiji.emailVerify.removePrompt.description"),
+      confirmText: t("kiji.emailVerify.removePrompt.confirm"),
+      cancelText: t("kiji.common.cancel"),
+      variant: "danger",
+    })
+    if (confirmed) {
+      setVerified(false)
+    }
+  }
 
   return (
-    <Container className="p-0">
-      <div className="flex flex-col gap-3 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <Heading level="h2">E-Mail-Verifizierung</Heading>
-          <StatusBadge color={verified ? "green" : "orange"}>
-            {verified ? "Verifiziert" : "Nicht verifiziert"}
-          </StatusBadge>
-        </div>
-
-        <Text size="small" className="text-ui-fg-muted">
+    <Container className="flex flex-col gap-y-3 px-6 py-4">
+      <div className="flex items-center justify-between gap-x-2">
+        <Heading level="h2">{t("kiji.emailVerify.title")}</Heading>
+        <StatusBadge color={verified ? "green" : "orange"}>
           {verified
-            ? "Der Kunde hat seine E-Mail-Adresse bestätigt und kann den Checkout durchlaufen."
-            : "Der Kunde kann den Checkout nicht abschließen, bis die E-Mail bestätigt ist."}
-        </Text>
+            ? t("kiji.emailVerify.status.verified")
+            : t("kiji.emailVerify.status.unverified")}
+        </StatusBadge>
+      </div>
 
-        <div className="flex flex-col gap-2 pt-1 sm:flex-row">
-          {verified ? (
+      <Text size="small" leading="compact" className="text-ui-fg-subtle">
+        {verified
+          ? t("kiji.emailVerify.description.verified")
+          : t("kiji.emailVerify.description.unverified")}
+      </Text>
+
+      <div className="flex flex-wrap gap-2">
+        {verified ? (
+          <Button
+            variant="secondary"
+            size="small"
+            disabled={isPending}
+            isLoading={isSettingVerified}
+            onClick={handleRemoveVerification}
+          >
+            {t("kiji.emailVerify.actions.removeVerification")}
+          </Button>
+        ) : (
+          <>
+            <Button
+              variant="primary"
+              size="small"
+              disabled={isPending}
+              isLoading={isSettingVerified}
+              onClick={() => setVerified(true)}
+            >
+              {t("kiji.emailVerify.actions.markVerified")}
+            </Button>
             <Button
               variant="secondary"
               size="small"
-              isLoading={setVerified.isPending}
-              onClick={() => setVerified.mutate(false)}
+              disabled={isPending}
+              isLoading={isResending}
+              onClick={() => resendVerification()}
             >
-              Verifikation entfernen
+              {t("kiji.emailVerify.actions.resend")}
             </Button>
-          ) : (
-            <>
-              <Button
-                variant="primary"
-                size="small"
-                isLoading={setVerified.isPending}
-                onClick={() => setVerified.mutate(true)}
-              >
-                Als verifiziert markieren
-              </Button>
-              <Button
-                variant="secondary"
-                size="small"
-                isLoading={resendMail.isPending}
-                onClick={() => resendMail.mutate()}
-              >
-                Bestätigungsmail erneut senden
-              </Button>
-            </>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </Container>
   )

@@ -1,57 +1,79 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "@medusajs/ui"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
+import { getErrorMessage } from "../lib/format"
 import { sdk } from "../lib/sdk"
-import { PreorderVariantResponse, CreatePreorderVariantData } from "../lib/types"
-import { HttpTypes } from "@medusajs/framework/types"
+import type {
+  AdminPreorderVariantResponse,
+  AdminUpsertPreorderVariantBody,
+  AdminVariantWithPreorder,
+} from "../lib/types"
+import { preorderQueryKeys } from "./query-keys"
 
-export const usePreorderVariant = (variant: HttpTypes.AdminProductVariant) => {
+export const usePreorderVariant = (
+  variantId: string,
+  productId: string | undefined,
+) => {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
 
-  const { data, isLoading, error } = useQuery<PreorderVariantResponse>({
-    queryFn: () => sdk.admin.product.retrieveVariant(
-      variant.product_id!,
-      variant.id,
-      { fields: "*preorder_variant" }
-    ),
-    queryKey: ["preorder-variant", variant.id],
+  const { data, isLoading, isError } = useQuery({
+    queryKey: preorderQueryKeys.variant(variantId),
+    queryFn: async () => {
+      const { variant } = await sdk.admin.product.retrieveVariant(
+        productId!,
+        variantId,
+        { fields: "+preorder_variant.*" },
+      )
+      return (variant as AdminVariantWithPreorder).preorder_variant ?? null
+    },
+    enabled: !!productId,
   })
 
   const upsertMutation = useMutation({
-    mutationFn: async (data: CreatePreorderVariantData) => {
-      return sdk.client.fetch(`/admin/variants/${variant.id}/preorders`, {
-        method: "POST",
-        body: data,
-      })
-    },
+    mutationFn: (body: AdminUpsertPreorderVariantBody) =>
+      sdk.client.fetch<AdminPreorderVariantResponse>(
+        `/admin/variants/${variantId}/preorders`,
+        { method: "POST", body },
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["preorder-variant", variant.id] })
-      toast.success("Preorder configuration saved successfully")
+      // Prefix match: refreshes this variant and any order pre-order lists.
+      queryClient.invalidateQueries({ queryKey: preorderQueryKeys.all })
+      toast.success(t("kiji.preorder.variant.toast.saved"))
     },
     onError: (error) => {
-      toast.error(`Failed to save preorder configuration: ${error.message}`)
+      toast.error(
+        t("kiji.preorder.variant.toast.saveError", {
+          message: getErrorMessage(error, t("kiji.common.unknownError")),
+        }),
+      )
     },
   })
 
   const disableMutation = useMutation({
-    mutationFn: async () => {
-      return sdk.client.fetch(`/admin/variants/${variant.id}/preorders`, {
-        method: "DELETE",
-      })
-    },
+    mutationFn: () =>
+      sdk.client.fetch<AdminPreorderVariantResponse>(
+        `/admin/variants/${variantId}/preorders`,
+        { method: "DELETE" },
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["preorder-variant", variant.id] })
-      toast.success("Preorder configuration removed successfully")
+      queryClient.invalidateQueries({ queryKey: preorderQueryKeys.all })
+      toast.success(t("kiji.preorder.variant.toast.removed"))
     },
     onError: (error) => {
-      toast.error(`Failed to remove preorder configuration: ${error.message}`)
+      toast.error(
+        t("kiji.preorder.variant.toast.removeError", {
+          message: getErrorMessage(error, t("kiji.common.unknownError")),
+        }),
+      )
     },
   })
 
   return {
-    preorderVariant: data?.variant.preorder_variant?.status === "enabled" ?
-      data.variant.preorder_variant : null,
+    // A disabled config is treated the same as no config.
+    preorderVariant: data?.status === "enabled" ? data : null,
     isLoading,
-    error,
+    isError,
     upsertPreorder: upsertMutation.mutate,
     disablePreorder: disableMutation.mutate,
     isUpserting: upsertMutation.isPending,
