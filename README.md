@@ -86,6 +86,14 @@ Ohne `RESEND_API_KEY` werden Mails nicht versendet, sondern vom lokalen Notifica
 | `yarn test:unit` | Unit-Tests `src/**/__tests__/**/*.unit.spec.ts` |
 | `yarn test:integration:http` | HTTP-Integrationstests `integration-tests/http/*.spec.ts` |
 | `yarn test:integration:modules` | Modul-Tests `src/modules/*/__tests__/**` |
+
+Die Integrationstests brauchen eine Postgres-Instanz, z. B. den Dev-Container:
+
+```bash
+DB_HOST=localhost DB_PORT=5432 DB_USERNAME=postgres DB_PASSWORD=postgres yarn test:integration:http
+```
+
+`DB_HOST` muss `localhost` sein, nicht `127.0.0.1`: `@medusajs/test-utils` schaltet sonst SSL ein und die Verbindung hängt. Die Tests legen eigene Datenbanken an und löschen sie wieder.
 | `yarn seed` | Demo-Daten (`src/scripts/seed.ts`) |
 | `yarn docker:up` / `yarn docker:down` | `docker compose up --build -d` / `docker compose down` |
 
