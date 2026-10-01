@@ -1,56 +1,57 @@
 {
-  "name": "medusa-starter-default",
+  "name": "kiji-backend",
   "version": "0.0.1",
-  "description": "A starter for Medusa projects.",
-  "author": "Medusa (https://medusajs.com)",
+  "private": true,
+  "description": "Medusa v2 backend for the kiji-games store (preorders, email verification, Resend notifications, guest order tokens).",
   "license": "MIT",
-  "keywords": [
-    "sqlite",
-    "postgres",
-    "typescript",
-    "ecommerce",
-    "headless",
-    "medusa"
-  ],
+  "packageManager": "yarn@4.12.0",
   "scripts": {
     "build": "medusa build",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "start": "medusa start",
     "dev": "medusa develop",
+    "lint": "medusa lint",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src/admin/tsconfig.json",
     "test:integration:http": "TEST_TYPE=integration:http NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit",
-    "test:integration:modules": "TEST_TYPE=integration:modules NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit",
-    "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit",
+    "test:integration:modules": "TEST_TYPE=integration:modules NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit --passWithNoTests",
+    "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit --passWithNoTests",
     "docker:up": "docker compose up --build -d",
-    "docker:down": "docker compose down",
-    "postinstall": "patch-package"
+    "docker:down": "docker compose down"
   },
   "dependencies": {
-    "@medusajs/admin-sdk": "2.15.3",
-    "@medusajs/cli": "2.15.3",
-    "@medusajs/framework": "2.15.3",
-    "@medusajs/medusa": "2.15.3",
-    "handlebars": "^4.7.8",
-    "resend": "^4.0.0"
+    "@medusajs/admin-sdk": "2.21.2",
+    "@medusajs/cli": "2.21.2",
+    "@medusajs/framework": "2.21.2",
+    "@medusajs/icons": "2.21.2",
+    "@medusajs/js-sdk": "2.21.2",
+    "@medusajs/medusa": "2.21.2",
+    "@medusajs/ui": "4.2.6",
+    "@tanstack/react-query": "5.64.2",
+    "handlebars": "^4.7.9",
+    "i18next": "23.7.11",
+    "react-i18next": "13.5.0",
+    "react-router-dom": "7.18.2",
+    "resend": "^6.31.0"
   },
   "devDependencies": {
-    "@medusajs/test-utils": "2.15.3",
+    "@medusajs/eslint-plugin": "2.21.2",
+    "@medusajs/test-utils": "2.21.2",
     "@swc/core": "^1.7.28",
     "@swc/jest": "^0.2.36",
     "@types/jest": "^29.5.13",
-    "@types/node": "^20.12.11",
+    "@types/node": "^22.10.0",
     "@types/react": "^18.3.2",
     "@types/react-dom": "^18.2.25",
+    "eslint": "^9.39.4",
     "jest": "^29.7.0",
-    "patch-package": "^8.0.1",
-    "prop-types": "^15.8.1",
+    "jiti": "^2.7.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2",
-    "vite": "^5.4.14",
-    "yalc": "^1.0.0-pre.53"
+    "vite": "^7.3.6"
   },
   "engines": {
-    "node": ">=20"
+    "node": "^20.19.0 || >=22.12.0"
   }
 }
