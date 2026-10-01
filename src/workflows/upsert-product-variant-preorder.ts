@@ -1,19 +1,19 @@
 import { createWorkflow, transform, when, WorkflowResponse } from "@medusajs/framework/workflows-sdk"
 import { createRemoteLinkStep, useQueryGraphStep } from "@medusajs/medusa/core-flows"
+import { Modules } from "@medusajs/framework/utils"
 import { updatePreorderVariantStep } from "./steps/update-preorder-variant"
 import { createPreorderVariantStep } from "./steps/create-preorder-variant"
 import { PREORDER_MODULE } from "../modules/preorder"
-import { Modules } from "@medusajs/framework/utils"
 import { PreorderVariantStatus } from "../modules/preorder/models/preorder-variant"
 
 type WorkflowInput = {
-  variant_id: string;
-  available_date: Date;
+  variant_id: string
+  available_date: Date
 }
 
 export const upsertProductVariantPreorderWorkflow = createWorkflow(
   "upsert-product-variant-preorder",
-  (input: WorkflowInput) => {
+  function (input: WorkflowInput) {
     useQueryGraphStep({
       entity: "product_variant",
       fields: ["id"],
@@ -27,32 +27,42 @@ export const upsertProductVariantPreorderWorkflow = createWorkflow(
 
     const { data: preorderVariants } = useQueryGraphStep({
       entity: "preorder_variant",
-      fields: ["*"],
+      fields: ["id"],
       filters: {
         variant_id: input.variant_id,
       },
     }).config({ name: "retrieve-preorder-variant" })
 
-    const preorderVariantsAny = preorderVariants as any
+    const existingId = transform({ preorderVariants }, function ({ preorderVariants }) {
+      return preorderVariants[0]?.id ?? null
+    })
 
     const updatedPreorderVariant = when(
-      { preorderVariants: preorderVariantsAny },
-      (data: { preorderVariants: { id: string }[] }) => data.preorderVariants.length > 0
-    ).then(() => {
-      const preorderVariant = updatePreorderVariantStep({
-        id: preorderVariantsAny[0].id,
-        variant_id: input.variant_id,
-        available_date: input.available_date,
-        status: PreorderVariantStatus.ENABLED,
+      "update-existing-preorder-variant",
+      { existingId },
+      function ({ existingId }) {
+        return !!existingId
+      }
+    ).then(function () {
+      const updateInput = transform({ existingId, input }, function ({ existingId, input }) {
+        return {
+          id: existingId as string,
+          variant_id: input.variant_id,
+          available_date: input.available_date,
+          status: PreorderVariantStatus.ENABLED,
+        }
       })
 
-      return preorderVariant
+      return updatePreorderVariantStep(updateInput)
     })
 
     const createdPreorderVariant = when(
-      { preorderVariants: preorderVariantsAny },
-      (data: { preorderVariants: unknown[] }) => data.preorderVariants.length === 0
-    ).then(() => {
+      "create-preorder-variant",
+      { existingId },
+      function ({ existingId }) {
+        return !existingId
+      }
+    ).then(function () {
       const preorderVariant = createPreorderVariantStep(input)
 
       createRemoteLinkStep([
@@ -72,9 +82,9 @@ export const upsertProductVariantPreorderWorkflow = createWorkflow(
     const preorderVariant = transform({
       updatedPreorderVariant,
       createdPreorderVariant,
-    }, (data) =>
-      data.createdPreorderVariant || data.updatedPreorderVariant
-    )
+    }, function (data) {
+      return data.createdPreorderVariant ?? data.updatedPreorderVariant
+    })
 
     return new WorkflowResponse(preorderVariant)
   }

@@ -1,4 +1,4 @@
-import { model } from "@medusajs/utils"
+import { model } from "@medusajs/framework/utils"
 import { PreorderVariant } from "./preorder-variant"
 
 export enum PreorderStatus {
@@ -21,5 +21,10 @@ export const Preorder = model.define(
 ).indexes([
   {
     on: ["item_id", "status"],
+  },
+  // One preorder per (order, preorder variant); guards against duplicate creation
+  {
+    on: ["order_id", "item_id"],
+    unique: true,
   },
 ])

@@ -14,8 +14,24 @@ export const createPreordersStep = createStep(
   }: StepInput, { container }) => {
     const preorderModuleService = container.resolve(PREORDER_MODULE)
 
+    const uniqueIds = [...new Set(preorder_variant_ids)]
+
+    // Re-check right before inserting; (order_id, item_id) is unique in the DB
+    const existing = uniqueIds.length
+      ? await preorderModuleService.listPreorders(
+        { order_id, item_id: uniqueIds },
+        { select: ["id", "item_id"] }
+      )
+      : []
+    const existingItemIds = new Set(existing.map((p) => p.item_id))
+    const missingIds = uniqueIds.filter((id) => !existingItemIds.has(id))
+
+    if (!missingIds.length) {
+      return new StepResponse([], [])
+    }
+
     const preorders = await preorderModuleService.createPreorders(
-      preorder_variant_ids.map((id) => ({
+      missingIds.map((id) => ({
         item_id: id,
         order_id,
       }))
@@ -24,7 +40,7 @@ export const createPreordersStep = createStep(
     return new StepResponse(preorders, preorders.map((p) => p.id))
   },
   async (preorderIds, { container }) => {
-    if (!preorderIds) {
+    if (!preorderIds?.length) {
       return
     }
 

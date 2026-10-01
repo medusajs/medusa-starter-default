@@ -1,88 +1,131 @@
-import {
-  InferTypeOf,
-  MedusaContainer,
-} from "@medusajs/framework/types"
+import { randomUUID } from "node:crypto"
+import { MedusaContainer } from "@medusajs/framework/types"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import { fulfillPreorderWorkflow } from "../workflows/fulfill-preorder"
-import { PreorderVariant } from "../modules/preorder/models/preorder-variant"
+import { PreorderStatus } from "../modules/preorder/models/preorder"
+import { PreorderVariantStatus } from "../modules/preorder/models/preorder-variant"
 
-export default async function fulfillPreordersJob(container: MedusaContainer) {
-  const query = container.resolve("query")
-  const logger = container.resolve("logger")
+const LOCK_KEY = "job:fulfill-preorders"
+// Upper bound for a run; the lock is released explicitly when the run ends
+const LOCK_TTL_SECONDS = 60 * 60
+const PAGE_SIZE = 500
 
-  logger.info("Starting daily fulfill preorders job...")
+// Last millisecond of the current day in UTC
+export function endOfUtcDay(now: Date = new Date()): Date {
+  return new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    23, 59, 59, 999
+  ))
+}
 
-  const endToday = new Date()
-  endToday.setHours(23, 59, 59, 999)
+// Workflow errors may arrive as plain (serialized) objects
+function errorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "message" in error) {
+    return String(error.message)
+  }
+  return String(error)
+}
 
-  const limit = 1000
-  let preorderVariantsOffset = 0
-  let preorderVariantsCount = 0
-  let totalPreordersCount = 0
+export type FulfillPreordersJobResult = {
+  skipped_run: boolean
+  processed: number
+  failed: number
+  actions: Record<string, number>
+}
 
-  do {
-    const {
-      data: preorderVariants,
-    } = await query.graph({
-      entity: "preorder_variant",
-      fields: [
-        "*",
-        "product_variant.*",
-      ],
-      filters: {
-        status: "enabled",
-        // No lower bound: also pick up missed preorders (server downtime, crash, etc.)
-        // Inner loop only matches preorders with status=pending — no double-fulfillment risk.
-        available_date: {
-          $lte: endToday,
-        },
-      },
-      pagination: {
-        skip: preorderVariantsOffset,
-        take: limit,
-      },
-    })
+/**
+ * Fulfills pending preorders of enabled preorder variants whose available
+ * date is on or before the current UTC day. Also invoked by
+ * src/scripts/run-fulfill-preorders.ts.
+ */
+export default async function fulfillPreordersJob(
+  container: MedusaContainer
+): Promise<FulfillPreordersJobResult> {
+  const query = container.resolve(ContainerRegistrationKeys.QUERY)
+  const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
+  const locking = container.resolve(Modules.LOCKING)
 
-    preorderVariantsCount = preorderVariants.length
+  const result: FulfillPreordersJobResult = {
+    skipped_run: false,
+    processed: 0,
+    failed: 0,
+    actions: {},
+  }
 
-    for (const preorderVariant of preorderVariants) {
+  // Prevents overlapping runs (cron + manual script). Across processes this
+  // only works with a shared locking provider (redis/postgres).
+  const ownerId = `fulfill-preorders:${randomUUID()}`
+  try {
+    await locking.acquire(LOCK_KEY, { ownerId, expire: LOCK_TTL_SECONDS })
+  } catch {
+    logger.warn("Fulfill preorders job is already running, skipping this run")
+    result.skipped_run = true
+    return result
+  }
+
+  try {
+    const cutoff = endOfUtcDay()
+    logger.info(`Starting fulfill preorders job (cut-off ${cutoff.toISOString()})...`)
+
+    // Collect ids first: processing changes preorder status, which would
+    // shift offset-based pages of a "pending" filter.
+    const preorderIds: string[] = []
+    let offset = 0
+    let pageLength = 0
+
+    do {
       const { data: preorders } = await query.graph({
         entity: "preorder",
-        fields: ["*"],
+        fields: ["id"],
         filters: {
-          item_id: preorderVariant.id,
-          status: "pending",
+          status: PreorderStatus.PENDING,
+          item: {
+            status: PreorderVariantStatus.ENABLED,
+            // No lower bound: also pick up missed runs (downtime, crash, ...)
+            available_date: { $lte: cutoff },
+          },
+        },
+        pagination: {
+          skip: offset,
+          take: PAGE_SIZE,
+          order: { created_at: "ASC" },
         },
       })
 
-      for (const preorder of preorders) {
-        try {
-          await fulfillPreorderWorkflow(container)
-            .run({
-              input: {
-                preorder_id: preorder.id,
-                item: preorderVariant as unknown as InferTypeOf<typeof PreorderVariant>,
-                order_id: preorder.order_id,
-              },
-            })
+      preorderIds.push(...preorders.map((p) => p.id))
+      pageLength = preorders.length
+      offset += PAGE_SIZE
+    } while (pageLength === PAGE_SIZE)
 
-          totalPreordersCount += 1
-        } catch (error) {
-          logger.error(
-            `Failed to fulfill preorder ${preorder.id}: ${error}`
-          )
-        }
+    // One failing preorder must not stop the others
+    for (const preorderId of preorderIds) {
+      try {
+        const { result: workflowResult } = await fulfillPreorderWorkflow(container).run({
+          input: { preorder_id: preorderId },
+        })
+
+        result.processed += 1
+        result.actions[workflowResult.action] = (result.actions[workflowResult.action] ?? 0) + 1
+      } catch (error) {
+        result.failed += 1
+        logger.error(`Failed to fulfill preorder ${preorderId}: ${errorMessage(error)}`)
       }
     }
 
-    preorderVariantsOffset += limit
-  } while (preorderVariantsCount === limit)
+    logger.info(
+      `Fulfill preorders job done: ${result.processed} processed ${JSON.stringify(result.actions)}, ${result.failed} failed`
+    )
 
-  logger.info(
-    `Fulfilled ${totalPreordersCount} preorders`
-  )
+    return result
+  } finally {
+    await locking.release(LOCK_KEY, { ownerId })
+  }
 }
 
 export const config = {
   name: "daily-fulfill-preorders",
+  // Runs at 00:00 server time; the cut-off is always computed in UTC
   schedule: "0 0 * * *",
 }

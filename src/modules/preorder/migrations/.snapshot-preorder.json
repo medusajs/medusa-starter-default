@@ -326,6 +326,15 @@
           "expression": "CREATE INDEX IF NOT EXISTS \"IDX_preorder_item_id_status\" ON \"preorder\" (\"item_id\", \"status\") WHERE deleted_at IS NULL"
         },
         {
+          "keyName": "IDX_preorder_order_id_item_id_unique",
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE UNIQUE INDEX IF NOT EXISTS \"IDX_preorder_order_id_item_id_unique\" ON \"preorder\" (\"order_id\", \"item_id\") WHERE deleted_at IS NULL"
+        },
+        {
           "keyName": "preorder_pkey",
           "columnNames": [
             "id"

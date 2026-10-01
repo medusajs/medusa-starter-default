@@ -1,5 +1,5 @@
 import { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
-import { Modules } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 
 type PreorderFulfilledEvent = {
   order_id: string
@@ -11,8 +11,8 @@ export default async function preorderFulfilledHandler({
   container,
 }: SubscriberArgs<PreorderFulfilledEvent>) {
   const notificationService = container.resolve(Modules.NOTIFICATION)
-  const query = container.resolve("query")
-  const logger = container.resolve("logger")
+  const query = container.resolve(ContainerRegistrationKeys.QUERY)
+  const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
 
   const { data: [order] } = await query.graph({
     entity: "order",
@@ -41,7 +41,7 @@ export default async function preorderFulfilledHandler({
 
   // Only items whose variant points to the just-fulfilled preorder_variant
   const fulfilledItems = (order.items ?? []).filter(
-    (it: any) => it.variant?.preorder_variant?.id === data.preorder_variant_id
+    (it) => it?.variant?.preorder_variant?.id === data.preorder_variant_id
   )
 
   if (fulfilledItems.length === 0) {

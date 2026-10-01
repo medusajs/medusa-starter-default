@@ -8,16 +8,9 @@ import {
 import {
   disablePreorderVariantWorkflow,
 } from "../../../../../workflows/disable-preorder-variant"
-import { z } from "@medusajs/framework/zod"
+import { UpsertPreorderVariantSchema } from "./validators"
 
-export const UpsertPreorderVariantSchema = z.object({
-  available_date: z.string().datetime(),
-})
-
-type UpsertPreorderVariantSchema = z.infer<
-  typeof UpsertPreorderVariantSchema
->
-
+// Creates or updates (and re-enables) the preorder config of a variant
 export const POST = async (
   req: AuthenticatedMedusaRequest<UpsertPreorderVariantSchema>,
   res: MedusaResponse
@@ -37,6 +30,7 @@ export const POST = async (
   })
 }
 
+// Disables the preorder config of a variant; 404 if none exists
 export const DELETE = async (
   req: AuthenticatedMedusaRequest,
   res: MedusaResponse

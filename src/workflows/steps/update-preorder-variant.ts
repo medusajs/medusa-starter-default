@@ -41,6 +41,7 @@ export const updatePreorderVariantStep = createStep(
       id: preorderVariant.id,
       variant_id: preorderVariant.variant_id,
       available_date: preorderVariant.available_date,
+      status: preorderVariant.status,
     })
   }
 )
