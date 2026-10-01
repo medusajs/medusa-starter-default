@@ -1,36 +1,17 @@
-import fs from "node:fs"
-import path from "node:path"
-import Handlebars from "handlebars"
+import { companyBlock, renderTemplate, siteUrl, type RenderedEmail } from "./_shared"
+import template from "./templates/welcome"
 
-const templateSource = fs.readFileSync(
-  path.join(__dirname, "welcome.html"),
-  "utf-8"
-)
-const compiledTemplate = Handlebars.compile(templateSource)
-
-export const renderWelcomeEmail = (
-  data: Record<string, unknown>
-): { subject: string; html: string } => {
-  const customer = (data.customer as any) ?? {}
-  const siteUrl =
-    (data.site_url as string) ||
-    process.env.STOREFRONT_URL ||
-    "http://localhost:8000"
-
-  const context = {
-    site_url: siteUrl,
-    account_url: (data.account_url as string) || `${siteUrl}/account`,
-    customer: {
-      first_name: customer.first_name ?? "",
-    },
-    company: {
-      address_line: process.env.COMPANY_ADDRESS_LINE ?? "",
-      city: process.env.COMPANY_CITY ?? "",
-    },
-  }
+export const renderWelcomeEmail = (data: Record<string, unknown>): RenderedEmail => {
+  const customer = (data.customer as { first_name?: string | null } | undefined) ?? {}
+  const site = siteUrl(data)
 
   return {
     subject: "Willkommen bei Kiji Games",
-    html: compiledTemplate(context),
+    html: renderTemplate("welcome", template, {
+      site_url: site,
+      account_url: (typeof data.account_url === "string" && data.account_url) || `${site}/account`,
+      customer: { first_name: customer.first_name ?? "" },
+      company: companyBlock(),
+    }),
   }
 }

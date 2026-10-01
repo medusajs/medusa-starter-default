@@ -1,4 +1,7 @@
-<!doctype html>
+// Handlebars source for the "welcome" email. Kept as a TS module (not a
+// loose .html file) so `medusa build` compiles it into .medusa/server.
+// Edit the markup freely, but avoid backticks, "${" and backslashes.
+export default /* html */ `<!doctype html>
 <html lang="de" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
   <head>
     <meta charset="utf-8" />
@@ -6,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark light" />
     <meta name="supported-color-schemes" content="dark light" />
-    <title>E-Mail bestätigen</title>
+    <title>Willkommen bei Kiji Games</title>
 
     <!--[if mso]>
     <noscript>
@@ -29,7 +32,6 @@
         .px-32 { padding-left: 20px !important; padding-right: 20px !important; }
         .py-40 { padding-top: 24px !important; padding-bottom: 24px !important; }
         .hero-title { font-size: 26px !important; line-height: 32px !important; }
-        .verify-link { font-size: 11px !important; }
       }
     </style>
   </head>
@@ -37,7 +39,7 @@
   <body style="margin:0; padding:0; background-color:#1c1812; color:#f4eee2; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
     <!-- Preheader -->
     <div style="display:none; visibility:hidden; opacity:0; height:0; width:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#1c1812;">
-      Bestätige deine E-Mail-Adresse, um den Checkout freizuschalten. Der Link ist 24 Stunden gültig.
+      Schön, dass du da bist. Hier dein Account bei Kiji Games.
     </div>
 
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#1c1812;">
@@ -57,7 +59,7 @@
                       </a>
                     </td>
                     <td align="right" valign="middle" style="font-family: 'SFMono-Regular', Menlo, Consolas, monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#ada18e;">
-                      Bestätigung
+                      Account
                     </td>
                   </tr>
                 </table>
@@ -70,32 +72,29 @@
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
                   <tr>
                     <td style="padding: 6px 14px; background-color: rgba(214,161,77,0.14); border-radius: 999px; font-family: 'SFMono-Regular', Menlo, Consolas, monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#d6a14d;">
-                      E-Mail bestätigen
+                      Willkommen
                     </td>
                   </tr>
                 </table>
 
                 <h1 class="hero-title" style="margin: 20px 0 8px 0; font-size: 30px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em; color:#f4eee2;">
-                  {{#if customer.first_name}}Willkommen, {{customer.first_name}}!{{else}}Willkommen bei Kiji Games!{{/if}}
+                  Schön, dass du da bist{{#if customer.first_name}}, {{customer.first_name}}{{/if}}.
                 </h1>
                 <p style="margin: 0 0 4px 0; font-size: 15px; line-height: 22px; color: #ada18e;">
-                  Bitte bestätige <span style="color:#f4eee2;">{{email}}</span> als deine E-Mail-Adresse.
-                </p>
-                <p style="margin: 0; font-size: 15px; line-height: 22px; color: #ada18e;">
-                  Erst danach kannst du Bestellungen abschließen.
+                  Dein Account bei Kiji Games ist eingerichtet. Damit kannst du Bestellungen einsehen, Vorbestellungen verwalten und deine Adressen pflegen.
                 </p>
               </td>
             </tr>
 
             <!-- CTA -->
             <tr>
-              <td align="center" style="padding: 28px 32px 16px 32px;">
+              <td align="center" style="padding: 28px 32px 32px 32px;">
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                   <tr>
                     <td align="center" style="border-radius: 8px; background-color: #d6a14d;">
-                      <a href="{{verify_url}}"
+                      <a href="{{account_url}}"
                          style="display:inline-block; padding: 14px 32px; font-size: 15px; font-weight: 600; line-height: 20px; color: #1c1812; text-decoration: none; border-radius: 8px;">
-                        E-Mail bestätigen
+                        Zu deinem Account
                       </a>
                     </td>
                   </tr>
@@ -103,27 +102,20 @@
               </td>
             </tr>
 
-            <!-- Plain text URL fallback -->
+            <!-- Quick links -->
             <tr>
-              <td class="px-32" style="padding: 0 32px 24px 32px;" align="center">
-                <p style="margin: 0 0 6px 0; font-size: 12px; color:#7a7263;">
-                  Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:
-                </p>
-                <p class="verify-link" style="margin: 0; font-family:'SFMono-Regular',Menlo,Consolas,monospace; font-size:12px; line-height:18px; color:#ada18e; word-break: break-all;">
-                  <a href="{{verify_url}}" style="color:#ada18e; text-decoration: underline;">{{verify_url}}</a>
-                </p>
-              </td>
-            </tr>
-
-            <!-- Security hint -->
-            <tr>
-              <td class="px-32" style="padding: 8px 32px 32px 32px;">
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#1c1812; border-radius: 10px;">
+              <td class="px-32" style="padding: 0 32px 32px 32px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-top: 1px solid #2e2820;">
                   <tr>
-                    <td style="padding: 16px 18px; font-size: 13px; line-height: 19px; color:#ada18e;">
-                      Der Link ist <strong style="color:#f4eee2;">24 Stunden</strong> gültig. Danach läuft er ab und du kannst aus deinem Konto einen neuen anfordern.
-                      <br /><br />
-                      Wenn du dich nicht bei Kiji Games registriert hast, ignoriere diese E-Mail einfach. Ohne Bestätigung passiert nichts weiter.
+                    <td style="padding-top: 24px;">
+                      <div style="font-family:'SFMono-Regular',Menlo,Consolas,monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#ada18e; margin-bottom: 12px;">
+                        Erste Schritte
+                      </div>
+                      <div style="font-size:14px; line-height:22px; color:#f4eee2;">
+                        <a href="{{site_url}}/products" style="color:#d6a14d; text-decoration:none;">› Im Shop stöbern</a><br />
+                        <a href="{{site_url}}/account" style="color:#d6a14d; text-decoration:none;">› Adressen hinterlegen</a><br />
+                        <a href="{{site_url}}/account/orders" style="color:#d6a14d; text-decoration:none;">› Deine Bestellungen ansehen</a>
+                      </div>
                     </td>
                   </tr>
                 </table>
@@ -134,7 +126,7 @@
             <tr>
               <td class="px-32" style="padding: 24px 32px 32px 32px; background-color: #1c1812; border-top: 1px solid #2e2820;">
                 <p style="margin: 0 0 8px 0; font-size: 13px; line-height: 19px; color:#ada18e;">
-                  Fragen? Schreib uns an
+                  Fragen? Antworte einfach auf diese Mail oder schreib uns an
                   <a href="mailto:support@kiji-games.de" style="color:#d6a14d;">support@kiji-games.de</a>.
                 </p>
                 <p style="margin: 16px 0 0 0; font-size: 12px; line-height: 18px; color:#7a7263;">
@@ -155,3 +147,4 @@
     </table>
   </body>
 </html>
+`

@@ -1,38 +1,40 @@
-import fs from "node:fs"
-import path from "node:path"
-import Handlebars from "handlebars"
+import {
+  addressBlock,
+  companyBlock,
+  formatDate,
+  itemTitle,
+  orderUrl,
+  placeholderImage,
+  renderTemplate,
+  siteUrl,
+  type AddressInput,
+  type MailLineItem,
+  type RenderedEmail,
+} from "./_shared"
+import template from "./templates/shipment-created"
 
-const templateSource = fs.readFileSync(
-  path.join(__dirname, "shipment-created.html"),
-  "utf-8"
-)
-const compiledTemplate = Handlebars.compile(templateSource)
+type ShipmentFulfillment = {
+  provider_id?: string | null
+  shipped_at?: string | Date | null
+  labels?: Array<{ tracking_number?: string | null; tracking_url?: string | null }> | null
+  items?: Array<{ line_item_id?: string | null; title?: string | null; quantity?: number | null }> | null
+}
 
-const countryDisplay = new Intl.DisplayNames(["de"], { type: "region" })
-
-const dateFormatter = new Intl.DateTimeFormat("de-DE", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-})
-
-const resolveCountryName = (countryCode?: string | null): string => {
-  if (!countryCode) return ""
-  try {
-    return countryDisplay.of(countryCode.toUpperCase()) ?? countryCode.toUpperCase()
-  } catch {
-    return countryCode.toUpperCase()
-  }
+type ShipmentOrder = {
+  id: string
+  display_id?: number | string | null
+  items?: MailLineItem[] | null
+  shipping_address?: AddressInput
 }
 
 const buildDhlTrackingUrl = (trackingNumber: string): string =>
   `https://nolp.dhl.de/nextt-online-public/set_identcodes.do?lang=de&idc=${encodeURIComponent(
-    trackingNumber
+    trackingNumber,
   )}`
 
 const inferCarrier = (
-  providerId: string | undefined,
-  trackingUrl: string | undefined
+  providerId: string | null | undefined,
+  trackingUrl: string | undefined,
 ): string => {
   const haystack = `${providerId ?? ""} ${trackingUrl ?? ""}`.toLowerCase()
   if (haystack.includes("dhl")) return "DHL"
@@ -44,93 +46,55 @@ const inferCarrier = (
   return "den Versanddienstleister"
 }
 
-type TrackingLink = {
-  tracking_number: string
-  tracking_url: string
-}
+// Only http(s) links end up in an href; anything else falls back to DHL.
+const isHttpUrl = (url: unknown): url is string =>
+  typeof url === "string" && /^https?:\/\//i.test(url.trim())
 
 export const renderShipmentCreatedEmail = (
-  data: Record<string, unknown>
-): { subject: string; html: string } => {
-  const fulfillment = data.fulfillment as any
-  const order = data.order as any
-  const siteUrl =
-    (data.site_url as string) ||
-    process.env.STOREFRONT_URL ||
-    "http://localhost:8000"
-  const placeholderImage = `${siteUrl}/placeholder.png`
+  data: Record<string, unknown>,
+): RenderedEmail => {
+  const fulfillment = (data.fulfillment as ShipmentFulfillment | undefined) ?? {}
+  const order = data.order as ShipmentOrder
+  const site = siteUrl(data)
+  const placeholder = placeholderImage(site)
 
-  const labels = (fulfillment?.labels ?? []) as Array<{
-    tracking_number?: string
-    tracking_url?: string
-  }>
-
-  const isValidUrl = (url: unknown): url is string =>
-    typeof url === "string" && /^https?:\/\//i.test(url.trim())
-
-  const tracking_links: TrackingLink[] = labels
-    .filter((l) => l.tracking_number)
+  const trackingLinks = (fulfillment.labels ?? [])
+    .filter((l): l is { tracking_number: string; tracking_url?: string | null } =>
+      !!l.tracking_number,
+    )
     .map((l) => ({
-      tracking_number: l.tracking_number as string,
-      tracking_url: isValidUrl(l.tracking_url)
-        ? (l.tracking_url as string).trim()
-        : buildDhlTrackingUrl(l.tracking_number as string),
+      tracking_number: l.tracking_number,
+      tracking_url: isHttpUrl(l.tracking_url)
+        ? l.tracking_url.trim()
+        : buildDhlTrackingUrl(l.tracking_number),
     }))
 
-  const primaryTrackingNumber =
-    tracking_links[0]?.tracking_number ?? ""
-
-  const carrierLabel = inferCarrier(
-    fulfillment?.provider_id,
-    tracking_links[0]?.tracking_url
-  )
-
-  const items = (fulfillment?.items ?? []).map((fi: any) => {
-    const lineItem = (order.items ?? []).find(
-      (oi: any) => oi.id === fi.line_item_id
-    )
+  const orderItems = order.items ?? []
+  const items = (fulfillment.items ?? []).map((fi) => {
+    const lineItem = orderItems.find((oi) => oi.id === fi.line_item_id)
     return {
-      thumbnail: lineItem?.thumbnail || placeholderImage,
-      title: lineItem?.product_title || lineItem?.title || fi.title || "Artikel",
+      thumbnail: lineItem?.thumbnail || placeholder,
+      title: itemTitle(lineItem, fi.title),
       variant_title: lineItem?.variant_title ?? null,
       quantity: fi.quantity,
     }
   })
 
-  const shipping = order.shipping_address ?? {}
-  const orderId = order.id
-
-  const shippedAt = fulfillment?.shipped_at ?? new Date()
-
-  const context = {
-    site_url: siteUrl,
-    order_url: (data.order_url as string) || `${siteUrl}/order/${orderId}`,
-    order: {
-      display_id: order.display_id ?? orderId,
-    },
-    shipped_at_formatted: dateFormatter.format(new Date(shippedAt)),
-    carrier_label: carrierLabel,
-    primary_tracking_number: primaryTrackingNumber,
-    tracking_links,
-    items,
-    shipping_address: {
-      first_name: shipping.first_name ?? "",
-      last_name: shipping.last_name ?? "",
-      company: shipping.company ?? "",
-      address_1: shipping.address_1 ?? "",
-      address_2: shipping.address_2 ?? "",
-      postal_code: shipping.postal_code ?? "",
-      city: shipping.city ?? "",
-      country_name: resolveCountryName(shipping.country_code),
-    },
-    company: {
-      address_line: process.env.COMPANY_ADDRESS_LINE ?? "",
-      city: process.env.COMPANY_CITY ?? "",
-    },
-  }
+  const displayId = order.display_id ?? order.id
 
   return {
-    subject: `Deine Bestellung #${context.order.display_id} ist unterwegs`,
-    html: compiledTemplate(context),
+    subject: `Deine Bestellung #${displayId} ist unterwegs`,
+    html: renderTemplate("shipment-created", template, {
+      site_url: site,
+      order_url: orderUrl(data, order.id),
+      order: { display_id: displayId },
+      shipped_at_formatted: formatDate(fulfillment.shipped_at ?? new Date()),
+      carrier_label: inferCarrier(fulfillment.provider_id, trackingLinks[0]?.tracking_url),
+      primary_tracking_number: trackingLinks[0]?.tracking_number ?? "",
+      tracking_links: trackingLinks,
+      items,
+      shipping_address: addressBlock(order.shipping_address),
+      company: companyBlock(),
+    }),
   }
 }

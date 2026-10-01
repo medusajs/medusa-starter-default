@@ -1,34 +1,17 @@
-import crypto from "node:crypto"
+import { hmacBase64Url, safeEqual } from "./hmac"
 
-// Deterministic HMAC token used to authorize guest access to a freshly
-// created order (post-checkout confirmation page) without requiring login.
+// Deterministic HMAC token used to authorize guest access to an order
+// (confirmation page, links in order mails) without requiring login.
 //
 // Logged-in customers don't need this — ownership is checked via the
-// customer JWT against `order.customer_id`. The token only matters for
-// guest checkouts where there is no customer record on the order.
-
-function getSecret(): string {
-  const secret = process.env.JWT_SECRET
-  if (!secret) {
-    throw new Error("JWT_SECRET is not configured")
-  }
-  return secret
-}
+// customer JWT against `order.customer_id`. Deterministic on purpose: links
+// in already-sent mails must keep working, so the format must not change.
 
 export function signOrderToken(orderId: string): string {
-  return crypto
-    .createHmac("sha256", getSecret())
-    .update(`order-token:${orderId}`)
-    .digest("base64url")
+  return hmacBase64Url(`order-token:${orderId}`)
 }
 
 export function verifyOrderToken(orderId: string, token: string): boolean {
-  if (!token || typeof token !== "string") return false
-  const expected = signOrderToken(orderId)
-  if (expected.length !== token.length) return false
-  try {
-    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(token))
-  } catch {
-    return false
-  }
+  if (!orderId || !token || typeof token !== "string") return false
+  return safeEqual(signOrderToken(orderId), token)
 }

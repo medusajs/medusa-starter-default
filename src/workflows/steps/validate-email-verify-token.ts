@@ -23,6 +23,10 @@ export const validateEmailVerifyTokenStep = createStep(
           : "Invalid verification token",
       )
     }
-    return new StepResponse(result)
+    return new StepResponse({
+      customer_id: result.customerId,
+      email: result.email,
+      issued_at_ms: result.issuedAtMs,
+    })
   },
 )

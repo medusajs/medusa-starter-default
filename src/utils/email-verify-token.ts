@@ -1,31 +1,47 @@
-import crypto from "node:crypto"
+import { hmacBase64Url, safeEqual } from "./hmac"
 
 // HMAC token for email verification. Bound to customer_id + email + issuance
 // timestamp so an old token becomes invalid once the customer changes their
 // address or the TTL elapses.
 //
 // Encoded as `<base64url(payload)>.<base64url(sig)>` where payload is
-// `<customer_id>:<email>:<issuedAtMs>`.
+// `<customer_id>:<email>:<issuedAtMs>`. The format is unchanged from the
+// first version so links already in inboxes stay valid.
 
 const TTL_MS = 24 * 60 * 60 * 1000
-
-function getSecret(): string {
-  const secret = process.env.JWT_SECRET
-  if (!secret) {
-    throw new Error("JWT_SECRET is not configured")
-  }
-  return secret
-}
+// Tolerated clock skew for tokens "issued in the future" (multi-instance).
+const MAX_FUTURE_SKEW_MS = 5 * 60 * 1000
 
 function sign(payload: string): string {
-  return crypto
-    .createHmac("sha256", getSecret())
-    .update(`email-verify:${payload}`)
-    .digest("base64url")
+  return hmacBase64Url(`email-verify:${payload}`)
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase()
 }
 
 function encodePayload(customerId: string, email: string, issuedAtMs: number): string {
-  return Buffer.from(`${customerId}:${email.toLowerCase()}:${issuedAtMs}`).toString("base64url")
+  return Buffer.from(
+    `${customerId}:${normalizeEmail(email)}:${issuedAtMs}`,
+  ).toString("base64url")
+}
+
+// customer ids never contain ":", the timestamp is the last segment, and
+// everything in between is the email (which may itself contain ":").
+function decodePayload(
+  payload: string,
+): { customerId: string; email: string; issuedAtMs: number } | null {
+  const decoded = Buffer.from(payload, "base64url").toString("utf-8")
+  const first = decoded.indexOf(":")
+  const last = decoded.lastIndexOf(":")
+  if (first <= 0 || last <= first) return null
+
+  const customerId = decoded.slice(0, first)
+  const email = decoded.slice(first + 1, last)
+  const issuedAtRaw = decoded.slice(last + 1)
+  if (!email || !/^\d+$/.test(issuedAtRaw)) return null
+
+  return { customerId, email, issuedAtMs: Number(issuedAtRaw) }
 }
 
 export function signEmailVerifyToken(
@@ -34,8 +50,7 @@ export function signEmailVerifyToken(
   issuedAtMs: number = Date.now(),
 ): string {
   const payload = encodePayload(customerId, email, issuedAtMs)
-  const sig = sign(payload)
-  return `${payload}.${sig}`
+  return `${payload}.${sign(payload)}`
 }
 
 export type VerifyResult =
@@ -50,33 +65,23 @@ export function verifyEmailVerifyToken(
 ): VerifyResult {
   if (!token || typeof token !== "string") return { ok: false, reason: "malformed" }
   const parts = token.split(".")
-  if (parts.length !== 2) return { ok: false, reason: "malformed" }
+  if (parts.length !== 2 || !parts[0] || !parts[1]) {
+    return { ok: false, reason: "malformed" }
+  }
   const [payload, sig] = parts
 
-  const expected = sign(payload)
-  if (expected.length !== sig.length) return { ok: false, reason: "signature" }
-  let sigMatch = false
-  try {
-    sigMatch = crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sig))
-  } catch {
-    return { ok: false, reason: "signature" }
-  }
-  if (!sigMatch) return { ok: false, reason: "signature" }
+  if (!safeEqual(sign(payload), sig)) return { ok: false, reason: "signature" }
 
-  let decoded: string
-  try {
-    decoded = Buffer.from(payload, "base64url").toString("utf-8")
-  } catch {
-    return { ok: false, reason: "malformed" }
-  }
-  const [tokenCustomerId, tokenEmail, issuedAtRaw] = decoded.split(":")
-  const issuedAtMs = Number(issuedAtRaw)
-  if (!tokenCustomerId || !tokenEmail || !Number.isFinite(issuedAtMs)) {
-    return { ok: false, reason: "malformed" }
-  }
-  if (tokenCustomerId !== customerId) return { ok: false, reason: "signature" }
-  if (tokenEmail !== email.toLowerCase()) return { ok: false, reason: "signature" }
-  if (Date.now() - issuedAtMs > maxAgeMs) return { ok: false, reason: "expired" }
+  const decoded = decodePayload(payload)
+  if (!decoded) return { ok: false, reason: "malformed" }
 
-  return { ok: true, customerId: tokenCustomerId, email: tokenEmail, issuedAtMs }
+  if (decoded.customerId !== customerId) return { ok: false, reason: "signature" }
+  if (decoded.email !== normalizeEmail(email)) return { ok: false, reason: "signature" }
+
+  const age = Date.now() - decoded.issuedAtMs
+  if (age > maxAgeMs || age < -MAX_FUTURE_SKEW_MS) {
+    return { ok: false, reason: "expired" }
+  }
+
+  return { ok: true, ...decoded }
 }

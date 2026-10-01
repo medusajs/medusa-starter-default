@@ -1,42 +1,24 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { MedusaError } from "@medusajs/framework/utils"
+import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 
 import { verifyCustomerEmailWorkflow } from "../../../../workflows/verify-customer-email"
-
-type Body = {
-  customer_id?: string
-  email?: string
-  token?: string
-}
+import type { StoreVerifyEmailSchema } from "./validators"
 
 // Public route — verifies an email via HMAC token without requiring a session,
 // because the link is followed from an email and may land in a different
 // browser than the one that holds the session cookie.
+//
+// Errors come from the workflow as MedusaError and are mapped by Medusa's
+// error handler: invalid/expired token or email mismatch -> 400, unknown
+// customer -> 404.
 export const POST = async (
-  req: MedusaRequest<Body>,
+  req: MedusaRequest<StoreVerifyEmailSchema>,
   res: MedusaResponse,
 ) => {
-  const customer_id = (req.body?.customer_id ?? "").toString().trim()
-  const email = (req.body?.email ?? "").toString().trim().toLowerCase()
-  const token = (req.body?.token ?? "").toString()
+  const { customer_id, email, token } = req.validatedBody
 
-  if (!customer_id || !email || !token) {
-    return res
-      .status(400)
-      .json({ message: "customer_id, email and token are required" })
-  }
+  await verifyCustomerEmailWorkflow(req.scope).run({
+    input: { customer_id, email, token },
+  })
 
-  try {
-    await verifyCustomerEmailWorkflow(req.scope).run({
-      input: { customer_id, email, token },
-    })
-  } catch (err) {
-    if (err instanceof MedusaError) {
-      const status = err.type === MedusaError.Types.NOT_FOUND ? 404 : 400
-      return res.status(status).json({ message: err.message })
-    }
-    throw err
-  }
-
-  return res.json({ verified: true })
+  res.json({ verified: true })
 }

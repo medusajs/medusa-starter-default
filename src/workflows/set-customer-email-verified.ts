@@ -1,13 +1,13 @@
 import {
   createWorkflow,
-  transform,
   WorkflowResponse,
 } from "@medusajs/framework/workflows-sdk"
 import {
   updateCustomersWorkflow,
   useQueryGraphStep,
 } from "@medusajs/medusa/core-flows"
-import { MedusaError } from "@medusajs/framework/utils"
+
+import { validateEmailVerifyCustomerStep } from "./steps/validate-email-verify-customer"
 
 type WorkflowInput = {
   customer_id: string
@@ -19,36 +19,26 @@ type WorkflowInput = {
 // to unblock the checkout without forcing them through the mail roundtrip.
 // Setting `verified: false` is also supported — useful if an automatic
 // verification was triggered by mistake.
+//
+// Only the flag is sent; the customer module merges it into the existing
+// metadata server-side, so no read-merge-write race on other keys.
 export const setCustomerEmailVerifiedWorkflow = createWorkflow(
   "set-customer-email-verified",
-  (input: WorkflowInput) => {
+  function (input: WorkflowInput) {
     const { data: customers } = useQueryGraphStep({
       entity: "customer",
-      fields: ["id", "metadata"],
+      fields: ["id", "email"],
       filters: { id: input.customer_id },
     })
 
-    const updatePayload = transform(
-      { customers, input },
-      (data) => {
-        const customer = data.customers[0]
-        if (!customer) {
-          throw new MedusaError(
-            MedusaError.Types.NOT_FOUND,
-            "Customer not found",
-          )
-        }
-        const existing = (customer.metadata as Record<string, unknown> | null) ?? {}
-        return {
-          selector: { id: customer.id },
-          update: {
-            metadata: { ...existing, email_verified: data.input.verified },
-          },
-        }
-      },
-    )
+    validateEmailVerifyCustomerStep({ customers })
 
-    updateCustomersWorkflow.runAsStep({ input: updatePayload })
+    updateCustomersWorkflow.runAsStep({
+      input: {
+        selector: { id: input.customer_id },
+        update: { metadata: { email_verified: input.verified } },
+      },
+    })
 
     return new WorkflowResponse({ verified: input.verified })
   },

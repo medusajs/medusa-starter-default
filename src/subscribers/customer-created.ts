@@ -1,19 +1,21 @@
 import { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
-import { Modules } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 
-import { signEmailVerifyToken } from "../utils/email-verify-token"
+import { sendEmailVerificationWorkflow } from "../workflows/send-email-verification"
 
+// Sends the welcome mail and the email-verify mail for new account signups.
+// The two are independent: a failure of one is logged and doesn't block
+// the other. Idempotency keys make a re-delivered event a no-op.
 export default async function customerCreatedHandler({
   event: { data },
   container,
 }: SubscriberArgs<{ id: string }>) {
-  const notificationService = container.resolve(Modules.NOTIFICATION)
-  const query = container.resolve("query")
-  const logger = container.resolve("logger")
+  const query = container.resolve(ContainerRegistrationKeys.QUERY)
+  const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
 
   const { data: [customer] } = await query.graph({
     entity: "customer",
-    fields: ["id", "email", "first_name", "last_name", "has_account", "metadata"],
+    fields: ["id", "email", "first_name", "has_account"],
     filters: { id: data.id },
   })
 
@@ -22,44 +24,56 @@ export default async function customerCreatedHandler({
     return
   }
 
-  // Skip guest customers (created during checkout) — only welcome real account signups
+  // Skip guest customers (created during checkout) — only real account signups.
   if (!customer.has_account) {
     logger.info(`Customer ${data.id} is a guest (no account) — skipping welcome mail`)
     return
   }
 
-  await notificationService.createNotifications({
-    to: customer.email,
-    channel: "email",
-    template: "welcome",
-    data: { customer },
-  })
+  const email = customer.email
+  const sendWelcome = async () => {
+    const notificationService = container.resolve(Modules.NOTIFICATION)
+    await notificationService.createNotifications({
+      to: email,
+      channel: "email",
+      template: "welcome",
+      data: { customer: { first_name: customer.first_name ?? "" } },
+      resource_type: "customer",
+      resource_id: customer.id,
+      receiver_id: customer.id,
+      idempotency_key: `welcome:${customer.id}`,
+    })
+  }
 
-  // Send verification mail unless this customer was created already-verified
-  // (e.g. backfill, admin-created accounts).
-  const alreadyVerified =
-    (customer.metadata as Record<string, unknown> | null)?.email_verified === true
-  if (alreadyVerified) return
+  // Skips customers that were created already-verified (backfill, admin).
+  const sendVerification = () =>
+    sendEmailVerificationWorkflow(container).run({
+      input: {
+        customer_id: customer.id,
+        skip_if_verified: true,
+        idempotency_key: `email-verify:signup:${customer.id}`,
+      },
+    })
 
-  const storefrontUrl =
-    process.env.STOREFRONT_URL || "http://localhost:8000"
-  const token = signEmailVerifyToken(customer.id, customer.email)
-  const verifyUrl =
-    `${storefrontUrl}/verify-email` +
-    `?customer_id=${encodeURIComponent(customer.id)}` +
-    `&email=${encodeURIComponent(customer.email)}` +
-    `&token=${encodeURIComponent(token)}`
+  const [welcome, verification] = await Promise.allSettled([
+    sendWelcome(),
+    sendVerification(),
+  ])
 
-  await notificationService.createNotifications({
-    to: customer.email,
-    channel: "email",
-    template: "email-verify",
-    data: {
-      email: customer.email,
-      verify_url: verifyUrl,
-      customer: { first_name: customer.first_name ?? "" },
-    },
-  })
+  if (welcome.status === "rejected") {
+    logger.error(
+      `[customer-created] welcome mail failed for customer ${customer.id}: ${errorMessage(welcome.reason)}`,
+    )
+  }
+  if (verification.status === "rejected") {
+    logger.error(
+      `[customer-created] verification mail failed for customer ${customer.id}: ${errorMessage(verification.reason)}`,
+    )
+  }
+}
+
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
 }
 
 export const config: SubscriberConfig = {

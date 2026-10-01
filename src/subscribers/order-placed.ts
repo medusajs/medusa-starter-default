@@ -1,18 +1,21 @@
 import { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
-import { Modules } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 
-import { signOrderToken } from "../utils/order-token"
+import { buildOrderUrl, getStorefrontUrl } from "../utils/urls"
 
 export default async function orderPlacedHandler({
   event: { data },
   container,
 }: SubscriberArgs<{ id: string }>) {
   const notificationService = container.resolve(Modules.NOTIFICATION)
-  const query = container.resolve("query")
-  const logger = container.resolve("logger")
+  const query = container.resolve(ContainerRegistrationKeys.QUERY)
+  const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
 
-  // IMPORTANT: do NOT use "*" at the order level — it overrides computed totals
-  // (https://docs.medusajs.com/resources/commerce-modules/order/order-totals)
+  // Totals are computed fields: Query only calculates them when they're
+  // requested by name (a `*` wildcard returns stored columns only), so each
+  // total the template renders is listed explicitly.
+  // Only what the template needs goes into the notification data — it is
+  // persisted on the notification record.
   const { data: [order] } = await query.graph({
     entity: "order",
     fields: [
@@ -43,9 +46,8 @@ export default async function orderPlacedHandler({
       "shipping_methods.*",
       "shipping_methods.adjustments.*",
       "shipping_address.*",
-      "customer.*",
-      "payment_collections.*",
-      "payment_collections.payments.*",
+      "customer.first_name",
+      "payment_collections.payments.provider_id",
     ],
     filters: { id: data.id },
   })
@@ -58,14 +60,18 @@ export default async function orderPlacedHandler({
   // The confirmation page is gated by either a customer JWT (logged-in)
   // or this HMAC token (guests). The token is harmless when the recipient
   // is logged in — the middleware short-circuits on the JWT match first.
-  const siteUrl = process.env.STOREFRONT_URL ?? "http://localhost:8000"
-  const orderUrl = `${siteUrl}/order/${order.id}?t=${signOrderToken(order.id)}`
-
   await notificationService.createNotifications({
     to: order.email,
     channel: "email",
     template: "order-placed",
-    data: { order, order_url: orderUrl, site_url: siteUrl },
+    data: {
+      order,
+      order_url: buildOrderUrl(order.id),
+      site_url: getStorefrontUrl(),
+    },
+    resource_type: "order",
+    resource_id: order.id,
+    idempotency_key: `order-placed:${order.id}`,
   })
 }
 

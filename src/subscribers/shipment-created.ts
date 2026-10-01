@@ -1,109 +1,96 @@
 import { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
-import { Modules } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
+
+import { buildOrderUrl, getStorefrontUrl } from "../utils/urls"
+
+type ShipmentCreatedEvent = {
+  id: string
+  no_notification?: boolean
+}
+
+export type ShipmentMailFulfillment = {
+  id: string
+  provider_id?: string | null
+  shipped_at?: string | Date | null
+  labels?: Array<{
+    tracking_number?: string | null
+    tracking_url?: string | null
+  }> | null
+  items?: Array<{
+    line_item_id?: string | null
+    title?: string | null
+    quantity?: number | null
+  }> | null
+  order?: {
+    id: string
+    display_id?: number | null
+    email?: string | null
+  } & Record<string, unknown> | null
+}
 
 export default async function shipmentCreatedHandler({
   event: { data },
   container,
-}: SubscriberArgs<{ id: string; no_notification?: boolean }>) {
-  const logger = container.resolve("logger")
-  logger.info(`[shipment-created debug] received event id=${data.id} no_notification=${data.no_notification}`)
+}: SubscriberArgs<ShipmentCreatedEvent>) {
+  if (data.no_notification) return
 
-  if (data.no_notification) {
-    logger.info(`[shipment-created debug] no_notification=true → skip`)
-    return
-  }
-
+  const query = container.resolve(ContainerRegistrationKeys.QUERY)
+  const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
   const notificationService = container.resolve(Modules.NOTIFICATION)
-  const query = container.resolve("query")
 
-  let fulfillment: any
-  let order: any
+  // The order is resolved through the order <-> fulfillment module link.
+  const { data: [result] } = await query.graph({
+    entity: "fulfillment",
+    fields: [
+      "id",
+      "provider_id",
+      "shipped_at",
+      "labels.tracking_number",
+      "labels.tracking_url",
+      "items.line_item_id",
+      "items.title",
+      "items.quantity",
+      "order.id",
+      "order.display_id",
+      "order.email",
+      "order.items.id",
+      "order.items.title",
+      "order.items.product_title",
+      "order.items.variant_title",
+      "order.items.thumbnail",
+      "order.shipping_address.*",
+    ],
+    filters: { id: data.id },
+  })
 
-  try {
-    const { data: [f] } = await query.graph({
-      entity: "fulfillment",
-      fields: [
-        "id",
-        "provider_id",
-        "shipped_at",
-        "labels.id",
-        "labels.tracking_number",
-        "labels.tracking_url",
-        "items.id",
-        "items.line_item_id",
-        "items.title",
-        "items.quantity",
-      ],
-      filters: { id: data.id },
-    })
-    fulfillment = f
-  } catch (e: any) {
-    logger.error(`[shipment-created] fulfillment query failed: ${e?.message ?? e}`)
-    return
-  }
-
-  logger.info(
-    `[shipment-created debug] fulfillment loaded: ${JSON.stringify({
-      id: fulfillment?.id,
-      provider_id: fulfillment?.provider_id,
-      labels: fulfillment?.labels,
-    })}`
-  )
-
+  const fulfillment = result as ShipmentMailFulfillment | undefined
   if (!fulfillment) {
     logger.warn(`Fulfillment ${data.id} not found — skipping shipment mail`)
     return
   }
 
-  // Find the order via the fulfillment's first item → line_item → order link
-  const lineItemId = fulfillment.items?.[0]?.line_item_id
-  if (!lineItemId) {
-    logger.warn(`Fulfillment ${fulfillment.id} has no items — skipping`)
-    return
-  }
-
-  try {
-    const { data: orders } = await query.graph({
-      entity: "order",
-      fields: [
-        "id",
-        "display_id",
-        "email",
-        "items.id",
-        "items.title",
-        "items.product_title",
-        "items.variant_title",
-        "items.thumbnail",
-        "shipping_address.*",
-      ],
-      filters: { items: { id: lineItemId } } as any,
-    })
-    order = orders[0]
-    logger.info(
-      `[shipment-created debug] order lookup via line_item ${lineItemId} returned ${orders.length} order(s)`
-    )
-  } catch (e: any) {
-    logger.error(`[shipment-created] order query failed: ${e?.message ?? e}`)
-    return
-  }
-
+  const { order, ...fulfillmentData } = fulfillment
   if (!order?.email) {
     logger.warn(
-      `No order/email found for fulfillment ${fulfillment.id} — skipping shipment mail`
+      `No order/email found for fulfillment ${fulfillment.id} — skipping shipment mail`,
     )
     return
   }
-
-  logger.info(`[shipment-created debug] sending mail to ${order.email}`)
 
   await notificationService.createNotifications({
     to: order.email,
     channel: "email",
     template: "shipment-created",
-    data: { fulfillment, order },
+    data: {
+      fulfillment: fulfillmentData,
+      order,
+      order_url: buildOrderUrl(order.id),
+      site_url: getStorefrontUrl(),
+    },
+    resource_type: "fulfillment",
+    resource_id: fulfillment.id,
+    idempotency_key: `shipment:${fulfillment.id}`,
   })
-
-  logger.info(`[shipment-created debug] mail dispatched`)
 }
 
 export const config: SubscriberConfig = {

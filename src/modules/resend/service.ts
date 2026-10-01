@@ -1,5 +1,6 @@
 import {
   AbstractNotificationProviderService,
+  MedusaError,
 } from "@medusajs/framework/utils"
 import {
   Logger,
@@ -7,12 +8,14 @@ import {
   ProviderSendNotificationResultsDTO,
 } from "@medusajs/framework/types"
 import { Resend } from "resend"
+
+import type { EmailRenderer } from "./emails/_shared"
+import { renderEmailVerifyEmail } from "./emails/email-verify"
 import { renderOrderPlacedEmail } from "./emails/order-placed"
-import { renderShipmentCreatedEmail } from "./emails/shipment-created"
 import { renderPasswordResetEmail } from "./emails/password-reset"
 import { renderPreorderFulfilledEmail } from "./emails/preorder-fulfilled"
+import { renderShipmentCreatedEmail } from "./emails/shipment-created"
 import { renderWelcomeEmail } from "./emails/welcome"
-import { renderEmailVerifyEmail } from "./emails/email-verify"
 
 type ResendOptions = {
   api_key: string
@@ -23,12 +26,7 @@ type InjectedDependencies = {
   logger: Logger
 }
 
-type TemplateRenderer = (data: Record<string, unknown>) => {
-  subject: string
-  html: string
-}
-
-const templates: Record<string, TemplateRenderer> = {
+const templates: Record<string, EmailRenderer> = {
   "order-placed": renderOrderPlacedEmail,
   "shipment-created": renderShipmentCreatedEmail,
   "password-reset": renderPasswordResetEmail,
@@ -37,12 +35,29 @@ const templates: Record<string, TemplateRenderer> = {
   "email-verify": renderEmailVerifyEmail,
 }
 
+// Errors are thrown (not swallowed) so the notification module marks the
+// notification as failed instead of recording a silent success.
 class ResendNotificationProviderService extends AbstractNotificationProviderService {
   static identifier = "notification-resend"
 
   private resendClient: Resend
   private options: ResendOptions
   private logger: Logger
+
+  static validateOptions(options: Record<string, unknown>) {
+    if (!options.api_key) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Resend notification provider: `api_key` option is required (RESEND_API_KEY).",
+      )
+    }
+    if (!options.from) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Resend notification provider: `from` option is required (RESEND_FROM_EMAIL).",
+      )
+    }
+  }
 
   constructor({ logger }: InjectedDependencies, options: ResendOptions) {
     super()
@@ -52,31 +67,33 @@ class ResendNotificationProviderService extends AbstractNotificationProviderServ
   }
 
   async send(
-    notification: ProviderSendNotificationDTO
+    notification: ProviderSendNotificationDTO,
   ): Promise<ProviderSendNotificationResultsDTO> {
     const renderer = templates[notification.template]
-
     if (!renderer) {
-      this.logger.error(
-        `No Resend template registered for "${notification.template}". Available: ${Object.keys(templates).join(", ")}`
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        `No Resend template registered for "${notification.template}". Available: ${Object.keys(templates).join(", ")}`,
       )
-      return {}
     }
 
     const { subject, html } = renderer(notification.data ?? {})
 
     const { data, error } = await this.resendClient.emails.send({
-      from: this.options.from,
+      from: notification.from || this.options.from,
       to: [notification.to],
       subject,
       html,
     })
 
-    if (error || !data) {
+    if (error) {
       this.logger.error(
-        `Failed to send "${notification.template}" email via Resend: ${error?.message ?? "unknown error"}`
+        `Resend rejected "${notification.template}" email: ${error.message}`,
       )
-      return {}
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Resend failed to send "${notification.template}" email: ${error.message}`,
+      )
     }
 
     return { id: data.id }

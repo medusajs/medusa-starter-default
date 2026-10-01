@@ -4,6 +4,8 @@ import {
 } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 
+import type { StoreEmailExistsSchema } from "./validators"
+
 // Pre-flight for the storefront's guest checkout: does a real customer
 // account already exist for this email?
 //
@@ -24,10 +26,6 @@ import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 // trigger the bug, so we don't want to confuse the storefront UX by
 // flagging them.
 
-interface EmailExistsBody {
-  email?: string
-}
-
 interface EmailExistsResponse {
   exists: boolean
 }
@@ -35,11 +33,11 @@ interface EmailExistsResponse {
 const EMAIL_FORMAT = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(
-  req: MedusaRequest<EmailExistsBody>,
+  req: MedusaRequest<StoreEmailExistsSchema>,
   res: MedusaResponse<EmailExistsResponse>,
 ) {
-  const raw = req.body?.email
-  const email = typeof raw === "string" ? raw.trim().toLowerCase() : ""
+  // Already trimmed + lowercased by the validator.
+  const { email } = req.validatedBody
 
   if (!email || !EMAIL_FORMAT.test(email)) {
     return res.json({ exists: false })
@@ -50,6 +48,7 @@ export async function POST(
     entity: "customer",
     fields: ["id"],
     filters: { email, has_account: true },
+    pagination: { take: 1 },
   })
 
   return res.json({ exists: customers.length > 0 })

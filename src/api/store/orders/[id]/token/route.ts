@@ -1,10 +1,11 @@
 import {
-  type AuthenticatedMedusaRequest,
+  type MedusaRequest,
   type MedusaResponse,
 } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 
 import { signOrderToken } from "../../../../../utils/order-token"
+import type { StoreIssueOrderTokenSchema } from "./validators"
 
 // Issues a confirmation token for a guest order. The caller proves they
 // know the order's email (which the storefront has from the cart prior
@@ -14,15 +15,12 @@ import { signOrderToken } from "../../../../../utils/order-token"
 // Logged-in customers don't need this — they authenticate via JWT and
 // ownership is verified by middleware.
 export async function POST(
-  req: AuthenticatedMedusaRequest<{ email?: string }>,
+  req: MedusaRequest<StoreIssueOrderTokenSchema>,
   res: MedusaResponse,
 ) {
   const orderId = req.params.id
-  const email = (req.validatedBody?.email ?? req.body?.email)?.toString().trim().toLowerCase()
-
-  if (!email) {
-    return res.status(400).json({ message: "email required" })
-  }
+  // Already trimmed + lowercased by the validator.
+  const { email } = req.validatedBody
 
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
   const { data: [order] } = await query.graph({
@@ -33,7 +31,7 @@ export async function POST(
 
   // Don't differentiate between "order missing" and "email mismatch" —
   // returning 404 in both cases avoids a probing oracle.
-  if (!order || order.email?.toLowerCase() !== email) {
+  if (!order || order.email?.trim().toLowerCase() !== email) {
     return res.status(404).json({ message: "Not found" })
   }
 

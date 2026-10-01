@@ -1,5 +1,8 @@
 import { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
-import { Modules } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
+
+import { maskEmail } from "../utils/mask-email"
+import { buildPasswordResetUrl } from "../utils/urls"
 
 type PasswordResetEvent = {
   entity_id: string
@@ -13,24 +16,17 @@ export default async function passwordResetHandler({
 }: SubscriberArgs<PasswordResetEvent>) {
   const { entity_id: email, token, actor_type } = data
   const notificationService = container.resolve(Modules.NOTIFICATION)
-  const logger = container.resolve("logger")
+  const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
 
-  const storefrontUrl =
-    process.env.STOREFRONT_URL || "http://localhost:8000"
-  const backendUrl =
-    process.env.MEDUSA_BACKEND_URL || "http://localhost:9000"
+  // Customers land on the storefront, admin users on the dashboard's form.
+  const resetUrl = buildPasswordResetUrl({ actorType: actor_type, token, email })
 
-  // Customer flow: storefront expects ONLY ?token=... (no email param)
-  // Admin flow: Medusa Admin's built-in form uses ?token=...&email=...
-  const resetUrl =
-    actor_type === "customer"
-      ? `${storefrontUrl}/reset-password?token=${encodeURIComponent(token)}`
-      : `${backendUrl}/app/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`
-
+  // Never log the URL or token — it grants a password change.
   logger.info(
-    `[password-reset] sending mail to ${email} (actor=${actor_type}) url=${resetUrl}`
+    `[password-reset] sending mail to ${maskEmail(email)} (actor=${actor_type})`,
   )
 
+  // No idempotency key: every reset request must produce a mail.
   await notificationService.createNotifications({
     to: email,
     channel: "email",

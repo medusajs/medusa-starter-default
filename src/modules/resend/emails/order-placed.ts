@@ -1,13 +1,17 @@
-import fs from "node:fs"
-import path from "node:path"
-import Handlebars from "handlebars"
-import { BigNumberValue, OrderDTO } from "@medusajs/framework/types"
-
-const templateSource = fs.readFileSync(
-  path.join(__dirname, "order-placed.html"),
-  "utf-8"
-)
-const compiledTemplate = Handlebars.compile(templateSource, { noEscape: false })
+import {
+  addressBlock,
+  companyBlock,
+  formatDate,
+  itemTitle,
+  orderUrl,
+  placeholderImage,
+  renderTemplate,
+  siteUrl,
+  type AddressInput,
+  type MailLineItem,
+  type RenderedEmail,
+} from "./_shared"
+import template from "./templates/order-placed"
 
 const PAYMENT_LABELS: Record<string, string> = {
   pp_stripe_stripe: "Kreditkarte (Stripe)",
@@ -15,14 +19,46 @@ const PAYMENT_LABELS: Record<string, string> = {
   manual: "Rechnung / Vorkasse",
 }
 
-const countryDisplay = new Intl.DisplayNames(["de"], { type: "region" })
+type Adjustment = {
+  promotion_id?: string | null
+  code?: string | null
+  amount?: unknown
+}
 
-const dateFormatter = new Intl.DateTimeFormat("de-DE", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-})
+type OrderItem = MailLineItem & {
+  unit_price?: unknown
+  total?: unknown
+  adjustments?: Adjustment[] | null
+  variant?: {
+    preorder_variant?: {
+      id?: string | null
+      status?: string | null
+      available_date?: string | Date | null
+    } | null
+  } | null
+}
 
+type PlacedOrder = {
+  id: string
+  display_id?: number | string | null
+  currency_code?: string | null
+  created_at?: string | Date | null
+  total?: unknown
+  tax_total?: unknown
+  discount_total?: unknown
+  shipping_total?: unknown
+  original_item_total?: unknown
+  items?: OrderItem[] | null
+  shipping_methods?: Array<{ name?: string | null; adjustments?: Adjustment[] | null }> | null
+  shipping_address?: AddressInput & { first_name?: string | null }
+  customer?: { first_name?: string | null } | null
+  payment_collections?: Array<{
+    payments?: Array<{ provider_id?: string | null }> | null
+  }> | null
+}
+
+// Order amounts arrive as numbers, numeric strings, BigNumber instances or
+// serialized BigNumber objects ({ value, precision } / { raw: { value } }).
 const toNumber = (value: unknown): number => {
   if (value === null || value === undefined) return 0
   if (typeof value === "number") return Number.isFinite(value) ? value : 0
@@ -31,16 +67,18 @@ const toNumber = (value: unknown): number => {
     return Number.isNaN(parsed) ? 0 : parsed
   }
   if (typeof value === "object") {
-    const obj = value as any
-    // Medusa BigNumber class instance
+    const obj = value as {
+      numeric?: unknown
+      raw?: { value?: unknown }
+      value?: unknown
+      valueOf?: () => unknown
+    }
     if (typeof obj.numeric === "number") return obj.numeric
-    // BigNumber.raw or plain { value: "X.XX", precision: 20 }
-    const raw = obj.raw ?? obj
-    if (raw && (typeof raw.value === "string" || typeof raw.value === "number")) {
+    const raw = (obj.raw ?? obj) as { value?: unknown }
+    if (typeof raw.value === "string" || typeof raw.value === "number") {
       const parsed = parseFloat(String(raw.value))
       if (!Number.isNaN(parsed)) return parsed
     }
-    // Fallback: valueOf (BigNumber implements it)
     if (typeof obj.valueOf === "function") {
       const v = obj.valueOf()
       if (typeof v === "number" && Number.isFinite(v)) return v
@@ -54,26 +92,16 @@ const toNumber = (value: unknown): number => {
   return Number.isNaN(parsed) ? 0 : parsed
 }
 
-const formatPrice = (value: BigNumberValue | number, currencyCode: string): string =>
+const formatPrice = (value: unknown, currencyCode: string): string =>
   new Intl.NumberFormat("de-DE", {
     style: "currency",
     currency: currencyCode.toUpperCase(),
   }).format(toNumber(value))
 
-const resolveCountryName = (countryCode?: string | null): string => {
-  if (!countryCode) return ""
-  try {
-    return countryDisplay.of(countryCode.toUpperCase()) ?? countryCode.toUpperCase()
-  } catch {
-    return countryCode.toUpperCase()
-  }
-}
-
-const resolvePaymentLabel = (order: OrderDTO): string => {
-  const collections = (order as any).payment_collections ?? []
-  for (const collection of collections) {
+const resolvePaymentLabel = (order: PlacedOrder): string => {
+  for (const collection of order.payment_collections ?? []) {
     for (const payment of collection.payments ?? []) {
-      const providerId: string | undefined = payment.provider_id
+      const providerId = payment.provider_id
       if (!providerId) continue
       if (PAYMENT_LABELS[providerId]) return PAYMENT_LABELS[providerId]
       if (providerId.includes("stripe")) return "Kreditkarte (Stripe)"
@@ -85,109 +113,55 @@ const resolvePaymentLabel = (order: OrderDTO): string => {
 
 type DiscountLine = { code: string; amount: number }
 
-const aggregateDiscounts = (order: OrderDTO): DiscountLine[] => {
+const aggregateDiscounts = (order: PlacedOrder): DiscountLine[] => {
   const map = new Map<string, DiscountLine>()
 
-  const addAdjustment = (adj: any) => {
+  const addAdjustment = (adj: Adjustment) => {
     const key = adj.promotion_id ?? adj.code ?? "manual"
-    const code = adj.code ?? ""
     const amount = Math.abs(toNumber(adj.amount))
     if (amount === 0) return
-    const current = map.get(key) ?? { code, amount: 0 }
+    const current = map.get(key) ?? { code: adj.code ?? "", amount: 0 }
     current.amount += amount
     map.set(key, current)
   }
 
   for (const item of order.items ?? []) {
-    for (const adj of (item as any).adjustments ?? []) addAdjustment(adj)
+    for (const adj of item.adjustments ?? []) addAdjustment(adj)
   }
-  for (const sm of (order as any).shipping_methods ?? []) {
+  for (const sm of order.shipping_methods ?? []) {
     for (const adj of sm.adjustments ?? []) addAdjustment(adj)
   }
 
   return Array.from(map.values())
 }
 
-type EmailContext = {
-  site_url: string
-  order_url: string
-  customer: { first_name: string }
-  has_preorder_items: boolean
-  order: {
-    display_id: string | number
-    created_at_formatted: string
-    items: Array<{
-      thumbnail: string
-      title: string
-      variant_title: string | null
-      quantity: number
-      unit_price_formatted: string
-      line_total_formatted: string
-      is_preorder: boolean
-      available_date_formatted: string | null
-    }>
-    original_item_total_formatted: string
-    discount_total_raw: number
-    discount_lines: Array<{ code: string; amount_formatted: string }>
-    shipping_total_formatted: string
-    shipping_method_name: string | null
-    tax_total_formatted: string
-    total_formatted: string
-  }
-  shipping_address: {
-    first_name: string
-    last_name: string
-    company: string
-    address_1: string
-    address_2: string
-    postal_code: string
-    city: string
-    country_name: string
-  }
-  payment_method_label: string
-  company: { address_line: string; city: string }
-}
-
-const buildContext = (data: Record<string, unknown>): EmailContext => {
-  const order = data.order as OrderDTO & {
-    customer?: { first_name?: string | null }
-    shipping_address?: any
-    shipping_methods?: any[]
-  }
-  const siteUrl =
-    (data.site_url as string) ||
-    process.env.STOREFRONT_URL ||
-    "http://localhost:8000"
-  const placeholderImage = `${siteUrl}/placeholder.png`
+const buildContext = (data: Record<string, unknown>) => {
+  const order = data.order as PlacedOrder
+  const site = siteUrl(data)
+  const placeholder = placeholderImage(site)
   const currency = order.currency_code ?? "eur"
-  const fmt = (v: BigNumberValue | number | undefined) =>
-    formatPrice(v ?? 0, currency)
+  const fmt = (v: unknown) => formatPrice(v ?? 0, currency)
 
   const firstName =
     order.customer?.first_name ||
     order.shipping_address?.first_name ||
     "Kunde"
 
-  const items = (order.items ?? []).map((item: any) => {
+  const items = (order.items ?? []).map((item) => {
     const preorderVariant = item.variant?.preorder_variant
     const isPreorder =
       !!preorderVariant?.id && preorderVariant.status !== "disabled"
-    const availableDate = preorderVariant?.available_date
-      ? dateFormatter.format(new Date(preorderVariant.available_date))
-      : null
     return {
-      thumbnail: item.thumbnail || placeholderImage,
-      title: item.product_title || item.title || "Artikel",
+      thumbnail: item.thumbnail || placeholder,
+      title: itemTitle(item),
       variant_title: item.variant_title ?? null,
       quantity: item.quantity,
       unit_price_formatted: fmt(item.unit_price),
       line_total_formatted: fmt(item.total),
       is_preorder: isPreorder,
-      available_date_formatted: availableDate,
+      available_date_formatted: formatDate(preorderVariant?.available_date) || null,
     }
   })
-
-  const hasPreorderItems = items.some((i) => i.is_preorder)
 
   const discounts = aggregateDiscounts(order)
   // Adjustments are stored net (is_tax_inclusive=false), but the email renders
@@ -196,69 +170,47 @@ const buildContext = (data: Record<string, unknown>): EmailContext => {
   // storefront's cost-breakdown.ts. Without this the discount showed e.g. 5,61
   // net against gross totals and the lines didn't sum to the total.
   const rawDiscountTotal = discounts.reduce((sum, d) => sum + d.amount, 0)
-  const grossDiscountTotal = Math.abs(toNumber((order as any).discount_total))
+  const grossDiscountTotal = Math.abs(toNumber(order.discount_total))
   const discountScale =
     rawDiscountTotal > 0 &&
     grossDiscountTotal > 0 &&
     Math.abs(rawDiscountTotal - grossDiscountTotal) > 0.005
       ? grossDiscountTotal / rawDiscountTotal
       : 1
-  const discountTotalRaw =
-    grossDiscountTotal > 0 ? grossDiscountTotal : rawDiscountTotal
-  const discountLines = discounts.map((d) => ({
-    code: d.code,
-    amount_formatted: fmt(d.amount * discountScale),
-  }))
-
-  const shippingMethodName =
-    (order as any).shipping_methods?.[0]?.name ?? null
-
-  const shipping = order.shipping_address ?? {}
-  const orderId = order.id
 
   return {
-    site_url: siteUrl,
-    order_url: (data.order_url as string) || `${siteUrl}/order/${orderId}`,
+    site_url: site,
+    order_url: orderUrl(data, order.id),
     customer: { first_name: firstName },
-    has_preorder_items: hasPreorderItems,
+    has_preorder_items: items.some((i) => i.is_preorder),
     order: {
-      display_id: order.display_id ?? orderId,
-      created_at_formatted: order.created_at
-        ? dateFormatter.format(new Date(order.created_at as any))
-        : "",
+      display_id: order.display_id ?? order.id,
+      created_at_formatted: formatDate(order.created_at),
       items,
-      original_item_total_formatted: fmt((order as any).original_item_total),
-      discount_total_raw: discountTotalRaw,
-      discount_lines: discountLines,
+      original_item_total_formatted: fmt(order.original_item_total),
+      discount_total_raw:
+        grossDiscountTotal > 0 ? grossDiscountTotal : rawDiscountTotal,
+      discount_lines: discounts.map((d) => ({
+        code: d.code,
+        amount_formatted: fmt(d.amount * discountScale),
+      })),
       shipping_total_formatted: fmt(order.shipping_total),
-      shipping_method_name: shippingMethodName,
+      shipping_method_name: order.shipping_methods?.[0]?.name ?? null,
       tax_total_formatted: fmt(order.tax_total),
       total_formatted: fmt(order.total),
     },
-    shipping_address: {
-      first_name: shipping.first_name ?? "",
-      last_name: shipping.last_name ?? "",
-      company: shipping.company ?? "",
-      address_1: shipping.address_1 ?? "",
-      address_2: shipping.address_2 ?? "",
-      postal_code: shipping.postal_code ?? "",
-      city: shipping.city ?? "",
-      country_name: resolveCountryName(shipping.country_code),
-    },
+    shipping_address: addressBlock(order.shipping_address),
     payment_method_label: resolvePaymentLabel(order),
-    company: {
-      address_line: process.env.COMPANY_ADDRESS_LINE ?? "",
-      city: process.env.COMPANY_CITY ?? "",
-    },
+    company: companyBlock(),
   }
 }
 
 export const renderOrderPlacedEmail = (
-  data: Record<string, unknown>
-): { subject: string; html: string } => {
+  data: Record<string, unknown>,
+): RenderedEmail => {
   const context = buildContext(data)
   return {
     subject: `Bestellung #${context.order.display_id} bestätigt`,
-    html: compiledTemplate(context),
+    html: renderTemplate("order-placed", template, context),
   }
 }

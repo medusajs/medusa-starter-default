@@ -1,4 +1,7 @@
-<!doctype html>
+// Handlebars source for the "shipment-created" email. Kept as a TS module (not a
+// loose .html file) so `medusa build` compiles it into .medusa/server.
+// Edit the markup freely, but avoid backticks, "${" and backslashes.
+export default /* html */ `<!doctype html>
 <html lang="de" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
   <head>
     <meta charset="utf-8" />
@@ -217,3 +220,4 @@
     </table>
   </body>
 </html>
+`
