@@ -44,14 +44,17 @@ export default async function backfillEmailVerified({ container }: ExecArgs) {
       .map((c) => c.id)
     skipped += customers.length - toUpdate.length
 
-    if (toUpdate.length) {
+    // One update per customer: with a multi-id selector the customer module
+    // merges metadata into a single shared object, which would copy metadata
+    // between customers.
+    for (const id of toUpdate) {
       await updateCustomersWorkflow(container).run({
         input: {
-          selector: { id: toUpdate },
+          selector: { id },
           update: { metadata: { email_verified: true } },
         },
       })
-      updated += toUpdate.length
+      updated++
     }
 
     if (customers.length < PAGE_SIZE) break

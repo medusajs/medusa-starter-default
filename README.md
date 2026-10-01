@@ -30,7 +30,7 @@ Weitere Doku:
 ## Schnellstart mit Docker (empfohlen)
 
 ```bash
-cp .env.template .env          # Werte prüfen, mindestens JWT_SECRET und COOKIE_SECRET setzen
+cp .env.template .env          # Werte prüfen; die Secrets im Template taugen nur für lokal
 docker compose up --build      # postgres + redis + medusa (medusa develop, Hot Reload)
 docker compose exec medusa npx medusa user -e admin@example.com -p '<passwort>'
 ```
@@ -61,7 +61,7 @@ yarn install
 cp .env.template .env
 # In .env: DATABASE_URL=postgres://postgres:postgres@localhost:5432/medusa-store
 #          REDIS_URL=redis://localhost:6379   (leer = alles in-memory)
-#          JWT_SECRET / COOKIE_SECRET setzen
+#          JWT_SECRET / COOKIE_SECRET (Template-Werte reichen lokal)
 npx medusa db:migrate
 yarn seed                      # optional: Demo-Daten
 npx medusa user -e admin@example.com -p '<passwort>'

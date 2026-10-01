@@ -56,27 +56,35 @@ const STORE_ORDER_EXTRA_FIELDS = [
 // Customers must never flip their own verification flag. Core
 // POST /store/customers and POST /store/customers/me accept free-form
 // `metadata`, and validateAndTransformBody passes it through untouched.
-// Registered as a global middleware (method checked inline) because Medusa
-// orders global middlewares before every method-scoped one — including the
-// core route's body validation — so the request is rejected before any
-// validation/workflow runs. Covers every POST under /store/customers.
-function rejectEmailVerifiedMetadata(
+// Registered as a global middleware (method/path checked inline) because
+// Medusa orders global middlewares before every method-scoped one, including
+// the core route's body validation.
+// The flag is stripped rather than rejected, so a profile form that echoes the
+// customer's metadata keeps working. `metadata: null` is dropped as well: it
+// would replace the whole object and wipe the flag (self-lockout from checkout).
+// Address routes (/store/customers/me/addresses) carry address metadata and
+// are left alone.
+const CUSTOMER_METADATA_PATHS = ["/store/customers", "/store/customers/me"]
+
+function stripEmailVerifiedMetadata(
   req: MedusaRequest,
-  res: MedusaResponse,
+  _res: MedusaResponse,
   next: MedusaNextFunction,
 ) {
-  if (req.method !== "POST") return next()
+  const path = (req.originalUrl ?? "").split("?")[0].replace(/\/+$/, "")
+  if (req.method !== "POST" || !CUSTOMER_METADATA_PATHS.includes(path)) {
+    return next()
+  }
 
-  const metadata = (req.body as { metadata?: unknown } | undefined)?.metadata
-  if (
-    metadata &&
-    typeof metadata === "object" &&
-    Object.prototype.hasOwnProperty.call(metadata, "email_verified")
-  ) {
-    return res.status(400).json({
-      type: "invalid_data",
-      message: "metadata.email_verified can't be set by customers",
-    })
+  const body = req.body as { metadata?: unknown } | undefined
+  if (!body || !Object.prototype.hasOwnProperty.call(body, "metadata")) {
+    return next()
+  }
+
+  if (body.metadata === null) {
+    delete body.metadata
+  } else if (typeof body.metadata === "object") {
+    delete (body.metadata as Record<string, unknown>).email_verified
   }
 
   return next()
@@ -216,7 +224,7 @@ export default defineMiddlewares({
     },
     {
       matcher: "/store/customers",
-      middlewares: [rejectEmailVerifiedMetadata],
+      middlewares: [stripEmailVerifiedMetadata],
     },
 
     // --- Admin

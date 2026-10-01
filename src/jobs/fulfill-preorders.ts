@@ -59,7 +59,12 @@ export default async function fulfillPreordersJob(
   const ownerId = `fulfill-preorders:${randomUUID()}`
   try {
     await locking.acquire(LOCK_KEY, { ownerId, expire: LOCK_TTL_SECONDS })
-  } catch {
+  } catch (err) {
+    // Both locking providers signal "already held" with this message; anything
+    // else (e.g. Redis unreachable) is a real error and must not look like a skip.
+    if (!(err instanceof Error && err.message.startsWith("Failed to acquire lock"))) {
+      throw err
+    }
     logger.warn("Fulfill preorders job is already running, skipping this run")
     result.skipped_run = true
     return result

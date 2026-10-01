@@ -12,7 +12,7 @@ Account-Kunden (`has_account = true`) können erst bestellen, wenn ihre E-Mail-A
 
 Alle drei schicken nur das Flag als `metadata`; das Customer-Modul merged es serverseitig in die bestehenden Metadaten.
 
-**Schutz gegen Selbstverifizierung**: Die Core-Routen `POST /store/customers` und `POST /store/customers/me` nehmen beliebige `metadata` an. Die globale Middleware `rejectEmailVerifiedMetadata` in `src/api/middlewares.ts` lehnt deshalb jeden `POST` unter `/store/customers` ab, der `metadata.email_verified` enthält (`400`, `type: "invalid_data"`).
+**Schutz gegen Selbstverifizierung**: Die Core-Routen `POST /store/customers` und `POST /store/customers/me` nehmen beliebige `metadata` an. Die globale Middleware `stripEmailVerifiedMetadata` in `src/api/middlewares.ts` entfernt deshalb bei diesen beiden Routen `metadata.email_verified` aus dem Body, bevor Medusa validiert. Ein `metadata: null` (würde das ganze Objekt samt Flag löschen) wird ebenfalls verworfen. Die Adress-Routen unter `/store/customers/me/addresses` sind nicht betroffen.
 
 ## Gate
 

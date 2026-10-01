@@ -20,7 +20,7 @@ Was die Astro-Storefront `kiji-store-mjs` von diesem Backend erwartet. Wer hier 
 
 ## E-Mail-Verifizierung
 
-- Flag: `customer.metadata.email_verified === true` (boolean). Kunden können es nicht selbst setzen: `POST /store/customers*` mit `metadata.email_verified` → `400 invalid_data`.
+- Flag: `customer.metadata.email_verified === true` (boolean). Kunden können es nicht selbst setzen: Bei `POST /store/customers` und `POST /store/customers/me` wird `metadata.email_verified` stillschweigend entfernt, `metadata: null` wird ignoriert.
 - `POST /store/auth/verify-email` `{ customer_id, email, token }` → `{ verified: true }`. Ungültiger oder abgelaufener Token und geänderte E-Mail → 400, unbekannter Kunde → 404.
 - `POST /store/customers/me/resend-verification` (eingeloggt) → `{ sent: true }`, oder `429` mit `Retry-After` und `retry_after` (60s Cooldown).
 - `POST /store/customers/email-exists` `{ email }` → `{ exists: boolean }` (nur echte Accounts).

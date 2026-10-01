@@ -219,8 +219,10 @@ module.exports = defineConfig({
       storeCors: STORE_CORS!,
       adminCors: ADMIN_CORS!,
       authCors: AUTH_CORS!,
-      jwtSecret: JWT_SECRET,
-      cookieSecret: COOKIE_SECRET,
+      // Only pass secrets when set: an explicit undefined would override
+      // Medusa's dev defaults (production is guarded by the checks above).
+      ...(JWT_SECRET ? { jwtSecret: JWT_SECRET } : {}),
+      ...(COOKIE_SECRET ? { cookieSecret: COOKIE_SECRET } : {}),
     },
     // Session cookie: Medusa sets `Secure` + `SameSite=Lax` when NODE_ENV=production.
     // Storefront (kiji-games.de) and API (api.kiji-games.de) are same-site,
