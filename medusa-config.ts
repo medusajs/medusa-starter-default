@@ -172,6 +172,9 @@ const paymentProviders = STRIPE_API_KEY
         options: {
           apiKey: STRIPE_API_KEY,
           webhookSecret: STRIPE_WEBHOOK_SECRET,
+          // Charge immediately (capture_method "automatic"). Authorize-only
+          // would expire after ~7 days, too short for preorders.
+          capture: true,
         },
       },
     ]

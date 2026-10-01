@@ -144,7 +144,7 @@ Update: `git pull && docker compose -f docker-compose.prod.yml up -d --build`. M
 2. **Stripe**:
    - Webhook-Endpoint im Stripe-Dashboard: **`https://api.kiji-games.de/hooks/payment/stripe_stripe`**, mindestens die Events `payment_intent.succeeded`, `payment_intent.amount_capturable_updated`, `payment_intent.payment_failed`, `payment_intent.canceled`, `payment_intent.requires_action`. Das Signing-Secret kommt nach `STRIPE_WEBHOOK_SECRET`.
    - Im Admin den Provider **Stripe in der Region aktivieren** (Settings → Regions → Payment Providers). Seit Medusa 2.20 ist das Pflicht, der Seed legt nur `pp_system_default` an.
-   - Die Config setzt keine `capture`-Option. Der Stripe-Provider legt PaymentIntents deshalb mit `capture_method: "manual"` an, es wird nur autorisiert, und die Zahlung wird im Admin erfasst (außer die Storefront übergibt selbst `capture_method`). Stripe-Autorisierungen verfallen in der Regel nach 7 Tagen, das ist vor allem für Vorbestellungen relevant.
+   - Die Config setzt `capture: true`: Zahlungen werden beim Checkout sofort eingezogen (`capture_method: "automatic"`), auch bei Vorbestellungen. Eine reine Autorisierung würde nach etwa 7 Tagen verfallen und wäre für Vorbestellungen zu kurz.
 3. **Resend**: Absender-Domain bei Resend verifizieren (SPF, DKIM, DMARC per DNS). Ohne verifizierte Domain stellt Resend nur an die eigene Account-Adresse zu. `RESEND_FROM_EMAIL` auf diese Domain setzen.
 4. **Publishable API Key** im Admin anlegen bzw. prüfen und in der Storefront eintragen.
 5. Prüfen: `https://api.kiji-games.de/health` liefert 200, Login unter `/app` funktioniert, eine Testbestellung löst die Bestätigungsmail aus.
