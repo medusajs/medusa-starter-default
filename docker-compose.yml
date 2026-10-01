@@ -1,58 +1,96 @@
+# Local development stack: Postgres + Redis + Medusa (`medusa develop`, hot reload).
+#
+#   docker compose up --build        # start (first run builds the dev image)
+#   docker compose logs -f medusa
+#   docker compose down              # stop (data volumes are kept)
+#
+# Configuration comes from `.env` (see .env.template). DATABASE_URL / REDIS_URL
+# there must use the service hosts `postgres` / `redis`, e.g.
+#   DATABASE_URL=postgres://postgres:postgres@postgres:5432/medusa-store
+#   REDIS_URL=redis://redis:6379
+# Postgres credentials can be changed via POSTGRES_USER / POSTGRES_PASSWORD /
+# POSTGRES_DB in `.env` (must match DATABASE_URL).
+#
+# All ports are bound to 127.0.0.1 only. Production: see Dockerfile (target
+# "production") and docker-compose.prod.yml.
+
 services:
-  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: medusa_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: medusa-store
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-medusa-store}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "5432:5432"
+      # for local DB tools; remove if not needed
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     networks:
       - medusa_network
 
-  # Redis for session management and caching
   redis:
     image: redis:7-alpine
     container_name: medusa_redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     networks:
       - medusa_network
 
-  # Medusa Server and Admin Dashboard
   medusa:
-    build: .
+    build:
+      context: .
+      target: dev
     container_name: medusa_backend
     restart: unless-stopped
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
-      - "9000:9000"
-      - "5173:5173"
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/medusa-store
-      - REDIS_URL=redis://redis:6379
+      - "127.0.0.1:9000:9000"
+      # Vite HMR websocket of the admin dashboard
+      - "127.0.0.1:5173:5173"
     env_file:
       - .env
+    environment:
+      NODE_ENV: development
     volumes:
+      # Source code (hot reload). The container runs as user `node` (uid 1000),
+      # so files it creates (.medusa/, migrations, static/) belong to the host user.
       - .:/server
-      - /server/node_modules
+      # Linux/musl node_modules in a named volume; synced with yarn.lock on every
+      # start by docker/dev-entrypoint.sh (`yarn install --immutable`).
+      - node_modules:/server/node_modules
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 300s
     networks:
       - medusa_network
 
 volumes:
   postgres_data:
   redis_data:
+  node_modules:
 
 networks:
   medusa_network:

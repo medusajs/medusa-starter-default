@@ -1,0 +1,94 @@
+# Production stack for a single VPS (or Coolify "Docker Compose" build pack):
+# Postgres + Redis + Medusa (Dockerfile target "production").
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Values are interpolated from the shell / a `.env` file next to this file
+# (Coolify: set them in the UI). Required ones are marked with `:?`.
+# POSTGRES_PASSWORD is embedded in DATABASE_URL -> use URL-safe characters
+# (e.g. `openssl rand -hex 24`).
+#
+# Nothing but Medusa is reachable from the host, and only on 127.0.0.1 for a
+# reverse proxy (nginx/Caddy) that terminates TLS for api.kiji-games.de.
+# Coolify: remove the `ports:` block and assign the domain to service "medusa"
+# (port 9000) instead - Coolify's proxy routes to it.
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-medusa-store}
+      POSTGRES_USER: ${POSTGRES_USER:-medusa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  medusa:
+    build:
+      context: .
+      target: production
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:9000:9000"
+    environment:
+      NODE_ENV: production
+      MEDUSA_WORKER_MODE: ${MEDUSA_WORKER_MODE:-shared}
+      MEDUSA_RUN_MIGRATIONS: ${MEDUSA_RUN_MIGRATIONS:-true}
+      MEDUSA_MIGRATE_LINKS: ${MEDUSA_MIGRATE_LINKS:-safe}
+      MEDUSA_MIGRATE_SEARCH: ${MEDUSA_MIGRATE_SEARCH:-safe}
+      DISABLE_MEDUSA_ADMIN: ${DISABLE_MEDUSA_ADMIN:-false}
+      DATABASE_URL: postgres://${POSTGRES_USER:-medusa}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-medusa-store}
+      REDIS_URL: redis://redis:6379
+      MEDUSA_BACKEND_URL: ${MEDUSA_BACKEND_URL:?set MEDUSA_BACKEND_URL}
+      STOREFRONT_URL: ${STOREFRONT_URL:?set STOREFRONT_URL}
+      STORE_CORS: ${STORE_CORS:?set STORE_CORS}
+      ADMIN_CORS: ${ADMIN_CORS:?set ADMIN_CORS}
+      AUTH_CORS: ${AUTH_CORS:?set AUTH_CORS}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      COOKIE_SECRET: ${COOKIE_SECRET:?set COOKIE_SECRET}
+      AUTH_MFA_ENCRYPTION_KEY: ${AUTH_MFA_ENCRYPTION_KEY:-}
+      STRIPE_API_KEY: ${STRIPE_API_KEY:?set STRIPE_API_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?set STRIPE_WEBHOOK_SECRET}
+      RESEND_API_KEY: ${RESEND_API_KEY:?set RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:?set RESEND_FROM_EMAIL}
+      COMPANY_ADDRESS_LINE: ${COMPANY_ADDRESS_LINE:-}
+      COMPANY_CITY: ${COMPANY_CITY:-}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_FILE_URL: ${S3_FILE_URL:-}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+      S3_REGION: ${S3_REGION:-auto}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_PREFIX: ${S3_PREFIX:-}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-false}
+    volumes:
+      # Uploads of the local file provider (unused when S3_BUCKET is set)
+      - medusa_static:/app/static
+
+volumes:
+  postgres_data:
+  redis_data:
+  medusa_static:

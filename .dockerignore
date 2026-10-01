@@ -1,18 +1,42 @@
+# Build context for the Dockerfile (dev + production targets).
+# Keep it small and never ship local secrets or runtime data into an image.
+
+# Dependencies / build output (installed and built inside the image)
 node_modules
-.git
 .medusa
 dist
 build
 coverage
 .cache
+*.tsbuildinfo
 
+# Yarn: only .yarnrc.yml + .yarn/releases are needed
+.yarn/*
+!.yarn/releases
+!.yarn/patches
+!.yarn/plugins
+
+# Secrets / local env files (env vars are injected at runtime)
+.env
+.env.*
+
+# Runtime data (local file-provider uploads, DB dumps)
+static
+uploads
+*.sql
+*.sql.gz
+
+# VCS / CI / editor / OS
+.git
+.github
+.claude
+.idea
+.vscode
+.DS_Store
 *.log
 yarn-error.log
 
-.env
-.env.test
-.env.template
-
-.DS_Store
-.idea
-.vscode
+# Docs and compose files are not needed inside the image
+docs
+*.md
+docker-compose*.yml

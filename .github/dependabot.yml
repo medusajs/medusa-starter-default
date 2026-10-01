@@ -3,19 +3,37 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "daily"
-    allow:
-      - dependency-type: production
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
     groups:
+      # All Medusa packages (incl. @medusajs/ui, test-utils, eslint-plugin in
+      # devDependencies) are released in lockstep and must be bumped together.
       medusa:
         patterns:
-        - "@medusajs*"
-        - "medusa*"
+          - "@medusajs/*"
         update-types:
-        - "minor"
-        - "patch"
+          - "minor"
+          - "patch"
+      dev-dependencies:
+        dependency-type: "development"
+        exclude-patterns:
+          - "@medusajs/*"
+        update-types:
+          - "minor"
+          - "patch"
     ignore:
-      - dependency-name: "@medusajs*"
+      # Medusa majors need a manual upgrade (migrations, breaking changes)
+      - dependency-name: "@medusajs/*"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "medusa*"
-        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
