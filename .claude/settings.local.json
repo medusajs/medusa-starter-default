@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose up *)",
+      "Bash(docker compose *)",
+      "Bash(curl *)",
+      "Bash(tr -d '\\\\r')",
+      "Bash(mv /tmp/start.sh /home/fabi/projects/medusa-starter-default/start.sh)",
+      "Bash(chmod +x /home/fabi/projects/medusa-starter-default/start.sh)",
+      "Bash(docker exec medusa_postgres *)",
+      "Skill(medusa-dev:new-user)",
+      "Bash(docker exec medusa_backend *)"
+    ]
+  }
+}
