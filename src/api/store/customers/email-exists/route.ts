@@ -47,9 +47,15 @@ export async function POST(
   const { data: customers } = await query.graph({
     entity: "customer",
     fields: ["id"],
-    filters: { email, has_account: true },
+    // Medusa stores emails as typed, so match case-insensitively. The input is
+    // escaped so LIKE wildcards in it can't match other addresses.
+    filters: { email: { $ilike: escapeLike(email) }, has_account: true },
     pagination: { take: 1 },
   })
 
   return res.json({ exists: customers.length > 0 })
+}
+
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (c) => `\\${c}`)
 }

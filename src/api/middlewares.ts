@@ -26,19 +26,22 @@ import { verifyOrderToken } from "../utils/order-token"
 // Medusa runs global middlewares before the core routes' query validation,
 // which is where `req.allowed` is consumed. A global matcher is a path
 // prefix, so "/store/products" also covers "/store/products/:id".
+// The bare relation entry makes `*…preorder_variant` wildcards work too.
 const PREORDER_VARIANT_FIELDS = ["id", "available_date", "status"]
+const preorderVariantFields = (prefix: string) => [
+  `${prefix}.preorder_variant`,
+  ...PREORDER_VARIANT_FIELDS.map((f) => `${prefix}.preorder_variant.${f}`),
+]
 
 // PRODUCT_FIELDS (list + retrieve): preorder link on variants.
-const STORE_PRODUCT_EXTRA_FIELDS = PREORDER_VARIANT_FIELDS.map(
-  (f) => `variants.preorder_variant.${f}`,
-)
+const STORE_PRODUCT_EXTRA_FIELDS = preorderVariantFields("variants")
 
 // CART_FIELDS (every cart route incl. line-items, shipping-methods,
 // promotions, customer transfer): preorder hint per line item and the
 // product/category metadata the FSK age-gate reads.
 const STORE_CART_EXTRA_FIELDS = [
   "items.variant.id",
-  ...PREORDER_VARIANT_FIELDS.map((f) => `items.variant.preorder_variant.${f}`),
+  ...preorderVariantFields("items.variant"),
   "items.product.metadata",
   "items.product.categories.metadata",
 ]
@@ -47,7 +50,7 @@ const STORE_CART_EXTRA_FIELDS = [
 // details for the cost breakdown, and returns for the return flow.
 // cart.id / summary / fulfillment_status / payment_status are allowed by default.
 const STORE_ORDER_EXTRA_FIELDS = [
-  ...PREORDER_VARIANT_FIELDS.map((f) => `items.variant.preorder_variant.${f}`),
+  ...preorderVariantFields("items.variant"),
   "promotions.application_method",
   "returns",
   "returns.items",

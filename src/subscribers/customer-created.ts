@@ -72,8 +72,13 @@ export default async function customerCreatedHandler({
   }
 }
 
+// Workflow errors arrive as plain objects ({ message, ... }), not Error instances.
 function errorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : String(err)
+  if (err instanceof Error) return err.message
+  if (err && typeof err === "object" && "message" in err) {
+    return String((err as { message: unknown }).message)
+  }
+  return String(err)
 }
 
 export const config: SubscriberConfig = {
