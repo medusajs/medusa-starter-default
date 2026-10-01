@@ -172,7 +172,7 @@ Quelle: `medusa-config.ts`, `src/`, `docker/*.sh`. Vorlage mit Kommentaren: [`.e
 | Variable | Prod | Beschreibung |
 |---|---|---|
 | `MEDUSA_BACKEND_URL` | ✔ | Öffentliche Backend-URL. Basis für Upload-URLs (`/static`) und Admin-Reset-Links |
-| `STOREFRONT_URL` | ✔ | Storefront-URL für Links in Mails (Dev-Fallback im Code: `http://localhost:8000`) |
+| `STOREFRONT_URL` | ✔ | Storefront-URL für Links in Mails (Dev-Fallback im Code: `http://localhost:4321`) |
 | `STORE_CORS` | ✔ | Storefront-Origin(s) |
 | `ADMIN_CORS` | ✔ | Admin-Origin(s), in Production die Backend-Domain |
 | `AUTH_CORS` | ✔ | Storefront- und Admin-Origins |

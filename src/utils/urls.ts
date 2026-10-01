@@ -2,7 +2,8 @@ import { MedusaError } from "@medusajs/framework/utils"
 
 import { signOrderToken } from "./order-token"
 
-const DEV_STOREFRONT_URL = "http://localhost:8000"
+// Astro dev server default port
+const DEV_STOREFRONT_URL = "http://localhost:4321"
 const DEV_BACKEND_URL = "http://localhost:9000"
 
 // Reads a base URL from the environment. In production a missing value is a

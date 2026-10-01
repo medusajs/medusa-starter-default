@@ -56,6 +56,8 @@ export default async function preorderFulfilledHandler({
     channel: "email",
     template: "preorder-fulfilled",
     data: { order, fulfilled_items: fulfilledItems },
+    // One mail per fulfilled preorder variant, even if the event is redelivered
+    idempotency_key: `preorder-fulfilled:${data.order_id}:${data.preorder_variant_id}`,
   })
 }
 

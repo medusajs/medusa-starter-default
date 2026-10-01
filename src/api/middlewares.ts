@@ -260,7 +260,7 @@ export default defineMiddlewares({
       methods: ["POST"],
       middlewares: [validateAndTransformBody(StoreIssueOrderTokenSchema)],
     },
-    // Returns: body carries order_id and optional token.
+    // Returns: body carries order_id; guest token comes via x-kiji-order-token.
     {
       matcher: "/store/returns",
       methods: ["POST"],

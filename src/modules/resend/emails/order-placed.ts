@@ -149,8 +149,12 @@ const buildContext = (data: Record<string, unknown>) => {
 
   const items = (order.items ?? []).map((item) => {
     const preorderVariant = item.variant?.preorder_variant
+    // Same rule as checkout (retrieve-preorder-items): enabled + future date
+    const availableAt = preorderVariant?.available_date
+      ? new Date(preorderVariant.available_date).getTime()
+      : NaN
     const isPreorder =
-      !!preorderVariant?.id && preorderVariant.status !== "disabled"
+      preorderVariant?.status === "enabled" && availableAt > Date.now()
     return {
       thumbnail: item.thumbnail || placeholder,
       title: itemTitle(item),
