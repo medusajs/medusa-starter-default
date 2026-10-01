@@ -1,333 +1,126 @@
-# Live-Installation auf Self-Hosted Server
+# Deployment (Production)
 
-Schritt-für-Schritt-Anleitung zur Installation des Medusa-Backends auf einem eigenen Linux-Server (Ubuntu / Debian empfohlen).
+Production läuft als Docker-Image, gebaut aus dem `Dockerfile` (Target `production`), zusammen mit PostgreSQL 15 und Redis 7. Produktiv-Domain der API: **`https://api.kiji-games.de`**, der Admin liegt unter `https://api.kiji-games.de/app`, die Storefront unter `https://kiji-games.de`.
 
-Die Anwendung besteht aus drei Docker-Containern:
+Es gibt zwei Wege:
 
-- **medusa** – Node.js Backend + Admin-Dashboard (Port `9000`, Admin unter `5173`)
-- **postgres** – Datenbank (Port `5432`)
-- **redis** – Cache & Sessions (Port `6379`)
+- **Coolify** (aktueller Weg), siehe [Coolify](#coolify)
+- **VPS mit `docker-compose.prod.yml`** plus eigenem Reverse Proxy, siehe [VPS mit Docker Compose](#vps-mit-docker-compose)
 
----
-
-## 1. Voraussetzungen
-
-### Server-Mindestanforderungen
-
-| Ressource | Empfehlung           |
-|-----------|----------------------|
-| OS        | Ubuntu 22.04 / 24.04 |
-| CPU       | 2 vCPU               |
-| RAM       | 4 GB (min. 2 GB)     |
-| Speicher  | 20 GB SSD            |
-| Netzwerk  | öffentliche IPv4     |
-
-### Benötigte Zugänge
-
-- SSH-Zugang als Benutzer mit `sudo`-Rechten
-- Eine Domain, die auf den Server zeigt (A-Record), z. B. `shop.example.com`
-- (Optional) Stripe API-Key für Zahlungen
-
-### Ports, die offen sein müssen
-
-- `22` (SSH, nur eigene IP zulassen)
-- `80` (HTTP – für Let's Encrypt)
-- `443` (HTTPS)
-
-Die Ports `9000`, `5173`, `5432`, `6379` dürfen **nicht** nach außen offen sein. Sie werden später über Nginx erreicht.
+Vor dem ersten Production-Deploy nach dem Upgrade von 2.15: [docs/upgrade-2.21.md](docs/upgrade-2.21.md) lesen (Backup, einmalig `MEDUSA_MIGRATE_LINKS=all`).
 
 ---
 
-## 2. Server vorbereiten
+## Das Production-Image
 
 ```bash
-# System aktualisieren
-sudo apt update && sudo apt upgrade -y
-
-# Grundtools installieren
-sudo apt install -y git curl ufw nano ca-certificates gnupg
+docker build -t kiji-backend .     # "production" ist die letzte Stage und damit der Default
 ```
 
-### Firewall konfigurieren
+- Basis `node:22-alpine`. Gebaut wird mit `yarn build --no-lint` (Lint läuft in der CI), danach enthält das Image nur `.medusa/server` und die Production-Dependencies. Es läuft als User `node` unter `tini`, `WORKDIR /app`.
+- `NODE_ENV=production`, `PORT=9000` und `MEDUSA_RUN_MIGRATIONS=true` sind im Image gesetzt.
+- Healthcheck: `GET /health` (Intervall 30s, **Start-Period 180s**).
+- Uploads des lokalen File-Providers landen in **`/app/static`**. Das Verzeichnis als Volume persistieren oder `S3_*` setzen.
+- Secrets werden zur Laufzeit gelesen, nicht beim Build. `medusa build` überspringt die Production-Prüfung.
 
-```bash
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-sudo ufw allow OpenSSH
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw enable
-sudo ufw status
-```
+### Entrypoint (`docker/entrypoint.sh`)
+
+1. Prüft `MEDUSA_WORKER_MODE` (`shared` | `server` | `worker`).
+2. Wenn `MEDUSA_RUN_MIGRATIONS=true` und der Modus nicht `worker` ist, läuft `docker/migrate.sh`. Das ist `medusa db:migrate` ohne interaktiven Prompt: Link- und Search-Sync werden über `MEDUSA_MIGRATE_LINKS` / `MEDUSA_MIGRATE_SEARCH` gesteuert (`safe` als Default, `all` oder `skip`). Ohne diese Flags würde `db:migrate` bei einer Link-Änderung auf eine Eingabe warten und im Container hängen bleiben.
+3. `medusa start`. Zusätzliche Container-Argumente werden durchgereicht, z. B. `--cluster 2`.
+
+### Worker-Modus
+
+| `MEDUSA_WORKER_MODE` | HTTP/Admin | Scheduled Jobs, Subscriber | Migrationen |
+|---|---|---|---|
+| `shared` (Default) | ja | ja | ja (wenn `MEDUSA_RUN_MIGRATIONS=true`) |
+| `server` | ja | nein | ja (wenn `MEDUSA_RUN_MIGRATIONS=true`) |
+| `worker` | nein (Admin automatisch aus) | ja | nie |
+
+Eine Instanz (`shared`) reicht. Wer skaliert: eine Instanz `server` mit Domain und eine `worker` ohne Domain, beide mit derselben DB und demselben Redis. **Migrationen nur auf genau einer Instanz laufen lassen**, auf allen anderen `MEDUSA_RUN_MIGRATIONS=false`. Ohne Worker (bzw. `shared`) läuft der tägliche Preorder-Job nicht.
+
+`DISABLE_MEDUSA_ADMIN=true` liefert den Admin unter `/app` nicht aus.
+
+### Konfigurationsprüfung beim Start
+
+Mit `NODE_ENV=production` bricht `medusa-config.ts` den Start mit einer Liste aller Fehler ab, wenn:
+
+- eine Pflicht-Variable fehlt (Spalte „Prod“ in der [Referenz](#umgebungsvariablen)), `REDIS_URL` eingeschlossen,
+- `JWT_SECRET` oder `COOKIE_SECRET` kürzer als 32 Zeichen oder `supersecret` ist,
+- `MEDUSA_WORKER_MODE` einen ungültigen Wert hat.
+
+Zusätzlich werfen die Mail-Link-Builder (`src/utils/urls.ts`) in Production einen Fehler, wenn `STOREFRONT_URL`/`MEDUSA_BACKEND_URL` fehlen, statt Links auf `localhost` zu verschicken.
 
 ---
 
-## 3. Docker und Docker Compose installieren
+## Coolify
 
-```bash
-# Offizielles Docker-Repo einbinden
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
-  sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
+Ressourcen im Coolify-Projekt:
 
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-  https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+1. **PostgreSQL 15** und **Redis 7** als Coolify-Datenbanken. Deren interne URLs werden zu `DATABASE_URL` und `REDIS_URL`.
+2. **Application** aus dem GitHub-Repo `xxp3nxx/medusa-starter-default` (öffentlich, kein Deploy Key nötig), Build Pack **Dockerfile**:
+   - Domain: `https://api.kiji-games.de`, Port **9000**
+   - Health Check: Pfad `/health`, Port 9000, **Start Period mindestens 180s**, beim ersten Deploy mit Migrationen eher mehr
+   - Persistent Storage: Volume auf **`/app/static`** (entfällt mit S3)
+   - Environment Variables wie unten. `NODE_ENV=production` bringt das Image schon mit.
 
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io \
-                    docker-buildx-plugin docker-compose-plugin
+Alternativ geht der Build Pack **Docker Compose** mit `docker-compose.prod.yml`. Dann dort den `ports:`-Block des `medusa`-Service entfernen und die Domain dem Service `medusa` (Port 9000) zuweisen.
 
-# Aktuellen Benutzer zur docker-Gruppe hinzufügen (damit sudo entfällt)
-sudo usermod -aG docker $USER
-
-# Einmal ausloggen und wieder einloggen, damit die Gruppe aktiv wird!
-```
-
-Test:
-
-```bash
-docker --version
-docker compose version
-docker run --rm hello-world
-```
-
----
-
-## 4. Projekt auf den Server laden (per Deploy Key)
-
-Der Server bekommt einen eigenen SSH-Schlüssel, der als **Deploy Key** im privaten GitHub-Repo hinterlegt wird. Der Kollege braucht dafür **keinen eigenen GitHub-Account** – der Schlüssel ist an das Repo gebunden, nicht an eine Person.
-
-### 4.1 Zielverzeichnis anlegen
-
-```bash
-sudo mkdir -p /opt/medusa
-sudo chown $USER:$USER /opt/medusa
-cd /opt/medusa
-```
-
-### 4.2 SSH-Deploy-Key auf dem Server erzeugen
-
-```bash
-ssh-keygen -t ed25519 -C "medusa-deploy@server" -f ~/.ssh/medusa_deploy -N ""
-```
-
-Das erzeugt zwei Dateien:
-
-- `~/.ssh/medusa_deploy`      – **privater** Schlüssel (bleibt auf dem Server!)
-- `~/.ssh/medusa_deploy.pub`  – öffentlicher Schlüssel (wird gleich bei GitHub eingetragen)
-
-Öffentlichen Schlüssel anzeigen und in die Zwischenablage kopieren:
-
-```bash
-cat ~/.ssh/medusa_deploy.pub
-```
-
-### 4.3 Deploy Key in GitHub eintragen
-
-Der **Repo-Besitzer** (Entwickler) macht das – der Kollege muss nichts bei GitHub anlegen:
-
-1. Auf GitHub zum privaten Repo gehen.
-2. `Settings` → `Deploy keys` → **`Add deploy key`**.
-3. Title: `Live-Server` (oder sprechender Name).
-4. Key: den gerade kopierten Inhalt von `medusa_deploy.pub` einfügen.
-5. **„Allow write access“** nicht anhaken (Server soll nur lesen).
-6. `Add key`.
-
-### 4.4 SSH-Config auf dem Server
-
-Damit `git` automatisch den richtigen Schlüssel nutzt:
-
-```bash
-nano ~/.ssh/config
-```
-
-Folgenden Block einfügen (GitHub-Benutzer und Repo-Namen anpassen):
-
-```
-Host github-medusa
-  HostName github.com
-  User git
-  IdentityFile ~/.ssh/medusa_deploy
-  IdentitiesOnly yes
-```
-
-Rechte setzen und Verbindung testen:
-
-```bash
-chmod 600 ~/.ssh/config ~/.ssh/medusa_deploy
-ssh -T github-medusa
-```
-
-Erwartete Antwort (das ist **kein** Fehler):
-
-```
-Hi <repo-name>! You've successfully authenticated, but GitHub does not provide shell access.
-```
-
-### 4.5 Repository klonen
-
-```bash
-cd /opt/medusa
-git clone git@github-medusa:xxp3nxx/medusa-starter-default.git .
-```
-
-> Falls sich der Repo-Name später ändert, hier anpassen. Der Teil **vor** dem Doppelpunkt (`github-medusa`) ist kein Tippfehler – das ist der Alias aus der `~/.ssh/config` und muss genau so bleiben.
-
-> **Wichtig:** Der Host-Alias `github-medusa` aus der `~/.ssh/config` sorgt dafür, dass der Deploy Key verwendet wird, ohne dass der GitHub-Account des Kollegen ins Spiel kommt.
-
-### 4.6 Alternative: ohne GitHub (nur Notfall)
-
-Falls kein Git-Zugang gewünscht ist, das Projekt per `rsync` vom Entwickler-Rechner übertragen:
-
-```bash
-rsync -avz --exclude node_modules --exclude .env \
-  ./my-medusa-store/ user@server:/opt/medusa/
-```
-
-Nachteil: Updates müssen jedes Mal manuell neu übertragen werden – `git pull` (siehe Abschnitt 11) funktioniert dann nicht.
-
----
-
-## 5. `.env`-Datei für Produktion anlegen
-
-```bash
-cd /opt/medusa
-cp .env.template .env
-nano .env
-```
-
-Inhalt der `.env` (Werte anpassen – Domain und Secrets):
+Environment (Production-Werte für kiji):
 
 ```env
-# === Öffentliche URLs ===
-STORE_CORS=https://shop.example.com
-ADMIN_CORS=https://admin.example.com,https://shop.example.com
-AUTH_CORS=https://admin.example.com,https://shop.example.com
-
-# === Datenbank (Passwort ersetzen!) ===
-DATABASE_URL=postgres://postgres:BITTE_STARKES_PASSWORT@postgres:5432/medusa-store
-
-# === Redis ===
-REDIS_URL=redis://redis:6379
-
-# === Secrets (mit `openssl rand -base64 48` generieren) ===
-JWT_SECRET=
-COOKIE_SECRET=
-
-# === Stripe (optional) ===
+DATABASE_URL=<interne Coolify-Postgres-URL>
+DATABASE_SSL=                       # leer, solange die DB im selben Docker-Netz läuft
+REDIS_URL=<interne Coolify-Redis-URL>
+MEDUSA_BACKEND_URL=https://api.kiji-games.de
+STOREFRONT_URL=https://kiji-games.de
+STORE_CORS=https://kiji-games.de
+ADMIN_CORS=https://api.kiji-games.de
+AUTH_CORS=https://kiji-games.de,https://api.kiji-games.de
+JWT_SECRET=<openssl rand -hex 32>
+COOKIE_SECRET=<openssl rand -hex 32>
+AUTH_MFA_ENCRYPTION_KEY=<openssl rand -hex 32>
 STRIPE_API_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+RESEND_API_KEY=re_...
+RESEND_FROM_EMAIL=<Adresse auf der bei Resend verifizierten Domain>
+COMPANY_ADDRESS_LINE=...
+COMPANY_CITY=...
+MEDUSA_WORKER_MODE=shared
+MEDUSA_RUN_MIGRATIONS=true
+MEDUSA_MIGRATE_LINKS=safe           # einmalig "all" beim ersten Deploy nach dem 2.21-Upgrade
+MEDUSA_MIGRATE_SEARCH=safe
 ```
 
-Sichere Secrets erzeugen:
-
-```bash
-echo "JWT_SECRET=$(openssl rand -base64 48)"
-echo "COOKIE_SECRET=$(openssl rand -base64 48)"
-```
-
-Die Ausgabe in die `.env` kopieren.
+Nach dem ersten erfolgreichen Deploy siehe [Nach dem ersten Deploy](#nach-dem-ersten-deploy).
 
 ---
 
-## 6. Datenbank-Passwort in `docker-compose.yml` anpassen
+## VPS mit Docker Compose
 
-Die Standard-Credentials (`postgres:postgres`) müssen vor einem Live-Deployment ersetzt werden. In `docker-compose.yml` unter `postgres.environment`:
-
-```yaml
-environment:
-  POSTGRES_DB: medusa-store
-  POSTGRES_USER: postgres
-  POSTGRES_PASSWORD: BITTE_STARKES_PASSWORT   # <- gleich wie in DATABASE_URL
-```
-
-Zusätzlich empfiehlt es sich, die öffentlichen Ports `5432` und `6379` in der `docker-compose.yml` zu entfernen (nur interner Zugriff über das Docker-Netzwerk nötig):
-
-```yaml
-postgres:
-  # ports:                 <-- diesen Block entfernen
-  #   - "5432:5432"
-
-redis:
-  # ports:                 <-- diesen Block entfernen
-  #   - "6379:6379"
-```
-
----
-
-## 7. Container starten
+`docker-compose.prod.yml` startet Postgres, Redis (AOF-Persistenz) und Medusa (Target `production`). Nur Medusa ist erreichbar, und zwar auf `127.0.0.1:9000` für einen Reverse Proxy mit TLS. Volumes: `postgres_data`, `redis_data`, `medusa_static` (→ `/app/static`).
 
 ```bash
-cd /opt/medusa
-docker compose up --build -d
+git clone https://github.com/xxp3nxx/medusa-starter-default.git /opt/kiji-backend
+cd /opt/kiji-backend
+# .env neben der Compose-Datei anlegen (wird von Compose interpoliert):
+#   POSTGRES_PASSWORD (URL-sicher, z. B. openssl rand -hex 24), MEDUSA_BACKEND_URL, STOREFRONT_URL,
+#   *_CORS, JWT_SECRET, COOKIE_SECRET, STRIPE_*, RESEND_* (Pflicht, sonst bricht Compose ab)
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml logs -f medusa
 ```
 
-Was passiert dabei:
+`DATABASE_URL` und `REDIS_URL` setzt die Compose-Datei selbst (DB-User Default `medusa`, DB `medusa-store`).
 
-1. Docker baut das Medusa-Image (`Dockerfile`).
-2. Postgres und Redis starten.
-3. Medusa läuft `npx medusa db:migrate` (siehe `start.sh`) und startet danach den Server.
-
-Status prüfen:
-
-```bash
-docker compose ps
-docker compose logs -f medusa
-```
-
-Der Start dauert beim ersten Mal 2–5 Minuten (Build + Migrationen). Fertig ist er, sobald in den Logs steht:
-
-```
-Server is ready on port: 9000
-```
-
----
-
-## 8. Admin-Benutzer anlegen
-
-```bash
-docker compose exec medusa npx medusa user \
-  -e admin@example.com -p EinSicheresPasswort
-```
-
-Damit ist der erste Admin-Account erzeugt und kann sich über das Admin-Dashboard einloggen.
-
----
-
-## 9. Reverse Proxy mit Nginx + HTTPS
-
-Medusa selbst sollte nicht direkt aus dem Internet erreichbar sein. Davor setzen wir Nginx mit Let's Encrypt.
-
-### Nginx installieren
-
-```bash
-sudo apt install -y nginx certbot python3-certbot-nginx
-```
-
-### Site-Konfiguration anlegen
-
-```bash
-sudo nano /etc/nginx/sites-available/medusa
-```
-
-Inhalt:
+Firewall: nur 22, 80 und 443 öffnen. Reverse Proxy, z. B. nginx mit certbot:
 
 ```nginx
 server {
-    listen 80;
-    server_name shop.example.com admin.example.com;
-
-    client_max_body_size 20M;
-
+    server_name api.kiji-games.de;
+    client_max_body_size 20M;   # Datei-Uploads im Admin
     location / {
         proxy_pass http://127.0.0.1:9000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 300s;
@@ -335,148 +128,139 @@ server {
 }
 ```
 
-Aktivieren:
-
 ```bash
-sudo ln -s /etc/nginx/sites-available/medusa /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
+sudo certbot --nginx -d api.kiji-games.de
 ```
 
-### HTTPS-Zertifikat holen
-
-```bash
-sudo certbot --nginx -d shop.example.com -d admin.example.com
-```
-
-Certbot passt die Nginx-Konfiguration automatisch an und richtet einen Cron-Job für Auto-Renewal ein.
-
-Test:
-
-```bash
-sudo certbot renew --dry-run
-```
+Update: `git pull && docker compose -f docker-compose.prod.yml up -d --build`. Migrationen laufen beim Start.
 
 ---
 
-## 10. Funktionsprüfung
+## Nach dem ersten Deploy
 
-- Health-Check API:  `https://shop.example.com/health` → sollte `OK` liefern.
-- Admin-Login:       `https://admin.example.com/app` → mit Admin-Benutzer aus Schritt 8 einloggen.
-- Logs live ansehen: `docker compose logs -f medusa`
+1. **Admin-User** anlegen (im laufenden Container):
+   `npx medusa user -e <email> -p '<passwort>'`
+   (VPS: `docker compose -f docker-compose.prod.yml exec medusa npx medusa user ...`, Coolify: Terminal der Application)
+2. **Stripe**:
+   - Webhook-Endpoint im Stripe-Dashboard: **`https://api.kiji-games.de/hooks/payment/stripe_stripe`**, mindestens die Events `payment_intent.succeeded`, `payment_intent.amount_capturable_updated`, `payment_intent.payment_failed`, `payment_intent.canceled`, `payment_intent.requires_action`. Das Signing-Secret kommt nach `STRIPE_WEBHOOK_SECRET`.
+   - Im Admin den Provider **Stripe in der Region aktivieren** (Settings → Regions → Payment Providers). Seit Medusa 2.20 ist das Pflicht, der Seed legt nur `pp_system_default` an.
+   - Die Config setzt keine `capture`-Option. Der Stripe-Provider legt PaymentIntents deshalb mit `capture_method: "manual"` an, es wird nur autorisiert, und die Zahlung wird im Admin erfasst (außer die Storefront übergibt selbst `capture_method`). Stripe-Autorisierungen verfallen in der Regel nach 7 Tagen, das ist vor allem für Vorbestellungen relevant.
+3. **Resend**: Absender-Domain bei Resend verifizieren (SPF, DKIM, DMARC per DNS). Ohne verifizierte Domain stellt Resend nur an die eigene Account-Adresse zu. `RESEND_FROM_EMAIL` auf diese Domain setzen.
+4. **Publishable API Key** im Admin anlegen bzw. prüfen und in der Storefront eintragen.
+5. Prüfen: `https://api.kiji-games.de/health` liefert 200, Login unter `/app` funktioniert, eine Testbestellung löst die Bestätigungsmail aus.
 
 ---
 
-## 11. Betrieb & Wartung
+## Umgebungsvariablen
 
-### Container neu starten
+Quelle: `medusa-config.ts`, `src/`, `docker/*.sh`. Vorlage mit Kommentaren: [`.env.template`](.env.template). **Prod** = ohne den Wert startet `NODE_ENV=production` nicht.
+
+**Laufzeit**
+
+| Variable | Prod | Beschreibung |
+|---|---|---|
+| `NODE_ENV` | | `production` (im Image gesetzt) / `development` (Dev-Compose) |
+| `MEDUSA_WORKER_MODE` | | `shared` (Default) \| `server` \| `worker` |
+| `DISABLE_MEDUSA_ADMIN` | | `true` = Admin unter `/app` nicht ausliefern |
+| `MEDUSA_RUN_MIGRATIONS` | | Migrationen beim Container-Start (Default `true`, Worker nie) |
+| `MEDUSA_MIGRATE_LINKS` | | Link-Sync bei `db:migrate`: `safe` (Default) \| `all` \| `skip` |
+| `MEDUSA_MIGRATE_SEARCH` | | Search-Sync bei `db:migrate`: `safe` (Default) \| `all` \| `skip` |
+| `PORT` | | HTTP-Port, im Image `9000` |
+
+**URLs und CORS** (ohne Slash am Ende, CORS kommagetrennt)
+
+| Variable | Prod | Beschreibung |
+|---|---|---|
+| `MEDUSA_BACKEND_URL` | ✔ | Öffentliche Backend-URL. Basis für Upload-URLs (`/static`) und Admin-Reset-Links |
+| `STOREFRONT_URL` | ✔ | Storefront-URL für Links in Mails (Dev-Fallback im Code: `http://localhost:8000`) |
+| `STORE_CORS` | ✔ | Storefront-Origin(s) |
+| `ADMIN_CORS` | ✔ | Admin-Origin(s), in Production die Backend-Domain |
+| `AUTH_CORS` | ✔ | Storefront- und Admin-Origins |
+
+**Secrets**
+
+| Variable | Prod | Beschreibung |
+|---|---|---|
+| `JWT_SECRET` | ✔ | ≥ 32 Zeichen, nicht `supersecret`. Signiert auch Order- und Verify-Tokens; ein Wechsel macht verschickte Links ungültig |
+| `COOKIE_SECRET` | ✔ | ≥ 32 Zeichen, nicht `supersecret` |
+| `AUTH_MFA_ENCRYPTION_KEY` | | Verschlüsselt MFA/TOTP-Secrets der Admin-User (von Medusa direkt gelesen). Nach Aktivierung von MFA nicht mehr ändern |
+
+**Datenbank und Redis**
+
+| Variable | Prod | Beschreibung |
+|---|---|---|
+| `DATABASE_URL` | ✔ | Postgres-URL, Sonderzeichen URL-encodet |
+| `DATABASE_SSL` | | `true` (TLS ohne Zertifikatsprüfung) \| `verify` \| leer (kein TLS) |
+| `REDIS_URL` | ✔ | Event-Bus, Workflow-Engine, Locking, Caching, Sessions. Leer = in-memory (nur lokal) |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | | Nur Compose: Credentials des Postgres-Containers (`docker-compose.prod.yml`: Passwort Pflicht) |
+
+**Datei-Uploads** (ohne `S3_BUCKET`: lokal nach `static/` bzw. `/app/static`)
+
+| Variable | Beschreibung |
+|---|---|
+| `S3_BUCKET` | Aktiviert den S3-Provider |
+| `S3_FILE_URL` | Öffentliche Basis-URL der Dateien |
+| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | Zugangsdaten |
+| `S3_REGION` | Default `auto` (R2), AWS z. B. `eu-central-1` |
+| `S3_ENDPOINT` | z. B. R2-Endpoint, leer bei AWS |
+| `S3_PREFIX` | Optionaler Pfad-Präfix |
+| `S3_FORCE_PATH_STYLE` | `true` für MinIO u. ä. |
+
+**Zahlungen und Mails**
+
+| Variable | Prod | Beschreibung |
+|---|---|---|
+| `STRIPE_API_KEY` | ✔ | Ohne Wert wird der Stripe-Provider nicht registriert |
+| `STRIPE_WEBHOOK_SECRET` | ✔ | Signing-Secret des Webhooks `/hooks/payment/stripe_stripe` |
+| `RESEND_API_KEY` | ✔ | Ohne Wert werden Mails nur geloggt (`notification-local`) |
+| `RESEND_FROM_EMAIL` | ✔ | Absender |
+| `COMPANY_ADDRESS_LINE` / `COMPANY_CITY` | | Footer der Mail-Templates |
+
+**Build-Zeit (Admin)**
+
+| Variable | Beschreibung |
+|---|---|
+| `VITE_BACKEND_URL` | Basis-URL des Admin-SDKs (`src/admin/lib/sdk.ts`). Leer = gleiche Origin; nur setzen, wenn der Admin nicht vom Backend ausgeliefert wird |
+
+**Tests** (`.env.test`): `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD` für `@medusajs/test-utils`.
+
+---
+
+## Betrieb
+
+**Backup** (vor jedem Medusa-Upgrade Pflicht):
 
 ```bash
-cd /opt/medusa
-docker compose restart medusa
+# VPS
+docker compose -f docker-compose.prod.yml exec -T postgres pg_dump -U medusa -d medusa-store -Fc > medusa_$(date +%F).dump
+# Restore
+docker compose -f docker-compose.prod.yml exec -T postgres pg_restore -U medusa -d medusa-store --clean --if-exists < medusa_YYYY-MM-DD.dump
 ```
 
-### Updates einspielen
+In Coolify die Backup-Funktion der Postgres-Ressource nutzen (geplante Backups, optional S3). Uploads in `/app/static` (bzw. im Volume `medusa_static`) gehören mit ins Backup, sofern kein S3 genutzt wird.
 
-```bash
-cd /opt/medusa
-git pull
-docker compose up --build -d
-```
+**Monitoring**: Der Preorder-Job loggt `Failed to fulfill preorder <id>: <message>` pro Fehler und am Ende eine Zusammenfassung (`Fulfill preorders job done: …`). Fehlgeschlagene Mails markiert das Notification-Modul als fehlgeschlagen; zusätzlich loggt der Provider `Resend rejected …`.
 
-Migrationen werden beim Start automatisch ausgeführt (`start.sh`).
+## Troubleshooting
 
-### Datenbank-Backup
+| Problem | Ursache / Lösung |
+|---|---|
+| Container startet nicht, `[medusa-config] Invalid production configuration` | Fehlende oder zu kurze Variablen, siehe Liste im Log |
+| Container hängt bei `db:migrate` | Tritt mit `docker/migrate.sh` nicht auf. Bei Link-Änderungen einmalig `MEDUSA_MIGRATE_LINKS=all` setzen |
+| Healthcheck schlägt beim ersten Start fehl | Start Period zu kurz für Migrationen, ≥ 180s setzen |
+| CORS-Fehler im Admin/Storefront | `ADMIN_CORS`/`STORE_CORS`/`AUTH_CORS` exakt mit Schema und ohne Slash am Ende |
+| Upload-Bilder 404 nach Redeploy | `/app/static` nicht persistiert, Volume oder S3 einrichten |
+| Stripe-Zahlungen bleiben „pending“ | Webhook-URL oder `STRIPE_WEBHOOK_SECRET` falsch, Stripe nicht in der Region aktiviert |
+| Mails kommen nicht an | Resend-Domain nicht verifiziert (Sandbox), `RESEND_FROM_EMAIL` nicht auf der Domain |
 
-```bash
-# Dump erzeugen
-docker compose exec postgres pg_dump -U postgres medusa-store \
-  | gzip > /opt/medusa/backups/medusa_$(date +%F).sql.gz
+## Checkliste Go-Live
 
-# Wiederherstellen
-gunzip < backup.sql.gz | docker compose exec -T postgres \
-  psql -U postgres -d medusa-store
-```
-
-Ein täglicher Cron-Job (`crontab -e`):
-
-```
-0 3 * * * cd /opt/medusa && docker compose exec -T postgres pg_dump -U postgres medusa-store | gzip > /opt/medusa/backups/medusa_$(date +\%F).sql.gz
-```
-
-Backup-Verzeichnis zuvor anlegen:
-
-```bash
-mkdir -p /opt/medusa/backups
-```
-
-### Logs rotieren
-
-Docker-Log-Größe in `/etc/docker/daemon.json` begrenzen:
-
-```json
-{
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "50m",
-    "max-file": "5"
-  }
-}
-```
-
-Danach `sudo systemctl restart docker`.
-
----
-
-## 12. Troubleshooting
-
-| Problem                               | Prüfung / Lösung                                                                 |
-|---------------------------------------|----------------------------------------------------------------------------------|
-| Container startet nicht               | `docker compose logs medusa`                                                     |
-| `ECONNREFUSED` auf DB                 | Ist `DATABASE_URL` in `.env` identisch zum Passwort in `docker-compose.yml`?     |
-| Admin zeigt CORS-Fehler               | `ADMIN_CORS` / `AUTH_CORS` in `.env` muss die exakte HTTPS-Domain enthalten      |
-| 502 Bad Gateway in Nginx              | Läuft Medusa? `docker compose ps`. Port 9000 lokal erreichbar?                   |
-| Migrationen hängen                    | Einmalig manuell: `docker compose exec medusa npx medusa db:migrate`             |
-| Seite lädt, Assets 404                | Container neu bauen: `docker compose up --build -d`                              |
-
----
-
-## 13. Hinweis für den Produktionsbetrieb
-
-Die mitgelieferte `start.sh` startet den Server aktuell im Entwicklungsmodus (`medusa develop`). Für echten Produktionsbetrieb wird empfohlen, auf den Produktions-Befehl umzustellen:
-
-In `start.sh`:
-
-```sh
-#!/bin/sh
-npx medusa db:migrate
-npx medusa build
-npx medusa start
-```
-
-Und in der `docker-compose.yml` unter `medusa.environment`:
-
-```yaml
-environment:
-  - NODE_ENV=production
-```
-
-Außerdem sollte der `volumes`-Mount `.:/server` im `medusa`-Service entfernt werden, damit der Container mit dem gebauten Image läuft und nicht mit lokalem Code.
-
----
-
-## 14. Checkliste vor Go-Live
-
-- [ ] Domain zeigt auf Server-IP (A-Record)
-- [ ] Firewall aktiv (`ufw status`)
-- [ ] `.env` mit echten Secrets und Domain-Werten
-- [ ] Starkes Postgres-Passwort in `docker-compose.yml` + `.env`
-- [ ] Postgres- und Redis-Ports nicht mehr öffentlich gemappt
-- [ ] HTTPS-Zertifikat aktiv
-- [ ] Admin-Benutzer angelegt
-- [ ] Backup-Cron eingerichtet
-- [ ] `NODE_ENV=production` und `medusa start` (siehe Abschnitt 13)
-
----
-
-**Support-Kontakt Entwicklung:** fabian.reichwald1@googlemail.com
+- [ ] DB-Backup vorhanden (bei Upgrade: vor dem ersten Start)
+- [ ] Alle Prod-Pflichtvariablen gesetzt, Secrets per `openssl rand -hex 32`
+- [ ] `/app/static` persistiert oder S3 konfiguriert
+- [ ] Health Check `/health` mit Start Period ≥ 180s
+- [ ] Migrationen auf genau einer Instanz, ein Worker bzw. `shared` läuft (Preorder-Job)
+- [ ] Stripe in der Region aktiviert, Webhook eingerichtet
+- [ ] Resend-Domain verifiziert
+- [ ] Admin-User angelegt, `/app` erreichbar
+- [ ] Rate-Limit am Proxy für `POST /store/customers/email-exists` (siehe [docs/email-verification.md](docs/email-verification.md#e-mail-existenz-prüfen))
